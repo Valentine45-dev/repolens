@@ -1,0 +1,33 @@
+[project]
+name = "repolens-backend"
+version = "0.1.0"
+description = "RepoLens API: ingest a GitHub repo, parse Python, serve graph, findings and Q&A"
+requires-python = ">=3.12"
+dependencies = [
+    "fastapi>=0.162.0",
+    "psycopg[binary,pool]>=3.3.6",
+    "tree-sitter>=0.26.0",
+    "tree-sitter-python>=0.25.0",
+    "uvicorn[standard]>=0.54.0",
+]
+
+[dependency-groups]
+dev = [
+    "httpx>=0.28.1",
+    "pytest>=9.1.1",
+    "ruff>=0.17.2",
+]
+
+[tool.ruff]
+line-length = 100
+target-version = "py312"
+# The fixture repo is sample input for the parser, not our code.
+extend-exclude = ["tests/fixtures"]
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "B", "UP"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["."]
+markers = ["db: needs a Postgres database (DATABASE_URL)"]
