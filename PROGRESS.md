@@ -16,11 +16,12 @@
     the job row, deadline check, workspace always deleted.
   - API: `POST /repos`, `GET /snapshots/{id}/status`, `GET /health`.
   - CI: `.github/workflows/ci.yml` (ruff + pytest, pgvector service, schema loaded with psql).
+    Green on `feat/ingest` (confirmed 27 Oct). `DATABASE_URL` is set at job level, so the DB
+    tests are not skipped there.
   - Tests: 36 local (redaction, discover, parser, URL validation); 2 network tests pass with
     `RUN_NETWORK_TESTS=1`; 4 DB end-to-end tests run only where `DATABASE_URL` is set (CI).
 
 ## Next
-- Confirm CI is green on GitHub (repo is private; check the Actions tab).
 - When Docker works: `docker compose up --build`, ingest `https://github.com/pallets/itsdangerous`,
   check row counts. Then merge `feat/ingest` into `main` (ask first).
 - Day 2: import resolution + call edges, graph/file/dependents endpoints, React shell.
