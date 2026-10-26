@@ -1,6 +1,8 @@
 # PROGRESS
 
 ## Done
+- **`feat/ingest` merged into `main` (27 Oct, `9b4ffe6`)** after CI run #8 was green on `17f883b`
+  (40 passed, 2 network skips). Day 2 work continues on `feat/graph-api`.
 - Git repo, `.gitignore`, `.gitattributes`; `main` pushed.
 - Day 1 on `feat/ingest` (pushed):
   - uv project in `backend/` (Python 3.12), `docker-compose.yml` (db on host 5433, api on 8000),
@@ -35,7 +37,6 @@
     never hit it). Pinned `tree-sitter>=0.25.2,<0.26` in `pyproject.toml`.
 
 ## Next
-- Merge `feat/ingest` into `main` (waiting for the go-ahead).
 - Day 2: import resolution + call edges, graph/file/dependents endpoints, React shell.
 
 ## Decisions
