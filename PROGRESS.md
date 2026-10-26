@@ -22,10 +22,20 @@
   - Tests: 36 local (redaction, discover, parser, URL validation); 2 network tests pass with
     `RUN_NETWORK_TESTS=1`; 4 DB end-to-end tests run only where `DATABASE_URL` is set (CI).
 
+  - **Local end-to-end run (27 Oct):** `.env` from `.env.example` (`DATABASE_URL` -> `localhost:5433`),
+    `docker compose up -d db`, full suite locally with DB + network tests: **42 passed, 0 skipped**.
+    API via `uv run --env-file ../.env uvicorn app.main:app` (config reads `os.environ`, so the
+    `--env-file` flag is needed). Ingested `pallets/itsdangerous` @ `672971d`: status `done`, 100%,
+    no error. Rows: **41 files** (15 Python), **159 symbols** (98 method, 29 class, 17 function,
+    15 module), **7 findings** (all `hardcoded-secret` on placeholder `secret_key=` in `tests/`,
+    values masked). Clone workspace deleted afterwards.
+  - **Fixed: Tree-sitter segfault.** First ingest killed the API process (exit 139, access violation in
+    `node.named_children` during parse). Identical code crashed 6/6 runs on `tree-sitter` 0.26.0 and
+    0/6 on 0.25.2, so it is a native regression in py-tree-sitter 0.26.0 (seen on Windows; Linux CI
+    never hit it). Pinned `tree-sitter>=0.25.2,<0.26` in `pyproject.toml`.
+
 ## Next
-- End-to-end run: start the `db` service in Docker, run the API with `uv run uvicorn`, ingest
-  `https://github.com/pallets/itsdangerous`, check row counts. Then merge `feat/ingest` into
-  `main` (ask first).
+- Merge `feat/ingest` into `main` (waiting for the go-ahead).
 - Day 2: import resolution + call edges, graph/file/dependents endpoints, React shell.
 
 ## Decisions
@@ -47,5 +57,11 @@
   with `uv run uvicorn`. The full compose stack (`db`, `api`, later `web`) is kept for the demo.
 
 ## Known issues
+- DB tests `TRUNCATE repos RESTART IDENTITY CASCADE` on whatever `DATABASE_URL` points at, so running
+  pytest locally wipes ingested dev data. Re-ingest after tests, or later point tests at a separate DB.
+- `hardcoded-secret` is noisy on test code (placeholder keys in `tests/`). Consider lower severity
+  for test paths when the Day 3 detectors land.
+- Fixture tests do not reproduce the 0.26.0 crash (only bigger files did); the pin is the guard.
+  Re-check before ever lifting it.
 - `httpx` with Starlette TestClient emits a deprecation warning (suggests `httpx2`); harmless for now.
 - Git for Windows `autocrlf` converts working copies to CRLF; repo stores LF. `.sh` files forced LF.
