@@ -15,15 +15,17 @@
   - `app/ingest/pipeline.py`: fetch -> discover -> parse, delete-then-insert per stage, progress on
     the job row, deadline check, workspace always deleted.
   - API: `POST /repos`, `GET /snapshots/{id}/status`, `GET /health`.
-  - CI: `.github/workflows/ci.yml` (ruff + pytest, pgvector service, schema loaded with psql).
-    Green on `feat/ingest` (confirmed 27 Oct). `DATABASE_URL` is set at job level, so the DB
-    tests are not skipped there.
+  - CI: `.github/workflows/ci.yml` (ruff + `pytest -q -rs`, pgvector service, schema loaded with
+    psql). Green on `feat/ingest`. `DATABASE_URL` is set at job level; the CI log shows
+    "40 passed, 2 skipped" (only the `RUN_NETWORK_TESTS` skips), so the DB tests run in CI.
+  - psycopg_pool deprecation warning fixed by passing `open=True` to `ConnectionPool` (`a5e2979`).
   - Tests: 36 local (redaction, discover, parser, URL validation); 2 network tests pass with
     `RUN_NETWORK_TESTS=1`; 4 DB end-to-end tests run only where `DATABASE_URL` is set (CI).
 
 ## Next
-- When Docker works: `docker compose up --build`, ingest `https://github.com/pallets/itsdangerous`,
-  check row counts. Then merge `feat/ingest` into `main` (ask first).
+- End-to-end run: start the `db` service in Docker, run the API with `uv run uvicorn`, ingest
+  `https://github.com/pallets/itsdangerous`, check row counts. Then merge `feat/ingest` into
+  `main` (ask first).
 - Day 2: import resolution + call edges, graph/file/dependents endpoints, React shell.
 
 ## Decisions
@@ -41,9 +43,9 @@
 - Re-submitting a URL whose commit has a queued/running/done job returns that job; a failed one
   starts a new job. No GitHub API size check (would need a token); file/size/time caps instead.
 - Unexpected pipeline errors show only "Internal error during <stage>." (log has the exception type).
+- Local dev on this 8 GB RAM laptop: only the `db` service runs in Docker; the API runs natively
+  with `uv run uvicorn`. The full compose stack (`db`, `api`, later `web`) is kept for the demo.
 
 ## Known issues
-- Docker Desktop still installing: nothing has run in Docker yet; DB tests not yet run locally
-  (the local Postgres on 5432 is off-limits).
 - `httpx` with Starlette TestClient emits a deprecation warning (suggests `httpx2`); harmless for now.
 - Git for Windows `autocrlf` converts working copies to CRLF; repo stores LF. `.sh` files forced LF.
