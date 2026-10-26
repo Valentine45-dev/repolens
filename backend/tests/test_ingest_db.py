@@ -1,0 +1,109 @@
+"""End-to-end ingestion against a real Postgres, with git replaced by the fixture repo."""
+
+import os
+import shutil
+from pathlib import Path
+
+import pytest
+from fastapi.testclient import TestClient
+
+pytestmark = [
+    pytest.mark.db,
+    pytest.mark.skipif(not os.environ.get("DATABASE_URL"), reason="needs DATABASE_URL"),
+]
+
+FIXTURE = Path(__file__).parent / "fixtures" / "sample_repo"
+SHA = "a" * 40
+
+
+@pytest.fixture
+def client(monkeypatch, tmp_path):
+    from app import config
+    from app.ingest import clone
+    from app.main import app
+
+    def fake_fetch(url, sha, dest, timeout):
+        shutil.copytree(FIXTURE, dest)
+
+    monkeypatch.setattr(clone, "resolve_sha", lambda url, timeout: SHA)
+    monkeypatch.setattr(clone, "fetch_commit", fake_fetch)
+    monkeypatch.setattr(config, "WORKSPACE_DIR", tmp_path / "work")
+
+    with TestClient(app) as c:
+        from app.db import pool
+
+        with pool().connection() as conn:
+            conn.execute("TRUNCATE repos RESTART IDENTITY CASCADE")
+        yield c
+
+
+def query(sql, *args):
+    from app.db import pool
+
+    with pool().connection() as conn:
+        return conn.execute(sql, args).fetchall()
+
+
+def test_ingest_fixture_repo(client, tmp_path):
+    r = client.post("/repos", json={"url": "https://github.com/Example/Sample.git"})
+    assert r.status_code == 202, r.text
+    body = r.json()
+    assert body["commit_sha"] == SHA
+
+    # TestClient runs background tasks before returning, so the job has finished.
+    status = client.get(f"/snapshots/{body['snapshot_id']}/status").json()
+    assert status["status"] == "done", status
+    assert status["percent"] == 100
+    assert status["url"] == "https://github.com/example/sample"
+
+    files = query("SELECT path FROM files ORDER BY path")
+    assert len(files) == 5
+
+    rows = query("SELECT kind, count(*) AS n FROM symbols GROUP BY kind")
+    kinds = {r["kind"]: r["n"] for r in rows}
+    assert kinds["module"] == 5
+    assert kinds["class"] >= 4
+
+    (finding,) = query("SELECT f.rule_id, f.line, f.snippet, fi.path FROM findings f"
+                       " JOIN files fi ON fi.id = f.file_id")
+    assert finding["rule_id"] == "hardcoded-secret"
+    assert finding["path"] == "sample_app/settings.py"
+    assert finding["line"] == 5
+    assert "[REDACTED]" in finding["snippet"]
+    assert "fixture-not-a-real-password" not in finding["snippet"]
+
+    stored = query("SELECT content FROM files WHERE path = 'sample_app/settings.py'")[0]
+    assert "fixture-not-a-real-password" not in stored["content"]
+
+    # The clone workspace is gone.
+    assert not any((tmp_path / "work").glob("*"))
+
+    # Submitting again reuses the finished job.
+    again = client.post("/repos", json={"url": "https://github.com/example/sample"}).json()
+    assert again["job_id"] == body["job_id"]
+    assert again["status"] == "done"
+
+
+def test_rejects_non_github_url(client):
+    r = client.post("/repos", json={"url": "https://gitlab.com/a/b"})
+    assert r.status_code == 422
+
+
+def test_unknown_snapshot_is_404(client):
+    assert client.get("/snapshots/999999/status").status_code == 404
+
+
+def test_failed_fetch_marks_job_failed_and_cleans_up(client, monkeypatch, tmp_path):
+    from app.ingest import clone
+
+    def failing_fetch(url, sha, dest, timeout):
+        dest.mkdir(parents=True)
+        raise clone.CloneError("git fetch timed out after 1s")
+
+    monkeypatch.setattr(clone, "fetch_commit", failing_fetch)
+    body = client.post("/repos", json={"url": "https://github.com/example/broken"}).json()
+    status = client.get(f"/snapshots/{body['snapshot_id']}/status").json()
+    assert status["status"] == "failed"
+    assert status["stage"] == "fetch"
+    assert "timed out" in status["error"]
+    assert not any((tmp_path / "work").glob("*"))
