@@ -106,3 +106,6 @@ Take items in this order; never start one that cannot finish before the freeze.
 - Tests only where cheap and valuable: one fixture repo in `backend/tests/fixtures/` (committed, never executed), detector positive/negative samples, citation validator.
 - Prefer boring, obvious code over clever abstractions. No new dependencies without saying why.
 - If a library API is uncertain, check its docs/installed version instead of guessing.
+
+## Commit attribution
+- Do not add Co-Authored-By or any AI attribution lines to commits or pull requests.
