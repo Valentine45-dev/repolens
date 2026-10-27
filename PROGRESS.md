@@ -177,10 +177,36 @@
   - express (snapshot 7): default graph 7 nodes / 7 edges (`index.js` + `lib/`, 135 test and
     example files hidden) in 43 ms; `exclude_tests=false&min_confidence=0.5`: 142 nodes, 291 edges,
     137 of them guess-only (dashed).
+- **Day 2 task 8 done (27 Oct): web shell** (`web/`, Vite 8 + React 19 + TypeScript 7,
+  TanStack Query, React Router; fonts self-hosted via `@fontsource`, so no Google Fonts call).
+  - Home (`/`): URL field with live validation (check when valid, specific message after blur,
+    server message kept under the field), limits caption, example chips for the three tested repos
+    (itsdangerous, express, ky), "Recent analyses (this browser)" from localStorage with live
+    status. Copy claims only what exists (the graph); no findings/Q&A/About/theme toggle yet.
+  - Progress (`/a/:id`): `owner/repo @ sha`, a status line (aria-live, changes per stage, not per
+    percent tick), a ledger of the four real pipeline stages. Only parse shows a number
+    (stage-relative). Slow note after 60s in one stage; failure callout with the server's message,
+    Retry (resets the cached status so polling restarts on the same id) and a link home; 404 page
+    for unknown ids. 4xx responses are not retried.
+  - Spec §8.2 tokens as CSS variables in `web/src/styles.css`, light only. Authored line icons
+    (5 glyphs), no icon library.
+  - Vite proxies `/api` to FastAPI (`API_URL`, default `http://127.0.0.1:8000`). `web` service in
+    compose (dev server, non-root; `/app` owned by `node` so Vite can write its temp config).
+    Checked: image builds (69 s), container proxies `/api/health` and serves `/a/9`.
+  - Design process (impeccable skill, as asked): `PRODUCT.md` from the docs (confirmed), surface
+    brief with direction contract in `.impeccable/surfaces/`, detector clean, finish review found
+    5 material issues (fake per-stage percent, dead Retry on the same snapshot id, wrong retry
+    caption, redundant "done", missing slow state), all fixed and re-scored.
+  - Checked live in the in-app browser: invalid URL, server rejection, a new repo
+    (`pallets/markupsafe`, `pallets/click`) running to done, recent list, 404, a forced failed job
+    retried to done, 375 px width (recent rows stack).
+  - `exclude_tests` also hides Python `test_*.py` / `*_test.py`.
+  - Day to day: `npm run dev` in `web/` with the API on :8000; `npm run build` type-checks.
 
 ## Next
 - Scope change (27 Oct, `7233e27`): Python and JS/TS both get full analysis; CLAUDE.md updated.
-- Day 2: task 8 of the Day 2 plan below (web shell).
+- Day 2: task 9 of the Day 2 plan below (graph view + node panel). When it lands, Progress
+  should send a finished analysis to the graph instead of stopping at "Analysis complete."
 - Running tests locally: `uv run --env-file ../.env pytest` (`.env` has `TEST_DATABASE_URL`).
 
 ## Day 2 plan
@@ -274,8 +300,9 @@ Plan decisions:
   with `uv run uvicorn`. The full compose stack (`db`, `api`, later `web`) is kept for the demo.
 
 ## Known issues
-- `exclude_tests` uses only the agreed patterns; Python `test_*.py` / `*_test.py` outside a
-  `tests/` folder are not hidden.
+- The in-app browser pane sometimes times out on screenshots when the window is behind others;
+  `get_page_text` still works.
+- Progress percent for parse updates every 50 files (pipeline), so small repos jump straight past it.
 - Calls made inside anonymous callbacks (`it(...)`, `forEach(function () {...})`) get the
   enclosing named symbol, often the module, as caller. Fine for the file-level graph.
 - Call edges never use star imports (`from x import *`, `export * from`).

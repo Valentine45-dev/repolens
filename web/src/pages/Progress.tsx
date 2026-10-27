@@ -144,7 +144,11 @@ export function Progress() {
         <FailedCallout status={status} />
       ) : status.status !== "done" ? (
         <>
-          {slow ? <p className="note">Taking longer than usual for this stage.</p> : null}
+          {slow ? (
+            <p className="note" data-tone="warning">
+              Taking longer than usual for this stage.
+            </p>
+          ) : null}
           <p className="note">
             You can leave this page. The analysis keeps running; this address brings you back to
             it.

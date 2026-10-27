@@ -505,6 +505,15 @@ a {
   color: var(--text-muted);
 }
 
+.note[data-tone="warning"] {
+  color: var(--warning);
+  font-weight: 500;
+}
+
+.note[data-tone="warning"] + .note {
+  margin-top: var(--space-2);
+}
+
 .callout {
   margin-top: var(--space-8);
   padding: var(--space-4);
