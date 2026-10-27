@@ -33,5 +33,14 @@ services:
     mem_limit: 2g
     cpus: 2
 
+  web:
+    build: ./web
+    environment:
+      API_URL: http://api:8000
+    ports:
+      - "5173:5173"
+    depends_on:
+      - api
+
 volumes:
   pgdata:
