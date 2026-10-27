@@ -39,7 +39,7 @@
 - **Day 2 task 1 done (27 Oct, `feat/graph-api`): separate test database.**
   - `tests/conftest.py`: DB tests read `TEST_DATABASE_URL` only; `DATABASE_URL` is removed from the
     environment at pytest start. A name not ending in `_test` is a hard error (`UsageError`); unset
-    means DB tests skip. Session fixture `test_db` drops and rebuilds `public` from `schema.sql`.
+    means DB tests skip locally but is an error when `CI` is set. Session fixture `test_db` drops and rebuilds `public` from `schema.sql`.
   - `db-init/02-test-db.sql` creates `repolens_test` on fresh volumes (checked with a throwaway
     container); existing volume: `docker compose exec -T db createdb -U repolens repolens_test`.
   - CI service DB is `repolens_test` via `TEST_DATABASE_URL`; the psql schema step is gone.

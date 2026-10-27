@@ -31,6 +31,9 @@ def pytest_configure(config):
     url = os.environ.get("TEST_DATABASE_URL")
     if url:
         check_test_database_url(url)
+    elif os.environ.get("CI"):
+        # Locally DB tests skip without a test database; in CI that would hide them.
+        raise pytest.UsageError("TEST_DATABASE_URL must be set in CI")
 
 
 @pytest.fixture(scope="session")

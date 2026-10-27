@@ -4,7 +4,7 @@ Deadline: **30 Oct 2026**. Code freeze: **29 Oct, 8pm**. This is a cut-down buil
 
 ## Dev environment
 - **Windows** with Docker Desktop. Give shell commands that work in PowerShell (or run them inside containers).
-- A **local PostgreSQL is already installed and uses port 5432**. Do not touch it. Expose the Docker `db` service on host port **5433** (`5433:5432`); inside the Compose network the API still connects to `db:5432`.
+- There is no local PostgreSQL on this machine. The Docker db service uses host port 5433.
 - Python tooling: `uv` only. Node for the frontend.
 - Watch for Windows pitfalls: CRLF line endings in shell scripts copied into Linux containers (add a `.gitattributes` with `*.sh text eol=lf`), and path separators in code (use `pathlib`).
 
@@ -99,6 +99,7 @@ Take items in this order; never start one that cannot finish before the freeze.
 - Small commits with clear messages. Never commit `.env`, secrets, cloned repos, or large generated files.
 - **CI (Day 1):** `.github/workflows/ci.yml` runs on every push and pull request: `uv sync`, `uv run ruff check .`, `uv run pytest` in `backend/`, with a `pgvector/pgvector:pg16` service for DB tests (database `repolens_test`, passed as `TEST_DATABASE_URL`). Tests use `FakeProvider` and a stubbed embedding function; no API keys in CI. Check current GitHub Action versions instead of guessing.
 - No CD: the demo runs locally with `docker compose up`.
+- Push feature branches freely after each commit; only ask before merging into main.
 
 ## UI rules
 - Follow `docs/repolens-ui-ux-spec.md`. Light theme by default; all colors from CSS-variable tokens.
