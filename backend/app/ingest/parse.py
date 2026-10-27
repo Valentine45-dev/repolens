@@ -9,7 +9,8 @@ from dataclasses import dataclass, field
 import tree_sitter_python
 from tree_sitter import Language, Node, Parser
 
-_LANGUAGE = Language(tree_sitter_python.language())
+PYTHON_LANGUAGE = Language(tree_sitter_python.language())
+_LANGUAGE = PYTHON_LANGUAGE
 
 
 @dataclass(frozen=True)

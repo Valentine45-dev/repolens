@@ -242,12 +242,34 @@
     panel focus (all fixed).
   - Tests: 108 passed, 2 skipped (fetch retry: transient classification, retried once, not for
     other errors, not without time left).
+- **Day 3 task 1 done (28 Oct, `feat/detectors`): detect stage + Python rules.**
+  - `app/detect/rules.py`: rule catalogue (id, language, severity, label, what it looks for, why
+    it is risky, possible-false-positive hint), including `hardcoded-secret`. `app/detect/python.py`:
+    one Tree-sitter walk for `py-eval-exec` (builtins only, not `obj.eval()`), `py-subprocess-shell`
+    (`subprocess.*`, aliases and `from subprocess import …`, with `shell=True`), `py-sql-string`
+    (f-string, `+`, `%`, `.format()` with a non-constant part), `py-bare-except`.
+  - SQL shape: the string must start with the statement (any case) or use upper-case keywords, so
+    prose like "select an item from the list" is not SQL (the negative fixture caught this).
+  - New pipeline stage `detect` (after `edges`, 90%): re-parses each code file, stores line,
+    innermost enclosing symbol, rule severity and label, and the redacted line as snippet;
+    delete-then-insert only for detector rule ids. Progress page lists "Running detectors".
+  - `hardcoded-secret` in a test path (shared `app/paths.is_test_path`, same as `exclude_tests`) is
+    severity low with "… in a test file."
+  - Fixtures `tests/fixtures/detectors/py_positive.py` / `py_negative.py` with `# expect: <rule>`
+    marks; tests compare exact (line, rule) sets. DB test ingests the fixtures as a repo.
+    Fixture tsconfig now uses `./web/src/lib/*` (no baseUrl); resolver tests cover `./` targets.
+  - Tests: 125 passed, 2 skipped.
+  - Real repos (re-ingested): itsdangerous, requests, flask-sqlalchemy: 0 detector findings.
+    psf/black: 17, all hand-checked as genuine matches of their rule: 9 bare `except:` and 7
+    `eval`/`exec` in test data (deliberately odd code that black formats), plus
+    `src/blib2to3/pgen2/pgen.py:100` `value = eval(label)` in source. No real-repo SQL hits yet;
+    the SQL rule is covered by the fixtures.
 
 ## Next
 - Scope change (27 Oct, `7233e27`): Python and JS/TS both get full analysis; CLAUDE.md updated.
 - **`feat/graph-api` merged into `main` (28 Oct, `0c514d2`)** after CI was green on `5111572` and
   on `main` (108 passed, 2 skipped). Includes the user's logo mark and favicons.
-- Day 3 on `feat/detectors`: the Day 3 plan below is a draft, waiting for approval.
+- Day 3 on `feat/detectors`: task 2 of the Day 3 plan (JS/TS rules).
 - Running tests locally: `uv run --env-file ../.env pytest` (`.env` has `TEST_DATABASE_URL`).
 
 ## Day 2 plan

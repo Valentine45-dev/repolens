@@ -7,13 +7,14 @@ import { ConnectionNotice, isReconnecting } from "../components/ConnectionNotice
 import { Icon } from "../components/Icon";
 import { rememberAnalysis } from "../recent";
 
-// The pipeline's real stages, in order (app/ingest/pipeline.py run_job). Detectors and search
-// do not exist yet, so they are not listed.
+// The pipeline's real stages, in order (app/ingest/pipeline.py run_job). Search for questions
+// does not exist yet, so it is not listed.
 const STAGES = [
   { id: "fetch", label: "Cloning repository" },
   { id: "discover", label: "Finding source files" },
   { id: "parse", label: "Parsing code" },
   { id: "edges", label: "Resolving imports and calls" },
+  { id: "detect", label: "Running detectors" },
 ] as const;
 
 type RowState = "pending" | "active" | "done" | "failed";

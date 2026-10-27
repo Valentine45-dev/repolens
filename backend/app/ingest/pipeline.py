@@ -1,4 +1,4 @@
-"""Runs one ingestion job: fetch -> discover -> parse -> edges.
+"""Runs one ingestion job: fetch -> discover -> parse -> edges -> detect.
 
 Each stage replaces its own rows (delete-then-insert in one transaction), so a rerun never
 duplicates anything. Progress goes to the job row. The clone is always deleted afterwards.
@@ -12,16 +12,18 @@ from pathlib import Path
 
 from app import config
 from app.db import pool
+from app.detect import detect
+from app.detect.rules import DETECTOR_RULES, RULES, SECRET_RULE
 from app.ingest import clone
 from app.ingest.calls import resolve_calls
 from app.ingest.discover import DiscoveredFile, discover
-from app.ingest.parse import ParsedFile, ParsedImport, parse_python
+from app.ingest.parse import ParsedFile, ParsedImport, ParsedSymbol, parse_python
 from app.ingest.parse_js import parse_js
 from app.ingest.resolve import JsModules, PythonModules, Target, resolve_js, resolve_python
+from app.paths import is_test_path
 
 log = logging.getLogger("repolens.ingest")
 
-SECRET_RULE = "hardcoded-secret"
 PARSER_KINDS = ("module", "class", "function", "method")
 
 
@@ -63,16 +65,20 @@ def store_files(snapshot_id: int, files: list[DiscoveredFile]) -> None:
                 " VALUES (%s, %s, %s, %s, %s) RETURNING id",
                 (snapshot_id, f.path, f.language, f.loc, f.content),
             ).fetchone()["id"]
+            # Placeholder keys in tests are common and rarely real: report them, but low.
+            in_test = is_test_path(f.path)
             for s in f.secrets:
                 conn.execute(
                     "INSERT INTO findings (snapshot_id, file_id, line, rule_id, severity,"
-                    " message, snippet) VALUES (%s, %s, %s, %s, 'high', %s, %s)",
+                    " message, snippet) VALUES (%s, %s, %s, %s, %s, %s, %s)",
                     (
                         snapshot_id,
                         file_id,
                         s.line,
                         SECRET_RULE,
-                        f"Possible hardcoded secret ({s.kind}).",
+                        "low" if in_test else "high",
+                        f"Possible hardcoded secret ({s.kind})"
+                        + (" in a test file." if in_test else "."),
                         _secret_snippet(f.content, s.line),
                     ),
                 )
@@ -88,6 +94,7 @@ def parse_file(path: str, language: str, content: str) -> ParsedFile:
 class Parsed:
     language: str
     result: ParsedFile
+    content: str  # redacted text, for the detect stage's re-parse and snippets
 
 
 def store_symbols(snapshot_id: int, job_id: int, deadline: float) -> dict[str, Parsed]:
@@ -106,7 +113,7 @@ def store_symbols(snapshot_id: int, job_id: int, deadline: float) -> dict[str, P
     rows = []
     for i, f in enumerate(files, start=1):
         result = parse_file(f["path"], f["language"], f["content"])
-        parsed[f["path"]] = Parsed(f["language"], result)
+        parsed[f["path"]] = Parsed(f["language"], result, f["content"])
         for s in result.symbols:
             rows.append(
                 (snapshot_id, f["id"], s.kind, s.name, s.qualified_name,
@@ -217,6 +224,60 @@ def store_edges(snapshot_id: int, parsed: dict[str, Parsed]) -> Counter:
     return counts
 
 
+def _innermost_symbol(symbols: list[ParsedSymbol], line: int) -> ParsedSymbol | None:
+    """The smallest symbol (function, method, class, or else the module) containing `line`."""
+    containing = [s for s in symbols if s.start_line <= line <= s.end_line]
+    return min(containing, key=lambda s: s.end_line - s.start_line, default=None)
+
+
+def store_findings(snapshot_id: int, parsed: dict[str, Parsed]) -> int:
+    """Detect stage: rule findings for every code file. Replaces only the detector rules'
+    findings; hardcoded-secret findings belong to the discover stage."""
+    rows = []
+    for path, p in parsed.items():
+        hits = detect(p.language, p.content, p.result)
+        if not hits:
+            continue
+        lines = p.content.splitlines()
+        for hit in hits:
+            rule = RULES[hit.rule_id]
+            symbol = _innermost_symbol(p.result.symbols, hit.line)
+            snippet = lines[hit.line - 1].strip()[:200] if hit.line <= len(lines) else ""
+            rows.append((path, symbol.qualified_name if symbol else None, hit.line, rule.id,
+                         rule.severity, rule.label, snippet))
+
+    with pool().connection() as conn, conn.transaction():
+        conn.execute(
+            "DELETE FROM findings WHERE snapshot_id = %s AND rule_id = ANY(%s)",
+            (snapshot_id, DETECTOR_RULES),
+        )
+        ids = {
+            (r["path"], r["qualified_name"]): (r["file_id"], r["id"])
+            for r in conn.execute(
+                "SELECT f.path, f.id AS file_id, s.qualified_name, s.id FROM symbols s"
+                " JOIN files f ON f.id = s.file_id WHERE s.snapshot_id = %s ORDER BY s.id DESC",
+                (snapshot_id,),
+            )
+        }
+        file_ids = {
+            r["path"]: r["id"]
+            for r in conn.execute(
+                "SELECT path, id FROM files WHERE snapshot_id = %s", (snapshot_id,)
+            )
+        }
+        with conn.cursor() as cur:
+            cur.executemany(
+                "INSERT INTO findings (snapshot_id, file_id, symbol_id, line, rule_id, severity,"
+                " message, snippet) VALUES (%s, %s, %s, %s, %s, %s, %s, %s)",
+                [
+                    (snapshot_id, file_ids[path], ids.get((path, qname), (None, None))[1],
+                     line, rule_id, severity, message, snippet)
+                    for path, qname, line, rule_id, severity, message, snippet in rows
+                ],
+            )
+    return len(rows)
+
+
 def _fetch_with_retry(job_id: int, url: str, sha: str, workdir: Path, deadline: float) -> None:
     """Fetch the commit; on a network error or timeout, try once more on a clean workspace,
     if a full attempt still fits before the deadline. Other git errors fail at once."""
@@ -260,6 +321,12 @@ def run_job(job_id: int, snapshot_id: int, url: str, sha: str) -> None:
         _set_job(job_id, stage, 85)
         counts = store_edges(snapshot_id, parsed)
         log.info("job %s: edges %s", job_id, dict(counts))
+        _check_deadline(deadline)
+
+        stage = "detect"
+        _set_job(job_id, stage, 90)
+        n_findings = store_findings(snapshot_id, parsed)
+        log.info("job %s: %d findings from detectors", job_id, n_findings)
 
         _set_job(job_id, "done", 100, status="done")
     except (clone.CloneError, JobError) as e:
