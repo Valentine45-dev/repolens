@@ -48,12 +48,13 @@ CREATE TABLE files (
 );
 
 -- Every graph node is a symbol: a file is a 'module' symbol, a third-party package an
--- 'external' symbol with no file. Edges point only at symbols.id.
+-- 'external' symbol with no file, and an import we cannot resolve an 'unresolved' symbol with
+-- no file (qualified_name = the import specifier). Edges point only at symbols.id.
 CREATE TABLE symbols (
   id              BIGSERIAL PRIMARY KEY,
   snapshot_id     BIGINT NOT NULL REFERENCES snapshots(id) ON DELETE CASCADE,
-  file_id         BIGINT REFERENCES files(id) ON DELETE CASCADE,   -- NULL for external packages
-  kind            TEXT NOT NULL,                  -- module|class|function|method|external
+  file_id         BIGINT REFERENCES files(id) ON DELETE CASCADE,   -- NULL for external/unresolved
+  kind            TEXT NOT NULL,             -- module|class|function|method|external|unresolved
   name            TEXT NOT NULL,
   qualified_name  TEXT NOT NULL,
   start_line      INT,
@@ -65,6 +66,8 @@ CREATE INDEX symbols_snapshot_qname ON symbols (snapshot_id, qualified_name);
 CREATE UNIQUE INDEX symbols_one_module_per_file ON symbols (file_id) WHERE kind = 'module';
 CREATE UNIQUE INDEX symbols_one_external_per_name ON symbols (snapshot_id, qualified_name)
   WHERE kind = 'external';
+CREATE UNIQUE INDEX symbols_one_unresolved_per_name ON symbols (snapshot_id, qualified_name)
+  WHERE kind = 'unresolved';
 
 CREATE TABLE edges (
   id           BIGSERIAL PRIMARY KEY,

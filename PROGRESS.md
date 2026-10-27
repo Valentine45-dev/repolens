@@ -46,11 +46,23 @@
   - `tests/test_db_guard.py` (7 cases). Local: **47 passed, 2 skipped** (network); with
     `TEST_DATABASE_URL` pointing at `repolens` pytest stops with the guard error; dev DB kept its
     41 files after a run with `DATABASE_URL` set to it.
+- **Day 2 task 2 done (27 Oct): discover JS/TS + `unresolved` symbol kind.**
+  - `discover.py` keeps `.js .jsx .mjs .cjs` (`javascript`) and `.ts .tsx` (`typescript`); the
+    parser will pick the tsx grammar by suffix. Skips `*.min|.bundle|.chunk` + JS suffix,
+    `bower_components/`, `.next/`, `coverage/`, and JS/TS files with a line > 5000 chars or an
+    average line > 300 chars (Python is never skipped for long lines).
+  - The parse stage still only parses `language = 'python'`; JS/TS files are stored, not parsed yet.
+  - `schema.sql`: symbol kind `unresolved` (`file_id` NULL, `qualified_name` = specifier) with a
+    unique index per snapshot + name. Dev DB got the index with one `CREATE UNIQUE INDEX`; data kept.
+  - Tests: 3 new discover tests. Local: **50 passed, 2 skipped** (network).
+- **Process (27 Oct):** CI errors if `TEST_DATABASE_URL` is missing; local `.env` has it. CLAUDE.md:
+  no local PostgreSQL (db stays on host 5433); feature branches are pushed after each commit, ask
+  only before merging into `main`.
 
 ## Next
 - Scope change (27 Oct, `7233e27`): Python and JS/TS both get full analysis; CLAUDE.md updated.
-- Day 2: task 2 of the Day 2 plan below (discover JS/TS + `unresolved` symbol kind).
-- Running tests locally: set `TEST_DATABASE_URL` (see `.env.example`) in the shell, or DB tests skip.
+- Day 2: task 3 of the Day 2 plan below (parsers return symbols, imports and calls; `parse_js`).
+- Running tests locally: `uv run --env-file ../.env pytest` (`.env` has `TEST_DATABASE_URL`).
 
 ## Day 2 plan
 Approved 27 Oct. Each task ends with: run it, show the result, commit, update this file, stop.
