@@ -91,10 +91,29 @@
   - Calls inside get the new symbol as caller. Fixture `web/src/server.js`; express `lib/` now gives
     70 function symbols (was 7). Tests: 65 passed, 2 skipped.
   - Fixture `tsconfig.json` no longer has `baseUrl` (covers the no-baseUrl alias case, task 5).
+- **Day 2 task 4 done (27 Oct): Python import resolution + `edges` stage.**
+  - `app/ingest/resolve.py`: `PythonModules` maps dotted names to paths for the repo root and every
+    source root (parent of a top-level package: `src/`, `backend/`, `tests/` when it holds a
+    package); `.py` wins over `.pyi`. `resolve_python` handles relative imports (incl. `__init__`
+    packages and too many dots), `from pkg import name` tries `pkg.name` first, then `pkg`.
+  - Missing -> `external` keyed by top-level package (`os.path` -> `os`). Missing relative import,
+    or a missing submodule of one of our own packages (`sample_app.gone`) -> `unresolved` (the
+    plan said external for the latter; that would label our own code third-party).
+  - `edges` stage (after parse, 85%): one transaction deletes the snapshot's import edges and
+    external/unresolved symbols, re-inserts them, one edge per (file, target), self-imports
+    dropped. Parse stage now returns its results so files are not parsed twice. JS/TS imports are
+    not resolved yet (task 5).
+  - Fixture: `broken.py` gained two unresolvable imports. Tests: 72 passed, 2 skipped (7 resolver
+    unit tests + exact edge list in the DB test).
+  - **itsdangerous @ `672971d`** (dev DB re-ingested, snapshot 3): status done; import edges
+    **36 internal, 39 external, 0 unresolved**; 18 external packages (base64 ... zlib, pytest,
+    freezegun). Hand-checked 22 edges of `src/itsdangerous/__init__.py`, `url_safe.py` and
+    `tests/test_itsdangerous/test_timed.py` against the source: all correct
+    (`from __future__` is not an import edge).
 
 ## Next
 - Scope change (27 Oct, `7233e27`): Python and JS/TS both get full analysis; CLAUDE.md updated.
-- Day 2: task 4 of the Day 2 plan below (Python import resolution + `edges` stage).
+- Day 2: task 5 of the Day 2 plan below (JS/TS import resolution, then the JS checkpoint).
 - Running tests locally: `uv run --env-file ../.env pytest` (`.env` has `TEST_DATABASE_URL`).
 
 ## Day 2 plan

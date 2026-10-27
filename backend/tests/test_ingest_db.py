@@ -65,6 +65,24 @@ def test_ingest_fixture_repo(client, tmp_path):
     assert {r["qualified_name"] for r in js} >= {"web/src/app.ts:App.render",
                                                  "web/src/app.ts:main"}
 
+    edges = query(
+        "SELECT fs.path AS src, d.kind, coalesce(fd.path, d.qualified_name) AS dst"
+        " FROM edges e JOIN symbols s ON s.id = e.src_id JOIN files fs ON fs.id = s.file_id"
+        " JOIN symbols d ON d.id = e.dst_id LEFT JOIN files fd ON fd.id = d.file_id"
+        " WHERE e.type = 'imports'"
+    )
+    assert sorted((e["src"], e["kind"], e["dst"]) for e in edges) == [
+        ("sample_app/__init__.py", "module", "sample_app/models.py"),
+        ("sample_app/__init__.py", "module", "sample_app/service.py"),
+        ("sample_app/__init__.py", "module", "sample_app/settings.py"),
+        ("sample_app/broken.py", "unresolved", "sample_app.gone"),
+        ("sample_app/broken.py", "unresolved", "sample_app.missing_mod"),
+        ("sample_app/models.py", "external", "dataclasses"),
+        ("sample_app/service.py", "external", "logging"),
+        ("sample_app/service.py", "module", "sample_app/models.py"),
+        ("sample_app/settings.py", "external", "os"),
+    ]
+
     (finding,) = query("SELECT f.rule_id, f.line, f.snippet, fi.path FROM findings f"
                        " JOIN files fi ON fi.id = f.file_id")
     assert finding["rule_id"] == "hardcoded-secret"
