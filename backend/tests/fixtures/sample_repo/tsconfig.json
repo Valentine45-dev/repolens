@@ -1,7 +1,7 @@
 {
   "compilerOptions": {
     "paths": {
-      "@lib/*": ["web/src/lib/*"]
+      "@lib/*": ["./web/src/lib/*"]
     }
   }
 }

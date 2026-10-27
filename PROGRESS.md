@@ -323,7 +323,21 @@ Plan decisions:
 - If time runs short, task 6 (call edges) shrinks first: same-file and explicitly imported calls only.
 
 ## Day 3 plan
-Draft 28 Oct, not yet approved. Order from CLAUDE.md: detectors + findings API, then Q&A
+Approved 28 Oct with these changes (they override the task text below where they differ):
+- `react-markdown` yes; never add `rehype-raw` (no raw HTML, ever).
+- Token cap 200k tokens per snapshot.
+- `hardcoded-secret` in a test path (same rule as `exclude_tests`) is severity low, and its message
+  says it is in a test file.
+- No similarity threshold to skip the LLM unless it is calibrated: skip the LLM only when the
+  snapshot has no chunks; otherwise the grounding prompt handles "could not find".
+- Chunk windows stay within the embedding model's input limit (check `max_seq_length` of
+  all-MiniLM-L6-v2 and record it here).
+- 1-hop graph expansion is a config switch (for the Day 4 with/without comparison).
+- Task 5 adds the prompt-injection fixture file for the smoke eval.
+- Fixture tsconfig: `paths` targets use a leading `./` without `baseUrl` (`"./web/src/lib/*"`); the
+  resolver must handle it.
+
+Original draft (28 Oct): Order from CLAUDE.md: detectors + findings API, then Q&A
 (chunks, embeddings, /ask), then the UI panels. Each task ends with: run it, show the result,
 commit, push, check CI, update this file, stop.
 
@@ -374,8 +388,8 @@ commit, push, check CI, update this file, stop.
    - Retrieve: embed the question, exact top-k (k=8) cosine scan for this snapshot, then 1-hop
      expansion through import/call edges (up to 8 more chunks, highest confidence first), within a
      context budget; every snippet tagged `path:start-end`.
-   - If nothing is relevant (no chunks, or best similarity under a threshold), answer
-     "I could not find this in the provided code." with no LLM call.
+   - If the snapshot has no chunks, answer "I could not find this in the provided code." with no
+     LLM call; otherwise the grounding prompt handles it (no uncalibrated threshold).
    - `LLMProvider` with `AnthropicProvider` (official `anthropic` SDK; check the installed Messages
      API first; model from `LLM_MODEL`; temperature 0) and `FakeProvider` for tests.
    - Day 3 notes: timeout (30 s), at most one retry, per-snapshot token cap

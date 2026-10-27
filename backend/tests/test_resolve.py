@@ -180,6 +180,20 @@ def test_tsconfig_paths_with_base_url():
     assert js("src/view.tsx", "react", m) == [Target("external", "react")]
 
 
+def test_tsconfig_dot_slash_targets():
+    # Without baseUrl, TypeScript wants targets relative to the tsconfig: "./src/lib/*".
+    m = JsModules(JS_PATHS, '{"compilerOptions": {"paths": {"@lib/*": ["./src/lib/*"]}}}')
+    assert m.base_url is None
+    assert js("src/view.tsx", "@lib/math", m) == [internal("src/lib/math.ts")]
+    # "@lib" alone does not match "@lib/*" and is not a valid npm name either.
+    assert js("src/view.tsx", "@lib", m) == [Target("unresolved", "@lib")]
+    # With baseUrl, "./" is relative to it.
+    m = JsModules(
+        JS_PATHS, '{"compilerOptions": {"baseUrl": "./src", "paths": {"#/*": ["./lib/*"]}}}'
+    )
+    assert js("src/app.ts", "#/math", m) == [internal("src/lib/math.ts")]
+
+
 def test_bad_tsconfig_is_ignored():
     assert read_tsconfig("{ not json") == (None, [])
     assert read_tsconfig(None) == (None, [])
