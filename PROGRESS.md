@@ -245,8 +245,9 @@
 
 ## Next
 - Scope change (27 Oct, `7233e27`): Python and JS/TS both get full analysis; CLAUDE.md updated.
-- Day 2 is done on `feat/graph-api`: end-to-end run, green CI, then ask before merging into `main`.
-- Day 3: detectors + findings API, then Q&A (see Day 3 notes).
+- **`feat/graph-api` merged into `main` (28 Oct, `0c514d2`)** after CI was green on `5111572` and
+  on `main` (108 passed, 2 skipped). Includes the user's logo mark and favicons.
+- Day 3 on `feat/detectors`: the Day 3 plan below is a draft, waiting for approval.
 - Running tests locally: `uv run --env-file ../.env pytest` (`.env` has `TEST_DATABASE_URL`).
 
 ## Day 2 plan
@@ -320,6 +321,104 @@ Plan decisions:
   `react-router-dom`, `@dagrejs/dagre`. No highlighter or UI kit.
 - `unresolved` as a symbol kind is the smallest schema change that lets an unresolved import be an edge.
 - If time runs short, task 6 (call edges) shrinks first: same-file and explicitly imported calls only.
+
+## Day 3 plan
+Draft 28 Oct, not yet approved. Order from CLAUDE.md: detectors + findings API, then Q&A
+(chunks, embeddings, /ask), then the UI panels. Each task ends with: run it, show the result,
+commit, push, check CI, update this file, stop.
+
+1. **Detect stage + Python rules** (`app/detect/`, new pipeline stage after `edges`).
+   - Re-parse each code file's redacted content with Tree-sitter (the parse stage keeps no trees;
+     re-parsing is cheap). Each rule: id, language, severity, label, what it looks for, why it is
+     risky, "possible false positive if…". Finding = file, line, enclosing symbol, masked snippet.
+   - Delete-then-insert only its own rule ids; `hardcoded-secret` (discover stage) is untouched.
+   - Python rules:
+     - `py-eval-exec` (high): calls to the builtins `eval(...)` / `exec(...)`; `obj.eval()` is not
+       flagged.
+     - `py-subprocess-shell` (high): `subprocess.*(..., shell=True)`, including `from subprocess
+       import run` and aliases.
+     - `py-sql-string` (high): a SQL-shaped literal (`SELECT … FROM`, `INSERT INTO`, `UPDATE … SET`,
+       `DELETE FROM`) built with an f-string, `+`, `%` or `.format(...)` with a non-literal part.
+     - `py-bare-except` (low): `except:` with no exception type.
+   - Fixtures: `tests/fixtures/detectors/` with positive and negative samples per rule (committed,
+     never executed); one test per rule that checks the exact lines it reports.
+2. **JS/TS rules** (same stage).
+   - `js-eval` (high): `eval(...)`; `js-new-function` (high): `new Function(...)`.
+   - `js-child-process-exec` (high): `exec` / `execSync` bound to `child_process` (require or
+     import, incl. `cp.exec`, destructured and aliased) with a non-literal first argument.
+   - `js-inner-html` (medium): assignment to `.innerHTML` / `.outerHTML` with a non-literal value.
+   - `js-sql-string` (high): SQL-shaped template literal with `${}`, or `+` concatenation with a
+     SQL-shaped literal.
+   - Same fixture/test pattern. Run on express, ky and black and hand-check the findings
+     (a quick precision check now; the measured eval with Bandit/Semgrep is Day 4).
+3. **Findings API.** `GET /snapshots/{id}/findings?severity=&rule=&language=&path=&limit=&offset=`
+   - Paginated (Day 3 note): `{ total, limit, offset, items, counts: {by_severity, by_rule} }`,
+     sorted by severity, then path, then line.
+   - Rule catalogue served from the backend (`GET /rules` or inside the response), so UI labels
+     always match real rule ids.
+   - Graph and file endpoints already carry finding counts; no change needed there.
+4. **Chunks + embeddings** (new stages `chunk` and `embed`).
+   - One chunk per function, method and class (class chunk = header and body up to its first
+     method) + one module chunk per file (top-level code outside any symbol). Each chunk text starts
+     with `path:start-end` and the qualified name. Very long symbols are split by line windows.
+   - Text comes from the redacted file content; `search_tsv` fills identifiers split into words
+     (`getUserById` -> get user by id), ready for the hybrid stretch item.
+   - Embeddings: `sentence-transformers` with `all-MiniLM-L6-v2` (384 dims, matches the schema).
+     torch must come from the CPU wheel index (uv index config), otherwise the Linux Docker image
+     pulls multi-GB CUDA wheels. The model (~90 MB) is downloaded once and cached (a Docker volume
+     for the api service; pre-fetch in the Dockerfile).
+   - Behind an `Embedder` interface; tests and CI use a deterministic stub (no model download).
+5. **Q&A: `POST /snapshots/{id}/ask`** (`app/qa/`).
+   - Route: structural questions ("which files import X", "who/what calls Y", "what does X
+     import/call") are answered from the graph, labelled `graph`, with no LLM.
+   - Retrieve: embed the question, exact top-k (k=8) cosine scan for this snapshot, then 1-hop
+     expansion through import/call edges (up to 8 more chunks, highest confidence first), within a
+     context budget; every snippet tagged `path:start-end`.
+   - If nothing is relevant (no chunks, or best similarity under a threshold), answer
+     "I could not find this in the provided code." with no LLM call.
+   - `LLMProvider` with `AnthropicProvider` (official `anthropic` SDK; check the installed Messages
+     API first; model from `LLM_MODEL`; temperature 0) and `FakeProvider` for tests.
+   - Day 3 notes: timeout (30 s), at most one retry, per-snapshot token cap
+     (`LLM_TOKEN_CAP_PER_SNAPSHOT`, counted in a new `snapshots.llm_tokens_used` column). If any of
+     these trips, or no key is set: "AI answers are unavailable right now. Graph questions still
+     work." The key never reaches logs, errors or the frontend.
+   - `app/qa/prompts/system.md` with `PROMPT_VERSION` (identity, grounding, citations, trust
+     boundary as CLAUDE.md states them), returned in every `/ask` response.
+   - Citation validation: only `path:start-end` tags whose path was in the context and whose range
+     lies inside a provided snippet are kept; the rest are stripped from the text and counted
+     (`dropped`). Response: `{ route, answer, citations[], dropped, prompt_version }`.
+   - Tests: router, citation validator, retrieval with the stub embedder, `/ask` with FakeProvider
+     (incl. LLM down, cap reached, no relevant code). No API key in CI.
+6. **Findings UI** (`/a/:id/findings`).
+   - Analysis tabs under the repo header: Explorer | Findings (n) (spec §3.4; no other tabs).
+   - Filters for severity, rule, language and path in the URL. The spec's notice: "These are
+     rule-based checks. They can miss issues and can flag safe code. Review each one."
+   - Rows with severity shown as icon + text + colour. A detail panel shows what the rule looks for,
+     why it is risky, the false-positive hint, the masked snippet, "Open in Explorer" (file selected,
+     line highlighted) and "Copy location". Secrets are always "value hidden".
+   - Empty: "No findings from our current rules. This does not guarantee the code is safe."
+   - Node panel gets a Findings tab; Progress lists the new stages (detectors, search).
+7. **Ask drawer.**
+   - "Ask" button in the analysis header opens a right drawer, kept open across tabs. The
+     conversation is per snapshot, in sessionStorage, with a one-click clear.
+   - Answers are labelled "AI answer" or "From the graph"; validated citations are chips that open
+     the Explorer on that file with the lines highlighted; "1 source could not be verified and was
+     removed" when `dropped > 0`.
+   - Suggested questions are built from real data (top hub files, files with findings).
+   - Markdown rendered without raw HTML. Unavailable, no-answer and cap states use the spec's copy.
+   - "Ask about this" from the node panel pre-fills the file.
+
+Decisions to confirm:
+- New dependencies:
+  - `anthropic` (required);
+  - `sentence-transformers` with CPU-only torch (required by CLAUDE.md);
+  - `react-markdown` for safe rendering (escapes HTML by default). The alternative is a small
+    hand-written formatter for paragraphs, lists and code.
+- Token cap default: 200k tokens per snapshot, in a new `snapshots.llm_tokens_used` column (a
+  one-line schema change plus an `ALTER TABLE` on the dev DB).
+- Severities as listed (secrets stay high).
+- If time runs short: task 7's suggested questions and "Ask about this" shrink first, then the node
+  panel Findings tab.
 
 ## Day 3 notes
 Agreed 27 Oct, to apply when building Day 3:
