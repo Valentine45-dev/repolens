@@ -153,7 +153,7 @@ Depth comes from 1px rules and a one-step tonal shift, never from shadow. The si
 A monochrome zinc palette where black does the work of an accent and three semantic hues are reserved for job state.
 
 ### Primary
-- **Ink** (`ink`): the primary button fill, the wordmark mark, the active-nav underline, the focus ring, text selection, and body text. Black is the only "brand" colour.
+- **Ink** (`ink`): the primary button fill, the logo mark (`web/public/logo-mark.svg`), the active-nav underline, the focus ring, text selection, and body text. Black is the only "brand" colour.
 - **Ink Lifted** (`ink-hover`): primary button hover; a one-step lift, not a new colour.
 
 ### Neutral
@@ -192,7 +192,7 @@ A monochrome zinc palette where black does the work of an accent and three seman
 ### Hierarchy
 - **Headline** (600, 28px, 1.2, -0.02em, balanced wrap): one page title per screen ("Understand a codebase before you read it.").
 - **Title Mono** (JetBrains Mono 500, 20px, -0.01em): the `owner/repo @ sha` heading on analysis pages; the SHA drops to 400 in Ash. Wraps anywhere.
-- **Wordmark** (600, 16px, -0.01em): "RepoLens" in the top bar beside a 12px black square.
+- **Wordmark** (600, 16px, -0.01em): "RepoLens" in the top bar beside the 20px logo mark (a three-node graph inside a lens).
 - **Body Large** (400, 16px, 1.5, max 60ch): the lede under a headline and the live status line.
 - **Body** (400, 14px, 1.5): the base size for everything else, including ledger rows.
 - **Label** (500, 14px): buttons, nav links, active ledger rows, status words, list names. Section titles use the same size at 600.
@@ -227,7 +227,7 @@ The system is flat. No element carries a `box-shadow`. Depth is conveyed by 1px 
 
 ## Shapes
 
-Two radii and a pill. Controls (buttons, inputs) use gently rounded corners (6px). Grouped containers (the recent-analyses list, callouts) use slightly softer corners (10px) and clip their rows. Example chips are full pills (999px). Small marks stay nearly square: the wordmark square at 2px, skeleton bars at 4px. The stage ledger has no container at all, only a top rule and a rule under each row.
+Two radii and a pill. Controls (buttons, inputs) use gently rounded corners (6px). Grouped containers (the recent-analyses list, callouts) use slightly softer corners (10px) and clip their rows. Example chips are full pills (999px). Skeleton bars use 4px. The stage ledger has no container at all, only a top rule and a rule under each row.
 
 Icons are authored inline SVG on a 16px grid, one 1.5 stroke, round caps and joins, `currentColor`: check, x, circle, spinner, arrow-right. They inherit the state colour of their row.
 

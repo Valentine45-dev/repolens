@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 260 64" fill="none">
+  <title>RepoLens</title>
+  <path d="M19 33 L27 19 L35 33 Z" stroke="#0A0A0A" stroke-width="2.4" stroke-linejoin="round"/>
+  <circle cx="27" cy="19" r="3.6" fill="#0A0A0A"/>
+  <circle cx="19" cy="33" r="3.6" fill="#0A0A0A"/>
+  <circle cx="35" cy="33" r="3.6" fill="#0A0A0A"/>
+  <circle cx="27" cy="27" r="19" stroke="#0A0A0A" stroke-width="5"/>
+  <path d="M41 41 L56 56" stroke="#0A0A0A" stroke-width="7" stroke-linecap="round"/>
+  <text x="70" y="42" font-family="Inter, -apple-system, Segoe UI, Arial, sans-serif" font-size="30" font-weight="600" letter-spacing="-0.5" fill="#0A0A0A">RepoLens</text>
+</svg>

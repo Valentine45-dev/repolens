@@ -150,10 +150,10 @@ a {
 }
 
 .wordmark-mark {
-  width: 12px;
-  height: 12px;
-  border-radius: 2px;
-  background: var(--primary);
+  display: block;
+  width: 20px;
+  height: 20px;
+  flex: none;
 }
 
 .topbar-link {

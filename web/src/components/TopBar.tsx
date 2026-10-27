@@ -7,7 +7,7 @@ export function TopBar() {
   return (
     <header className="topbar">
       <Link to="/" className="wordmark" aria-label="RepoLens home">
-        <span className="wordmark-mark" aria-hidden="true" />
+        <img src="/logo-mark.svg" alt="" width={20} height={20} className="wordmark-mark" />
         RepoLens
       </Link>
       <nav aria-label="Main">
