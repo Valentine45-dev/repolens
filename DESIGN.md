@@ -14,6 +14,11 @@ colors:
   success: "#067647"
   danger: "#b42318"
   warning: "#b54708"
+  node-python: "#2f5d8a"
+  node-js: "#a16207"
+  node-other: "#52525b"
+  node-external: "#71717a"
+  edge: "#8a8a93"
 typography:
   headline:
     fontFamily: "Inter Variable, Inter, ui-sans-serif, system-ui, sans-serif"
@@ -165,7 +170,12 @@ A monochrome zinc palette where black does the work of an accent and three seman
 - **Failed Red** (`danger`): failed ledger row, "Failed" status, invalid input border and focus ring, error messages, error callout title; the error callout border mixes 35% of it into Hairline.
 - **Slow Amber** (`warning`): the "taking longer than usual" note only.
 
-The stylesheet also declares `--info` and four graph-node colours from the spec; no shipped surface uses them yet, so they are not part of this record until a surface does.
+### Graph (Explorer)
+- **Python Blue** (`node-python`) and **JS Ochre** (`node-js`, also TypeScript): fill of the small language mark on a file node, which also carries the text `py` / `js` / `ts`, so colour is never the only cue. **Other** (`node-other`) for anything else.
+- **External Grey** (`node-external`): the dashed outline of the "external" tag in the node panel. Corrected from #a1a1aa (2.6:1 on Paper) to #71717a (4.8:1) when the Explorer shipped.
+- **Edge Grey** (`edge`): every graph edge at rest and the legend lines (3.4:1 on Paper, above the 3:1 floor for graphics). Edges touching the selected file turn Ink; a best-guess edge is dashed, never a different colour.
+
+`--info` is declared in the stylesheet but no shipped surface uses it yet.
 
 ### Named Rules
 **The Ink Is The Accent Rule.** Black is the only emphasis colour. There is no brand hue; a new surface that wants attention uses Ink, weight, or position, never a new colour.
@@ -203,7 +213,7 @@ Spacing runs on a 4px grid using the seven steps in the frontmatter: 8px between
 One breakpoint at 560px: gutters drop to 16px, the URL field and Analyze button stack with the button full width, and list rows collapse from name-plus-meta to a single column.
 
 ### Named Rules
-**The One Column Rule.** Shell screens are one narrow column with one primary action. No side rails, no card grids, no sidebar items for features that do not exist.
+**The One Column Rule.** Shell screens are one narrow column with one primary action. No side rails, no card grids, no sidebar items for features that do not exist. The Explorer is the one full-width screen (the graph needs the width): a header row, a ruled toolbar, the canvas, and the node panel docked on the right.
 
 ## Elevation & Depth
 
@@ -251,6 +261,14 @@ Quiet and solid; one black button per screen.
 
 ### Stage Ledger (signature)
 A ruled vertical list: a 20px icon column, the stage label, and a right-aligned Data Mono value column. Rows are at least 48px with a Hairline under each. Pending rows are Ash with a hollow circle; the active row is Ink at 500 with a spinner and the only number on the ledger (when the backend reports one); done rows return to Ink at 400 with a Done Green check; a failed row is Failed Red with an x. Colour changes ease over 200ms. Below it: a Graphite note saying the visitor can leave, and an amber note only after a stage has stalled for a minute.
+
+### Explorer
+- **File node:** 200×44 Paper rectangle, 1px Strong Hairline, 4px radius. A 22px language mark (`py`/`js`/`ts`, mono 10px on its graph colour) then the file name (mono 12/500) over its folder (mono 10, Ash, truncated from the left so the end of the path stays visible). Selected: Ink border plus 2px Ink outline. Focus mode dims everything outside the selected file's neighbours to 28%.
+- **Edges:** Edge Grey, 1.25px, closed arrowhead pointing at the file being used; Ink at 1.75px when touching the selection; dashed (5 4) when the link is only a best guess (confidence under 0.9). Native tooltip says what the edge is.
+- **Legend:** bottom-left Paper box with a Hairline border, 12px text: solid line, then dashed line with the spec's microcopy.
+- **Toolbar:** segmented Graph/List control (Bench Grey track, Paper pressed segment), native checkboxes with Ink accent for "Show test files" and "Show guessed calls", a small secondary Fit button, and a right-aligned caption carrying the file count, the render-cap note and hidden-test count.
+- **Node panel:** docked right, `min(480px, 42vw)`, Hairline left border (an overlay under 900px). Path in mono, a four-fact row (Used by, Uses, External imports, Unresolved imports), underline tabs (Code, Used by, Uses), and a code view with a sticky Bench Grey line-number gutter. Neighbours are grouped by file; external and unresolved entries carry a small tag (dashed External Grey for external).
+- **List view:** a full-width table with a sticky Bench Grey header, 36px rows, mono numbers right-aligned; the selected row takes Sunk Grey.
 
 ### Loading
 Skeleton bars in Sunk Grey at 4px radius, sized to the text they replace. Spinners rotate at 900ms linear; under reduced motion they slow to 2.4s and transitions collapse.

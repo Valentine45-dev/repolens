@@ -41,3 +41,6 @@ desktop.ini
 
 # Impeccable review captures (local only)
 .impeccable/review/
+
+# Playwright MCP snapshots and logs (local only)
+.playwright-mcp/

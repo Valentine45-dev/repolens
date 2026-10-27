@@ -1,8 +1,9 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { useEffect, useState } from "react";
-import { Link, useNavigate, useParams } from "react-router-dom";
+import { useEffect, useRef, useState } from "react";
+import { Link, Navigate, useNavigate, useParams } from "react-router-dom";
 
 import { ApiError, getStatus, isFinished, repoName, submitRepo, type SnapshotStatus } from "../api";
+import { ConnectionNotice, isReconnecting } from "../components/ConnectionNotice";
 import { Icon } from "../components/Icon";
 import { rememberAnalysis } from "../recent";
 
@@ -74,11 +75,25 @@ export function Progress() {
 
   const query = useQuery({
     queryKey: ["status", snapshotId],
-    queryFn: () => getStatus(snapshotId),
+    queryFn: ({ signal }) => getStatus(snapshotId, signal),
     enabled: valid,
     refetchInterval: (q) => (q.state.error || isFinished(q.state.data?.status) ? false : 1000),
   });
   const slow = useSlowStage(query.data);
+  const reconnecting = isReconnecting(query);
+
+  // Opened on an analysis that was already done: go straight to the graph. Watched it finish:
+  // say so, then open the graph a moment later (the link is there for anyone faster).
+  const sawRunning = useRef(false);
+  if (query.data && query.data.status !== "done") sawRunning.current = true;
+  const navigate = useNavigate();
+  const done = query.data?.status === "done";
+  useEffect(() => {
+    if (!done || !sawRunning.current) return;
+    const timer = window.setTimeout(() => navigate(`/a/${snapshotId}/explore`), 1200);
+    return () => window.clearTimeout(timer);
+  }, [done, navigate, snapshotId]);
+  if (done && !sawRunning.current) return <Navigate to={`/a/${snapshotId}/explore`} replace />;
 
   if (!valid || (query.error instanceof ApiError && query.error.status === 404)) {
     return (
@@ -108,7 +123,7 @@ export function Progress() {
   }
 
   const status = query.data;
-  if (!status) return <ProgressSkeleton />;
+  if (!status) return <ProgressSkeleton reconnecting={reconnecting} />;
 
   const states = rowStates(status);
   return (
@@ -122,6 +137,14 @@ export function Progress() {
       <p className="status-line" aria-live="polite">
         {statusLine(status)}
       </p>
+      {reconnecting && !isFinished(status.status) ? <ConnectionNotice /> : null}
+      {status.status === "done" ? (
+        <p className="note">
+          <Link to={`/a/${snapshotId}/explore`} className="text-link">
+            Open graph
+          </Link>
+        </p>
+      ) : null}
 
       <ol className="ledger" aria-label="Analysis stages">
         {STAGES.map((stage, i) => (
@@ -212,11 +235,12 @@ function FailedCallout({ status }: { status: SnapshotStatus }) {
   );
 }
 
-function ProgressSkeleton() {
+function ProgressSkeleton({ reconnecting }: { reconnecting: boolean }) {
   return (
     <div className="page" aria-busy="true" aria-label="Loading analysis">
       <div className="skeleton" style={{ width: 280, height: 24 }} />
       <div className="skeleton" style={{ width: 160, marginTop: 12 }} />
+      {reconnecting ? <ConnectionNotice /> : null}
       <ol className="ledger" aria-hidden="true">
         {STAGES.map((stage) => (
           <li key={stage.id} className="ledger-row">
