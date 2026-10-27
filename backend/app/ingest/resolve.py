@@ -205,7 +205,10 @@ class JsModules:
         self.base_url, self.aliases = read_tsconfig(tsconfig)
 
     def probe(self, path: str) -> str | None:
-        """The repo file that `path` (no or any extension) refers to, or None."""
+        """The repo file that `path` (no or any extension) refers to, or None.
+        '.' is the repo root: only its index file can match."""
+        if path == ".":
+            return next((f"index{e}" for e in JS_EXTENSIONS if f"index{e}" in self.paths), None)
         if path in self.paths:
             return path
         root, ext = posixpath.splitext(path)

@@ -120,6 +120,16 @@ def test_js_relative_extension_and_index_probing():
     assert js("src/lib/math.ts", "../legacy/util.js", m) == [internal("src/legacy/util.js")]
 
 
+def test_js_require_of_repo_root_finds_root_index():
+    # express: examples/auth/index.js does require('../..')
+    m = JsModules(["index.js", "lib/express.js", "examples/auth/index.js"])
+    assert js("examples/auth/index.js", "../..", m) == [internal("index.js")]
+    assert js("lib/express.js", "..", m) == [internal("index.js")]
+    assert js("lib/express.js", "..", JsModules(["lib/express.js"])) == [
+        Target("unresolved", ".")
+    ]
+
+
 def test_js_missing_relative_and_outside_repo_are_unresolved():
     m = JsModules(JS_PATHS)
     assert js("src/app.ts", "./missing", m) == [Target("unresolved", "src/missing")]

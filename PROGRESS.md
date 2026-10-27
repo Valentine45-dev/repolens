@@ -110,10 +110,34 @@
     freezegun). Hand-checked 22 edges of `src/itsdangerous/__init__.py`, `url_safe.py` and
     `tests/test_itsdangerous/test_timed.py` against the source: all correct
     (`from __future__` is not an import edge).
+- **Day 2 task 5 done (27 Oct): JS/TS import resolution + JS checkpoint PASSED.**
+  - `resolve.py` `JsModules` / `resolve_js`: relative imports with extension probing
+    (`.ts .tsx .js .jsx .mjs .cjs .d.ts`), `index.*`, TS-style `./x.js` -> `x.ts`/`x.tsx`; a path that
+    normalises to the repo root (`require('../..')`) finds root `index.*`; outside the repo ->
+    unresolved. Asset imports (`.css`, `.svg`, `.json`, ...) get no edge.
+  - Root `tsconfig.json` `paths` (JSONC tolerated): one `*` and one target with one `*`, else
+    unresolved; exact (no-`*`) patterns match only themselves; longest prefix wins. Targets resolve
+    against `baseUrl` when set, else the tsconfig's directory. With `baseUrl`, bare names are tried
+    under it first.
+  - Bare specifiers -> external by package (`@scope/pkg/x` -> `@scope/pkg`, `lodash/fp` -> `lodash`,
+    `node:fs` -> `fs`); not a valid npm name (`@/x`, `~/x`) -> unresolved.
+  - Edges stage now resolves both languages. Tests: 80 passed, 2 skipped (8 JS resolver tests incl.
+    a `baseUrl` case; DB test checks all 11 fixture JS/TS edges).
+  - **Checkpoint (real repos, dev DB):**
+    - `expressjs/express` @ `1c6f1b0` (CommonJS, 142 JS files): first run had 96 unresolved, all
+      `require('../..')` to the root `index.js` (bug: `./index.js` vs `index.js`), fixed. Now
+      **154 internal, 244 external, 0 unresolved**. Hand-checked every `require` in `index.js` and
+      all 6 `lib/*.js` files: **53/53 edges correct**; 3 `require`s with no edge are inside JSDoc
+      examples (correct).
+    - `sindresorhus/ky` @ `3541888` (TS, ESM, `.js` specifiers): **182 internal, 121 external,
+      0 unresolved**. Checked `source/index.ts`, `core/Ky.ts`, `utils/merge.ts`, `utils/options.ts`,
+      `errors/HTTPError.ts` against their imports: **50/50 correct** (multi-line imports included;
+      one `from 'ky'` with no edge is in a JSDoc `@example`).
+    - Result: JS/TS keeps full analysis (no fallback to symbols-only).
 
 ## Next
 - Scope change (27 Oct, `7233e27`): Python and JS/TS both get full analysis; CLAUDE.md updated.
-- Day 2: task 5 of the Day 2 plan below (JS/TS import resolution, then the JS checkpoint).
+- Day 2: task 6 of the Day 2 plan below (call edges, both languages).
 - Running tests locally: `uv run --env-file ../.env pytest` (`.env` has `TEST_DATABASE_URL`).
 
 ## Day 2 plan
