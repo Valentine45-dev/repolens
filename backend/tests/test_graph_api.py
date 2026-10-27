@@ -39,9 +39,11 @@ def items(body):
 
 def test_is_test_path():
     for path in ["tests/x.py", "a/test/b.js", "src/__tests__/a.ts", "examples/app.js",
-                 "src/a.test.ts", "src/a.spec.tsx", "lib/math.spec.ts"]:
+                 "src/a.test.ts", "src/a.spec.tsx", "lib/math.spec.ts",
+                 "test_app.py", "pkg/test_models.py", "pkg/models_test.py"]:
         assert is_test_path(path), path
-    for path in ["src/app.ts", "test.js", "src/testing/x.py", "src/latest.py", "spec.ts"]:
+    for path in ["src/app.ts", "test.js", "src/testing/x.py", "src/latest.py", "spec.ts",
+                 "pkg/testing.py", "pkg/contest.py", "test_utils.js"]:
         assert not is_test_path(path), path
 
 
