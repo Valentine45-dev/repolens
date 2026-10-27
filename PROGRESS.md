@@ -264,12 +264,28 @@
     `eval`/`exec` in test data (deliberately odd code that black formats), plus
     `src/blib2to3/pgen2/pgen.py:100` `value = eval(label)` in source. No real-repo SQL hits yet;
     the SQL rule is covered by the fixtures.
+- **Day 3 task 2 done (28 Oct): JS/TS rules** (`app/detect/javascript.py`, grammar by suffix).
+  - `js-eval` (global `eval(...)`), `js-new-function` (`new Function(...)` and `Function(...)`),
+    `js-child-process-exec` (`exec`/`execSync` bound to `child_process` / `node:child_process`
+    via require, destructuring, aliases, namespace/default/named imports or inline
+    `require("child_process").exec`, with a non-constant command), `js-inner-html` (`=` or `+=`
+    to `.innerHTML`/`.outerHTML` with a non-constant value), `js-sql-string` (template with `${}`
+    or `+` with a SQL-shaped literal). Unrelated `exec` (regex, DB driver) is not flagged.
+  - "Constant" means a string, a template without `${}`, or a `+` chain of only those (jQuery's
+    test files caught `"<style>" + "..."` being flagged; fixed and added to the negative fixture).
+  - Fixtures `js_positive.js` (CommonJS), `ts_positive.ts` (ESM, TS syntax), `js_negative.js`.
+    Tests: 130 passed, 2 skipped.
+  - Real repos: express and ky have 0 findings. A grep of their source for every rule pattern
+    finds only strings (an XSS payload in `test/res.redirect.js`, `waitForFunction` in ky), so
+    no misses. jquery/jquery @ HEAD (222 code files): 8 findings, all genuine: `innerHTML` in
+    `src/manipulation.js:276` and `src/manipulation/buildFragment.js:47` (by design: `.html()`),
+    the same in the vendored `test/data/jquery-3.7.1.js` (3), and 3 `eval` calls in tests.
 
 ## Next
 - Scope change (27 Oct, `7233e27`): Python and JS/TS both get full analysis; CLAUDE.md updated.
 - **`feat/graph-api` merged into `main` (28 Oct, `0c514d2`)** after CI was green on `5111572` and
   on `main` (108 passed, 2 skipped). Includes the user's logo mark and favicons.
-- Day 3 on `feat/detectors`: task 2 of the Day 3 plan (JS/TS rules).
+- Day 3 on `feat/detectors`: task 3 of the Day 3 plan (findings API).
 - Running tests locally: `uv run --env-file ../.env pytest` (`.env` has `TEST_DATABASE_URL`).
 
 ## Day 2 plan

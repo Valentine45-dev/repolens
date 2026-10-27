@@ -39,9 +39,14 @@ def test_detect_stage_stores_findings_with_symbols(detector_repo):
         " AND f.rule_id <> 'hardcoded-secret' ORDER BY f.line",
         detector_repo,
     )
-    assert {r["path"] for r in rows} == {"py_positive.py"}  # nothing from py_negative.py
-    marks = len(re.findall(r"#\s*expect:\s*[\w-]+", (DETECTORS / "py_positive.py").read_text()))
-    assert len(rows) == marks == 13
+    positives = ["js_positive.js", "py_positive.py", "ts_positive.ts"]
+    assert sorted({r["path"] for r in rows}) == positives  # nothing from the negatives
+    marks = sum(
+        len(re.findall(r"(?:#|//)\s*expect:\s*[\w-]+", (DETECTORS / name).read_text()))
+        for name in positives
+    )
+    assert len(rows) == marks
+    rows = [r for r in rows if r["path"] == "py_positive.py"]
     first = rows[0]
     assert (first["rule_id"], first["severity"], first["line"]) == ("py-eval-exec", "high", 9)
     assert first["qualified_name"] == "py_positive.handler"
@@ -50,6 +55,17 @@ def test_detect_stage_stores_findings_with_symbols(detector_repo):
     assert {r["rule_id"] for r in rows} == {
         "py-eval-exec", "py-subprocess-shell", "py-sql-string", "py-bare-except",
     }
+
+
+def test_js_findings_attach_to_js_symbols(detector_repo):
+    rows = query(
+        "SELECT f.rule_id, f.line, s.qualified_name FROM findings f"
+        " JOIN files fi ON fi.id = f.file_id LEFT JOIN symbols s ON s.id = f.symbol_id"
+        " WHERE f.snapshot_id = %s AND fi.path = 'ts_positive.ts' ORDER BY f.line",
+        detector_repo,
+    )
+    assert rows[0]["rule_id"] == "js-eval"
+    assert {r["qualified_name"] for r in rows} == {"ts_positive.ts:handler"}
 
 
 def test_secrets_in_test_files_are_low(detector_repo):

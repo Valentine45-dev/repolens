@@ -6,9 +6,11 @@ from pathlib import Path
 
 import pytest
 
+from app.detect.javascript import detect_javascript
 from app.detect.python import detect_python
 from app.detect.rules import RULES, looks_like_sql
 from app.ingest.parse import parse_python
+from app.ingest.parse_js import parse_js
 
 FIXTURES = Path(__file__).parent / "fixtures" / "detectors"
 EXPECT = re.compile(r"(?:#|//)\s*expect:\s*([\w-]+)")
@@ -32,6 +34,19 @@ def run_python(name: str):
 def test_python_fixtures(name):
     got, want = run_python(name)
     assert got == want
+
+
+@pytest.mark.parametrize("name", ["js_positive.js", "ts_positive.ts", "js_negative.js"])
+def test_javascript_fixtures(name):
+    source = (FIXTURES / name).read_text(encoding="utf-8")
+    hits = detect_javascript(name, source, parse_js(name, source).imports)
+    assert sorted((h.line, h.rule_id) for h in hits) == expected(source)
+
+
+def test_child_process_exec_needs_child_process():
+    # An unrelated exec() (e.g. a regex or a DB driver) is not child_process.
+    source = 'const re = /a/;\nre.exec(input);\ndb.exec(sql);\nexec(cmd);\n'
+    assert detect_javascript("a.js", source, parse_js("a.js", source).imports) == []
 
 
 def test_every_expected_rule_exists():

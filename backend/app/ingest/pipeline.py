@@ -235,7 +235,7 @@ def store_findings(snapshot_id: int, parsed: dict[str, Parsed]) -> int:
     findings; hardcoded-secret findings belong to the discover stage."""
     rows = []
     for path, p in parsed.items():
-        hits = detect(p.language, p.content, p.result)
+        hits = detect(path, p.language, p.content, p.result)
         if not hits:
             continue
         lines = p.content.splitlines()

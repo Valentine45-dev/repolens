@@ -63,6 +63,41 @@ RULES: dict[str, Rule] = {
             "They also catch KeyboardInterrupt and SystemExit and can hide real errors.",
             "the handler re-raises, or it is a deliberate last-resort guard that logs the error.",
         ),
+        Rule(
+            "js-eval", "javascript", "high", "Use of eval()",
+            "Calls to the global eval().",
+            "If any part of the input comes from a user, they can run arbitrary JavaScript.",
+            "the argument is a constant, for example in a build or test script.",
+        ),
+        Rule(
+            "js-new-function", "javascript", "high", "new Function()",
+            "Functions created from strings with new Function(...) or Function(...).",
+            "Like eval(), it runs code built at runtime; user input in it can run arbitrary code.",
+            "all arguments are constants written by the program.",
+        ),
+        Rule(
+            "js-child-process-exec", "javascript", "high", "child_process exec with dynamic input",
+            "exec() or execSync() from child_process whose command is not a constant string.",
+            "exec runs the command through a shell, so unescaped input can inject extra "
+            "commands; execFile/spawn with an argument list avoid the shell.",
+            "the dynamic part is a constant or validated value the program controls.",
+        ),
+        Rule(
+            "js-inner-html", "javascript", "medium", "innerHTML with dynamic value",
+            "Assignments to .innerHTML or .outerHTML whose value is not a constant string.",
+            "Inserting untrusted text as HTML allows cross-site scripting (XSS); textContent or "
+            "a sanitizer avoids it.",
+            "the value is built only from trusted, already-escaped markup.",
+        ),
+        Rule(
+            "js-sql-string", "javascript", "high", "SQL built from strings",
+            "A SQL statement built with a template literal (${...}) or + that includes a "
+            "non-constant value.",
+            "Values pasted into SQL text can change the query (SQL injection); query "
+            "parameters avoid this.",
+            "the inserted part is a constant such as a table name chosen by the program, or the "
+            "string is only logged and never executed.",
+        ),
     ]
 }
 
