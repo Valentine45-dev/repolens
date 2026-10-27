@@ -118,3 +118,62 @@ def test_failed_fetch_marks_job_failed_and_cleans_up(client, monkeypatch, tmp_pa
     assert status["stage"] == "fetch"
     assert "timed out" in status["error"]
     assert not any((tmp_path / "work").glob("*"))
+
+
+def _flaky_fetch(errors):
+    """fetch_commit that raises the given CloneErrors in turn, then copies the fixture repo."""
+    import shutil
+
+    from conftest import FIXTURE
+
+    calls = []
+
+    def fetch(url, sha, dest, timeout):
+        calls.append(dest)
+        dest.mkdir(parents=True)
+        if len(calls) <= len(errors):
+            raise errors[len(calls) - 1]
+        shutil.rmtree(dest)
+        shutil.copytree(FIXTURE, dest)
+
+    return fetch, calls
+
+
+def test_fetch_network_error_is_retried_once(client, monkeypatch):
+    from app.ingest import clone
+
+    fetch, calls = _flaky_fetch([clone.CloneError("Could not resolve host", transient=True)])
+    monkeypatch.setattr(clone, "fetch_commit", fetch)
+    body = client.post("/repos", json={"url": "https://github.com/example/flaky"}).json()
+    status = client.get(f"/snapshots/{body['snapshot_id']}/status").json()
+    assert status["status"] == "done", status
+    assert len(calls) == 2
+
+
+def test_fetch_retries_only_once_and_not_for_other_errors(client, monkeypatch):
+    from app.ingest import clone
+
+    twice = [clone.CloneError("timed out", transient=True)] * 2
+    fetch, calls = _flaky_fetch(twice)
+    monkeypatch.setattr(clone, "fetch_commit", fetch)
+    body = client.post("/repos", json={"url": "https://github.com/example/down"}).json()
+    status = client.get(f"/snapshots/{body['snapshot_id']}/status").json()
+    assert (status["status"], status["stage"], len(calls)) == ("failed", "fetch", 2)
+
+    fetch, calls = _flaky_fetch([clone.CloneError("not our ref", transient=False)])
+    monkeypatch.setattr(clone, "fetch_commit", fetch)
+    body = client.post("/repos", json={"url": "https://github.com/example/badref"}).json()
+    status = client.get(f"/snapshots/{body['snapshot_id']}/status").json()
+    assert (status["status"], len(calls)) == ("failed", 1)
+
+
+def test_fetch_is_not_retried_without_time_left(client, monkeypatch):
+    from app import config
+    from app.ingest import clone
+
+    monkeypatch.setattr(config, "MAX_ANALYSIS_S", 10)  # less than CLONE_TIMEOUT_S
+    fetch, calls = _flaky_fetch([clone.CloneError("timed out", transient=True)])
+    monkeypatch.setattr(clone, "fetch_commit", fetch)
+    body = client.post("/repos", json={"url": "https://github.com/example/late"}).json()
+    status = client.get(f"/snapshots/{body['snapshot_id']}/status").json()
+    assert (status["status"], len(calls)) == ("failed", 1)

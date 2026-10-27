@@ -281,6 +281,14 @@ Plan decisions:
 - `unresolved` as a symbol kind is the smallest schema change that lets an unresolved import be an edge.
 - If time runs short, task 6 (call edges) shrinks first: same-file and explicitly imported calls only.
 
+## Day 3 notes
+Agreed 27 Oct, to apply when building Day 3:
+- `GET /snapshots/{id}/findings` is paginated (limit/offset with a total), not one unbounded list.
+- The LLM call gets a timeout, at most one retry, and a per-snapshot token cap; when any of these
+  trips, the answer says AI is unavailable and graph questions still work.
+- No CORS middleware at all: the browser only talks to `/api` through the Vite proxy (same
+  origin). Never a wildcard origin.
+
 ## Decisions
 - Python 3.12 everywhere (safer for torch / sentence-transformers on Day 3).
 - Embedding column `vector(384)` (all-MiniLM-L6-v2 / bge-small-en-v1.5 class models).

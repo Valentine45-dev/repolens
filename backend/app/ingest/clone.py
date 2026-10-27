@@ -35,7 +35,19 @@ class InvalidRepoUrl(ValueError):
 
 
 class CloneError(RuntimeError):
-    pass
+    def __init__(self, message: str, transient: bool = False):
+        super().__init__(message)
+        # True for timeouts and connection trouble, where one more try may succeed.
+        self.transient = transient
+
+
+# git's wording for network failures (curl and transport errors), not for missing repos.
+_NETWORK_ERRORS = re.compile(
+    r"could not resolve host|failed to connect|couldn't connect|connection (timed out|reset|"
+    r"refused)|operation timed out|early eof|unexpected disconnect|remote end hung up|"
+    r"rpc failed|ssl|gnutls|network is unreachable",
+    re.IGNORECASE,
+)
 
 
 def normalize_repo_url(url: str) -> str:
@@ -74,10 +86,13 @@ def _git(args: list[str], timeout: int, cwd: Path | None = None) -> str:
             stdin=subprocess.DEVNULL,
         )
     except subprocess.TimeoutExpired as e:
-        raise CloneError(f"git {args[0]} timed out after {timeout}s") from e
+        raise CloneError(f"git {args[0]} timed out after {timeout}s", transient=True) from e
     if proc.returncode != 0:
         detail = proc.stderr.strip().splitlines()[-1:] or ["unknown error"]
-        raise CloneError(f"git {args[0]} failed: {detail[0][:300]}")
+        raise CloneError(
+            f"git {args[0]} failed: {detail[0][:300]}",
+            transient=bool(_NETWORK_ERRORS.search(proc.stderr)),
+        )
     return proc.stdout
 
 

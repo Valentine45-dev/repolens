@@ -217,6 +217,19 @@ def store_edges(snapshot_id: int, parsed: dict[str, Parsed]) -> Counter:
     return counts
 
 
+def _fetch_with_retry(job_id: int, url: str, sha: str, workdir: Path, deadline: float) -> None:
+    """Fetch the commit; on a network error or timeout, try once more on a clean workspace,
+    if a full attempt still fits before the deadline. Other git errors fail at once."""
+    try:
+        clone.fetch_commit(url, sha, workdir, timeout=config.CLONE_TIMEOUT_S)
+    except clone.CloneError as e:
+        if not e.transient or deadline - time.monotonic() < config.CLONE_TIMEOUT_S:
+            raise
+        log.warning("job %s: fetch failed (%s), retrying once", job_id, e)
+        clone.remove_workspace(workdir)
+        clone.fetch_commit(url, sha, workdir, timeout=config.CLONE_TIMEOUT_S)
+
+
 def run_job(job_id: int, snapshot_id: int, url: str, sha: str) -> None:
     workdir = Path(config.WORKSPACE_DIR) / f"job-{job_id}"
     deadline = time.monotonic() + config.MAX_ANALYSIS_S
@@ -224,7 +237,7 @@ def run_job(job_id: int, snapshot_id: int, url: str, sha: str) -> None:
     try:
         _set_job(job_id, stage, 5)
         clone.remove_workspace(workdir)  # leftover from an earlier crash
-        clone.fetch_commit(url, sha, workdir, timeout=config.CLONE_TIMEOUT_S)
+        _fetch_with_retry(job_id, url, sha, workdir, deadline)
         _check_deadline(deadline)
 
         stage = "discover"
