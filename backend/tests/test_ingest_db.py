@@ -1,23 +1,19 @@
 """End-to-end ingestion against a real Postgres, with git replaced by the fixture repo."""
 
-import os
 import shutil
 from pathlib import Path
 
 import pytest
 from fastapi.testclient import TestClient
 
-pytestmark = [
-    pytest.mark.db,
-    pytest.mark.skipif(not os.environ.get("DATABASE_URL"), reason="needs DATABASE_URL"),
-]
+pytestmark = pytest.mark.db
 
 FIXTURE = Path(__file__).parent / "fixtures" / "sample_repo"
 SHA = "a" * 40
 
 
 @pytest.fixture
-def client(monkeypatch, tmp_path):
+def client(test_db, monkeypatch, tmp_path):
     from app import config
     from app.ingest import clone
     from app.main import app

@@ -11,7 +11,7 @@
   - `app/ingest/redact.py`: line-preserving redaction; returns `SecretMatch(line, kind)`, never the value.
   - `app/ingest/discover.py`: skip rules (secret files, venvs, vendor/build dirs, binaries, >1 MB),
     `MAX_FILES` cap, CRLF normalised, content redacted.
-  - `app/ingest/parse.py`: Tree-sitter 0.26 Python parser -> module/class/function/method symbols.
+  - `app/ingest/parse.py`: Tree-sitter 0.25.2 Python parser -> module/class/function/method symbols.
   - `app/ingest/clone.py`: GitHub URL validation, `git ls-remote` SHA resolve, shallow fetch by SHA
     with hooks off, no submodules/LFS, `core.symlinks=false`, host git config ignored, timeouts.
   - `app/ingest/pipeline.py`: fetch -> discover -> parse, delete-then-insert per stage, progress on
@@ -36,9 +36,21 @@
     0/6 on 0.25.2, so it is a native regression in py-tree-sitter 0.26.0 (seen on Windows; Linux CI
     never hit it). Pinned `tree-sitter>=0.25.2,<0.26` in `pyproject.toml`.
 
+- **Day 2 task 1 done (27 Oct, `feat/graph-api`): separate test database.**
+  - `tests/conftest.py`: DB tests read `TEST_DATABASE_URL` only; `DATABASE_URL` is removed from the
+    environment at pytest start. A name not ending in `_test` is a hard error (`UsageError`); unset
+    means DB tests skip. Session fixture `test_db` drops and rebuilds `public` from `schema.sql`.
+  - `db-init/02-test-db.sql` creates `repolens_test` on fresh volumes (checked with a throwaway
+    container); existing volume: `docker compose exec -T db createdb -U repolens repolens_test`.
+  - CI service DB is `repolens_test` via `TEST_DATABASE_URL`; the psql schema step is gone.
+  - `tests/test_db_guard.py` (7 cases). Local: **47 passed, 2 skipped** (network); with
+    `TEST_DATABASE_URL` pointing at `repolens` pytest stops with the guard error; dev DB kept its
+    41 files after a run with `DATABASE_URL` set to it.
+
 ## Next
 - Scope change (27 Oct, `7233e27`): Python and JS/TS both get full analysis; CLAUDE.md updated.
-- Day 2: start with task 1 of the Day 2 plan below.
+- Day 2: task 2 of the Day 2 plan below (discover JS/TS + `unresolved` symbol kind).
+- Running tests locally: set `TEST_DATABASE_URL` (see `.env.example`) in the shell, or DB tests skip.
 
 ## Day 2 plan
 Approved 27 Oct. Each task ends with: run it, show the result, commit, update this file, stop.
@@ -129,8 +141,6 @@ Plan decisions:
   with `uv run uvicorn`. The full compose stack (`db`, `api`, later `web`) is kept for the demo.
 
 ## Known issues
-- DB tests `TRUNCATE repos RESTART IDENTITY CASCADE` on whatever `DATABASE_URL` points at, so running
-  pytest locally wipes ingested dev data. Re-ingest after tests, or later point tests at a separate DB.
 - `hardcoded-secret` is noisy on test code (placeholder keys in `tests/`). Consider lower severity
   for test paths when the Day 3 detectors land.
 - Fixture tests do not reproduce the 0.26.0 crash (only bigger files did); the pin is the guard.
