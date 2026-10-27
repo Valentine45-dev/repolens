@@ -1,0 +1,153 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-10-27T00:00:00Z",
+  "title": "Design System: RepoLens",
+  "extensions": {
+    "colorMeta": {
+      "ink": { "role": "primary", "displayName": "Ink", "canonical": "#0a0a0a", "tonalRamp": ["#0a0a0a", "#18181b", "#27272a", "#3f3f46", "#52525b", "#71717a", "#a1a1aa", "#e4e4e7"] },
+      "ink-hover": { "role": "primary", "displayName": "Ink Lifted", "canonical": "#27272a", "tonalRamp": ["#0a0a0a", "#18181b", "#27272a", "#3f3f46", "#52525b", "#71717a", "#a1a1aa", "#e4e4e7"] },
+      "paper": { "role": "neutral", "displayName": "Paper", "canonical": "#ffffff", "tonalRamp": ["#27272a", "#52525b", "#71717a", "#a1a1aa", "#d4d4d8", "#e4e4e7", "#f4f4f5", "#ffffff"] },
+      "panel": { "role": "neutral", "displayName": "Bench Grey", "canonical": "#fafafa", "tonalRamp": ["#27272a", "#52525b", "#71717a", "#a1a1aa", "#d4d4d8", "#e4e4e7", "#f4f4f5", "#fafafa"] },
+      "panel-sunk": { "role": "neutral", "displayName": "Sunk Grey", "canonical": "#f4f4f5", "tonalRamp": ["#27272a", "#52525b", "#71717a", "#a1a1aa", "#d4d4d8", "#e4e4e7", "#f4f4f5", "#fafafa"] },
+      "rule": { "role": "neutral", "displayName": "Hairline", "canonical": "#e4e4e7", "tonalRamp": ["#27272a", "#52525b", "#71717a", "#a1a1aa", "#d4d4d8", "#e4e4e7", "#f4f4f5", "#fafafa"] },
+      "rule-strong": { "role": "neutral", "displayName": "Strong Hairline", "canonical": "#d4d4d8", "tonalRamp": ["#27272a", "#52525b", "#71717a", "#a1a1aa", "#d4d4d8", "#e4e4e7", "#f4f4f5", "#fafafa"] },
+      "text-muted": { "role": "neutral", "displayName": "Graphite", "canonical": "#52525b", "tonalRamp": ["#18181b", "#27272a", "#3f3f46", "#52525b", "#71717a", "#a1a1aa", "#d4d4d8", "#f4f4f5"] },
+      "text-subtle": { "role": "neutral", "displayName": "Ash", "canonical": "#71717a", "tonalRamp": ["#18181b", "#27272a", "#3f3f46", "#52525b", "#71717a", "#a1a1aa", "#d4d4d8", "#f4f4f5"] },
+      "success": { "role": "semantic", "displayName": "Done Green", "canonical": "#067647", "tonalRamp": ["#053321", "#054f31", "#067647", "#079455", "#17b26a", "#75e0a7", "#abefc6", "#ecfdf3"] },
+      "danger": { "role": "semantic", "displayName": "Failed Red", "canonical": "#b42318", "tonalRamp": ["#55160c", "#7a271a", "#b42318", "#d92d20", "#f04438", "#fda29b", "#fecdca", "#fef3f2"] },
+      "warning": { "role": "semantic", "displayName": "Slow Amber", "canonical": "#b54708", "tonalRamp": ["#4e1d09", "#7a2e0e", "#b54708", "#dc6803", "#f79009", "#fec84b", "#fedf89", "#fffaeb"] }
+    },
+    "typographyMeta": {
+      "headline": { "displayName": "Headline", "purpose": "One page title per screen; balanced wrap." },
+      "title-mono": { "displayName": "Title Mono", "purpose": "owner/repo @ sha heading on analysis pages; SHA at 400 in Ash." },
+      "wordmark": { "displayName": "Wordmark", "purpose": "RepoLens in the top bar beside a 12px black square." },
+      "body-lg": { "displayName": "Body Large", "purpose": "Lede under a headline and the live status line; max 60ch." },
+      "body": { "displayName": "Body", "purpose": "The 14px base for everything else, including ledger rows." },
+      "label": { "displayName": "Label", "purpose": "Buttons, nav links, active ledger rows, status words, list names; section titles at 600." },
+      "caption": { "displayName": "Caption", "purpose": "Limits under the URL field, field messages, list meta." },
+      "data-mono": { "displayName": "Data Mono", "purpose": "Ledger values and example chips; tabular figures. Inline mono in prose at 0.93em; URL input mono at 13px." }
+    },
+    "shadows": [],
+    "focus": [
+      { "name": "focus-ring", "value": "outline: 2px solid var(--focus-ring); outline-offset: 2px", "purpose": "Global keyboard focus; inputs use offset 0 and an Ink border; invalid inputs use Failed Red." }
+    ],
+    "motion": [
+      { "name": "ease-out", "value": "cubic-bezier(0.16, 1, 0.3, 1)", "purpose": "Shared curve for every state transition." },
+      { "name": "state-150", "value": "150ms", "purpose": "Colour, background and border changes on buttons, chips, inputs, links and list rows." },
+      { "name": "ledger-200", "value": "200ms", "purpose": "Ledger row colour as a stage changes state." },
+      { "name": "spin", "value": "900ms linear infinite", "purpose": "Spinner icon; 2.4s under prefers-reduced-motion, where transitions also collapse to 0.01ms." }
+    ],
+    "breakpoints": [
+      { "name": "narrow", "value": "560px", "purpose": "Gutters 16px, URL row stacks with full-width button, list rows collapse to one column." }
+    ],
+    "layout": {
+      "pageMaxWidth": "688px",
+      "contentWidth": "640px",
+      "pageTopPadding": "clamp(32px, 14vh, 128px)",
+      "topbarHeight": "52px",
+      "controlHeight": "40px"
+    }
+  },
+  "components": [
+    {
+      "name": "Primary Button",
+      "kind": "button",
+      "refersTo": "button-primary",
+      "description": "The single black action per screen (Analyze).",
+      "html": "<button class=\"ds-btn-primary\">Analyze</button>",
+      "css": ".ds-btn-primary { display: inline-flex; align-items: center; justify-content: center; gap: 8px; height: 40px; padding: 0 16px; border: 1px solid var(--primary, #0a0a0a); border-radius: 6px; background: var(--primary, #0a0a0a); color: var(--primary-text, #ffffff); font-family: \"Inter Variable\", Inter, system-ui, sans-serif; font-size: 14px; font-weight: 500; cursor: pointer; transition: background-color 150ms cubic-bezier(0.16, 1, 0.3, 1), border-color 150ms cubic-bezier(0.16, 1, 0.3, 1); } .ds-btn-primary:hover { background: var(--primary-hover, #27272a); border-color: var(--primary-hover, #27272a); } .ds-btn-primary:focus-visible { outline: 2px solid var(--focus-ring, #0a0a0a); outline-offset: 2px; } .ds-btn-primary:disabled { opacity: 0.6; cursor: default; }"
+    },
+    {
+      "name": "Secondary Button",
+      "kind": "button",
+      "refersTo": "button-secondary",
+      "description": "Paper button for secondary actions inside callouts (Try again, Retry analysis).",
+      "html": "<button class=\"ds-btn-secondary\">Retry analysis</button>",
+      "css": ".ds-btn-secondary { display: inline-flex; align-items: center; justify-content: center; gap: 8px; height: 40px; padding: 0 16px; border: 1px solid var(--border-strong, #d4d4d8); border-radius: 6px; background: var(--bg, #ffffff); color: var(--text, #0a0a0a); font-family: \"Inter Variable\", Inter, system-ui, sans-serif; font-size: 14px; font-weight: 500; cursor: pointer; transition: background-color 150ms cubic-bezier(0.16, 1, 0.3, 1); } .ds-btn-secondary:hover { background: var(--surface-2, #f4f4f5); } .ds-btn-secondary:focus-visible { outline: 2px solid var(--focus-ring, #0a0a0a); outline-offset: 2px; }"
+    },
+    {
+      "name": "URL Input",
+      "kind": "input",
+      "refersTo": "input-url",
+      "description": "Mono URL field with inline valid check and error state.",
+      "html": "<div class=\"ds-field\"><input class=\"ds-input\" placeholder=\"https://github.com/owner/repo\" value=\"https://github.com/pallets/itsdangerous\"><span class=\"ds-field-icon\"><svg width=\"16\" height=\"16\" viewBox=\"0 0 16 16\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.5\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M3.5 8.5l3 3 6-7\"/></svg></span></div><p class=\"ds-field-message\">Public GitHub repositories only · up to 2,000 files · files over 1 MB are skipped</p>",
+      "css": ".ds-field { position: relative; max-width: 480px; } .ds-input { width: 100%; height: 40px; padding: 0 36px 0 12px; border: 1px solid var(--border-strong, #d4d4d8); border-radius: 6px; background: var(--bg, #ffffff); color: var(--text, #0a0a0a); font-family: \"JetBrains Mono\", ui-monospace, monospace; font-size: 13px; transition: border-color 150ms cubic-bezier(0.16, 1, 0.3, 1); } .ds-input::placeholder { color: var(--text-subtle, #71717a); } .ds-input:hover { border-color: var(--text-subtle, #71717a); } .ds-input:focus-visible { outline: 2px solid var(--focus-ring, #0a0a0a); outline-offset: 0; border-color: var(--focus-ring, #0a0a0a); } .ds-input[aria-invalid=\"true\"] { border-color: var(--danger, #b42318); } .ds-field-icon { position: absolute; top: 50%; right: 12px; transform: translateY(-50%); display: flex; color: var(--success, #067647); } .ds-field-message { margin: 8px 0 0; font-family: \"Inter Variable\", Inter, system-ui, sans-serif; font-size: 12px; color: var(--text-subtle, #71717a); }"
+    },
+    {
+      "name": "Example Chip",
+      "kind": "chip",
+      "refersTo": "chip-example",
+      "description": "Pill action that starts an example analysis; repo name in mono.",
+      "html": "<button class=\"ds-chip\">pallets/itsdangerous</button> <button class=\"ds-chip\">expressjs/express</button>",
+      "css": ".ds-chip { display: inline-flex; align-items: center; height: 28px; padding: 0 12px; border: 1px solid var(--border, #e4e4e7); border-radius: 999px; background: var(--bg, #ffffff); color: var(--text, #0a0a0a); font-family: \"JetBrains Mono\", ui-monospace, monospace; font-size: 12px; cursor: pointer; transition: background-color 150ms cubic-bezier(0.16, 1, 0.3, 1), border-color 150ms cubic-bezier(0.16, 1, 0.3, 1); } .ds-chip:hover { background: var(--surface-2, #f4f4f5); border-color: var(--border-strong, #d4d4d8); } .ds-chip:focus-visible { outline: 2px solid var(--focus-ring, #0a0a0a); outline-offset: 2px; }"
+    },
+    {
+      "name": "Top Bar",
+      "kind": "nav",
+      "refersTo": "topbar",
+      "description": "Sticky 52px bar: wordmark with black square, links only to pages that exist.",
+      "html": "<header class=\"ds-topbar\"><a class=\"ds-wordmark\" href=\"#\"><span class=\"ds-wordmark-mark\"></span>RepoLens</a><nav><a class=\"ds-topbar-link\" href=\"#\" aria-current=\"page\">New analysis</a></nav></header>",
+      "css": ".ds-topbar { display: flex; align-items: center; gap: 24px; height: 52px; padding: 0 24px; background: var(--bg, #ffffff); border-bottom: 1px solid var(--border, #e4e4e7); font-family: \"Inter Variable\", Inter, system-ui, sans-serif; font-size: 14px; } .ds-wordmark { display: inline-flex; align-items: center; gap: 8px; font-weight: 600; font-size: 16px; letter-spacing: -0.01em; color: var(--text, #0a0a0a); text-decoration: none; } .ds-wordmark-mark { width: 12px; height: 12px; border-radius: 2px; background: var(--primary, #0a0a0a); } .ds-topbar-link { color: var(--text-muted, #52525b); text-decoration: none; font-weight: 500; padding: 4px 0; border-bottom: 1px solid transparent; transition: color 150ms cubic-bezier(0.16, 1, 0.3, 1), border-color 150ms cubic-bezier(0.16, 1, 0.3, 1); } .ds-topbar-link:hover { color: var(--text, #0a0a0a); } .ds-topbar-link[aria-current=\"page\"] { color: var(--text, #0a0a0a); border-bottom-color: var(--text, #0a0a0a); } .ds-topbar-link:focus-visible { outline: 2px solid var(--focus-ring, #0a0a0a); outline-offset: 2px; }"
+    },
+    {
+      "name": "Recent List",
+      "kind": "card",
+      "refersTo": "list-row",
+      "description": "Bordered 10px list of analyses: mono name, status word, mono SHA, age.",
+      "html": "<ul class=\"ds-list\"><li class=\"ds-list-row\"><a class=\"ds-list-link\" href=\"#\"><span class=\"ds-list-name\">pallets/itsdangerous</span><span class=\"ds-list-meta\"><span class=\"ds-status\" data-state=\"done\"><svg width=\"14\" height=\"14\" viewBox=\"0 0 16 16\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.5\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M3.5 8.5l3 3 6-7\"/></svg>Ready</span><span>·</span><span class=\"ds-mono\">a1b2c3d</span><span>·</span><span>2 min ago</span></span></a></li><li class=\"ds-list-row\"><a class=\"ds-list-link\" href=\"#\"><span class=\"ds-list-name\">expressjs/express</span><span class=\"ds-list-meta\"><span class=\"ds-status\" data-state=\"failed\"><svg width=\"14\" height=\"14\" viewBox=\"0 0 16 16\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.5\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M4.5 4.5l7 7m0-7l-7 7\"/></svg>Failed</span><span>·</span><span class=\"ds-mono\">9f8e7d6</span><span>·</span><span>1 h ago</span></span></a></li></ul>",
+      "css": ".ds-list { margin: 0; padding: 0; list-style: none; border: 1px solid var(--border, #e4e4e7); border-radius: 10px; overflow: hidden; font-family: \"Inter Variable\", Inter, system-ui, sans-serif; font-size: 14px; } .ds-list-row + .ds-list-row { border-top: 1px solid var(--border, #e4e4e7); } .ds-list-link { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: 16px; padding: 12px 16px; color: var(--text, #0a0a0a); text-decoration: none; transition: background-color 150ms cubic-bezier(0.16, 1, 0.3, 1); } .ds-list-link:hover { background: var(--surface, #fafafa); } .ds-list-link:focus-visible { outline: 2px solid var(--focus-ring, #0a0a0a); outline-offset: -2px; } .ds-list-name { font-family: \"JetBrains Mono\", ui-monospace, monospace; font-size: 0.93em; font-weight: 500; } .ds-list-meta { display: inline-flex; align-items: center; gap: 8px; color: var(--text-subtle, #71717a); font-size: 12px; white-space: nowrap; } .ds-mono { font-family: \"JetBrains Mono\", ui-monospace, monospace; font-variant-numeric: tabular-nums; } .ds-status { display: inline-flex; align-items: center; gap: 6px; font-weight: 500; color: var(--text-muted, #52525b); } .ds-status[data-state=\"done\"] { color: var(--success, #067647); } .ds-status[data-state=\"failed\"] { color: var(--danger, #b42318); }"
+    },
+    {
+      "name": "Stage Ledger",
+      "kind": "custom",
+      "refersTo": "ledger-row",
+      "description": "Signature: ruled list of real pipeline stages with a tabular mono value column.",
+      "html": "<ol class=\"ds-ledger\"><li class=\"ds-ledger-row\" data-state=\"done\"><span class=\"ds-ledger-icon\"><svg width=\"16\" height=\"16\" viewBox=\"0 0 16 16\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.5\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M3.5 8.5l3 3 6-7\"/></svg></span><span>Cloning repository</span><span class=\"ds-ledger-value\"></span></li><li class=\"ds-ledger-row\" data-state=\"done\"><span class=\"ds-ledger-icon\"><svg width=\"16\" height=\"16\" viewBox=\"0 0 16 16\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.5\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M3.5 8.5l3 3 6-7\"/></svg></span><span>Finding source files</span><span class=\"ds-ledger-value\"></span></li><li class=\"ds-ledger-row\" data-state=\"active\"><span class=\"ds-ledger-icon\"><svg class=\"ds-spin\" width=\"16\" height=\"16\" viewBox=\"0 0 16 16\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.5\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><circle cx=\"8\" cy=\"8\" r=\"5.5\" opacity=\"0.25\"/><path d=\"M8 2.5a5.5 5.5 0 0 1 5.5 5.5\"/></svg></span><span>Parsing code</span><span class=\"ds-ledger-value\">62%</span></li><li class=\"ds-ledger-row\"><span class=\"ds-ledger-icon\"><svg width=\"16\" height=\"16\" viewBox=\"0 0 16 16\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.5\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><circle cx=\"8\" cy=\"8\" r=\"4.5\"/></svg></span><span>Resolving imports and calls</span><span class=\"ds-ledger-value\"></span></li></ol>",
+      "css": ".ds-ledger { margin: 0; padding: 0; list-style: none; border-top: 1px solid var(--border, #e4e4e7); font-family: \"Inter Variable\", Inter, system-ui, sans-serif; font-size: 14px; max-width: 640px; } .ds-ledger-row { display: grid; grid-template-columns: 20px minmax(0, 1fr) auto; align-items: center; gap: 12px; min-height: 48px; border-bottom: 1px solid var(--border, #e4e4e7); color: var(--text-subtle, #71717a); transition: color 200ms cubic-bezier(0.16, 1, 0.3, 1); } .ds-ledger-row[data-state=\"done\"] { color: var(--text, #0a0a0a); } .ds-ledger-row[data-state=\"active\"] { color: var(--text, #0a0a0a); font-weight: 500; } .ds-ledger-row[data-state=\"failed\"] { color: var(--danger, #b42318); font-weight: 500; } .ds-ledger-icon { display: flex; justify-content: center; } .ds-ledger-row[data-state=\"done\"] .ds-ledger-icon { color: var(--success, #067647); } .ds-ledger-value { font-family: \"JetBrains Mono\", ui-monospace, monospace; font-size: 12px; font-variant-numeric: tabular-nums; font-weight: 400; color: var(--text-subtle, #71717a); } .ds-ledger-row[data-state=\"active\"] .ds-ledger-value { color: var(--text, #0a0a0a); } .ds-spin { animation: ds-spin 900ms linear infinite; } @keyframes ds-spin { to { transform: rotate(360deg); } } @media (prefers-reduced-motion: reduce) { .ds-spin { animation-duration: 2.4s; } }"
+    },
+    {
+      "name": "Error Callout",
+      "kind": "card",
+      "refersTo": "callout",
+      "description": "Bench Grey panel reporting a stopped analysis, with secondary action and text link.",
+      "html": "<div class=\"ds-callout\" data-tone=\"error\"><p class=\"ds-callout-title\">Stopped while parsing code.</p><p>Clone timed out after 120 s.</p><div class=\"ds-callout-actions\"><button class=\"ds-callout-btn\">Retry analysis</button><a class=\"ds-text-link\" href=\"#\">Analyze a different repository</a></div></div>",
+      "css": ".ds-callout { padding: 16px; border: 1px solid var(--border, #e4e4e7); border-radius: 10px; background: var(--surface, #fafafa); font-family: \"Inter Variable\", Inter, system-ui, sans-serif; font-size: 14px; color: var(--text, #0a0a0a); max-width: 640px; } .ds-callout p { margin: 0; } .ds-callout-title + p { margin-top: 4px; } .ds-callout[data-tone=\"error\"] { border-color: color-mix(in srgb, var(--danger, #b42318) 35%, var(--border, #e4e4e7)); } .ds-callout-title { font-weight: 600; } .ds-callout[data-tone=\"error\"] .ds-callout-title { color: var(--danger, #b42318); } .ds-callout-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 16px; margin-top: 16px; } .ds-callout-btn { height: 40px; padding: 0 16px; border: 1px solid var(--border-strong, #d4d4d8); border-radius: 6px; background: var(--bg, #ffffff); color: var(--text, #0a0a0a); font: inherit; font-weight: 500; cursor: pointer; transition: background-color 150ms cubic-bezier(0.16, 1, 0.3, 1); } .ds-callout-btn:hover { background: var(--surface-2, #f4f4f5); } .ds-callout-btn:focus-visible, .ds-text-link:focus-visible { outline: 2px solid var(--focus-ring, #0a0a0a); outline-offset: 2px; } .ds-text-link { color: var(--text, #0a0a0a); font-weight: 500; text-underline-offset: 3px; text-decoration-thickness: 1px; } .ds-text-link:hover { color: var(--text-muted, #52525b); }"
+    }
+  ],
+  "narrative": {
+    "northStar": "The Quiet Instrument",
+    "overview": "RepoLens looks like a measuring tool laid on a white bench: black ink on white paper, hairline rules, and nothing that does not report something real. One narrow left-aligned column (640px of content) carries each screen; it starts well down the page so the single primary action sits in calm space rather than under a hero. The world is pinned by `docs/repolens-ui-ux-spec.md` §8 and shipped in light only; there is no dark theme and no theme toggle by project rule.\n\nTwo voices share the page. Inter speaks in sentences (headlines, explanations, labels). JetBrains Mono speaks in facts: every repository name, commit SHA, path, URL and number. A reader can tell at a glance which text is prose and which text is data copied from the analysis. Colour is withheld until state demands it: green appears only when something finished, red only when something failed, amber only when something is slow.\n\nDepth comes from 1px rules and a one-step tonal shift, never from shadow. The signature pattern is the stage ledger: a ruled vertical list of the backend's real stages with a tabular mono column on the right that carries a number only where the backend reports real progress.",
+    "keyCharacteristics": [
+      "White ground, black primary, zinc neutrals; semantic colour only for state.",
+      "Inter for prose, JetBrains Mono for every fact and number.",
+      "Flat: 1px rules and tonal panels, no shadows.",
+      "One narrow column, one primary action per screen.",
+      "Authored 16px line icons at a single 1.5 stroke."
+    ],
+    "rules": [
+      { "name": "The Ink Is The Accent Rule", "body": "Black is the only emphasis colour. There is no brand hue; a new surface that wants attention uses Ink, weight, or position, never a new colour.", "section": "colors" },
+      { "name": "The State-Only Colour Rule", "body": "Green, red and amber appear only to report job or input state, and always beside an icon or word that says the same thing; colour is never the only carrier of meaning.", "section": "colors" },
+      { "name": "The Facts Are Mono Rule", "body": "Every repository name, commit SHA, URL, path and progress number is set in JetBrains Mono; prose never is. Numbers that change in place use tabular figures.", "section": "typography" },
+      { "name": "The Fourteen Base Rule", "body": "The working size is 14px. Only the page headline (28px) and the repo title (20px) rise above 16px.", "section": "typography" },
+      { "name": "The One Column Rule", "body": "Shell screens are one narrow column with one primary action. No side rails, no card grids, no sidebar items for features that do not exist.", "section": "layout" },
+      { "name": "The Rule Not Shadow Rule", "body": "Separation is a 1px line or a one-step tonal shift. If a surface seems to need a shadow, give it a Hairline border instead.", "section": "elevation" }
+    ],
+    "dos": [
+      "Do set every repository name, SHA, URL, path and number in JetBrains Mono, with tabular figures where it updates in place.",
+      "Do keep one Ink primary button per screen; secondary actions use the Paper button with a Strong Hairline border.",
+      "Do separate with 1px Hairline rules and the Paper-to-Bench-Grey tonal step.",
+      "Do pair every state colour with an icon or word saying the same thing.",
+      "Do use the authored 16px line icons (1.5 stroke, `currentColor`) and add new glyphs in the same grid and stroke.",
+      "Do animate only colour and background, 150ms on `cubic-bezier(0.16, 1, 0.3, 1)`, and honour reduced motion.",
+      "Do show a number only where the backend reports real progress."
+    ],
+    "donts": [
+      "Don't add `box-shadow` to any surface.",
+      "Don't introduce a brand hue or use Done Green, Failed Red or Slow Amber for decoration.",
+      "Don't hardcode colours in components; every colour comes from a CSS variable on `:root`.",
+      "Don't add a dark theme or theme toggle; this build is light only.",
+      "Don't show placeholder data, fake progress bars, or navigation for features that do not exist.",
+      "Don't show \"Safe\", \"All clear\" or \"0 issues\" as a verdict."
+    ]
+  }
+}

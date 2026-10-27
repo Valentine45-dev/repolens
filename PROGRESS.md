@@ -303,6 +303,9 @@ Plan decisions:
 - The in-app browser pane sometimes times out on screenshots when the window is behind others;
   `get_page_text` still works.
 - Progress percent for parse updates every 50 files (pipeline), so small repos jump straight past it.
+- `--node-external` (#a1a1aa) is about 2.6:1 on white, below the 3:1 floor for UI graphics: pick
+  a darker grey for external nodes when the graph view (task 9) uses it. `DESIGN.md` (written by
+  the impeccable documenter from the built shell) leaves the graph colours out until then.
 - Calls made inside anonymous callbacks (`it(...)`, `forEach(function () {...})`) get the
   enclosing named symbol, often the module, as caller. Fine for the file-level graph.
 - Call edges never use star imports (`from x import *`, `export * from`).
