@@ -20,6 +20,6 @@ STORY: Before submitting the visitor knows what RepoLens does, for which languag
 
 FIRST VIEWPORT: Top bar: wordmark left, "New analysis" link. Home: one left-aligned column, max 640px, starting about a fifth down: 28px headline, one-line explainer, URL field and black Analyze button on one row, limits caption beneath, example repos as mono chips, then the recent list. Progress: owner/repo @ sha in mono, a status line, the stage ledger, the leave-and-return note.
 
-FORM: Signature move: the stage ledger. The backend's real stages (clone, find files, parse, resolve) as a ruled vertical list with a tabular mono column on the right; the active row is live, finished rows keep their result. Position: brief-pinned (spec §5.1, §5.2, §8), no concept roll. seed: none (unavailable)
+FORM: Signature move: the stage ledger. The backend's real stages (clone, find files, parse, resolve) as a ruled vertical list with a tabular mono column on the right; finished rows keep their check, the active row is live, and the column carries a number only where the backend reports real progress (files parsed). Position: brief-pinned (spec §5.1, §5.2, §8). seed: none (brief-pinned; concept-seed was not run)
 
 FINISH: unreviewed and undocumented is unfinished; this build ends with the finish review, the verdict, DESIGN.md, and every shipping raster carrying its provenance

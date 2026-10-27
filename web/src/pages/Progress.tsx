@@ -1,4 +1,5 @@
-import { useMutation, useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useEffect, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 
 import { ApiError, getStatus, isFinished, repoName, submitRepo, type SnapshotStatus } from "../api";
@@ -15,6 +16,29 @@ const STAGES = [
 ] as const;
 
 type RowState = "pending" | "active" | "done" | "failed";
+
+// The job's percent is a fixed milestone for every stage except parse, which moves from 40 to 80
+// as files are parsed (pipeline.py). Only that stage gets a number, relative to the stage.
+function stageProgress(status: SnapshotStatus): string | null {
+  if (status.stage !== "parse") return null;
+  const parsed = Math.round(((status.percent - 40) / 40) * 100);
+  return `${Math.min(Math.max(parsed, 0), 100)}%`;
+}
+
+const SLOW_AFTER_MS = 60_000;
+
+/** True once the running job has sat in the same stage for a minute. */
+function useSlowStage(status: SnapshotStatus | undefined): boolean {
+  const [slow, setSlow] = useState(false);
+  const key = status?.status === "running" ? status.stage : null;
+  useEffect(() => {
+    setSlow(false);
+    if (!key) return;
+    const timer = window.setTimeout(() => setSlow(true), SLOW_AFTER_MS);
+    return () => window.clearTimeout(timer);
+  }, [key]);
+  return slow;
+}
 
 function rowStates(status: SnapshotStatus): RowState[] {
   if (status.status === "done") return STAGES.map(() => "done");
@@ -54,6 +78,7 @@ export function Progress() {
     enabled: valid,
     refetchInterval: (q) => (q.state.error || isFinished(q.state.data?.status) ? false : 1000),
   });
+  const slow = useSlowStage(query.data);
 
   if (!valid || (query.error instanceof ApiError && query.error.status === 404)) {
     return (
@@ -109,9 +134,7 @@ export function Progress() {
               <span className="visually-hidden">: {states[i]}</span>
             </span>
             <span className="ledger-value">
-              {states[i] === "active" ? `${status.percent}%` : null}
-              {states[i] === "done" ? "done" : null}
-              {states[i] === "failed" ? "failed" : null}
+              {states[i] === "active" ? stageProgress(status) : null}
             </span>
           </li>
         ))}
@@ -120,9 +143,13 @@ export function Progress() {
       {status.status === "failed" ? (
         <FailedCallout status={status} />
       ) : status.status !== "done" ? (
-        <p className="note">
-          You can leave this page. The analysis keeps running; this address brings you back to it.
-        </p>
+        <>
+          {slow ? <p className="note">Taking longer than usual for this stage.</p> : null}
+          <p className="note">
+            You can leave this page. The analysis keeps running; this address brings you back to
+            it.
+          </p>
+        </>
       ) : null}
     </div>
   );
@@ -137,15 +164,19 @@ function StageIcon({ state }: { state: RowState }) {
 
 function FailedCallout({ status }: { status: SnapshotStatus }) {
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const retry = useMutation({
     mutationFn: () => submitRepo(status.url),
-    onSuccess: (result) => {
+    onSuccess: async (result) => {
       rememberAnalysis({
         snapshotId: result.snapshot_id,
         url: status.url,
         commitSha: result.commit_sha,
         submittedAt: Date.now(),
       });
+      // The same commit keeps its snapshot id, so the page stays mounted: drop the cached
+      // "failed" status so polling starts again on the new job.
+      await queryClient.resetQueries({ queryKey: ["status", result.snapshot_id] });
       navigate(`/a/${result.snapshot_id}`, { replace: true });
     },
   });
@@ -156,7 +187,8 @@ function FailedCallout({ status }: { status: SnapshotStatus }) {
       <p className="callout-title">Stopped while {stage}.</p>
       <p>{status.error ?? "The server did not give a reason."}</p>
       <p className="caption">
-        Retrying starts a new run of the same commit. If it fails again, try a smaller repository.
+        Retrying analyzes the repository&apos;s current commit. If it fails again, try a smaller
+        repository.
       </p>
       <div className="callout-actions">
         <button
@@ -167,6 +199,9 @@ function FailedCallout({ status }: { status: SnapshotStatus }) {
           {retry.isPending ? <Icon name="spinner" /> : null}
           Retry analysis
         </button>
+        <Link to="/" state={{ focusUrl: true }} className="text-link">
+          Analyze a different repository
+        </Link>
       </div>
       {retry.isError ? <p className="field-message" data-tone="error">{retry.error.message}</p> : null}
     </div>
