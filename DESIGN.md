@@ -210,7 +210,10 @@ A single centred column, `max-width: 688px` (640px content plus 24px gutters), l
 
 Spacing runs on a 4px grid using the seven steps in the frontmatter: 8px between a control and its neighbour, 12px from headline to lede and inside list rows, 24px before example chips and after the ledger, 32px from lede to the URL row and from status line to ledger, 48px between page sections.
 
-One breakpoint at 560px: gutters drop to 16px, the URL field and Analyze button stack with the button full width, and list rows collapse from name-plus-meta to a single column.
+Three breakpoints:
+- **900px (Explorer):** below it the node panel stops docking beside the canvas and overlays it from the right as a drawer (`min(100%, 480px)`); the selected file is re-centred in the part of the canvas the panel leaves free.
+- **767px (Explorer, spec §10):** phones get the list view only. The Graph/List control is replaced by the caption "The graph view needs a larger screen."; the URL keeps its `view` value.
+- **560px (all screens):** gutters drop to 16px, the URL field and Analyze button stack with the button full width, recent-analysis rows collapse from name-plus-meta to a single column, the node panel's four facts become two columns, and the file list hides its Language, External and Unresolved columns (the panel still shows those counts). File paths wrap only after a "/".
 
 ### Named Rules
 **The One Column Rule.** Shell screens are one narrow column with one primary action. No side rails, no card grids, no sidebar items for features that do not exist. The Explorer is the one full-width screen (the graph needs the width): a header row, a ruled toolbar, the canvas, and the node panel docked on the right.

@@ -90,7 +90,12 @@ export function Progress() {
   const done = query.data?.status === "done";
   useEffect(() => {
     if (!done || !sawRunning.current) return;
-    const timer = window.setTimeout(() => navigate(`/a/${snapshotId}/explore`), 1200);
+    // replace: Progress of a finished run redirects to the graph, so keeping it in history
+    // would make Back bounce straight back.
+    const timer = window.setTimeout(
+      () => navigate(`/a/${snapshotId}/explore`, { replace: true }),
+      1200,
+    );
     return () => window.clearTimeout(timer);
   }, [done, navigate, snapshotId]);
   if (done && !sawRunning.current) return <Navigate to={`/a/${snapshotId}/explore`} replace />;

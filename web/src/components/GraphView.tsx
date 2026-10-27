@@ -12,11 +12,19 @@ import {
   type NodeProps,
   Position,
   ReactFlow,
+  useReactFlow,
 } from "@xyflow/react";
-import { memo, useMemo } from "react";
+import { memo, useEffect, useMemo, useRef, useState } from "react";
 
 import type { GraphEdge, GraphNode } from "../api";
-import { isGuess, languageLabel, type Positioned, splitPath } from "../graphModel";
+import {
+  isGuess,
+  languageLabel,
+  NODE_HEIGHT,
+  NODE_WIDTH,
+  type Positioned,
+  splitPath,
+} from "../graphModel";
 
 type FileNodeData = {
   path: string;
@@ -78,11 +86,32 @@ function DepEdge(props: EdgeProps<DepFlowEdge>) {
   );
 }
 
-// Room at the bottom for the legend, so the fitted graph never sits under it.
+// The Fit button: the whole graph, with room at the bottom for the legend.
 export const FIT_OPTIONS: FitViewOptions = {
   padding: { top: "24px", right: "24px", bottom: "112px", left: "24px" },
   maxZoom: 1.1,
 };
+
+// First view: never so far out that file names are unreadable (12px names at 0.8 stay ~10px).
+// A big graph opens on its most connected file and that file's neighbours instead.
+const READABLE_ZOOM = 0.8;
+
+function hubNeighbourhood(edges: GraphEdge[]): { id: string }[] | undefined {
+  const degree = new Map<number, number>();
+  for (const e of edges) {
+    degree.set(e.source, (degree.get(e.source) ?? 0) + 1);
+    degree.set(e.target, (degree.get(e.target) ?? 0) + 1);
+  }
+  let hub: number | null = null;
+  for (const [id, d] of degree) if (hub === null || d > degree.get(hub)!) hub = id;
+  if (hub === null) return undefined;
+  const ids = new Set([hub]);
+  for (const e of edges) {
+    if (e.source === hub) ids.add(e.target);
+    if (e.target === hub) ids.add(e.source);
+  }
+  return [...ids].map((id) => ({ id: String(id) }));
+}
 
 const nodeTypes = { file: FileNode };
 const edgeTypes = { dep: DepEdge };
@@ -110,6 +139,46 @@ export function GraphView({
   selectedId: number | null;
   onSelect: (fileId: number | null) => void;
 }) {
+  const { getViewport, setCenter } = useReactFlow();
+  const initialFit = useMemo<FitViewOptions>(() => {
+    // Fit the whole graph when that keeps names readable; otherwise open on the hub.
+    const xs = [...positions.values()].map((p) => p.x);
+    const ys = [...positions.values()].map((p) => p.y);
+    const width = Math.max(...xs) - Math.min(...xs) + NODE_WIDTH + 48;
+    const height = Math.max(...ys) - Math.min(...ys) + NODE_HEIGHT + 136;
+    // The canvas fills the viewport below the header and toolbar (~150px).
+    const wholeZoom = Math.min(window.innerWidth / width, (window.innerHeight - 150) / height);
+    if (wholeZoom >= READABLE_ZOOM) return FIT_OPTIONS;
+    return { ...FIT_OPTIONS, minZoom: READABLE_ZOOM, nodes: hubNeighbourhood(edges) };
+  }, [positions, edges]);
+
+  // Keep the selected file in view: centre it in the part of the canvas the panel leaves free
+  // (below 900px the panel overlays the canvas from the right).
+  // Opened with ?node= in the URL: skip React Flow's first fit (it would run after, and undo,
+  // the centring below) and open on the selected file instead.
+  const [fitOnMount] = useState(selectedId === null);
+  const canvasRef = useRef<HTMLDivElement>(null);
+  const [ready, setReady] = useState(false); // set by onInit: the viewport can be moved
+  useEffect(() => {
+    if (selectedId === null || !ready) return;
+    const p = positions.get(selectedId);
+    const canvas = canvasRef.current;
+    if (!p || !canvas) return;
+    const frame = requestAnimationFrame(() => {
+      const zoom = Math.max(getViewport().zoom, READABLE_ZOOM);
+      const overlay = window.matchMedia("(max-width: 900px)").matches;
+      const covered = overlay ? Math.min(480, canvas.clientWidth) : 0;
+      const visibleWidth = canvas.clientWidth - covered;
+      const shift = covered > 0 && visibleWidth > NODE_WIDTH * zoom ? covered / 2 / zoom : 0;
+      const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+      void setCenter(p.x + NODE_WIDTH / 2 + shift, p.y + NODE_HEIGHT / 2, {
+        zoom,
+        duration: reduced ? 0 : 200,
+      });
+    });
+    return () => cancelAnimationFrame(frame);
+  }, [selectedId, positions, ready, getViewport, setCenter]);
+
   // Focus mode: with a file selected, everything outside its 1-hop neighbourhood is dimmed.
   const neighbourhood = useMemo(() => {
     if (selectedId === null) return null;
@@ -161,21 +230,24 @@ export function GraphView({
   );
 
   return (
-    <ReactFlow<FileFlowNode, DepFlowEdge>
-      nodes={flowNodes}
-      edges={flowEdges}
-      nodeTypes={nodeTypes}
-      edgeTypes={edgeTypes}
-      onNodeClick={(_, node) => onSelect(Number(node.id))}
-      onPaneClick={() => onSelect(null)}
-      fitView
-      fitViewOptions={FIT_OPTIONS}
-      minZoom={0.08}
-      maxZoom={2}
-      nodesConnectable={false}
-      nodesDraggable={false}
-      elementsSelectable={false}
-      onlyRenderVisibleElements
-    />
+    <div ref={canvasRef} className="canvas-flow">
+      <ReactFlow<FileFlowNode, DepFlowEdge>
+        nodes={flowNodes}
+        edges={flowEdges}
+        nodeTypes={nodeTypes}
+        edgeTypes={edgeTypes}
+        onNodeClick={(_, node) => onSelect(Number(node.id))}
+        onPaneClick={() => onSelect(null)}
+        fitView={fitOnMount}
+        fitViewOptions={initialFit}
+        onInit={() => setReady(true)}
+        minZoom={0.08}
+        maxZoom={2}
+        nodesConnectable={false}
+        nodesDraggable={false}
+        elementsSelectable={false}
+        onlyRenderVisibleElements
+      />
+    </div>
   );
 }

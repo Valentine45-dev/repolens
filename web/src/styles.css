@@ -734,6 +734,11 @@ a {
   background: var(--bg);
 }
 
+.canvas-flow {
+  position: absolute;
+  inset: 0;
+}
+
 .canvas-message {
   display: flex;
   flex-direction: column;
@@ -973,6 +978,15 @@ a {
   font-size: var(--text-sm);
   font-weight: 500;
   overflow-wrap: anywhere;
+}
+
+.panel-title:focus {
+  outline: none; /* focus is moved here programmatically; the panel itself is the cue */
+}
+
+.panel-title:focus-visible {
+  outline: 2px solid var(--focus-ring);
+  outline-offset: 2px;
 }
 
 .panel-facts {

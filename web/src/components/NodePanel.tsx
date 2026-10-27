@@ -26,7 +26,19 @@ export function NodePanel({
 }) {
   const [tab, setTab] = useState<Tab>("code");
   const titleId = useId();
-  const closeRef = useRef<HTMLButtonElement>(null);
+  const titleRef = useRef<HTMLHeadingElement>(null);
+
+  // Keyboard focus (spec §11): opening moves focus to the panel heading; closing returns it to
+  // whatever opened the panel (list row, graph node, a Used by / Uses link), if still on screen.
+  useEffect(() => {
+    const opener = document.activeElement instanceof HTMLElement ? document.activeElement : null;
+    return () => {
+      if (opener?.isConnected) opener.focus();
+    };
+  }, []);
+  useEffect(() => {
+    titleRef.current?.focus();
+  }, [node.id]);
 
   useEffect(() => {
     function onKey(e: KeyboardEvent) {
@@ -56,7 +68,7 @@ export function NodePanel({
     <aside className="panel" aria-labelledby={titleId}>
       <header className="panel-header">
         <div className="panel-heading">
-          <h2 id={titleId} className="panel-title mono">
+          <h2 id={titleId} ref={titleRef} tabIndex={-1} className="panel-title mono">
             {node.path}
           </h2>
           <p className="caption">
@@ -64,7 +76,6 @@ export function NodePanel({
           </p>
         </div>
         <button
-          ref={closeRef}
           type="button"
           className="icon-button"
           onClick={onClose}
