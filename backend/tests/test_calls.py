@@ -59,6 +59,8 @@ def test_fixture_repo_call_edges():
         ("web/src/server.js:app.handle", "web/src/server.js:res.send", 1.0),  # res.send here
         ("web/src/server.js:module.exports.start", "web/src/server.js:app.listen", 1.0),
         ("web/src/view.tsx:View", "web/src/lib/index.ts:formatName", 1.0),  # via tsconfig alias
+        ("tests.check_service.check_create_user", "sample_app.service.create_user", 1.0),
+        ("web/src/lib/math.spec.ts:checkAdd", "web/src/lib/math.ts:add", 1.0),
     ])
 
 

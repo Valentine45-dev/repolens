@@ -4,7 +4,7 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI
 
 from app import config, db
-from app.api import repos, snapshots
+from app.api import graph, repos, snapshots
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(name)s: %(message)s")
 
@@ -26,6 +26,7 @@ async def lifespan(_app: FastAPI):
 app = FastAPI(title="RepoLens", lifespan=lifespan)
 app.include_router(repos.router)
 app.include_router(snapshots.router)
+app.include_router(graph.router)
 
 
 @app.get("/health")

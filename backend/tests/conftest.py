@@ -6,6 +6,7 @@ from schema.sql once per session.
 """
 
 import os
+import shutil
 from pathlib import Path
 
 import psycopg
@@ -13,6 +14,8 @@ import pytest
 from psycopg.conninfo import conninfo_to_dict
 
 SCHEMA = Path(__file__).resolve().parent.parent / "schema.sql"
+FIXTURE = Path(__file__).parent / "fixtures" / "sample_repo"
+SHA = "a" * 40
 
 
 def check_test_database_url(url: str) -> str:
@@ -55,3 +58,34 @@ def test_db():
     config.DATABASE_URL = url
     yield url
     config.DATABASE_URL = ""
+
+
+@pytest.fixture
+def client(test_db, monkeypatch, tmp_path):
+    """API client on an empty test database, with git replaced by a copy of the fixture repo."""
+    from fastapi.testclient import TestClient
+
+    from app import config
+    from app.ingest import clone
+    from app.main import app
+
+    def fake_fetch(url, sha, dest, timeout):
+        shutil.copytree(FIXTURE, dest)
+
+    monkeypatch.setattr(clone, "resolve_sha", lambda url, timeout: SHA)
+    monkeypatch.setattr(clone, "fetch_commit", fake_fetch)
+    monkeypatch.setattr(config, "WORKSPACE_DIR", tmp_path / "work")
+
+    with TestClient(app) as c:
+        from app.db import pool
+
+        with pool().connection() as conn:
+            conn.execute("TRUNCATE repos RESTART IDENTITY CASCADE")
+        yield c
+
+
+def query(sql, *args):
+    from app.db import pool
+
+    with pool().connection() as conn:
+        return conn.execute(sql, args).fetchall()

@@ -155,10 +155,32 @@
     `this.app.enabled`), and a random 12 of the test/example 0.5 edges are real calls into
     express. ky (snapshot 5) was ingested before this change and has no call edges until
     re-ingested.
+- **Day 2 task 7 done (27 Oct): graph and file APIs** (`app/api/graph.py`).
+  - `GET /snapshots/{id}/graph?min_confidence=0.9&exclude_tests=true`: nodes = code files (id,
+    module `symbol_id`, path, language, loc, `external_imports` / `unresolved_imports` counts,
+    `findings` count); external/unresolved are never nodes. Edges = one per (file -> file) pair:
+    `import` (bool), `calls` (count of call edges >= min_confidence), `weight` = import + calls,
+    `confidence` = 1.0 with an import, else the best call confidence (so guess-only pairs can be
+    drawn dashed). Same-file edges left out. `exclude_tests` hides `test/`, `tests/`,
+    `__tests__/`, `examples/` (any depth), `*.test.*`, `*.spec.*`; `hidden_files` says how many.
+    404 unknown snapshot, 409 not done, 422 min_confidence outside 0..1.
+  - `GET /snapshots/{id}/files/{file_id}`: content (redacted), symbols, findings, names of
+    external and unresolved imports.
+  - `GET /symbols/{id}/dependents` / `dependencies` (`min_confidence`, default 0.9 like the graph;
+    tests are not hidden here): items `{type, confidence, symbol{...path}}`, deduped, plus a
+    `files` count. For a module symbol they cover the whole file and skip same-file edges.
+  - Confidence is REAL (0.9 is stored as 0.8999...), so filters and output use it rounded to 2
+    decimals.
+  - Fixture: `tests/check_service.py` (not `test_*`, so pytest never collects it) and
+    `web/src/lib/math.spec.ts` exercise `exclude_tests`. The `client` fixture and `query` moved
+    to `conftest.py`. Tests: 98 passed, 2 skipped (10 API tests).
+  - express (snapshot 7): default graph 7 nodes / 7 edges (`index.js` + `lib/`, 135 test and
+    example files hidden) in 43 ms; `exclude_tests=false&min_confidence=0.5`: 142 nodes, 291 edges,
+    137 of them guess-only (dashed).
 
 ## Next
 - Scope change (27 Oct, `7233e27`): Python and JS/TS both get full analysis; CLAUDE.md updated.
-- Day 2: task 7 of the Day 2 plan below (graph and file APIs).
+- Day 2: task 8 of the Day 2 plan below (web shell).
 - Running tests locally: `uv run --env-file ../.env pytest` (`.env` has `TEST_DATABASE_URL`).
 
 ## Day 2 plan
@@ -240,8 +262,8 @@ Plan decisions:
 - On API startup, jobs still `queued`/`running` are marked failed ("Interrupted by server restart").
 - Config read from `os.environ` in `app/config.py` (no pydantic-settings).
 - Dropped `jobs.attempts`, `jobs.heartbeat_at`, `jobs_queue` index (no heartbeat/requeue).
-- Discover stores Python plus common text/config files (md, rst, txt, toml, cfg, ini, yaml, json, sh)
-  so secrets in config are reported; only Python is parsed.
+- Discover stores Python, JS/TS and common text/config files (md, rst, txt, toml, cfg, ini, yaml,
+  json, sh) so secrets in config are reported; Python and JS/TS are parsed, the rest is text only.
 - **Secrets:** redaction matches become `findings` rows (`rule_id='hardcoded-secret'`, severity high,
   masked snippet) in the discover stage. The Day 3 detect stage must delete/insert only its own
   rule ids and leave `hardcoded-secret` alone.
@@ -252,6 +274,8 @@ Plan decisions:
   with `uv run uvicorn`. The full compose stack (`db`, `api`, later `web`) is kept for the demo.
 
 ## Known issues
+- `exclude_tests` uses only the agreed patterns; Python `test_*.py` / `*_test.py` outside a
+  `tests/` folder are not hidden.
 - Calls made inside anonymous callbacks (`it(...)`, `forEach(function () {...})`) get the
   enclosing named symbol, often the module, as caller. Fine for the file-level graph.
 - Call edges never use star imports (`from x import *`, `export * from`).

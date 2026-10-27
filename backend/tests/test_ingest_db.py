@@ -1,43 +1,9 @@
 """End-to-end ingestion against a real Postgres, with git replaced by the fixture repo."""
 
-import shutil
-from pathlib import Path
-
 import pytest
-from fastapi.testclient import TestClient
+from conftest import SHA, query
 
 pytestmark = pytest.mark.db
-
-FIXTURE = Path(__file__).parent / "fixtures" / "sample_repo"
-SHA = "a" * 40
-
-
-@pytest.fixture
-def client(test_db, monkeypatch, tmp_path):
-    from app import config
-    from app.ingest import clone
-    from app.main import app
-
-    def fake_fetch(url, sha, dest, timeout):
-        shutil.copytree(FIXTURE, dest)
-
-    monkeypatch.setattr(clone, "resolve_sha", lambda url, timeout: SHA)
-    monkeypatch.setattr(clone, "fetch_commit", fake_fetch)
-    monkeypatch.setattr(config, "WORKSPACE_DIR", tmp_path / "work")
-
-    with TestClient(app) as c:
-        from app.db import pool
-
-        with pool().connection() as conn:
-            conn.execute("TRUNCATE repos RESTART IDENTITY CASCADE")
-        yield c
-
-
-def query(sql, *args):
-    from app.db import pool
-
-    with pool().connection() as conn:
-        return conn.execute(sql, args).fetchall()
 
 
 def test_ingest_fixture_repo(client, tmp_path):
@@ -53,11 +19,11 @@ def test_ingest_fixture_repo(client, tmp_path):
     assert status["url"] == "https://github.com/example/sample"
 
     files = query("SELECT path FROM files ORDER BY path")
-    assert len(files) == 13  # 5 Python, 7 JS/TS, tsconfig.json
+    assert len(files) == 15  # 6 Python, 8 JS/TS, tsconfig.json
 
     rows = query("SELECT kind, count(*) AS n FROM symbols GROUP BY kind")
     kinds = {r["kind"]: r["n"] for r in rows}
-    assert kinds["module"] == 12
+    assert kinds["module"] == 14
     assert kinds["class"] >= 6
 
     js = query("SELECT s.qualified_name FROM symbols s JOIN files f ON f.id = s.file_id"
@@ -81,6 +47,7 @@ def test_ingest_fixture_repo(client, tmp_path):
         ("sample_app/service.py", "external", "logging"),
         ("sample_app/service.py", "module", "sample_app/models.py"),
         ("sample_app/settings.py", "external", "os"),
+        ("tests/check_service.py", "module", "sample_app/service.py"),
         ("web/src/app.ts", "external", "fs"),  # node:fs
         ("web/src/app.ts", "external", "react"),
         ("web/src/app.ts", "module", "web/src/lib/index.ts"),  # ./lib -> index
@@ -90,6 +57,7 @@ def test_ingest_fixture_repo(client, tmp_path):
         ("web/src/legacy.cjs", "external", "path"),
         ("web/src/legacy.cjs", "module", "web/src/util.js"),  # require("./util")
         ("web/src/lib/index.ts", "module", "web/src/lib/math.ts"),  # export ... from
+        ("web/src/lib/math.spec.ts", "module", "web/src/lib/math.ts"),
         ("web/src/server.js", "external", "http"),
         ("web/src/view.tsx", "module", "web/src/lib/index.ts"),  # @lib/index, no baseUrl
     ]
@@ -99,7 +67,7 @@ def test_ingest_fixture_repo(client, tmp_path):
         " JOIN symbols s ON s.id = e.src_id JOIN symbols d ON d.id = e.dst_id"
         " WHERE e.type = 'calls'"
     )
-    assert len(calls) == 14  # the full list is checked in test_calls.py
+    assert len(calls) == 16  # the full list is checked in test_calls.py
     assert ("sample_app.service.main", "sample_app.service.create_user", 1.0) in {
         (c["src"], c["dst"], c["confidence"]) for c in calls
     }
