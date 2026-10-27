@@ -33,7 +33,7 @@ RULES: dict[str, Rule] = {
             "Values that look like keys, tokens or passwords written into the code or config.",
             "Anyone who can read the repository can use the secret; it also stays in git history.",
             "the value is a placeholder, a test key, or loaded from the environment elsewhere. "
-            "In test files this rule reports low severity.",
+            "In test or example code this rule reports low severity.",
         ),
         Rule(
             "py-eval-exec", "python", "high", "Use of eval() or exec()",

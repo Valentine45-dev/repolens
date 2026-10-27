@@ -59,7 +59,7 @@ def test_secrets_in_test_files_are_low(detector_repo):
         ("src/config.py", "high"),
         ("tests/conftest.py", "low"),
     ]
-    assert rows[1]["message"].endswith("in a test file.")
+    assert rows[1]["message"].endswith("in test or example code.")
     assert all("fixture-not-a-real-password" not in r["snippet"] for r in rows)
 
 

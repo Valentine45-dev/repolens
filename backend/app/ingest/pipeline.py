@@ -78,7 +78,7 @@ def store_files(snapshot_id: int, files: list[DiscoveredFile]) -> None:
                         SECRET_RULE,
                         "low" if in_test else "high",
                         f"Possible hardcoded secret ({s.kind})"
-                        + (" in a test file." if in_test else "."),
+                        + (" in test or example code." if in_test else "."),
                         _secret_snippet(f.content, s.line),
                         in_test,
                     ),
