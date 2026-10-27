@@ -15,6 +15,8 @@ from psycopg.conninfo import conninfo_to_dict
 
 SCHEMA = Path(__file__).resolve().parent.parent / "schema.sql"
 FIXTURE = Path(__file__).parent / "fixtures" / "sample_repo"
+DETECTORS = Path(__file__).parent / "fixtures" / "detectors"
+SECRET_VALUE = "fixture-not-a-real-password"
 SHA = "a" * 40
 
 
@@ -89,3 +91,24 @@ def query(sql, *args):
 
     with pool().connection() as conn:
         return conn.execute(sql, args).fetchall()
+
+
+SECRET = 'DB_PASSWORD = "fixture-not-a-real-password"\n'
+
+
+@pytest.fixture
+def detector_repo(client, monkeypatch, tmp_path):
+    from app.ingest import clone
+
+    def fetch(url, sha, dest, timeout):
+        shutil.copytree(DETECTORS, dest)
+        (dest / "src").mkdir()
+        (dest / "src" / "config.py").write_text(SECRET, encoding="utf-8")
+        (dest / "tests").mkdir()
+        (dest / "tests" / "conftest.py").write_text(SECRET, encoding="utf-8")
+
+    monkeypatch.setattr(clone, "fetch_commit", fetch)
+    body = client.post("/repos", json={"url": "https://github.com/example/detectors"}).json()
+    status = client.get(f"/snapshots/{body['snapshot_id']}/status").json()
+    assert status["status"] == "done", status
+    return body["snapshot_id"]

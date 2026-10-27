@@ -11,7 +11,7 @@ class Rule:
     id: str
     language: str  # python | javascript (JS and TS) | any
     severity: str  # high | medium | low
-    label: str  # short name shown in lists
+    title: str  # short name shown in lists
     looks_for: str  # what the rule matches, in plain language
     why: str  # why it can be risky
     false_positive: str  # when a match is probably fine

@@ -70,7 +70,7 @@ def store_files(snapshot_id: int, files: list[DiscoveredFile]) -> None:
             for s in f.secrets:
                 conn.execute(
                     "INSERT INTO findings (snapshot_id, file_id, line, rule_id, severity,"
-                    " message, snippet) VALUES (%s, %s, %s, %s, %s, %s, %s)",
+                    " message, snippet, in_test) VALUES (%s, %s, %s, %s, %s, %s, %s, %s)",
                     (
                         snapshot_id,
                         file_id,
@@ -80,6 +80,7 @@ def store_files(snapshot_id: int, files: list[DiscoveredFile]) -> None:
                         f"Possible hardcoded secret ({s.kind})"
                         + (" in a test file." if in_test else "."),
                         _secret_snippet(f.content, s.line),
+                        in_test,
                     ),
                 )
 
@@ -244,7 +245,7 @@ def store_findings(snapshot_id: int, parsed: dict[str, Parsed]) -> int:
             symbol = _innermost_symbol(p.result.symbols, hit.line)
             snippet = lines[hit.line - 1].strip()[:200] if hit.line <= len(lines) else ""
             rows.append((path, symbol.qualified_name if symbol else None, hit.line, rule.id,
-                         rule.severity, rule.label, snippet))
+                         rule.severity, rule.title, snippet))
 
     with pool().connection() as conn, conn.transaction():
         conn.execute(
@@ -268,10 +269,10 @@ def store_findings(snapshot_id: int, parsed: dict[str, Parsed]) -> int:
         with conn.cursor() as cur:
             cur.executemany(
                 "INSERT INTO findings (snapshot_id, file_id, symbol_id, line, rule_id, severity,"
-                " message, snippet) VALUES (%s, %s, %s, %s, %s, %s, %s, %s)",
+                " message, snippet, in_test) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)",
                 [
                     (snapshot_id, file_ids[path], ids.get((path, qname), (None, None))[1],
-                     line, rule_id, severity, message, snippet)
+                     line, rule_id, severity, message, snippet, is_test_path(path))
                     for path, qname, line, rule_id, severity, message, snippet in rows
                 ],
             )

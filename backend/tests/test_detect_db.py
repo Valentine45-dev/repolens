@@ -1,7 +1,6 @@
 """The detect stage end to end: detector fixtures ingested as a repo (git replaced by a copy)."""
 
 import re
-import shutil
 from pathlib import Path
 
 import pytest
@@ -10,25 +9,6 @@ from conftest import query
 pytestmark = pytest.mark.db
 
 DETECTORS = Path(__file__).parent / "fixtures" / "detectors"
-SECRET = 'DB_PASSWORD = "fixture-not-a-real-password"\n'
-
-
-@pytest.fixture
-def detector_repo(client, monkeypatch, tmp_path):
-    from app.ingest import clone
-
-    def fetch(url, sha, dest, timeout):
-        shutil.copytree(DETECTORS, dest)
-        (dest / "src").mkdir()
-        (dest / "src" / "config.py").write_text(SECRET, encoding="utf-8")
-        (dest / "tests").mkdir()
-        (dest / "tests" / "conftest.py").write_text(SECRET, encoding="utf-8")
-
-    monkeypatch.setattr(clone, "fetch_commit", fetch)
-    body = client.post("/repos", json={"url": "https://github.com/example/detectors"}).json()
-    status = client.get(f"/snapshots/{body['snapshot_id']}/status").json()
-    assert status["status"] == "done", status
-    return body["snapshot_id"]
 
 
 def test_detect_stage_stores_findings_with_symbols(detector_repo):

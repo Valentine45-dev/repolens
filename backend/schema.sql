@@ -89,7 +89,8 @@ CREATE TABLE findings (
   rule_id      TEXT NOT NULL,
   severity     TEXT NOT NULL,                     -- low|medium|high
   message      TEXT NOT NULL,
-  snippet      TEXT                               -- masked
+  snippet      TEXT,                              -- masked
+  in_test      BOOLEAN NOT NULL DEFAULT false     -- file is a test/example (app/paths.py)
 );
 CREATE INDEX findings_snapshot ON findings (snapshot_id, severity);
 

@@ -280,12 +280,36 @@
     no misses. jquery/jquery @ HEAD (222 code files): 8 findings, all genuine: `innerHTML` in
     `src/manipulation.js:276` and `src/manipulation/buildFragment.js:47` (by design: `.html()`),
     the same in the vendored `test/data/jquery-3.7.1.js` (3), and 3 `eval` calls in tests.
+- **Day 3 task 3 done (28 Oct): findings API** (`app/api/findings.py`).
+  - `GET /snapshots/{id}/findings` with filters `severity`, `rule`, `language`, `path_prefix`,
+    `in_test`, and `limit` (default 50, 1..200, else 422) / `offset`. Response:
+    `{snapshot_id, total, limit, offset, items, counts}`. Items: id, rule_id, severity, message,
+    file_id, path, language, line, `symbol` (name, null at module level), masked snippet,
+    `in_test`, `node_id` (finding's symbol, else the file's module symbol, for "Open in Explorer").
+  - Order: severity rank via CASE (high, medium, low), then path (`COLLATE "C"`), line, id.
+  - `counts` (total, by_severity, by_rule) are over the whole snapshot, not the filter.
+  - 404 unknown snapshot; 422 bad severity / unknown rule / language / limit / offset; 409 with
+    the reason while detection has not finished ("…not finished yet (current stage: parse)") or
+    if the analysis failed ("Detection did not run: the analysis failed during fetch."), never
+    an empty list that reads as "no findings".
+  - `GET /rules`: the catalogue from `app/detect/rules.py` (id, language, severity, title, checks,
+    why, false_positive).
+  - Schema: `findings.in_test` (set when stored, same rule as `exclude_tests`); dev DB got one
+    `ALTER TABLE`. Index `findings_snapshot (snapshot_id, severity)` was already there.
+    Test-file findings are included by default and marked.
+  - Tests (detector fixtures as a repo): order, pages of 7 neither overlap nor skip, each filter,
+    counts ignore filters, node_id fallback, 422/404/409, raw fixture secret never in any
+    response. 151 passed, 2 skipped.
+  - Real snapshots (re-ingested): itsdangerous 7 findings, all `hardcoded-secret` in `tests/`
+    (low, `in_test`, "... in a test file."; were high on Day 1); express 1 (placeholder password in
+    `examples/auth/index.js`, low, `in_test`). Snapshots ingested before 28 Oct (old jQuery, black,
+    etc.) have `in_test=false`: re-ingest them before demoing findings.
 
 ## Next
 - Scope change (27 Oct, `7233e27`): Python and JS/TS both get full analysis; CLAUDE.md updated.
 - **`feat/graph-api` merged into `main` (28 Oct, `0c514d2`)** after CI was green on `5111572` and
   on `main` (108 passed, 2 skipped). Includes the user's logo mark and favicons.
-- Day 3 on `feat/detectors`: task 3 of the Day 3 plan (findings API).
+- Day 3 on `feat/detectors`: task 4 of the Day 3 plan (chunks + embeddings).
 - Running tests locally: `uv run --env-file ../.env pytest` (`.env` has `TEST_DATABASE_URL`).
 
 ## Day 2 plan
