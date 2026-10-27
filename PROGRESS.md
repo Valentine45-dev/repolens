@@ -37,7 +37,78 @@
     never hit it). Pinned `tree-sitter>=0.25.2,<0.26` in `pyproject.toml`.
 
 ## Next
-- Day 2: import resolution + call edges, graph/file/dependents endpoints, React shell.
+- Scope change (27 Oct, `7233e27`): Python and JS/TS both get full analysis; CLAUDE.md updated.
+- Day 2: start with task 1 of the Day 2 plan below.
+
+## Day 2 plan
+Approved 27 Oct. Each task ends with: run it, show the result, commit, update this file, stop.
+
+1. **Separate test database.**
+   - `tests/conftest.py` reads `TEST_DATABASE_URL` only, never `DATABASE_URL`.
+   - Hard error (not skip) unless the database name ends in `_test`.
+   - At session start it rebuilds the schema from `schema.sql`, so tests always see the current schema.
+   - `db-init/02-test-db.sql` creates `repolens_test` on fresh volumes; on the existing volume,
+     create it once with `createdb`.
+   - CI uses `repolens_test` via `TEST_DATABASE_URL`; the separate psql schema step goes away.
+   - `.env.example` gets `TEST_DATABASE_URL`. Test for the name guard.
+2. **Discover JS/TS + schema for unresolved imports.**
+   - Keep `.js .jsx .mjs .cjs .ts .tsx` (tsx parsed with the tsx grammar).
+   - Skip `*.min.js`, `*.bundle.js`, `*.chunk.js`, and minified files detected by very long lines
+     (`dist/` and `node_modules` are already skipped).
+   - New symbol kind `unresolved`: one per import specifier per snapshot, `file_id` NULL, so an
+     unresolved import is still an edge (edges must point at a symbol). Dev DB needs only one
+     `CREATE INDEX`; no data loss.
+3. **Parsers return symbols, imports and calls.**
+   - `parse_python` returns `ParsedFile(symbols, imports, calls)`.
+   - New `parse_js` with the same output. Symbols: module, class, function (including top-level
+     `const f = () =>`), method.
+   - JS imports from `import` / `export ... from`, `require('x')`, and `import('x')` with a literal.
+   - Add JS/TS files to the fixture repo: `require`, `index`, `.js` -> `.ts`, a tsconfig alias.
+4. **Python import resolution + new `edges` stage.**
+   - Module map from file paths, including `src/` layouts; relative imports; `from pkg import name`
+     tries module `pkg.name` first.
+   - Not found internally -> `external`; relative import with no matching file -> `unresolved`.
+   - Stage does delete-then-insert for edges plus external/unresolved symbols.
+   - Show edge counts on itsdangerous.
+5. **JS/TS import resolution, then the JS checkpoint.**
+   - Extension and `index` probing; TS-style `./x.js` maps to `x.ts`; `node:fs` and bare package
+     names -> `external`.
+   - tsconfig `paths` from the root `tsconfig.json` only, and only when each pattern has one `*` and
+     one target; anything else -> `unresolved`.
+   - Checkpoint done right after this task, not at end of day: ingest one small real JS repo and one
+     small TS repo. Candidates: `expressjs/express` (CommonJS) and `sindresorhus/ky` (TS); check
+     sizes first.
+   - **Hand-check ~20 edges from source files (`lib/`, `src/`), not tests.**
+   - If it fails: JS/TS drops to symbols-only, recorded here.
+6. **Call edges, both languages.** Name-based, with confidence:
+   - **1.0** callee defined in the same file or explicitly imported.
+   - **0.9** `self.m()` / `this.m()` calling a method in the same class.
+   - **0.5** unique name match elsewhere in the snapshot.
+   - Ambiguous names: no edge.
+7. **Graph and file APIs.**
+   - `GET /snapshots/{id}/graph`: file nodes, import and call edges with weights.
+     **Unresolved and external nodes are hidden by default; each file shows only per-file counts of
+     its external and unresolved imports.**
+   - `GET /snapshots/{id}/files/{file_id}`: content, symbols, findings.
+   - `/symbols/{id}/dependents` and `/symbols/{id}/dependencies` (design doc paths); for a module
+     symbol they cover the whole file.
+   - DB tests on the fixture repo.
+8. **Web shell (`web/`).**
+   - Vite React TS, TanStack Query, React Router.
+   - Home (URL input); snapshot page polls status and shows stage, percent, error.
+   - Light-theme CSS variables. Vite proxies `/api` to the API (no CORS).
+   - `web` service in compose for the demo; day to day `npm run dev` natively.
+9. **Graph view + node panel.**
+   - React Flow (`@xyflow/react`) with dagre for layout (React Flow does not position nodes).
+   - Node panel: code (plain `<pre>` with line numbers) and "Used by" / "Uses".
+   - End of Day 2: end-to-end run, push, green CI, then ask before merging.
+
+Plan decisions:
+- New dependencies: `tree-sitter-javascript` 0.25.0 and `tree-sitter-typescript` 0.23.2 (both load
+  and parse on the pinned tree-sitter 0.25.2); frontend `@xyflow/react`, `@tanstack/react-query`,
+  `react-router-dom`, `@dagrejs/dagre`. No highlighter or UI kit.
+- `unresolved` as a symbol kind is the smallest schema change that lets an unresolved import be an edge.
+- If time runs short, task 6 (call edges) shrinks first: same-file and explicitly imported calls only.
 
 ## Decisions
 - Python 3.12 everywhere (safer for torch / sentence-transformers on Day 3).
