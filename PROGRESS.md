@@ -202,11 +202,51 @@
     retried to done, 375 px width (recent rows stack).
   - `exclude_tests` also hides Python `test_*.py` / `*_test.py`.
   - Day to day: `npm run dev` in `web/` with the API on :8000; `npm run build` type-checks.
+- **Day 2 task 9 done (27-28 Oct): Explorer (graph view + node panel)**, `/a/:id/explore`
+  (lazy-loaded; React Flow 12 + dagre 3).
+  - Toolbar: Graph/List, "Show test files" (`exclude_tests`), "Show guessed calls"
+    (`min_confidence=0.5`), Fit, and a note ("N files · M test files hidden", or "Showing 300 of
+    415 files, the most connected. List view shows all."). State in the URL (`tests`, `guesses`,
+    `view`, `node`).
+  - Graph: file nodes (name over folder, `py`/`js`/`ts` mark), edges point at the file used;
+    guesses (confidence < 0.9) dashed, legend with the spec microcopy. Render cap 300, keeping the
+    most connected files. dagre layers taller than 24 wrap into columns. First view fits the
+    whole graph only when names stay readable (zoom >= 0.8), else frames the hub and its
+    neighbours; Fit shows everything. Selecting a file centres it beside the panel; focus mode
+    dims the rest.
+  - List view: every file (never capped) with uses / used by / external / unresolved; phones
+    (< 768px) get the list only with "The graph view needs a larger screen."
+  - Node panel: path, language, lines; Used by / Uses / External / Unresolved counts; tabs Code
+    (line numbers), Used by, Uses (grouped by file, external/unresolved tagged, guesses marked).
+    Esc or x closes; focus moves in on open and back to the opener on close. Queries keyed per
+    node and cancelled on switch, so a slow answer never lands in another node's panel.
+  - Progress: a watched run shows "Analysis complete." + "Open graph" and opens the graph after
+    1.2s (replacing the Progress entry, so Back leaves the analysis); opening a finished `/a/:id`
+    goes straight to the graph.
+  - Network: connection errors (fetch failure, proxy 502/503/504) retry with backoff 1-10s,
+    forever, and show "Connection lost, reconnecting…" while keeping the last data; React
+    Query pauses offline and resumes on reconnect. "Analysis failed" only from the server.
+  - Error boundary around all routes (resets on navigation). 4xx are never retried.
+  - Backend: a fetch that fails with a network error or timeout is retried once on a clean
+    workspace if a full attempt still fits before the deadline (`CloneError.transient`).
+  - `--node-external` #a1a1aa -> #71717a (4.8:1); new `--edge` #8a8a93 (3.4:1). DESIGN.md has
+    the graph tokens, Explorer components and the 900/767/560 breakpoints.
+  - Live checks (Playwright at 1440x900, 820, 390): express default and with both toggles,
+    itsdangerous with panel and Uses tab, list view, psf/black (503 files kept, 415 parsed:
+    55 shown by default, cap 300 of 415 with tests), API stopped mid-session (reconnecting, then
+    recovered without reload, backoff 1/2/4/8/10s), Back after auto-open, focus in/out.
+    Production build renders black's capped graph in ~2.0s.
+  - Design review (impeccable finish reviewer): first pass asked for mobile/tablet/complete
+    captures and found spec §10 phone list-only missing and page overflow on phones (fixed);
+    second pass found unreadable default zoom, selection hidden behind the panel, Back bouncing,
+    panel focus (all fixed).
+  - Tests: 108 passed, 2 skipped (fetch retry: transient classification, retried once, not for
+    other errors, not without time left).
 
 ## Next
 - Scope change (27 Oct, `7233e27`): Python and JS/TS both get full analysis; CLAUDE.md updated.
-- Day 2: task 9 of the Day 2 plan below (graph view + node panel). When it lands, Progress
-  should send a finished analysis to the graph instead of stopping at "Analysis complete."
+- Day 2 is done on `feat/graph-api`: end-to-end run, green CI, then ask before merging into `main`.
+- Day 3: detectors + findings API, then Q&A (see Day 3 notes).
 - Running tests locally: `uv run --env-file ../.env pytest` (`.env` has `TEST_DATABASE_URL`).
 
 ## Day 2 plan
@@ -308,6 +348,9 @@ Agreed 27 Oct, to apply when building Day 3:
   with `uv run uvicorn`. The full compose stack (`db`, `api`, later `web`) is kept for the demo.
 
 ## Known issues
+- A dagre layout of 300 nodes takes ~0.4s on the main thread (dev); fine at the cap, would need
+  a worker if the cap grows.
+- React Flow logs a `nodeTypes` warning in dev StrictMode (double mount); not in production.
 - The in-app browser pane sometimes times out on screenshots when the window is behind others;
   `get_page_text` still works.
 - Progress percent for parse updates every 50 files (pipeline), so small repos jump straight past it.

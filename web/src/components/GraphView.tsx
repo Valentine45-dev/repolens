@@ -86,9 +86,9 @@ function DepEdge(props: EdgeProps<DepFlowEdge>) {
   );
 }
 
-// The Fit button: the whole graph, with room at the bottom for the legend.
+// The Fit button: the whole graph.
 export const FIT_OPTIONS: FitViewOptions = {
-  padding: { top: "24px", right: "24px", bottom: "112px", left: "24px" },
+  padding: "24px",
   maxZoom: 1.1,
 };
 
@@ -159,8 +159,20 @@ export function GraphView({
   const [fitOnMount] = useState(selectedId === null);
   const canvasRef = useRef<HTMLDivElement>(null);
   const [ready, setReady] = useState(false); // set by onInit: the viewport can be moved
+  // The canvas narrows when the docked panel opens; centring must use the final size, so it
+  // re-runs whenever the canvas is resized.
+  const [canvasSize, setCanvasSize] = useState("");
   useEffect(() => {
-    if (selectedId === null || !ready) return;
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const observer = new ResizeObserver(() =>
+      setCanvasSize(`${canvas.clientWidth}x${canvas.clientHeight}`),
+    );
+    observer.observe(canvas);
+    return () => observer.disconnect();
+  }, []);
+  useEffect(() => {
+    if (selectedId === null || !ready || !canvasSize) return;
     const p = positions.get(selectedId);
     const canvas = canvasRef.current;
     if (!p || !canvas) return;
@@ -177,7 +189,7 @@ export function GraphView({
       });
     });
     return () => cancelAnimationFrame(frame);
-  }, [selectedId, positions, ready, getViewport, setCenter]);
+  }, [selectedId, positions, ready, canvasSize, getViewport, setCenter]);
 
   // Focus mode: with a file selected, everything outside its 1-hop neighbourhood is dimmed.
   const neighbourhood = useMemo(() => {

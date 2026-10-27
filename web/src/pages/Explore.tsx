@@ -143,6 +143,10 @@ function ExploreInner() {
         </p>
       </div>
 
+      {!listView && graph.data && graph.data.nodes.length > 0 ? (
+        <Legend showGuesses={showGuesses} />
+      ) : null}
+
       <div className="explore-body">
         <div className="canvas">
           {hardError && !graph.data ? (
@@ -178,7 +182,6 @@ function ExploreInner() {
                 selectedId={selectedId}
                 onSelect={select}
               />
-              <Legend showGuesses={showGuesses} />
               {selectedId !== null && selected && !shownIds.has(selectedId) ? (
                 <p className="canvas-hint caption">
                   {selected.path} is outside the {RENDER_CAP} files drawn. It is in List view.

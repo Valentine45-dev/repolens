@@ -634,9 +634,9 @@ a {
 /* --- Explorer (full width: the graph needs it) --- */
 
 .explore {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr); /* never wider than the viewport */
-  grid-template-rows: auto auto minmax(0, 1fr);
+  display: flex;
+  flex-direction: column;
+  min-width: 0; /* never wider than the viewport */
   height: calc(100dvh - var(--topbar-h));
 }
 
@@ -724,7 +724,9 @@ a {
 .explore-body {
   position: relative;
   display: flex;
+  flex: 1;
   min-height: 0;
+  min-width: 0;
 }
 
 .canvas {
@@ -856,18 +858,14 @@ a {
   opacity: 0.15;
 }
 
+/* A strip under the toolbar, not over the canvas, so it never hides a node. */
 .legend {
-  position: absolute;
-  left: var(--space-4);
-  bottom: var(--space-4);
-  z-index: 5;
-  display: grid;
-  gap: var(--space-1);
-  max-width: 340px;
-  padding: var(--space-2) var(--space-3);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-control);
-  background: var(--bg);
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-1) var(--space-6);
+  padding: var(--space-2) var(--space-6);
+  border-bottom: 1px solid var(--border);
+  background: var(--surface);
   font-size: var(--text-xs);
   color: var(--text-muted);
 }
@@ -986,7 +984,8 @@ a {
 
 .panel-title:focus-visible {
   outline: 2px solid var(--focus-ring);
-  outline-offset: 2px;
+  outline-offset: 0; /* hugs the title; never crosses the caption below */
+  border-radius: 2px;
 }
 
 .panel-facts {
@@ -1148,7 +1147,8 @@ a {
   }
 
   .explore-header,
-  .toolbar {
+  .toolbar,
+  .legend {
     padding-left: var(--space-4);
     padding-right: var(--space-4);
   }
