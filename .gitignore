@@ -44,3 +44,6 @@ desktop.ini
 
 # Playwright MCP snapshots and logs (local only)
 .playwright-mcp/
+
+# Local-only Claude Code config
+.claude/launch.json

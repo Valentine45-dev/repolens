@@ -1,6 +1,6 @@
 {
   "schemaVersion": 2,
-  "generatedAt": "2026-10-27T00:00:00Z",
+  "generatedAt": "2026-10-28T00:00:00Z",
   "title": "Design System: RepoLens",
   "extensions": {
     "colorMeta": {
@@ -187,27 +187,82 @@
       "node-python": {
         "role": "graph",
         "displayName": "Python Blue",
-        "canonical": "#2f5d8a"
+        "canonical": "#2f5d8a",
+        "tonalRamp": [
+          "#0f1f2f",
+          "#1a3550",
+          "#244a6e",
+          "#2f5d8a",
+          "#4a7aa8",
+          "#7aa0c4",
+          "#b3c9df",
+          "#eaf1f8"
+        ],
+        "purpose": "Language mark fill on Python file nodes; always paired with the text py."
       },
       "node-js": {
         "role": "graph",
         "displayName": "JS Ochre",
-        "canonical": "#a16207"
+        "canonical": "#a16207",
+        "tonalRamp": [
+          "#422006",
+          "#713f12",
+          "#854d0e",
+          "#a16207",
+          "#ca8a04",
+          "#eab308",
+          "#fde047",
+          "#fefce8"
+        ],
+        "purpose": "Language mark fill on JavaScript and TypeScript file nodes; paired with js / ts."
       },
       "node-other": {
         "role": "graph",
         "displayName": "Other",
-        "canonical": "#52525b"
+        "canonical": "#52525b",
+        "tonalRamp": [
+          "#18181b",
+          "#27272a",
+          "#3f3f46",
+          "#52525b",
+          "#71717a",
+          "#a1a1aa",
+          "#d4d4d8",
+          "#f4f4f5"
+        ],
+        "purpose": "Language mark fill for any other language."
       },
       "node-external": {
         "role": "graph",
         "displayName": "External Grey",
-        "canonical": "#71717a"
+        "canonical": "#71717a",
+        "tonalRamp": [
+          "#18181b",
+          "#27272a",
+          "#3f3f46",
+          "#52525b",
+          "#71717a",
+          "#a1a1aa",
+          "#d4d4d8",
+          "#f4f4f5"
+        ],
+        "purpose": "Dashed outline of the external tag in the node panel; corrected from #a1a1aa (2.6:1) to 4.8:1 on Paper."
       },
       "edge": {
         "role": "graph",
         "displayName": "Edge Grey",
-        "canonical": "#8a8a93"
+        "canonical": "#8a8a93",
+        "tonalRamp": [
+          "#18181b",
+          "#27272a",
+          "#3f3f46",
+          "#52525b",
+          "#8a8a93",
+          "#a1a1aa",
+          "#d4d4d8",
+          "#f4f4f5"
+        ],
+        "purpose": "Graph edges at rest and legend lines; 3.4:1 on Paper. Edges touching the selection turn Ink; guesses are dashed, never recoloured."
       }
     },
     "typographyMeta": {
@@ -221,7 +276,7 @@
       },
       "wordmark": {
         "displayName": "Wordmark",
-        "purpose": "RepoLens in the top bar beside a 12px black square."
+        "purpose": "RepoLens in the top bar beside the 20px logo mark (a three-node graph inside a lens)."
       },
       "body-lg": {
         "displayName": "Body Large",
@@ -250,6 +305,11 @@
         "name": "focus-ring",
         "value": "outline: 2px solid var(--focus-ring); outline-offset: 2px",
         "purpose": "Global keyboard focus; inputs use offset 0 and an Ink border; invalid inputs use Failed Red."
+      },
+      {
+        "name": "focus-ring-hug",
+        "value": "outline: 2px solid var(--focus-ring); outline-offset: 0; border-radius: 2px",
+        "purpose": "Node panel title after focus is moved there; hugs the title so it never crosses the caption below."
       }
     ],
     "motion": [
@@ -272,21 +332,49 @@
         "name": "spin",
         "value": "900ms linear infinite",
         "purpose": "Spinner icon; 2.4s under prefers-reduced-motion, where transitions also collapse to 0.01ms."
+      },
+      {
+        "name": "graph-dim",
+        "value": "opacity 150ms cubic-bezier(0.16, 1, 0.3, 1)",
+        "purpose": "File nodes fade to 28% (edges to 15%) outside the selected file's neighbours."
       }
     ],
     "breakpoints": [
       {
+        "name": "explorer-overlay",
+        "value": "900px",
+        "query": "(max-width: 900px)",
+        "purpose": "Explorer: the node panel stops docking beside the canvas and overlays it from the right as a drawer (min(100%, 480px)); the selected file is re-centred in the canvas area the panel leaves free; the toolbar caption drops to its own line."
+      },
+      {
+        "name": "phone",
+        "value": "767px",
+        "query": "(max-width: 767px)",
+        "purpose": "Explorer (spec \u00a710): list view only. The Graph/List control is replaced by the caption \"The graph view needs a larger screen.\"; the URL keeps its view value."
+      },
+      {
         "name": "narrow",
         "value": "560px",
-        "purpose": "Gutters 16px, URL row stacks with full-width button, list rows collapse to one column."
+        "query": "(max-width: 560px)",
+        "purpose": "All screens: gutters 16px, URL row stacks with a full-width button, recent rows collapse to one column, node panel facts go to two columns, file list hides Language, External and Unresolved columns. Paths wrap only after a \"/\"."
       }
     ],
     "layout": {
       "pageMaxWidth": "688px",
       "contentWidth": "640px",
       "pageTopPadding": "clamp(32px, 14vh, 128px)",
+      "pageBottomPadding": "48px",
       "topbarHeight": "52px",
-      "controlHeight": "40px"
+      "controlHeight": "40px",
+      "explorer": {
+        "width": "full viewport (the one exception to The One Column Rule)",
+        "height": "calc(100dvh - 52px)",
+        "structure": "header row (repo title 16/500, 16px 24px 12px padding) > ruled toolbar (Hairline bottom) > legend strip (graph view only) > body: canvas flex 1 + node panel docked right",
+        "panelWidth": "min(480px, 42vw); min(100%, 480px) overlay under 900px",
+        "graphNode": "200x44",
+        "firstView": "Fit the whole graph only when zoom stays at 0.8 or more; otherwise open on the most connected file and its neighbours. Fit always shows everything. A selected file is centred in the canvas area the panel leaves free.",
+        "listRowHeight": "36px"
+      }
     }
   },
   "components": [
@@ -326,9 +414,9 @@
       "name": "Top Bar",
       "kind": "nav",
       "refersTo": "topbar",
-      "description": "Sticky 52px bar: wordmark with black square, links only to pages that exist.",
-      "html": "<header class=\"ds-topbar\"><a class=\"ds-wordmark\" href=\"#\"><span class=\"ds-wordmark-mark\"></span>RepoLens</a><nav><a class=\"ds-topbar-link\" href=\"#\" aria-current=\"page\">New analysis</a></nav></header>",
-      "css": ".ds-topbar { display: flex; align-items: center; gap: 24px; height: 52px; padding: 0 24px; background: var(--bg, #ffffff); border-bottom: 1px solid var(--border, #e4e4e7); font-family: \"Inter Variable\", Inter, system-ui, sans-serif; font-size: 14px; } .ds-wordmark { display: inline-flex; align-items: center; gap: 8px; font-weight: 600; font-size: 16px; letter-spacing: -0.01em; color: var(--text, #0a0a0a); text-decoration: none; } .ds-wordmark-mark { width: 12px; height: 12px; border-radius: 2px; background: var(--primary, #0a0a0a); } .ds-topbar-link { color: var(--text-muted, #52525b); text-decoration: none; font-weight: 500; padding: 4px 0; border-bottom: 1px solid transparent; transition: color 150ms cubic-bezier(0.16, 1, 0.3, 1), border-color 150ms cubic-bezier(0.16, 1, 0.3, 1); } .ds-topbar-link:hover { color: var(--text, #0a0a0a); } .ds-topbar-link[aria-current=\"page\"] { color: var(--text, #0a0a0a); border-bottom-color: var(--text, #0a0a0a); } .ds-topbar-link:focus-visible { outline: 2px solid var(--focus-ring, #0a0a0a); outline-offset: 2px; }"
+      "description": "Sticky 52px bar: 20px logo mark (three-node graph inside a lens) and wordmark, links only to pages that exist.",
+      "html": "<header class=\"ds-topbar\"><a class=\"ds-wordmark\" href=\"#\"><svg class=\"ds-wordmark-mark\" width=\"20\" height=\"20\" viewBox=\"0 0 64 64\" fill=\"none\" aria-hidden=\"true\"><path d=\"M19 33 L27 19 L35 33 Z\" stroke=\"currentColor\" stroke-width=\"2.4\" stroke-linejoin=\"round\"/><circle cx=\"27\" cy=\"19\" r=\"3.6\" fill=\"currentColor\"/><circle cx=\"19\" cy=\"33\" r=\"3.6\" fill=\"currentColor\"/><circle cx=\"35\" cy=\"33\" r=\"3.6\" fill=\"currentColor\"/><circle cx=\"27\" cy=\"27\" r=\"19\" stroke=\"currentColor\" stroke-width=\"5\"/><path d=\"M41 41 L56 56\" stroke=\"currentColor\" stroke-width=\"7\" stroke-linecap=\"round\"/></svg>RepoLens</a><nav><a class=\"ds-topbar-link\" href=\"#\" aria-current=\"page\">New analysis</a></nav></header>",
+      "css": ".ds-topbar { display: flex; align-items: center; gap: 24px; height: 52px; padding: 0 24px; background: var(--bg, #ffffff); border-bottom: 1px solid var(--border, #e4e4e7); font-family: \"Inter Variable\", Inter, system-ui, sans-serif; font-size: 14px; } .ds-wordmark { display: inline-flex; align-items: center; gap: 8px; font-weight: 600; font-size: 16px; letter-spacing: -0.01em; color: var(--text, #0a0a0a); text-decoration: none; } .ds-wordmark-mark { display: block; width: 20px; height: 20px; flex: none; color: var(--primary, #0a0a0a); } .ds-wordmark:focus-visible { outline: 2px solid var(--focus-ring, #0a0a0a); outline-offset: 2px; } .ds-topbar-link { color: var(--text-muted, #52525b); text-decoration: none; font-weight: 500; padding: 4px 0; border-bottom: 1px solid transparent; transition: color 150ms cubic-bezier(0.16, 1, 0.3, 1), border-color 150ms cubic-bezier(0.16, 1, 0.3, 1); } .ds-topbar-link:hover { color: var(--text, #0a0a0a); } .ds-topbar-link[aria-current=\"page\"] { color: var(--text, #0a0a0a); border-bottom-color: var(--text, #0a0a0a); } .ds-topbar-link:focus-visible { outline: 2px solid var(--focus-ring, #0a0a0a); outline-offset: 2px; }"
     },
     {
       "name": "Recent List",
@@ -353,6 +441,54 @@
       "description": "Bench Grey panel reporting a stopped analysis, with secondary action and text link.",
       "html": "<div class=\"ds-callout\" data-tone=\"error\"><p class=\"ds-callout-title\">Stopped while parsing code.</p><p>Clone timed out after 120 s.</p><div class=\"ds-callout-actions\"><button class=\"ds-callout-btn\">Retry analysis</button><a class=\"ds-text-link\" href=\"#\">Analyze a different repository</a></div></div>",
       "css": ".ds-callout { padding: 16px; border: 1px solid var(--border, #e4e4e7); border-radius: 10px; background: var(--surface, #fafafa); font-family: \"Inter Variable\", Inter, system-ui, sans-serif; font-size: 14px; color: var(--text, #0a0a0a); max-width: 640px; } .ds-callout p { margin: 0; } .ds-callout-title + p { margin-top: 4px; } .ds-callout[data-tone=\"error\"] { border-color: color-mix(in srgb, var(--danger, #b42318) 35%, var(--border, #e4e4e7)); } .ds-callout-title { font-weight: 600; } .ds-callout[data-tone=\"error\"] .ds-callout-title { color: var(--danger, #b42318); } .ds-callout-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 16px; margin-top: 16px; } .ds-callout-btn { height: 40px; padding: 0 16px; border: 1px solid var(--border-strong, #d4d4d8); border-radius: 6px; background: var(--bg, #ffffff); color: var(--text, #0a0a0a); font: inherit; font-weight: 500; cursor: pointer; transition: background-color 150ms cubic-bezier(0.16, 1, 0.3, 1); } .ds-callout-btn:hover { background: var(--surface-2, #f4f4f5); } .ds-callout-btn:focus-visible, .ds-text-link:focus-visible { outline: 2px solid var(--focus-ring, #0a0a0a); outline-offset: 2px; } .ds-text-link { color: var(--text, #0a0a0a); font-weight: 500; text-underline-offset: 3px; text-decoration-thickness: 1px; } .ds-text-link:hover { color: var(--text-muted, #52525b); }"
+    },
+    {
+      "name": "File Node",
+      "kind": "custom",
+      "refersTo": "graph-node",
+      "description": "Explorer graph node: 200x44 Paper rectangle with language mark, mono file name over its left-truncated folder. Selected and dimmed states shown.",
+      "html": "<div class=\"ds-node-row\"><div class=\"ds-node\" data-lang=\"python\" tabindex=\"0\"><span class=\"ds-node-lang\">py</span><span class=\"ds-node-text\"><span class=\"ds-node-name\">signer.py</span><span class=\"ds-node-dir\"><bdi>src/itsdangerous</bdi></span></span></div><div class=\"ds-node\" data-lang=\"typescript\" data-selected tabindex=\"0\"><span class=\"ds-node-lang\">ts</span><span class=\"ds-node-text\"><span class=\"ds-node-name\">router.ts</span><span class=\"ds-node-dir\"><bdi>lib/router</bdi></span></span></div><div class=\"ds-node\" data-dimmed tabindex=\"0\"><span class=\"ds-node-lang\">md</span><span class=\"ds-node-text\"><span class=\"ds-node-name\">README.md</span><span class=\"ds-node-dir\"><bdi>.</bdi></span></span></div></div>",
+      "css": ".ds-node-row { display: flex; flex-wrap: wrap; gap: 16px; font-family: \"Inter Variable\", Inter, system-ui, sans-serif; } .ds-node { display: flex; align-items: center; gap: 8px; width: 200px; height: 44px; padding: 0 8px; border: 1px solid var(--border-strong, #d4d4d8); border-radius: 4px; background: var(--bg, #ffffff); color: var(--text, #0a0a0a); cursor: pointer; transition: opacity 150ms cubic-bezier(0.16, 1, 0.3, 1), border-color 150ms cubic-bezier(0.16, 1, 0.3, 1); } .ds-node:hover { border-color: var(--text-subtle, #71717a); } .ds-node:focus-visible { outline: 2px solid var(--focus-ring, #0a0a0a); outline-offset: 2px; } .ds-node[data-selected] { border-color: var(--text, #0a0a0a); outline: 2px solid var(--text, #0a0a0a); } .ds-node[data-dimmed] { opacity: 0.28; } .ds-node-lang { flex: none; width: 22px; padding: 1px 0; border-radius: 3px; background: var(--node-other, #52525b); color: var(--bg, #ffffff); font-family: \"JetBrains Mono\", ui-monospace, monospace; font-size: 10px; font-weight: 500; text-align: center; } .ds-node[data-lang=\"python\"] .ds-node-lang { background: var(--node-python, #2f5d8a); } .ds-node[data-lang=\"javascript\"] .ds-node-lang, .ds-node[data-lang=\"typescript\"] .ds-node-lang { background: var(--node-js, #a16207); } .ds-node-text { display: flex; flex-direction: column; min-width: 0; line-height: 1.25; } .ds-node-name { overflow: hidden; font-family: \"JetBrains Mono\", ui-monospace, monospace; font-size: 12px; font-weight: 500; text-overflow: ellipsis; white-space: nowrap; } .ds-node-dir { overflow: hidden; color: var(--text-subtle, #71717a); font-family: \"JetBrains Mono\", ui-monospace, monospace; font-size: 10px; text-overflow: ellipsis; white-space: nowrap; direction: rtl; text-align: left; }"
+    },
+    {
+      "name": "Legend Strip",
+      "kind": "custom",
+      "refersTo": "legend",
+      "description": "Bench Grey strip between the Explorer toolbar and the canvas (graph view only); never floats over a node.",
+      "html": "<div class=\"ds-legend\" aria-label=\"Legend\"><div class=\"ds-legend-row\"><svg width=\"28\" height=\"8\" aria-hidden=\"true\"><line x1=\"0\" y1=\"4\" x2=\"28\" y2=\"4\" class=\"ds-legend-line\"/></svg>Import or call (arrow points to the file used)</div><div class=\"ds-legend-row\" data-muted><svg width=\"28\" height=\"8\" aria-hidden=\"true\"><line x1=\"0\" y1=\"4\" x2=\"28\" y2=\"4\" class=\"ds-legend-line\" stroke-dasharray=\"5 4\"/></svg><span>Dashed: a best guess. Dynamic code makes some calls hard to resolve. Hidden; turn on \u201cShow guessed calls\u201d.</span></div></div>",
+      "css": ".ds-legend { display: flex; flex-wrap: wrap; gap: 4px 24px; padding: 8px 24px; border-bottom: 1px solid var(--border, #e4e4e7); background: var(--surface, #fafafa); font-family: \"Inter Variable\", Inter, system-ui, sans-serif; font-size: 12px; color: var(--text-muted, #52525b); } .ds-legend-row { display: flex; align-items: center; gap: 8px; } .ds-legend-row svg { flex: none; } .ds-legend-row[data-muted] { color: var(--text-subtle, #71717a); } .ds-legend-line { stroke: var(--edge, #8a8a93); stroke-width: 1.5; }"
+    },
+    {
+      "name": "Explorer Toolbar",
+      "kind": "custom",
+      "refersTo": "toolbar",
+      "description": "Ruled toolbar: segmented Graph/List control, native Ink-accent checkboxes, small secondary Fit button, right-aligned caption.",
+      "html": "<div class=\"ds-toolbar\"><div class=\"ds-segmented\" role=\"group\" aria-label=\"View\"><button aria-pressed=\"true\">Graph</button><button aria-pressed=\"false\">List</button></div><label class=\"ds-check\"><input type=\"checkbox\"> Show test files</label><label class=\"ds-check\"><input type=\"checkbox\" checked> Show guessed calls</label><button class=\"ds-btn-small\">Fit</button><span class=\"ds-toolbar-note\"><span class=\"ds-mono\">42</span> files \u00b7 <span class=\"ds-mono\">6</span> test files hidden</span></div>",
+      "css": ".ds-toolbar { display: flex; flex-wrap: wrap; align-items: center; gap: 12px 24px; padding: 12px 24px; border-bottom: 1px solid var(--border, #e4e4e7); font-family: \"Inter Variable\", Inter, system-ui, sans-serif; font-size: 14px; color: var(--text, #0a0a0a); } .ds-segmented { display: inline-flex; padding: 2px; border: 1px solid var(--border-strong, #d4d4d8); border-radius: 6px; background: var(--surface, #fafafa); } .ds-segmented button { height: 26px; padding: 0 12px; border: 0; border-radius: 4px; background: transparent; color: var(--text-muted, #52525b); font: inherit; font-size: 12px; font-weight: 500; cursor: pointer; } .ds-segmented button[aria-pressed=\"true\"] { background: var(--bg, #ffffff); color: var(--text, #0a0a0a); outline: 1px solid var(--border-strong, #d4d4d8); } .ds-segmented button:focus-visible { outline: 2px solid var(--focus-ring, #0a0a0a); outline-offset: 2px; } .ds-check { display: inline-flex; align-items: center; gap: 8px; cursor: pointer; user-select: none; } .ds-check input { width: 16px; height: 16px; margin: 0; accent-color: var(--primary, #0a0a0a); cursor: pointer; } .ds-check input:focus-visible { outline: 2px solid var(--focus-ring, #0a0a0a); outline-offset: 2px; } .ds-btn-small { height: 30px; padding: 0 12px; border: 1px solid var(--border-strong, #d4d4d8); border-radius: 6px; background: var(--bg, #ffffff); color: var(--text, #0a0a0a); font: inherit; font-size: 12px; font-weight: 500; cursor: pointer; transition: background-color 150ms cubic-bezier(0.16, 1, 0.3, 1); } .ds-btn-small:hover { background: var(--surface-2, #f4f4f5); } .ds-btn-small:focus-visible { outline: 2px solid var(--focus-ring, #0a0a0a); outline-offset: 2px; } .ds-toolbar-note { margin-left: auto; color: var(--text-subtle, #71717a); font-size: 12px; } .ds-mono { font-family: \"JetBrains Mono\", ui-monospace, monospace; font-variant-numeric: tabular-nums; }"
+    },
+    {
+      "name": "Node Panel",
+      "kind": "custom",
+      "refersTo": "panel",
+      "description": "Docked right panel: mono path title, caption, close button, four-fact row, underline tabs, and a code view with a sticky Bench Grey line-number gutter.",
+      "html": "<aside class=\"ds-panel\"><header class=\"ds-panel-header\"><div class=\"ds-panel-heading\"><h2 class=\"ds-panel-title\" tabindex=\"-1\">src/itsdangerous/signer.py</h2><p class=\"ds-caption\">Python \u00b7 <span class=\"ds-mono\">257</span> lines</p></div><button class=\"ds-icon-button\" aria-label=\"Close panel\"><svg width=\"16\" height=\"16\" viewBox=\"0 0 16 16\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.5\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M4.5 4.5l7 7m0-7l-7 7\"/></svg></button></header><dl class=\"ds-facts\"><div><dt>Used by</dt><dd class=\"ds-mono\">3 files</dd></div><div><dt>Uses</dt><dd class=\"ds-mono\">4 files</dd></div><div><dt>External imports</dt><dd class=\"ds-mono\">2</dd></div><div><dt>Unresolved imports</dt><dd class=\"ds-mono\">0</dd></div></dl><div class=\"ds-tabs\" role=\"tablist\"><button class=\"ds-tab\" role=\"tab\" aria-selected=\"true\">Code</button><button class=\"ds-tab\" role=\"tab\" aria-selected=\"false\">Used by</button><button class=\"ds-tab\" role=\"tab\" aria-selected=\"false\">Uses</button></div><div class=\"ds-panel-body\"><div class=\"ds-code\"><pre class=\"ds-code-gutter\">1\n2\n3\n4</pre><pre class=\"ds-code-text\">import hashlib\nimport hmac\n\nfrom .encoding import want_bytes</pre></div></div></aside>",
+      "css": ".ds-panel { display: flex; flex-direction: column; width: min(480px, 100%); border-left: 1px solid var(--border, #e4e4e7); background: var(--bg, #ffffff); font-family: \"Inter Variable\", Inter, system-ui, sans-serif; font-size: 14px; color: var(--text, #0a0a0a); } .ds-panel-header { display: flex; align-items: flex-start; gap: 12px; padding: 16px 16px 12px; } .ds-panel-heading { flex: 1; min-width: 0; } .ds-panel-title { margin: 0; font-family: \"JetBrains Mono\", ui-monospace, monospace; font-size: 0.93em; font-weight: 500; overflow-wrap: anywhere; } .ds-panel-title:focus-visible { outline: 2px solid var(--focus-ring, #0a0a0a); outline-offset: 0; border-radius: 2px; } .ds-caption { margin: 0; color: var(--text-subtle, #71717a); font-size: 12px; } .ds-icon-button { display: inline-flex; align-items: center; justify-content: center; width: 30px; height: 30px; flex: none; border: 1px solid transparent; border-radius: 6px; background: transparent; color: var(--text-muted, #52525b); cursor: pointer; transition: background-color 150ms cubic-bezier(0.16, 1, 0.3, 1), color 150ms cubic-bezier(0.16, 1, 0.3, 1); } .ds-icon-button:hover { background: var(--surface-2, #f4f4f5); color: var(--text, #0a0a0a); } .ds-icon-button:focus-visible { outline: 2px solid var(--focus-ring, #0a0a0a); outline-offset: 2px; } .ds-facts { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; margin: 0; padding: 0 16px 12px; } .ds-facts dt { color: var(--text-subtle, #71717a); font-size: 11px; } .ds-facts dd { margin: 0; font-size: 14px; } .ds-mono { font-family: \"JetBrains Mono\", ui-monospace, monospace; font-variant-numeric: tabular-nums; } .ds-tabs { display: flex; gap: 16px; padding: 0 16px; border-bottom: 1px solid var(--border, #e4e4e7); } .ds-tab { height: 36px; padding: 0; border: 0; border-bottom: 2px solid transparent; background: none; color: var(--text-muted, #52525b); font: inherit; font-weight: 500; cursor: pointer; transition: color 150ms cubic-bezier(0.16, 1, 0.3, 1), border-color 150ms cubic-bezier(0.16, 1, 0.3, 1); } .ds-tab:hover { color: var(--text, #0a0a0a); } .ds-tab[aria-selected=\"true\"] { color: var(--text, #0a0a0a); border-bottom-color: var(--text, #0a0a0a); } .ds-tab:focus-visible { outline: 2px solid var(--focus-ring, #0a0a0a); outline-offset: 2px; } .ds-panel-body { overflow: auto; max-height: 200px; } .ds-code { display: flex; min-width: max-content; font-family: \"JetBrains Mono\", ui-monospace, monospace; font-size: 12px; line-height: 1.6; } .ds-code pre { margin: 0; padding: 12px 0; font: inherit; } .ds-code-gutter { position: sticky; left: 0; padding-left: 12px !important; padding-right: 12px !important; border-right: 1px solid var(--border, #e4e4e7); background: var(--surface, #fafafa); color: var(--text-subtle, #71717a); text-align: right; user-select: none; font-variant-numeric: tabular-nums; } .ds-code-text { padding-left: 12px !important; padding-right: 16px !important; tab-size: 4; }"
+    },
+    {
+      "name": "Neighbour Row with Tags",
+      "kind": "chip",
+      "refersTo": "tag",
+      "description": "Used by / Uses entries grouped by file; external entries carry a dashed External Grey tag, unresolved a solid Strong Hairline tag.",
+      "html": "<ul class=\"ds-neighbours\"><li class=\"ds-neighbour\"><div class=\"ds-neighbour-head\"><button class=\"ds-row-button\">src/itsdangerous/encoding.py</button></div><p class=\"ds-caption\"><span class=\"ds-mono\">want_bytes</span>, <span class=\"ds-mono\">base64_encode</span></p></li><li class=\"ds-neighbour\"><div class=\"ds-neighbour-head\"><span class=\"ds-mono ds-neighbour-path\">hashlib</span><span class=\"ds-tag\" data-kind=\"external\">external</span></div></li><li class=\"ds-neighbour\"><div class=\"ds-neighbour-head\"><span class=\"ds-mono ds-neighbour-path\">@/utils/time</span><span class=\"ds-tag\" data-kind=\"unresolved\">unresolved</span></div></li></ul>",
+      "css": ".ds-neighbours { margin: 0; padding: 0; list-style: none; font-family: \"Inter Variable\", Inter, system-ui, sans-serif; font-size: 14px; color: var(--text, #0a0a0a); } .ds-neighbour { padding: 8px 16px; border-bottom: 1px solid var(--border, #e4e4e7); } .ds-neighbour-head { display: flex; align-items: center; gap: 8px; } .ds-neighbour-path { font-size: 0.8125rem; overflow-wrap: anywhere; } .ds-mono { font-family: \"JetBrains Mono\", ui-monospace, monospace; } .ds-caption { margin: 2px 0 0; color: var(--text-subtle, #71717a); font-size: 12px; } .ds-row-button { padding: 0; border: 0; background: none; color: var(--text, #0a0a0a); font-family: \"JetBrains Mono\", ui-monospace, monospace; font-size: 0.8125rem; text-align: left; text-decoration: underline; text-decoration-color: var(--border-strong, #d4d4d8); text-underline-offset: 3px; overflow-wrap: break-word; cursor: pointer; } .ds-row-button:hover { text-decoration-color: var(--text, #0a0a0a); } .ds-row-button:focus-visible { outline: 2px solid var(--focus-ring, #0a0a0a); outline-offset: 2px; } .ds-tag { display: inline-flex; align-items: center; height: 18px; padding: 0 6px; border: 1px dashed var(--node-external, #71717a); border-radius: 4px; color: var(--text-muted, #52525b); font-size: 11px; white-space: nowrap; } .ds-tag[data-kind=\"unresolved\"] { border-style: solid; border-color: var(--border-strong, #d4d4d8); }"
+    },
+    {
+      "name": "File List Table",
+      "kind": "custom",
+      "refersTo": "table",
+      "description": "Explorer list view: full-width table, sticky Bench Grey header, 36px rows, mono numbers right-aligned, selected row in Sunk Grey.",
+      "html": "<div class=\"ds-file-list\"><table class=\"ds-table\"><thead><tr><th>File</th><th>Language</th><th class=\"ds-num-col\">Uses</th><th class=\"ds-num-col\">Used by</th></tr></thead><tbody><tr><td><button class=\"ds-row-button\">src/itsdangerous/signer.py</button></td><td>Python</td><td class=\"ds-num-col ds-mono\">4</td><td class=\"ds-num-col ds-mono\">3</td></tr><tr aria-selected=\"true\"><td><button class=\"ds-row-button\">src/itsdangerous/encoding.py</button></td><td>Python</td><td class=\"ds-num-col ds-mono\">0</td><td class=\"ds-num-col ds-mono\">6</td></tr><tr><td><button class=\"ds-row-button\">src/itsdangerous/url_safe.py</button></td><td>Python</td><td class=\"ds-num-col ds-mono\">2</td><td class=\"ds-num-col ds-mono\">0</td></tr></tbody></table></div>",
+      "css": ".ds-file-list { max-height: 240px; overflow: auto; font-family: \"Inter Variable\", Inter, system-ui, sans-serif; color: var(--text, #0a0a0a); } .ds-table { width: 100%; border-collapse: collapse; font-size: 14px; } .ds-table th { position: sticky; top: 0; z-index: 1; padding: 8px 12px; border-bottom: 1px solid var(--border, #e4e4e7); background: var(--surface, #fafafa); color: var(--text-muted, #52525b); font-size: 12px; font-weight: 500; text-align: left; } .ds-table td { padding: 0 12px; height: 36px; border-bottom: 1px solid var(--border, #e4e4e7); } .ds-table tr[aria-selected=\"true\"] td { background: var(--surface-2, #f4f4f5); } .ds-num-col { text-align: right !important; width: 1%; white-space: nowrap; } .ds-mono { font-family: \"JetBrains Mono\", ui-monospace, monospace; font-variant-numeric: tabular-nums; } .ds-row-button { padding: 0; border: 0; background: none; color: var(--text, #0a0a0a); font-family: \"JetBrains Mono\", ui-monospace, monospace; font-size: 0.8125rem; text-align: left; text-decoration: underline; text-decoration-color: var(--border-strong, #d4d4d8); text-underline-offset: 3px; overflow-wrap: break-word; cursor: pointer; } .ds-row-button:hover { text-decoration-color: var(--text, #0a0a0a); } .ds-row-button:focus-visible { outline: 2px solid var(--focus-ring, #0a0a0a); outline-offset: 2px; }"
     }
   ],
   "narrative": {
@@ -388,7 +524,7 @@
       },
       {
         "name": "The One Column Rule",
-        "body": "Shell screens are one narrow column with one primary action. No side rails, no card grids, no sidebar items for features that do not exist.",
+        "body": "Shell screens are one narrow column with one primary action. No side rails, no card grids, no sidebar items for features that do not exist. The Explorer is the one full-width screen (the graph needs the width): a header row, a ruled toolbar, the canvas, and the node panel docked on the right.",
         "section": "layout"
       },
       {
