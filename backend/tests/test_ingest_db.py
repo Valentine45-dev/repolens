@@ -94,6 +94,19 @@ def test_ingest_fixture_repo(client, tmp_path):
         ("web/src/view.tsx", "module", "web/src/lib/index.ts"),  # @lib/index, no baseUrl
     ]
 
+    calls = query(
+        "SELECT s.qualified_name AS src, d.qualified_name AS dst, e.confidence FROM edges e"
+        " JOIN symbols s ON s.id = e.src_id JOIN symbols d ON d.id = e.dst_id"
+        " WHERE e.type = 'calls'"
+    )
+    assert len(calls) == 14  # the full list is checked in test_calls.py
+    assert ("sample_app.service.main", "sample_app.service.create_user", 1.0) in {
+        (c["src"], c["dst"], c["confidence"]) for c in calls
+    }
+    assert ("web/src/lib/index.ts:Cache.getOr", "web/src/lib/index.ts:Cache.get", 0.9) in {
+        (c["src"], c["dst"], round(c["confidence"], 2)) for c in calls
+    }
+
     (finding,) = query("SELECT f.rule_id, f.line, f.snippet, fi.path FROM findings f"
                        " JOIN files fi ON fi.id = f.file_id")
     assert finding["rule_id"] == "hardcoded-secret"

@@ -134,10 +134,31 @@
       `errors/HTTPError.ts` against their imports: **50/50 correct** (multi-line imports included;
       one `from 'ky'` with no edge is in a JSDoc `@example`).
     - Result: JS/TS keeps full analysis (no fallback to symbols-only).
+- **Day 2 task 6 done (27 Oct): call edges, both languages** (`app/ingest/calls.py`, pure).
+  - 1.0: `f()` defined in the same file (if several, the single top-level one) or explicitly
+    imported (one re-export hop: package `__init__`, `export {x} from`); `X.f()` with `X.f` in the
+    same file (`User.create()`, express `app.set`); `mod.f()` with `mod` an imported module of ours
+    (`import * as m`, `require`, `import pkg.mod`; CommonJS `exports.f` counts).
+  - 0.9: `self.f()` / `this.f()` / `cls.f()` hitting the caller's own class or JS object.
+  - 0.5: exactly one candidate in the snapshot, same language. Plain calls match only
+    functions/classes, `x.f()` only methods. For `x.f()`: no guess when `x` is not a plain name or
+    is a JS global (`Object.create`), and a JS object member (`app.set`, `View.prototype.render`)
+    needs the receiver to name the owner (`this.app.set()`). Class methods match any receiver.
+  - Ambiguous, external, recursion: no edge. One edge per (caller, callee), highest confidence.
+  - Stored by the edges stage (same transaction as imports, `type='calls'`).
+  - Tests: 88 passed, 2 skipped (8 call tests incl. the exact 14 fixture call edges).
+  - Real repos (dev DB re-ingested): express snapshot 7: calls 63 @1.0, 34 @0.9, 243 @0.5;
+    itsdangerous snapshot 8: 52 / 22 / 8. Before the receiver/owner rule express had 335 @0.5
+    with wrong links like `Object.create` -> `examples/.../exports.create`, `arr.map` ->
+    `examples/route-map:app.map`. All express `lib/` edges read correctly; the 4 remaining
+    `lib/` 0.5 edges match the source (`app.handle`, `app.init`, `req.accepts`,
+    `this.app.enabled`), and a random 12 of the test/example 0.5 edges are real calls into
+    express. ky (snapshot 5) was ingested before this change and has no call edges until
+    re-ingested.
 
 ## Next
 - Scope change (27 Oct, `7233e27`): Python and JS/TS both get full analysis; CLAUDE.md updated.
-- Day 2: task 6 of the Day 2 plan below (call edges, both languages).
+- Day 2: task 7 of the Day 2 plan below (graph and file APIs).
 - Running tests locally: `uv run --env-file ../.env pytest` (`.env` has `TEST_DATABASE_URL`).
 
 ## Day 2 plan
@@ -231,6 +252,9 @@ Plan decisions:
   with `uv run uvicorn`. The full compose stack (`db`, `api`, later `web`) is kept for the demo.
 
 ## Known issues
+- Calls made inside anonymous callbacks (`it(...)`, `forEach(function () {...})`) get the
+  enclosing named symbol, often the module, as caller. Fine for the file-level graph.
+- Call edges never use star imports (`from x import *`, `export * from`).
 - PyPI fetches sometimes time out on this network (`uv add` failed once); `UV_HTTP_TIMEOUT=180` worked.
 - Docker Desktop can stop on its own; if DB tests error on connect, start it and `docker compose up -d db`.
 - JS member assignments and object-literal methods become symbols only at top level, not inside

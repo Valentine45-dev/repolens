@@ -13,8 +13,9 @@ from pathlib import Path
 from app import config
 from app.db import pool
 from app.ingest import clone
+from app.ingest.calls import resolve_calls
 from app.ingest.discover import DiscoveredFile, discover
-from app.ingest.parse import ParsedFile, parse_python
+from app.ingest.parse import ParsedFile, ParsedImport, parse_python
 from app.ingest.parse_js import parse_js
 from app.ingest.resolve import JsModules, PythonModules, Target, resolve_js, resolve_python
 
@@ -130,8 +131,8 @@ def store_symbols(snapshot_id: int, job_id: int, deadline: float) -> dict[str, P
 
 
 def store_edges(snapshot_id: int, parsed: dict[str, Parsed]) -> Counter:
-    """Edges stage: import edges from each file's module symbol to an internal module, an
-    external package or an unresolved import, for Python and JS/TS."""
+    """Edges stage, Python and JS/TS: import edges from each file's module symbol to an internal
+    module, an external package or an unresolved import; call edges between symbols (calls.py)."""
     with pool().connection() as conn:
         row = conn.execute(
             "SELECT content FROM files WHERE snapshot_id = %s AND path = 'tsconfig.json'",
@@ -142,21 +143,24 @@ def store_edges(snapshot_id: int, parsed: dict[str, Parsed]) -> Counter:
         [path for path, p in parsed.items() if p.language != "python"],
         row["content"] if row else None,
     )
+    def resolve_import(path: str, imp: ParsedImport) -> list[Target]:
+        if parsed[path].language == "python":
+            return resolve_python(path, imp, py_modules)
+        return resolve_js(path, imp, js_modules)
+
     wanted: dict[tuple[str, Target], None] = {}  # ordered set
     for path, p in parsed.items():
         for imp in p.result.imports:
-            if p.language == "python":
-                targets = resolve_python(path, imp, py_modules)
-            else:
-                targets = resolve_js(path, imp, js_modules)
-            for target in targets:
+            for target in resolve_import(path, imp):
                 if not (target.kind == "internal" and target.key == path):
                     wanted[(path, target)] = None
+    calls = resolve_calls({path: p.result for path, p in parsed.items()}, resolve_import)
 
     counts: Counter = Counter()
     with pool().connection() as conn, conn.transaction():
         conn.execute(
-            "DELETE FROM edges WHERE snapshot_id = %s AND type = 'imports'", (snapshot_id,)
+            "DELETE FROM edges WHERE snapshot_id = %s AND type IN ('imports', 'calls')",
+            (snapshot_id,),
         )
         conn.execute(
             "DELETE FROM symbols WHERE snapshot_id = %s AND kind IN ('external', 'unresolved')",
@@ -190,6 +194,26 @@ def store_edges(snapshot_id: int, parsed: dict[str, Parsed]) -> Counter:
                 " VALUES (%s, %s, %s, 'imports', 1.0)",
                 rows,
             )
+
+        symbol_ids: dict[tuple[str, str], int] = {}
+        for r in conn.execute(
+            "SELECT f.path, s.qualified_name, s.id FROM symbols s JOIN files f ON f.id = s.file_id"
+            " WHERE s.snapshot_id = %s ORDER BY s.id",
+            (snapshot_id,),
+        ):
+            symbol_ids.setdefault((r["path"], r["qualified_name"]), r["id"])
+        call_rows = []
+        for edge in calls:
+            src, dst = symbol_ids.get(edge.src), symbol_ids.get(edge.dst)
+            if src is not None and dst is not None:
+                call_rows.append((snapshot_id, src, dst, edge.confidence))
+                counts[f"calls@{edge.confidence}"] += 1
+        with conn.cursor() as cur:
+            cur.executemany(
+                "INSERT INTO edges (snapshot_id, src_id, dst_id, type, confidence)"
+                " VALUES (%s, %s, %s, 'calls', %s)",
+                call_rows,
+            )
     return counts
 
 
@@ -222,7 +246,7 @@ def run_job(job_id: int, snapshot_id: int, url: str, sha: str) -> None:
         stage = "edges"
         _set_job(job_id, stage, 85)
         counts = store_edges(snapshot_id, parsed)
-        log.info("job %s: import edges %s", job_id, dict(counts))
+        log.info("job %s: edges %s", job_id, dict(counts))
 
         _set_job(job_id, "done", 100, status="done")
     except (clone.CloneError, JobError) as e:
