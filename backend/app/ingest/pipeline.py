@@ -16,7 +16,7 @@ from app.ingest import clone
 from app.ingest.discover import DiscoveredFile, discover
 from app.ingest.parse import ParsedFile, parse_python
 from app.ingest.parse_js import parse_js
-from app.ingest.resolve import PythonModules, Target, resolve_python
+from app.ingest.resolve import JsModules, PythonModules, Target, resolve_js, resolve_python
 
 log = logging.getLogger("repolens.ingest")
 
@@ -131,13 +131,25 @@ def store_symbols(snapshot_id: int, job_id: int, deadline: float) -> dict[str, P
 
 def store_edges(snapshot_id: int, parsed: dict[str, Parsed]) -> Counter:
     """Edges stage: import edges from each file's module symbol to an internal module, an
-    external package or an unresolved import. Python only for now (JS/TS in task 5)."""
-    python = {path: p.result for path, p in parsed.items() if p.language == "python"}
-    modules = PythonModules(list(python))
+    external package or an unresolved import, for Python and JS/TS."""
+    with pool().connection() as conn:
+        row = conn.execute(
+            "SELECT content FROM files WHERE snapshot_id = %s AND path = 'tsconfig.json'",
+            (snapshot_id,),
+        ).fetchone()
+    py_modules = PythonModules([path for path, p in parsed.items() if p.language == "python"])
+    js_modules = JsModules(
+        [path for path, p in parsed.items() if p.language != "python"],
+        row["content"] if row else None,
+    )
     wanted: dict[tuple[str, Target], None] = {}  # ordered set
-    for path, result in python.items():
-        for imp in result.imports:
-            for target in resolve_python(path, imp, modules):
+    for path, p in parsed.items():
+        for imp in p.result.imports:
+            if p.language == "python":
+                targets = resolve_python(path, imp, py_modules)
+            else:
+                targets = resolve_js(path, imp, js_modules)
+            for target in targets:
                 if not (target.kind == "internal" and target.key == path):
                     wanted[(path, target)] = None
 

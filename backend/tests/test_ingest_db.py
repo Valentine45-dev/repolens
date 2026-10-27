@@ -81,6 +81,17 @@ def test_ingest_fixture_repo(client, tmp_path):
         ("sample_app/service.py", "external", "logging"),
         ("sample_app/service.py", "module", "sample_app/models.py"),
         ("sample_app/settings.py", "external", "os"),
+        ("web/src/app.ts", "external", "fs"),  # node:fs
+        ("web/src/app.ts", "external", "react"),
+        ("web/src/app.ts", "module", "web/src/lib/index.ts"),  # ./lib -> index
+        ("web/src/app.ts", "module", "web/src/lib/math.ts"),  # ./lib/math.js and @lib/math
+        ("web/src/app.ts", "module", "web/src/view.tsx"),  # import("./view")
+        ("web/src/app.ts", "unresolved", "web/src/missing"),
+        ("web/src/legacy.cjs", "external", "path"),
+        ("web/src/legacy.cjs", "module", "web/src/util.js"),  # require("./util")
+        ("web/src/lib/index.ts", "module", "web/src/lib/math.ts"),  # export ... from
+        ("web/src/server.js", "external", "http"),
+        ("web/src/view.tsx", "module", "web/src/lib/index.ts"),  # @lib/index, no baseUrl
     ]
 
     (finding,) = query("SELECT f.rule_id, f.line, f.snippet, fi.path FROM findings f"

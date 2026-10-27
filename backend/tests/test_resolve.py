@@ -76,3 +76,101 @@ def test_star_import():
     assert resolve("tests/test_core.py", "pkg.sub", ("*", "*")) == [
         internal("src/pkg/sub/__init__.py")
     ]
+
+
+# --- JavaScript / TypeScript ---
+
+from app.ingest.resolve import JsModules, package_name, read_tsconfig, resolve_js  # noqa: E402
+
+JS_PATHS = [
+    "src/app.ts",
+    "src/lib/index.ts",
+    "src/lib/math.ts",
+    "src/legacy/util.js",
+    "src/legacy/index.js",
+    "src/view.tsx",
+    "src/types.d.ts",
+    "packages/ui/src/button.tsx",
+]
+TSCONFIG = """{
+  // comments and trailing commas are allowed in tsconfig.json
+  "compilerOptions": {
+    "paths": {
+      "@lib/*": ["src/lib/*"],
+      "@ui/*": ["packages/ui/src/*"],
+      "@multi/*": ["a/*", "b/*"],
+      "@config": ["src/app.ts"], /* exact patterns are not supported */
+    },
+  },
+}"""
+
+
+def js(importer: str, spec: str, modules: JsModules) -> list[Target]:
+    return resolve_js(importer, ParsedImport(spec, (), 1), modules)
+
+
+def test_js_relative_extension_and_index_probing():
+    m = JsModules(JS_PATHS)
+    assert js("src/app.ts", "./lib", m) == [internal("src/lib/index.ts")]
+    assert js("src/app.ts", "./lib/math", m) == [internal("src/lib/math.ts")]
+    assert js("src/app.ts", "./lib/math.js", m) == [internal("src/lib/math.ts")]  # TS style
+    assert js("src/app.ts", "./view.jsx", m) == [internal("src/view.tsx")]
+    assert js("src/app.ts", "./types", m) == [internal("src/types.d.ts")]
+    assert js("src/legacy/util.js", ".", m) == [internal("src/legacy/index.js")]
+    assert js("src/lib/math.ts", "../legacy/util.js", m) == [internal("src/legacy/util.js")]
+
+
+def test_js_missing_relative_and_outside_repo_are_unresolved():
+    m = JsModules(JS_PATHS)
+    assert js("src/app.ts", "./missing", m) == [Target("unresolved", "src/missing")]
+    assert js("src/app.ts", "../../x", m) == [Target("unresolved", "../../x")]
+    assert js("src/app.ts", "/abs/path", m) == [Target("unresolved", "/abs/path")]
+
+
+def test_js_assets_are_skipped():
+    m = JsModules(JS_PATHS)
+    assert js("src/app.ts", "./styles.css", m) == []
+    assert js("src/app.ts", "./logo.svg?url", m) == []
+    assert js("src/app.ts", "../package.json", m) == []
+
+
+def test_js_packages_are_external():
+    m = JsModules(JS_PATHS)
+    assert js("src/app.ts", "react", m) == [Target("external", "react")]
+    assert js("src/app.ts", "lodash/fp", m) == [Target("external", "lodash")]
+    assert js("src/app.ts", "@scope/pkg/sub/x", m) == [Target("external", "@scope/pkg")]
+    assert js("src/app.ts", "node:fs", m) == [Target("external", "fs")]
+    assert package_name("fs") == "fs"
+    # Not a valid npm name and no alias: unresolved, not external.
+    assert js("src/app.ts", "@/components/x", m) == [Target("unresolved", "@/components/x")]
+    assert js("src/app.ts", "~/x", m) == [Target("unresolved", "~/x")]
+
+
+def test_tsconfig_paths_without_base_url_resolve_from_tsconfig_dir():
+    m = JsModules(JS_PATHS, TSCONFIG)
+    assert m.base_url is None
+    assert js("src/view.tsx", "@lib/math", m) == [internal("src/lib/math.ts")]
+    assert js("src/view.tsx", "@lib/index", m) == [internal("src/lib/index.ts")]
+    assert js("src/app.ts", "@ui/button", m) == [internal("packages/ui/src/button.tsx")]
+    assert js("src/app.ts", "@lib/nothere", m) == [Target("unresolved", "@lib/nothere")]
+    # Not simple (two targets, or no '*'): unresolved.
+    assert js("src/app.ts", "@multi/x", m) == [Target("unresolved", "@multi/x")]
+    assert js("src/app.ts", "@config", m) == [Target("unresolved", "@config")]
+    # An exact pattern does not swallow longer names.
+    assert js("src/app.ts", "@configs/x", m) == [Target("external", "@configs/x")]
+
+
+def test_tsconfig_paths_with_base_url():
+    tsconfig = '{"compilerOptions": {"baseUrl": "src", "paths": {"#/*": ["lib/*"]}}}'
+    m = JsModules(JS_PATHS, tsconfig)
+    assert m.base_url == "src"
+    assert js("src/app.ts", "#/math", m) == [internal("src/lib/math.ts")]
+    # baseUrl also makes bare names resolve inside it before falling back to packages.
+    assert js("src/view.tsx", "lib/math", m) == [internal("src/lib/math.ts")]
+    assert js("src/view.tsx", "react", m) == [Target("external", "react")]
+
+
+def test_bad_tsconfig_is_ignored():
+    assert read_tsconfig("{ not json") == (None, [])
+    assert read_tsconfig(None) == (None, [])
+    assert read_tsconfig('{"compilerOptions": {"baseUrl": "."}}') == ("", [])
