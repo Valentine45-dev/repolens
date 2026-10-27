@@ -71,3 +71,42 @@ def test_resolve_and_fetch_real_repo(tmp_path):
 def test_resolve_missing_repo_fails_fast():
     with pytest.raises(CloneError):
         resolve_sha("https://github.com/this-owner-does-not-exist-xyz/nope", timeout=30)
+
+
+class _Proc:
+    def __init__(self, returncode, stderr=""):
+        self.returncode, self.stderr, self.stdout = returncode, stderr, ""
+
+
+@pytest.mark.parametrize(
+    "stderr, transient",
+    [
+        ("fatal: unable to access '...': Could not resolve host: github.com", True),
+        ("fatal: unable to access '...': Failed to connect to github.com port 443", True),
+        ("error: RPC failed; curl 56 Recv failure: Connection reset by peer", True),
+        ("fatal: early EOF", True),
+        ("fatal: repository 'https://github.com/a/b/' not found", False),
+        ("fatal: remote error: upload-pack: not our ref", False),
+    ],
+)
+def test_git_errors_are_marked_transient_only_for_network_trouble(monkeypatch, stderr, transient):
+    from app.ingest import clone
+
+    monkeypatch.setattr(clone.subprocess, "run", lambda *a, **k: _Proc(128, stderr))
+    with pytest.raises(CloneError) as info:
+        clone._git(["fetch", "x"], timeout=5)
+    assert info.value.transient is transient
+
+
+def test_git_timeout_is_transient(monkeypatch):
+    import subprocess
+
+    from app.ingest import clone
+
+    def slow(*a, **k):
+        raise subprocess.TimeoutExpired("git", 5)
+
+    monkeypatch.setattr(clone.subprocess, "run", slow)
+    with pytest.raises(CloneError) as info:
+        clone._git(["fetch", "x"], timeout=5)
+    assert info.value.transient

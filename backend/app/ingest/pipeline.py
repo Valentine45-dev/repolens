@@ -1,4 +1,4 @@
-"""Runs one ingestion job: fetch -> discover -> parse.
+"""Runs one ingestion job: fetch -> discover -> parse -> edges.
 
 Each stage replaces its own rows (delete-then-insert in one transaction), so a rerun never
 duplicates anything. Progress goes to the job row. The clone is always deleted afterwards.
@@ -6,13 +6,18 @@ duplicates anything. Progress goes to the job row. The clone is always deleted a
 
 import logging
 import time
+from collections import Counter
+from dataclasses import dataclass
 from pathlib import Path
 
 from app import config
 from app.db import pool
 from app.ingest import clone
+from app.ingest.calls import resolve_calls
 from app.ingest.discover import DiscoveredFile, discover
-from app.ingest.parse import parse_python
+from app.ingest.parse import ParsedFile, ParsedImport, parse_python
+from app.ingest.parse_js import parse_js
+from app.ingest.resolve import JsModules, PythonModules, Target, resolve_js, resolve_python
 
 log = logging.getLogger("repolens.ingest")
 
@@ -73,25 +78,43 @@ def store_files(snapshot_id: int, files: list[DiscoveredFile]) -> None:
                 )
 
 
-def store_symbols(snapshot_id: int, job_id: int, deadline: float) -> int:
-    """Parse stage: module/class/function/method symbols for every Python file."""
+def parse_file(path: str, language: str, content: str) -> ParsedFile:
+    if language == "python":
+        return parse_python(path, content)
+    return parse_js(path, content)
+
+
+@dataclass
+class Parsed:
+    language: str
+    result: ParsedFile
+
+
+def store_symbols(snapshot_id: int, job_id: int, deadline: float) -> dict[str, Parsed]:
+    """Parse stage: module/class/function/method symbols for every Python and JS/TS file.
+
+    Returns the parse results by path so the edges stage does not parse again.
+    """
     with pool().connection() as conn:
         files = conn.execute(
-            "SELECT id, path, content FROM files WHERE snapshot_id = %s AND language = 'python'"
-            " ORDER BY path",
+            "SELECT id, path, language, content FROM files WHERE snapshot_id = %s"
+            " AND language IN ('python', 'javascript', 'typescript') ORDER BY path",
             (snapshot_id,),
         ).fetchall()
 
+    parsed: dict[str, Parsed] = {}
     rows = []
     for i, f in enumerate(files, start=1):
-        for s in parse_python(f["path"], f["content"]):
+        result = parse_file(f["path"], f["language"], f["content"])
+        parsed[f["path"]] = Parsed(f["language"], result)
+        for s in result.symbols:
             rows.append(
                 (snapshot_id, f["id"], s.kind, s.name, s.qualified_name,
                  s.start_line, s.end_line, s.signature)
             )
         if i % 50 == 0:
             _check_deadline(deadline)
-            _set_job(job_id, "parse", 40 + int(55 * i / len(files)))
+            _set_job(job_id, "parse", 40 + int(40 * i / len(files)))
 
     with pool().connection() as conn, conn.transaction():
         conn.execute(
@@ -104,7 +127,107 @@ def store_symbols(snapshot_id: int, job_id: int, deadline: float) -> int:
                 " start_line, end_line, signature) VALUES (%s, %s, %s, %s, %s, %s, %s, %s)",
                 rows,
             )
-    return len(rows)
+    return parsed
+
+
+def store_edges(snapshot_id: int, parsed: dict[str, Parsed]) -> Counter:
+    """Edges stage, Python and JS/TS: import edges from each file's module symbol to an internal
+    module, an external package or an unresolved import; call edges between symbols (calls.py)."""
+    with pool().connection() as conn:
+        row = conn.execute(
+            "SELECT content FROM files WHERE snapshot_id = %s AND path = 'tsconfig.json'",
+            (snapshot_id,),
+        ).fetchone()
+    py_modules = PythonModules([path for path, p in parsed.items() if p.language == "python"])
+    js_modules = JsModules(
+        [path for path, p in parsed.items() if p.language != "python"],
+        row["content"] if row else None,
+    )
+    def resolve_import(path: str, imp: ParsedImport) -> list[Target]:
+        if parsed[path].language == "python":
+            return resolve_python(path, imp, py_modules)
+        return resolve_js(path, imp, js_modules)
+
+    wanted: dict[tuple[str, Target], None] = {}  # ordered set
+    for path, p in parsed.items():
+        for imp in p.result.imports:
+            for target in resolve_import(path, imp):
+                if not (target.kind == "internal" and target.key == path):
+                    wanted[(path, target)] = None
+    calls = resolve_calls({path: p.result for path, p in parsed.items()}, resolve_import)
+
+    counts: Counter = Counter()
+    with pool().connection() as conn, conn.transaction():
+        conn.execute(
+            "DELETE FROM edges WHERE snapshot_id = %s AND type IN ('imports', 'calls')",
+            (snapshot_id,),
+        )
+        conn.execute(
+            "DELETE FROM symbols WHERE snapshot_id = %s AND kind IN ('external', 'unresolved')",
+            (snapshot_id,),
+        )
+        module_ids = {
+            r["path"]: r["id"]
+            for r in conn.execute(
+                "SELECT f.path, s.id FROM symbols s JOIN files f ON f.id = s.file_id"
+                " WHERE s.snapshot_id = %s AND s.kind = 'module'",
+                (snapshot_id,),
+            )
+        }
+        node_ids: dict[Target, int] = {}
+        for target in {t for _, t in wanted if t.kind != "internal"}:
+            node_ids[target] = conn.execute(
+                "INSERT INTO symbols (snapshot_id, file_id, kind, name, qualified_name)"
+                " VALUES (%s, NULL, %s, %s, %s) RETURNING id",
+                (snapshot_id, target.kind, target.key, target.key),
+            ).fetchone()["id"]
+
+        rows = []
+        for path, target in wanted:
+            dst = module_ids.get(target.key) if target.kind == "internal" else node_ids[target]
+            if dst is not None:
+                rows.append((snapshot_id, module_ids[path], dst))
+                counts[target.kind] += 1
+        with conn.cursor() as cur:
+            cur.executemany(
+                "INSERT INTO edges (snapshot_id, src_id, dst_id, type, confidence)"
+                " VALUES (%s, %s, %s, 'imports', 1.0)",
+                rows,
+            )
+
+        symbol_ids: dict[tuple[str, str], int] = {}
+        for r in conn.execute(
+            "SELECT f.path, s.qualified_name, s.id FROM symbols s JOIN files f ON f.id = s.file_id"
+            " WHERE s.snapshot_id = %s ORDER BY s.id",
+            (snapshot_id,),
+        ):
+            symbol_ids.setdefault((r["path"], r["qualified_name"]), r["id"])
+        call_rows = []
+        for edge in calls:
+            src, dst = symbol_ids.get(edge.src), symbol_ids.get(edge.dst)
+            if src is not None and dst is not None:
+                call_rows.append((snapshot_id, src, dst, edge.confidence))
+                counts[f"calls@{edge.confidence}"] += 1
+        with conn.cursor() as cur:
+            cur.executemany(
+                "INSERT INTO edges (snapshot_id, src_id, dst_id, type, confidence)"
+                " VALUES (%s, %s, %s, 'calls', %s)",
+                call_rows,
+            )
+    return counts
+
+
+def _fetch_with_retry(job_id: int, url: str, sha: str, workdir: Path, deadline: float) -> None:
+    """Fetch the commit; on a network error or timeout, try once more on a clean workspace,
+    if a full attempt still fits before the deadline. Other git errors fail at once."""
+    try:
+        clone.fetch_commit(url, sha, workdir, timeout=config.CLONE_TIMEOUT_S)
+    except clone.CloneError as e:
+        if not e.transient or deadline - time.monotonic() < config.CLONE_TIMEOUT_S:
+            raise
+        log.warning("job %s: fetch failed (%s), retrying once", job_id, e)
+        clone.remove_workspace(workdir)
+        clone.fetch_commit(url, sha, workdir, timeout=config.CLONE_TIMEOUT_S)
 
 
 def run_job(job_id: int, snapshot_id: int, url: str, sha: str) -> None:
@@ -114,7 +237,7 @@ def run_job(job_id: int, snapshot_id: int, url: str, sha: str) -> None:
     try:
         _set_job(job_id, stage, 5)
         clone.remove_workspace(workdir)  # leftover from an earlier crash
-        clone.fetch_commit(url, sha, workdir, timeout=config.CLONE_TIMEOUT_S)
+        _fetch_with_retry(job_id, url, sha, workdir, deadline)
         _check_deadline(deadline)
 
         stage = "discover"
@@ -129,8 +252,14 @@ def run_job(job_id: int, snapshot_id: int, url: str, sha: str) -> None:
 
         stage = "parse"
         _set_job(job_id, stage, 40)
-        n_symbols = store_symbols(snapshot_id, job_id, deadline)
-        log.info("job %s: %d symbols", job_id, n_symbols)
+        parsed = store_symbols(snapshot_id, job_id, deadline)
+        log.info("job %s: %d files parsed", job_id, len(parsed))
+        _check_deadline(deadline)
+
+        stage = "edges"
+        _set_job(job_id, stage, 85)
+        counts = store_edges(snapshot_id, parsed)
+        log.info("job %s: edges %s", job_id, dict(counts))
 
         _set_job(job_id, "done", 100, status="done")
     except (clone.CloneError, JobError) as e:

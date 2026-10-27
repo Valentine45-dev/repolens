@@ -9,12 +9,23 @@ from app.ingest.redact import SecretMatch, redact
 SKIP_DIRS = {
     ".git", "node_modules", "__pycache__", "venv", ".venv", ".tox", ".nox", ".eggs",
     ".mypy_cache", ".pytest_cache", ".ruff_cache", "build", "dist", "site-packages", "htmlcov",
+    "bower_components", ".next", "coverage",
 }
 SECRET_SUFFIXES = {".pem", ".key", ".p12", ".pfx", ".jks", ".keystore", ".der", ".crt"}
 SECRET_NAMES = {"id_rsa", "id_dsa", "id_ecdsa", "id_ed25519", ".netrc", ".pgpass", ".npmrc"}
 
-# Python is analysed; the rest is kept so secrets in config are reported and docs can be cited.
-LANGUAGES = {".py": "python", ".pyi": "python"}
+# Python and JS/TS are analysed; the rest is kept so secrets in config are reported and docs can
+# be cited. .tsx gets the tsx grammar at parse time, chosen by suffix.
+LANGUAGES = {
+    ".py": "python", ".pyi": "python",
+    ".js": "javascript", ".jsx": "javascript", ".mjs": "javascript", ".cjs": "javascript",
+    ".ts": "typescript", ".tsx": "typescript",
+}
+# Generated JS: app.min.js, main.bundle.js, 123.chunk.js (also .mjs/.cjs).
+GENERATED_JS_MARKERS = (".min", ".bundle", ".chunk")
+# Minified code that is not named as such: very long lines.
+MINIFIED_MAX_LINE = 5000
+MINIFIED_AVG_LINE = 300
 TEXT_SUFFIXES = {
     ".md", ".rst", ".txt", ".toml", ".cfg", ".ini", ".yaml", ".yml", ".json", ".sh",
 }
@@ -48,7 +59,15 @@ def _wanted(path: Path) -> bool:
     name = path.name
     if name.startswith(".env") or name in SECRET_NAMES or path.suffix.lower() in SECRET_SUFFIXES:
         return False
+    if LANGUAGES.get(path.suffix) == "javascript" and path.stem.endswith(GENERATED_JS_MARKERS):
+        return False
     return path.suffix in LANGUAGES or path.suffix.lower() in TEXT_SUFFIXES
+
+
+def _looks_minified(text: str) -> bool:
+    lines = text.split("\n")
+    longest = max(len(line) for line in lines)
+    return longest > MINIFIED_MAX_LINE or len(text) / len(lines) > MINIFIED_AVG_LINE
 
 
 def discover(root: Path, max_files: int, max_file_bytes: int) -> DiscoverResult:
@@ -77,11 +96,15 @@ def discover(root: Path, max_files: int, max_file_bytes: int) -> DiscoverResult:
                 return result
 
             text = raw.decode("utf-8", errors="replace").replace("\r\n", "\n")
+            language = LANGUAGES.get(path.suffix)
+            if language in ("javascript", "typescript") and _looks_minified(text):
+                result.skipped += 1
+                continue
             content, secrets = redact(text)
             result.files.append(
                 DiscoveredFile(
                     path=path.relative_to(root).as_posix(),
-                    language=LANGUAGES.get(path.suffix),
+                    language=language,
                     loc=content.count("\n") + (0 if content.endswith("\n") or not content else 1),
                     content=content,
                     secrets=secrets,

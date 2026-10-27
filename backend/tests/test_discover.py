@@ -65,6 +65,35 @@ def test_content_is_redacted_and_secrets_reported(tmp_path):
     assert f.loc == 2
 
 
+def test_keeps_js_and_ts_with_language(tmp_path):
+    for rel in ["a.js", "b.jsx", "c.mjs", "d.cjs", "e.ts", "f.tsx"]:
+        write(tmp_path, f"src/{rel}", "export const x = 1;\n")
+    langs = {f.path: f.language for f in discover(tmp_path, 100, 1000).files}
+    assert langs == {
+        "src/a.js": "javascript", "src/b.jsx": "javascript", "src/c.mjs": "javascript",
+        "src/d.cjs": "javascript", "src/e.ts": "typescript", "src/f.tsx": "typescript",
+    }
+
+
+def test_skips_generated_and_minified_js(tmp_path):
+    write(tmp_path, "src/app.js", "const a = 1;\n")
+    write(tmp_path, "src/app.min.js", "x\n")
+    write(tmp_path, "src/main.bundle.js", "x\n")
+    write(tmp_path, "src/1.chunk.mjs", "x\n")
+    write(tmp_path, "dist/out.js", "x\n")
+    write(tmp_path, "node_modules/p/index.js", "x\n")
+    write(tmp_path, "coverage/lcov.js", "x\n")
+    write(tmp_path, "src/vendor.js", "var a=1;" * 700)  # one 5600-char line
+    write(tmp_path, "src/dense.ts", ("let b=2;" * 50 + "\n") * 3)  # 400-char lines
+    result = discover(tmp_path, max_files=100, max_file_bytes=100_000)
+    assert paths(result) == ["src/app.js"]
+
+
+def test_long_line_in_python_is_kept(tmp_path):
+    write(tmp_path, "data.py", "X = '" + "a" * 6000 + "'\n")
+    assert paths(discover(tmp_path, 10, 100_000)) == ["data.py"]
+
+
 def test_crlf_normalised(tmp_path):
     write(tmp_path, "w.py", b"a = 1\r\nb = 2")
     (f,) = discover(tmp_path, max_files=10, max_file_bytes=1000).files

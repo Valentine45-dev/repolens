@@ -1,47 +1,9 @@
 """End-to-end ingestion against a real Postgres, with git replaced by the fixture repo."""
 
-import os
-import shutil
-from pathlib import Path
-
 import pytest
-from fastapi.testclient import TestClient
+from conftest import SHA, query
 
-pytestmark = [
-    pytest.mark.db,
-    pytest.mark.skipif(not os.environ.get("DATABASE_URL"), reason="needs DATABASE_URL"),
-]
-
-FIXTURE = Path(__file__).parent / "fixtures" / "sample_repo"
-SHA = "a" * 40
-
-
-@pytest.fixture
-def client(monkeypatch, tmp_path):
-    from app import config
-    from app.ingest import clone
-    from app.main import app
-
-    def fake_fetch(url, sha, dest, timeout):
-        shutil.copytree(FIXTURE, dest)
-
-    monkeypatch.setattr(clone, "resolve_sha", lambda url, timeout: SHA)
-    monkeypatch.setattr(clone, "fetch_commit", fake_fetch)
-    monkeypatch.setattr(config, "WORKSPACE_DIR", tmp_path / "work")
-
-    with TestClient(app) as c:
-        from app.db import pool
-
-        with pool().connection() as conn:
-            conn.execute("TRUNCATE repos RESTART IDENTITY CASCADE")
-        yield c
-
-
-def query(sql, *args):
-    from app.db import pool
-
-    with pool().connection() as conn:
-        return conn.execute(sql, args).fetchall()
+pytestmark = pytest.mark.db
 
 
 def test_ingest_fixture_repo(client, tmp_path):
@@ -57,12 +19,61 @@ def test_ingest_fixture_repo(client, tmp_path):
     assert status["url"] == "https://github.com/example/sample"
 
     files = query("SELECT path FROM files ORDER BY path")
-    assert len(files) == 5
+    assert len(files) == 15  # 6 Python, 8 JS/TS, tsconfig.json
 
     rows = query("SELECT kind, count(*) AS n FROM symbols GROUP BY kind")
     kinds = {r["kind"]: r["n"] for r in rows}
-    assert kinds["module"] == 5
-    assert kinds["class"] >= 4
+    assert kinds["module"] == 14
+    assert kinds["class"] >= 6
+
+    js = query("SELECT s.qualified_name FROM symbols s JOIN files f ON f.id = s.file_id"
+               " WHERE f.path = 'web/src/app.ts' AND s.kind <> 'module'")
+    assert {r["qualified_name"] for r in js} >= {"web/src/app.ts:App.render",
+                                                 "web/src/app.ts:main"}
+
+    edges = query(
+        "SELECT fs.path AS src, d.kind, coalesce(fd.path, d.qualified_name) AS dst"
+        " FROM edges e JOIN symbols s ON s.id = e.src_id JOIN files fs ON fs.id = s.file_id"
+        " JOIN symbols d ON d.id = e.dst_id LEFT JOIN files fd ON fd.id = d.file_id"
+        " WHERE e.type = 'imports'"
+    )
+    assert sorted((e["src"], e["kind"], e["dst"]) for e in edges) == [
+        ("sample_app/__init__.py", "module", "sample_app/models.py"),
+        ("sample_app/__init__.py", "module", "sample_app/service.py"),
+        ("sample_app/__init__.py", "module", "sample_app/settings.py"),
+        ("sample_app/broken.py", "unresolved", "sample_app.gone"),
+        ("sample_app/broken.py", "unresolved", "sample_app.missing_mod"),
+        ("sample_app/models.py", "external", "dataclasses"),
+        ("sample_app/service.py", "external", "logging"),
+        ("sample_app/service.py", "module", "sample_app/models.py"),
+        ("sample_app/settings.py", "external", "os"),
+        ("tests/check_service.py", "module", "sample_app/service.py"),
+        ("web/src/app.ts", "external", "fs"),  # node:fs
+        ("web/src/app.ts", "external", "react"),
+        ("web/src/app.ts", "module", "web/src/lib/index.ts"),  # ./lib -> index
+        ("web/src/app.ts", "module", "web/src/lib/math.ts"),  # ./lib/math.js and @lib/math
+        ("web/src/app.ts", "module", "web/src/view.tsx"),  # import("./view")
+        ("web/src/app.ts", "unresolved", "web/src/missing"),
+        ("web/src/legacy.cjs", "external", "path"),
+        ("web/src/legacy.cjs", "module", "web/src/util.js"),  # require("./util")
+        ("web/src/lib/index.ts", "module", "web/src/lib/math.ts"),  # export ... from
+        ("web/src/lib/math.spec.ts", "module", "web/src/lib/math.ts"),
+        ("web/src/server.js", "external", "http"),
+        ("web/src/view.tsx", "module", "web/src/lib/index.ts"),  # @lib/index, no baseUrl
+    ]
+
+    calls = query(
+        "SELECT s.qualified_name AS src, d.qualified_name AS dst, e.confidence FROM edges e"
+        " JOIN symbols s ON s.id = e.src_id JOIN symbols d ON d.id = e.dst_id"
+        " WHERE e.type = 'calls'"
+    )
+    assert len(calls) == 16  # the full list is checked in test_calls.py
+    assert ("sample_app.service.main", "sample_app.service.create_user", 1.0) in {
+        (c["src"], c["dst"], c["confidence"]) for c in calls
+    }
+    assert ("web/src/lib/index.ts:Cache.getOr", "web/src/lib/index.ts:Cache.get", 0.9) in {
+        (c["src"], c["dst"], round(c["confidence"], 2)) for c in calls
+    }
 
     (finding,) = query("SELECT f.rule_id, f.line, f.snippet, fi.path FROM findings f"
                        " JOIN files fi ON fi.id = f.file_id")
@@ -107,3 +118,62 @@ def test_failed_fetch_marks_job_failed_and_cleans_up(client, monkeypatch, tmp_pa
     assert status["stage"] == "fetch"
     assert "timed out" in status["error"]
     assert not any((tmp_path / "work").glob("*"))
+
+
+def _flaky_fetch(errors):
+    """fetch_commit that raises the given CloneErrors in turn, then copies the fixture repo."""
+    import shutil
+
+    from conftest import FIXTURE
+
+    calls = []
+
+    def fetch(url, sha, dest, timeout):
+        calls.append(dest)
+        dest.mkdir(parents=True)
+        if len(calls) <= len(errors):
+            raise errors[len(calls) - 1]
+        shutil.rmtree(dest)
+        shutil.copytree(FIXTURE, dest)
+
+    return fetch, calls
+
+
+def test_fetch_network_error_is_retried_once(client, monkeypatch):
+    from app.ingest import clone
+
+    fetch, calls = _flaky_fetch([clone.CloneError("Could not resolve host", transient=True)])
+    monkeypatch.setattr(clone, "fetch_commit", fetch)
+    body = client.post("/repos", json={"url": "https://github.com/example/flaky"}).json()
+    status = client.get(f"/snapshots/{body['snapshot_id']}/status").json()
+    assert status["status"] == "done", status
+    assert len(calls) == 2
+
+
+def test_fetch_retries_only_once_and_not_for_other_errors(client, monkeypatch):
+    from app.ingest import clone
+
+    twice = [clone.CloneError("timed out", transient=True)] * 2
+    fetch, calls = _flaky_fetch(twice)
+    monkeypatch.setattr(clone, "fetch_commit", fetch)
+    body = client.post("/repos", json={"url": "https://github.com/example/down"}).json()
+    status = client.get(f"/snapshots/{body['snapshot_id']}/status").json()
+    assert (status["status"], status["stage"], len(calls)) == ("failed", "fetch", 2)
+
+    fetch, calls = _flaky_fetch([clone.CloneError("not our ref", transient=False)])
+    monkeypatch.setattr(clone, "fetch_commit", fetch)
+    body = client.post("/repos", json={"url": "https://github.com/example/badref"}).json()
+    status = client.get(f"/snapshots/{body['snapshot_id']}/status").json()
+    assert (status["status"], len(calls)) == ("failed", 1)
+
+
+def test_fetch_is_not_retried_without_time_left(client, monkeypatch):
+    from app import config
+    from app.ingest import clone
+
+    monkeypatch.setattr(config, "MAX_ANALYSIS_S", 10)  # less than CLONE_TIMEOUT_S
+    fetch, calls = _flaky_fetch([clone.CloneError("timed out", transient=True)])
+    monkeypatch.setattr(clone, "fetch_commit", fetch)
+    body = client.post("/repos", json={"url": "https://github.com/example/late"}).json()
+    status = client.get(f"/snapshots/{body['snapshot_id']}/status").json()
+    assert (status["status"], len(calls)) == ("failed", 1)

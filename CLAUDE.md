@@ -4,12 +4,12 @@ Deadline: **30 Oct 2026**. Code freeze: **29 Oct, 8pm**. This is a cut-down buil
 
 ## Dev environment
 - **Windows** with Docker Desktop. Give shell commands that work in PowerShell (or run them inside containers).
-- A **local PostgreSQL is already installed and uses port 5432**. Do not touch it. Expose the Docker `db` service on host port **5433** (`5433:5432`); inside the Compose network the API still connects to `db:5432`.
+- There is no local PostgreSQL on this machine. The Docker db service uses host port 5433.
 - Python tooling: `uv` only. Node for the frontend.
 - Watch for Windows pitfalls: CRLF line endings in shell scripts copied into Linux containers (add a `.gitattributes` with `*.sh text eol=lf`), and path separators in code (use `pathlib`).
 
 ## What RepoLens does (this build)
-Submit a public GitHub repo URL → clone → parse **Python** → store files, symbols, import/call edges → show a **file-level dependency graph** → list **rule-based findings** → answer **questions with validated file:line citations**.
+Submit a public GitHub repo URL → clone → parse **Python and JavaScript/TypeScript** → store files, symbols, import/call edges → show a **file-level dependency graph** → list **rule-based findings** → answer **questions with validated file:line citations**.
 
 ## Reference docs (read before big changes)
 - `docs/repolens-system-design.md` — schema (section 6), pipeline (5), Q&A path (9), security (13)
@@ -17,17 +17,22 @@ Submit a public GitHub repo URL → clone → parse **Python** → store files, 
 - `docs/repolens-ui-ux-spec.md` — UI reference only; build the minimal version below
 
 ## In scope
-- Python only (Tree-sitter: `tree-sitter` + `tree-sitter-python`; check current package APIs before use)
+- **Python and JavaScript/TypeScript both get full analysis** (Tree-sitter: `tree-sitter` + `tree-sitter-python`, `tree-sitter-javascript`, `tree-sitter-typescript`; check current package APIs and compatibility with the pinned `tree-sitter` before use)
+  - Discover keeps `.js .jsx .mjs .cjs .ts .tsx`; skips `*.min.js`, bundles and `dist/`.
 - Ingestion via FastAPI `BackgroundTasks`, progress written to the `jobs` row (stage, percent, error)
 - Import edges (internal / external / unresolved) and best-effort name-based call edges with `confidence`
-- 5 detectors: `eval`/`exec`, `subprocess` with `shell=True`, SQL built by string concat or f-string, hardcoded secrets, bare `except`
+  - JS/TS import resolution: relative paths, extension probing, `index` files, both `import` and `require`. tsconfig `paths` aliases only if simple; otherwise mark the edge `unresolved`.
+- Detectors
+  - Python: `eval`/`exec`, `subprocess` with `shell=True`, SQL built by string concat or f-string, bare `except`
+  - JS/TS: `eval`, `new Function`, `child_process.exec`/`execSync` with a non-literal argument, `innerHTML`/`outerHTML` assigned a non-literal, SQL built by concatenation or template literal
+  - Both: hardcoded secrets (shared, produced by redaction in the discover stage)
 - Chunks: one per function/class + one module-level chunk per file; local `sentence-transformers` embeddings in pgvector
 - Q&A: embed → top-k for this snapshot (exact scan, no vector index) → 1-hop graph expansion → LLM → citation validation
 - Structural questions ("which files import X", "what calls Y") answered from the graph, no LLM
 - UI: Home (URL input), progress, file-level graph, node panel (code + used by/uses), findings list, Ask panel with citation chips
 
 ## Not in the core build
-- **Stretch only** (build only when it is on the stretch list below and the current day's core is done and working): JS/TS analysis, folder & symbol graph levels, frontend CI, hosting, `llm_traces`, Overview insight cards. (Backend CI is core, Day 1.)
+- **Stretch only** (build only when it is on the stretch list below and the current day's core is done and working): folder & symbol graph levels, frontend CI, hosting, `llm_traces`, Overview insight cards. (Backend CI is core, Day 1.)
 - **Never build in this project:** Postgres job queue / heartbeat / requeue, SSE, answer cache, full golden-test framework (the small smoke eval below is in scope), auth/unlock page, zip upload, dark mode, command palette, Dependencies tab.
 - If something seems necessary, ask first.
 
@@ -54,9 +59,13 @@ Submit a public GitHub repo URL → clone → parse **Python** → store files, 
 
 ## Build order (do the current day only)
 - **Day 1 (26–27 Oct night):** repo layout, `docker-compose.yml`, `schema.sql`, `POST /repos` (resolve SHA with `git ls-remote`), clone → discover → parse into `files` (redacted `content`) and `symbols`, `GET /snapshots/{id}/status`. Test on one small Python repo. Once the first test passes, add CI (see "Git and CI").
-- **Day 2 (27 Oct):** import resolution + call edges, `GET /snapshots/{id}/graph` (file level), `GET /snapshots/{id}/files/{file_id}`, dependents/dependencies endpoints, React shell + Home + progress + graph view + node panel.
-- **Day 3 (28 Oct):** 5 detectors + `GET /snapshots/{id}/findings` + findings UI; chunk + embed; `POST /snapshots/{id}/ask` with routing, retrieval, 1-hop expansion, citation validation; Ask panel. System prompt lives in `backend/app/qa/prompts/system.md` with a `PROMPT_VERSION` string (see "System prompt" below).
-- **Day 4 (29 Oct):** `eval/` scripts: detector precision/recall on seeded fixtures vs Bandit on the same labels; Q&A recall@k with vs without graph expansion on ~10 questions; `eval/smoke_qa.py` (see below). README. Freeze at 8pm.
+- **Day 2 (27 Oct), in this order:**
+  1. Separate test database first: tests use `repolens_test` via `TEST_DATABASE_URL` and refuse to run unless the database name ends in `_test`.
+  2. Python and JS/TS parsers, then import and call edges for both.
+  3. `GET /snapshots/{id}/graph` (file level), `GET /snapshots/{id}/files/{file_id}`, dependents/dependencies endpoints, then React shell + Home + progress + graph view + node panel.
+- **Day 3 (28 Oct), in this order:** detectors for both languages + `GET /snapshots/{id}/findings`; then Q&A: chunk + embed, `POST /snapshots/{id}/ask` with routing, retrieval, 1-hop expansion, citation validation; then the UI panels (findings list, Ask panel). System prompt lives in `backend/app/qa/prompts/system.md` with a `PROMPT_VERSION` string (see "System prompt" below).
+- **Day 4 (29 Oct):** `eval/` scripts: detector precision/recall on seeded labeled fixtures, with Bandit as the Python baseline and Semgrep as the JS/TS baseline, each scored on the same labels as RepoLens; Q&A recall@k with vs without graph expansion on ~10 questions; `eval/smoke_qa.py` (see below). README. Freeze at 8pm.
+- **JS checkpoint (end of Day 2):** if JS/TS import edges are not correct on a real small JS repo, JS/TS drops to symbols-only (no JS import/call edges or JS detectors), and this is recorded in `PROGRESS.md`. Python work is never blocked by JS/TS.
 
 ## System prompt (versioned)
 `system.md` must state, in plain language:
@@ -78,19 +87,19 @@ Judge by pass criteria, not exact wording.
 Take items in this order; never start one that cannot finish before the freeze.
 1. Hybrid retrieval: Postgres full-text search on identifiers merged with vector results (reciprocal rank fusion); add it as a configuration in the Q&A evaluation.
 2. Overview page with insight cards (findings by severity, top hubs, circular imports).
-3. JS/TS at symbols-only (generic) level, then deep JS/TS if time remains.
-4. Folder and symbol graph levels.
-5. `llm_traces` table (design section 20.6).
-6. Frontend CI job (lint, type-check, build).
-7. Hosted demo (last; free tiers are the most likely thing to fail live).
+3. Folder and symbol graph levels.
+4. `llm_traces` table (design section 20.6).
+5. Frontend CI job (lint, type-check, build).
+6. Hosted demo (last; free tiers are the most likely thing to fail live).
 
 ## Git and CI
 - `main` is always working and demo-ready. Never commit directly to `main`.
 - One short-lived branch per feature: `feat/<name>` or `fix/<name>` (e.g. `feat/ingest`, `feat/graph-api`, `feat/detectors`, `feat/qa`).
 - Merge into `main` only when tests pass locally, CI is green, and the feature has been run end to end. Solo developer: no review requirement; merge locally or via a PR to self.
 - Small commits with clear messages. Never commit `.env`, secrets, cloned repos, or large generated files.
-- **CI (Day 1):** `.github/workflows/ci.yml` runs on every push and pull request: `uv sync`, `uv run ruff check .`, `uv run pytest` in `backend/`, with a `pgvector/pgvector:pg16` service for DB tests. Tests use `FakeProvider` and a stubbed embedding function; no API keys in CI. Check current GitHub Action versions instead of guessing.
+- **CI (Day 1):** `.github/workflows/ci.yml` runs on every push and pull request: `uv sync`, `uv run ruff check .`, `uv run pytest` in `backend/`, with a `pgvector/pgvector:pg16` service for DB tests (database `repolens_test`, passed as `TEST_DATABASE_URL`). Tests use `FakeProvider` and a stubbed embedding function; no API keys in CI. Check current GitHub Action versions instead of guessing.
 - No CD: the demo runs locally with `docker compose up`.
+- Push feature branches freely after each commit; only ask before merging into main.
 
 ## UI rules
 - Follow `docs/repolens-ui-ux-spec.md`. Light theme by default; all colors from CSS-variable tokens.

@@ -8,7 +8,7 @@ FIXTURE = Path(__file__).parent / "fixtures" / "sample_repo"
 
 def parse_fixture(rel: str):
     source = (FIXTURE / rel).read_text(encoding="utf-8")
-    return {s.qualified_name: s for s in parse_python(rel, source)}
+    return {s.qualified_name: s for s in parse_python(rel, source).symbols}
 
 
 def test_module_name():
@@ -57,6 +57,47 @@ def test_syntax_error_does_not_stop_parsing():
     assert "sample_app.broken.StillFound.method" in syms
 
 
+def test_python_imports():
+    source = (
+        "import os, os.path as osp\n"
+        "import a.b\n"
+        "from . import models as m\n"
+        "from ..pkg.mod import x, y as z\n"
+        "from lib import *\n"
+        "def f():\n"
+        "    import json\n"
+    )
+    imports = [(i.specifier, i.names, i.line) for i in parse_python("p/q.py", source).imports]
+    assert imports == [
+        ("os", (("*", "os"),), 1),
+        ("os.path", (("*", "osp"),), 1),
+        ("a.b", (("*", "a.b"),), 2),
+        (".", (("models", "m"),), 3),
+        ("..pkg.mod", (("x", "x"), ("y", "z")), 4),
+        ("lib", (("*", "*"),), 5),
+        ("json", (("*", "json"),), 7),
+    ]
+
+
+def test_python_calls_have_caller_and_receiver():
+    source = (FIXTURE / "sample_app/service.py").read_text(encoding="utf-8")
+    calls = {(c.caller, c.name, c.receiver) for c in parse_python("sample_app/service.py",
+                                                                   source).calls}
+    assert ("sample_app.service", "getLogger", "logging") in calls
+    assert ("sample_app.service.create_user", "User", None) in calls
+    assert ("sample_app.service.create_user", "save", "user") in calls
+    assert ("sample_app.service.fetch_user", "_key", None) in calls
+    assert ("sample_app.service.fetch_user", "info", "log") in calls
+    assert ("sample_app.service.main", "create_user", None) in calls
+
+
+def test_python_receiver_is_empty_for_non_names():
+    calls = parse_python("m.py", "get().run()\nself.a.b()\nx[0].y()\n").calls
+    assert [(c.name, c.receiver) for c in calls] == [
+        ("run", ""), ("get", None), ("b", "self.a"), ("y", ""),
+    ]
+
+
 def test_fixture_repo_discovers_and_reports_secret():
     result = discover(FIXTURE, max_files=100, max_file_bytes=1_000_000)
     by_path = {f.path: f for f in result.files}
@@ -66,6 +107,16 @@ def test_fixture_repo_discovers_and_reports_secret():
         "sample_app/models.py",
         "sample_app/service.py",
         "sample_app/settings.py",
+        "tests/check_service.py",
+        "tsconfig.json",
+        "web/src/app.ts",
+        "web/src/legacy.cjs",
+        "web/src/lib/index.ts",
+        "web/src/lib/math.spec.ts",
+        "web/src/lib/math.ts",
+        "web/src/server.js",
+        "web/src/util.js",
+        "web/src/view.tsx",
     ]
     settings = by_path["sample_app/settings.py"]
     assert "fixture-not-a-real-password" not in settings.content
