@@ -635,6 +635,7 @@ a {
 
 .explore {
   display: grid;
+  grid-template-columns: minmax(0, 1fr); /* never wider than the viewport */
   grid-template-rows: auto auto minmax(0, 1fr);
   height: calc(100dvh - var(--topbar-h));
 }
@@ -938,7 +939,7 @@ a {
   text-decoration: underline;
   text-decoration-color: var(--border-strong);
   text-underline-offset: 3px;
-  overflow-wrap: anywhere;
+  overflow-wrap: break-word; /* paths break at the <wbr> after each "/" */
   cursor: pointer;
 }
 
@@ -1130,6 +1131,21 @@ a {
 
   .submit-row .button {
     width: 100%;
+  }
+
+  .explore-header,
+  .toolbar {
+    padding-left: var(--space-4);
+    padding-right: var(--space-4);
+  }
+
+  .panel-facts {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  /* Phones: the list keeps file, uses and used by; the panel has the rest. */
+  .table .col-optional {
+    display: none;
   }
 
   .list-link {

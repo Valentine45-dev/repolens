@@ -1,4 +1,4 @@
-import { useMemo } from "react";
+import { Fragment, useMemo } from "react";
 
 import type { GraphNode } from "../api";
 import { type Degrees, languageLabel } from "../graphModel";
@@ -29,11 +29,11 @@ export function FileList({
         <thead>
           <tr>
             <th scope="col">File</th>
-            <th scope="col">Language</th>
+            <th scope="col" className="col-optional">Language</th>
             <th scope="col" className="num-col">Uses</th>
             <th scope="col" className="num-col">Used by</th>
-            <th scope="col" className="num-col">External</th>
-            <th scope="col" className="num-col">Unresolved</th>
+            <th scope="col" className="num-col col-optional">External</th>
+            <th scope="col" className="num-col col-optional">Unresolved</th>
           </tr>
         </thead>
         <tbody>
@@ -43,19 +43,38 @@ export function FileList({
               <tr key={n.id} aria-selected={n.id === selectedId}>
                 <td>
                   <button type="button" className="row-button mono" onClick={() => onSelect(n.id)}>
-                    {n.path}
+                    <BreakablePath path={n.path} />
                   </button>
                 </td>
-                <td>{languageLabel(n.language)}</td>
+                <td className="col-optional">{languageLabel(n.language)}</td>
                 <td className="num-col mono num">{d?.uses ?? 0}</td>
                 <td className="num-col mono num">{d?.usedBy ?? 0}</td>
-                <td className="num-col mono num">{n.external_imports}</td>
-                <td className="num-col mono num">{n.unresolved_imports}</td>
+                <td className="num-col mono num col-optional">{n.external_imports}</td>
+                <td className="num-col mono num col-optional">{n.unresolved_imports}</td>
               </tr>
             );
           })}
         </tbody>
       </table>
     </div>
+  );
+}
+
+/** A path that may wrap only after a "/", never inside a name. */
+export function BreakablePath({ path }: { path: string }) {
+  const parts = path.split("/");
+  return (
+    <>
+      {parts.map((part, i) => (
+        <Fragment key={i}>
+          {part}
+          {i < parts.length - 1 ? (
+            <>
+              /<wbr />
+            </>
+          ) : null}
+        </Fragment>
+      ))}
+    </>
   );
 }

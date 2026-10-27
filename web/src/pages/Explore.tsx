@@ -9,6 +9,7 @@ import { FileList } from "../components/FileList";
 import { FIT_OPTIONS, GraphView } from "../components/GraphView";
 import { NodePanel } from "../components/NodePanel";
 import { applyCap, degrees, layoutGraph, RENDER_CAP } from "../graphModel";
+import { useMediaQuery } from "../useMediaQuery";
 
 // State lives in the URL (spec §3.6): ?tests=1&guesses=1&view=list&node=<file id>.
 export function Explore() {
@@ -25,7 +26,9 @@ function ExploreInner() {
   const [params, setParams] = useSearchParams();
   const showTests = params.get("tests") === "1";
   const showGuesses = params.get("guesses") === "1";
-  const listView = params.get("view") === "list";
+  // Spec §10: under 768px the graph is not readable, so phones get the list only.
+  const phone = useMediaQuery("(max-width: 767px)");
+  const listView = phone || params.get("view") === "list";
   const selectedId = params.get("node") ? Number(params.get("node")) : null;
   const { fitView } = useReactFlow();
 
@@ -98,14 +101,18 @@ function ExploreInner() {
       </div>
 
       <div className="toolbar" role="toolbar" aria-label="Graph options">
-        <div className="segmented" role="group" aria-label="View">
-          <button type="button" aria-pressed={!listView} onClick={() => setParam("view", null)}>
-            Graph
-          </button>
-          <button type="button" aria-pressed={listView} onClick={() => setParam("view", "list")}>
-            List
-          </button>
-        </div>
+        {phone ? (
+          <p className="caption">The graph view needs a larger screen.</p>
+        ) : (
+          <div className="segmented" role="group" aria-label="View">
+            <button type="button" aria-pressed={!listView} onClick={() => setParam("view", null)}>
+              Graph
+            </button>
+            <button type="button" aria-pressed={listView} onClick={() => setParam("view", "list")}>
+              List
+            </button>
+          </div>
+        )}
         <label className="check">
           <input
             type="checkbox"
