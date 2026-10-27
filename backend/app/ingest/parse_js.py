@@ -124,6 +124,13 @@ def _function_signature(node: Node, name: str, prefix: str) -> str:
     return f"{'async ' if is_async else ''}{prefix}{name}{text(params)}{ret}"
 
 
+def _value_signature(lead: str, value: Node) -> str:
+    """'const f = (a) =>', 'app.listen = function listen(port)', 'stop: function ()'."""
+    if value.type == "arrow_function":
+        return f"{lead}{_function_signature(value, '', '')} =>"
+    return lead + _function_signature(value, text(value.child_by_field_name("name")), "function ")
+
+
 def parse_js(path: str, source: str) -> ParsedFile:
     tree = Parser(_grammar(path)).parse(source.encode("utf-8"))
     module = path
@@ -140,6 +147,29 @@ def parse_js(path: str, source: str) -> ParsedFile:
             kind, name, qualified, span.start_point.row + 1, span.end_point.row + 1, signature,
         ))
         return qualified
+
+    def define_function(kind: str, name: str, scope: str, span: Node, value: Node,
+                        signature: str) -> None:
+        qualified = define(kind, name, scope, span, signature)
+        body = value.child_by_field_name("body")
+        if body is not None:
+            visit_node(body, qualified)
+
+    def visit_object(obj: Node, prefix: str, scope: str) -> None:
+        """Top-level `x = { a() {}, b: function () {}, c: () => 1 }` -> methods x.a, x.b, x.c."""
+        for prop in obj.named_children:
+            if prop.type == "method_definition":
+                key = text(prop.child_by_field_name("name"))
+                define_function("method", f"{prefix}.{key}", scope, prop, prop,
+                                _function_signature(prop, key, ""))
+                continue
+            value = prop.child_by_field_name("value") if prop.type == "pair" else None
+            if value is not None and value.type in FUNCTION_VALUES:
+                key = text(prop.child_by_field_name("key"))
+                define_function("method", f"{prefix}.{key}", scope, prop, value,
+                                _value_signature(f"{key}: ", value))
+                continue
+            visit_node(prop, scope)
 
     def add_import(specifier: str, names, node: Node) -> None:
         out.imports.append(ParsedImport(specifier, tuple(names), node.start_point.row + 1))
@@ -204,19 +234,39 @@ def parse_js(path: str, source: str) -> ParsedFile:
                 if fn is not None and text(fn) == "require" and spec is not None:
                     add_import(spec, _pattern_names(name_node), value)
                     return
-            # Only top-level `const f = () => ...` becomes a function symbol.
-            if (scope == module and value is not None and value.type in FUNCTION_VALUES
+            # Only top-level `const f = () => ...` / `const o = { m() {} }` become symbols.
+            if (scope == module and value is not None
                     and name_node is not None and name_node.type == "identifier"):
                 name = text(name_node)
-                span = node.parent if node.parent is not None else node
-                if value.type == "arrow_function":
-                    sig = f"const {name} = {_function_signature(value, '', '')} =>"
-                else:
-                    sig = _function_signature(value, name, "function ")
-                qualified = define("function", name, scope, span, sig)
-                body = value.child_by_field_name("body")
-                if body is not None:
-                    visit_node(body, qualified)
+                if value.type in FUNCTION_VALUES:
+                    span = node.parent if node.parent is not None else node
+                    define_function("function", name, scope, span, value,
+                                    _value_signature(f"const {name} = ", value))
+                    return
+                if value.type == "object":
+                    visit_object(value, name, scope)
+                    return
+            visit(node, scope)
+            return
+        if t == "assignment_expression" and scope == module:
+            # CommonJS style: `app.listen = function listen() {}`, `exports.y = () => {}`,
+            # `module.exports = function name() {}`, `module.exports = { a() {} }`.
+            left = node.child_by_field_name("left")
+            right = node.child_by_field_name("right")
+            is_member = left is not None and left.type == "member_expression"
+            target = _receiver(left) if is_member else ""
+            if target and right is not None and right.type in FUNCTION_VALUES:
+                name = target
+                if target == "module.exports":
+                    name = text(right.child_by_field_name("name")) or target
+                parent = node.parent
+                is_statement = parent is not None and parent.type == "expression_statement"
+                span = parent if is_statement else node
+                define_function("function", name, scope, span, right,
+                                _value_signature(f"{target} = ", right))
+                return
+            if target and right is not None and right.type == "object":
+                visit_object(right, target, scope)
                 return
             visit(node, scope)
             return

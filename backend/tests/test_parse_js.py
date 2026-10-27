@@ -93,9 +93,58 @@ def test_commonjs_require():
         ("./util", (("*", "util"),), 1),
         ("path", (("join", "join"), ("basename", "base")), 2),
     ]
-    assert ("web/src/legacy.cjs", "trim", "util") in calls(p)
+    assert ("web/src/legacy.cjs:legacy", "trim", "util") in calls(p)
     syms = symbols(parse_fixture("web/src/util.js"))
     assert syms["web/src/util.js:trim"].kind == "function"
+
+
+def test_commonjs_member_assignments_are_functions():
+    p = parse_fixture("web/src/server.js")
+    syms = symbols(p)
+    listen = syms["web/src/server.js:app.listen"]
+    assert (listen.kind, listen.name, listen.start_line, listen.end_line) == (
+        "function", "app.listen", 6, 9,
+    )
+    assert listen.signature == "app.listen = function listen(port)"
+    assert syms["web/src/server.js:app.handle"].signature == "app.handle = (req) =>"
+    assert syms["web/src/server.js:res.send"].kind == "function"
+    assert syms["web/src/server.js:exports.version"].kind == "function"
+    assert syms["web/src/server.js:module.exports.create"].signature == (
+        "module.exports.create = function ()"
+    )
+    # Calls inside get the assigned function as caller.
+    c = calls(p)
+    assert ("web/src/server.js:app.listen", "createServer", "http") in c
+    assert ("web/src/server.js:app.handle", "send", "res") in c
+
+
+def test_module_exports_object_methods():
+    syms = symbols(parse_fixture("web/src/server.js"))
+    start = syms["web/src/server.js:module.exports.start"]
+    assert (start.kind, start.start_line, start.end_line) == ("method", 27, 29)
+    assert start.signature == "start(port)"
+    assert syms["web/src/server.js:module.exports.stop"].signature == "stop: function ()"
+    assert syms["web/src/server.js:module.exports.ping"].signature == "ping: () =>"
+    # A shorthand property is a reference, not a definition.
+    assert "web/src/server.js:module.exports.app" not in syms
+
+
+def test_module_exports_named_function():
+    syms = symbols(parse_fixture("web/src/legacy.cjs"))
+    legacy = syms["web/src/legacy.cjs:legacy"]
+    assert (legacy.kind, legacy.start_line, legacy.end_line) == ("function", 4, 6)
+    assert legacy.signature == "module.exports = function legacy(p)"
+    anon = symbols(parse_js("a.js", "module.exports = () => 1;\n"))
+    assert anon["a.js:module.exports"].kind == "function"
+
+
+def test_assignments_inside_functions_are_not_symbols():
+    p = parse_js("m.js", "function setup(app) {\n  app.get = function () {};\n}\n"
+                         "const api = { list() { return 1; } };\n")
+    syms = symbols(p)
+    assert "m.js:app.get" not in syms
+    assert "m.js:setup" in syms
+    assert syms["m.js:api.list"].kind == "method"
 
 
 def test_js_edge_cases():

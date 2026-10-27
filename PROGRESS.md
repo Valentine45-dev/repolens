@@ -81,6 +81,16 @@
   - Tests: 61 passed, 2 skipped (network). Crash check: all 98 JS/TS files of
     `sindresorhus/ky` parsed 15 times, no crash (1003 symbols, 311 imports per pass).
   - `test_db` connects with `connect_timeout=5`, so a stopped database fails fast instead of hanging.
+- **JS CommonJS symbols (27 Oct, before task 4).** Top-level only:
+  - `x.y = function name() {}` / `x.y = () => {}` (incl. `exports.y`, `module.exports.y`,
+    `app.listen`, `res.send`, `View.prototype.render`) -> function named `x.y`.
+  - `module.exports = function name() {}` -> function `name` (anonymous: `module.exports`).
+  - Object literals assigned at top level (`module.exports = { a() {}, b: function () {},
+    c: () => 1 }`, `const api = {...}`) -> methods `module.exports.a`, `api.b`, ...; shorthand
+    properties are references, not symbols.
+  - Calls inside get the new symbol as caller. Fixture `web/src/server.js`; express `lib/` now gives
+    70 function symbols (was 7). Tests: 65 passed, 2 skipped.
+  - Fixture `tsconfig.json` no longer has `baseUrl` (covers the no-baseUrl alias case, task 5).
 
 ## Next
 - Scope change (27 Oct, `7233e27`): Python and JS/TS both get full analysis; CLAUDE.md updated.
@@ -121,7 +131,9 @@ Approved 27 Oct. Each task ends with: run it, show the result, commit, update th
    - Extension and `index` probing; TS-style `./x.js` maps to `x.ts`; `node:fs` and bare package
      names -> `external`.
    - tsconfig `paths` from the root `tsconfig.json` only, and only when each pattern has one `*` and
-     one target; anything else -> `unresolved`.
+     one target; anything else -> `unresolved`. Targets resolve against `baseUrl` when set,
+     otherwise against the tsconfig.json's own directory (fixture has no `baseUrl`; a tmp_path
+     unit test covers `baseUrl`).
    - Checkpoint done right after this task, not at end of day: ingest one small real JS repo and one
      small TS repo. Candidates: `expressjs/express` (CommonJS) and `sindresorhus/ky` (TS); check
      sizes first.
@@ -178,8 +190,8 @@ Plan decisions:
 ## Known issues
 - PyPI fetches sometimes time out on this network (`uv add` failed once); `UV_HTTP_TIMEOUT=180` worked.
 - Docker Desktop can stop on its own; if DB tests error on connect, start it and `docker compose up -d db`.
-- JS `module.exports = function f() {}` and object-literal methods are not symbols (only declarations
-  and top-level arrow/function consts are).
+- JS member assignments and object-literal methods become symbols only at top level, not inside
+  functions (e.g. `function setup(app) { app.get = ... }` is not a symbol).
 - `hardcoded-secret` is noisy on test code (placeholder keys in `tests/`). Consider lower severity
   for test paths when the Day 3 detectors land.
 - Fixture tests do not reproduce the 0.26.0 crash (only bigger files did); the pin is the guard.

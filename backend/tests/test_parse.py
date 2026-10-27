@@ -112,6 +112,7 @@ def test_fixture_repo_discovers_and_reports_secret():
         "web/src/legacy.cjs",
         "web/src/lib/index.ts",
         "web/src/lib/math.ts",
+        "web/src/server.js",
         "web/src/util.js",
         "web/src/view.tsx",
     ]

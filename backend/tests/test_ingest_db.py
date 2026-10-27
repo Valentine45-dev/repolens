@@ -53,11 +53,11 @@ def test_ingest_fixture_repo(client, tmp_path):
     assert status["url"] == "https://github.com/example/sample"
 
     files = query("SELECT path FROM files ORDER BY path")
-    assert len(files) == 12  # 5 Python, 6 JS/TS, tsconfig.json
+    assert len(files) == 13  # 5 Python, 7 JS/TS, tsconfig.json
 
     rows = query("SELECT kind, count(*) AS n FROM symbols GROUP BY kind")
     kinds = {r["kind"]: r["n"] for r in rows}
-    assert kinds["module"] == 11
+    assert kinds["module"] == 12
     assert kinds["class"] >= 6
 
     js = query("SELECT s.qualified_name FROM symbols s JOIN files f ON f.id = s.file_id"
