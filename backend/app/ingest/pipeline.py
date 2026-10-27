@@ -12,7 +12,8 @@ from app import config
 from app.db import pool
 from app.ingest import clone
 from app.ingest.discover import DiscoveredFile, discover
-from app.ingest.parse import parse_python
+from app.ingest.parse import ParsedFile, parse_python
+from app.ingest.parse_js import parse_js
 
 log = logging.getLogger("repolens.ingest")
 
@@ -73,18 +74,24 @@ def store_files(snapshot_id: int, files: list[DiscoveredFile]) -> None:
                 )
 
 
+def parse_file(path: str, language: str, content: str) -> ParsedFile:
+    if language == "python":
+        return parse_python(path, content)
+    return parse_js(path, content)
+
+
 def store_symbols(snapshot_id: int, job_id: int, deadline: float) -> int:
-    """Parse stage: module/class/function/method symbols for every Python file."""
+    """Parse stage: module/class/function/method symbols for every Python and JS/TS file."""
     with pool().connection() as conn:
         files = conn.execute(
-            "SELECT id, path, content FROM files WHERE snapshot_id = %s AND language = 'python'"
-            " ORDER BY path",
+            "SELECT id, path, language, content FROM files WHERE snapshot_id = %s"
+            " AND language IN ('python', 'javascript', 'typescript') ORDER BY path",
             (snapshot_id,),
         ).fetchall()
 
     rows = []
     for i, f in enumerate(files, start=1):
-        for s in parse_python(f["path"], f["content"]):
+        for s in parse_file(f["path"], f["language"], f["content"]).symbols:
             rows.append(
                 (snapshot_id, f["id"], s.kind, s.name, s.qualified_name,
                  s.start_line, s.end_line, s.signature)

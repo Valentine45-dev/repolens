@@ -44,7 +44,8 @@ def test_db():
         pytest.skip("needs TEST_DATABASE_URL")
     url = check_test_database_url(url)
 
-    with psycopg.connect(url, autocommit=True) as conn:
+    # Fail fast (not hang) when the database is down.
+    with psycopg.connect(url, autocommit=True, connect_timeout=5) as conn:
         conn.execute("DROP SCHEMA public CASCADE")
         conn.execute("CREATE SCHEMA public")
         conn.execute(SCHEMA.read_text(encoding="utf-8"))

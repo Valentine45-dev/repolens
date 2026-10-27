@@ -58,10 +58,33 @@
 - **Process (27 Oct):** CI errors if `TEST_DATABASE_URL` is missing; local `.env` has it. CLAUDE.md:
   no local PostgreSQL (db stays on host 5433); feature branches are pushed after each commit, ask
   only before merging into `main`.
+- **Day 2 task 3 done (27 Oct): parsers return symbols, imports and calls.**
+  - `parse_python` returns `ParsedFile(symbols, imports, calls)`. `ParsedImport(specifier, names,
+    line)`: specifier as written (`.models`, `os.path`, `./lib`); names are `(imported, local)`
+    pairs, imported `*` = whole module bound to local, local `*` = star import. `ParsedCall(caller,
+    name, receiver, line)`: caller = innermost enclosing symbol; receiver None for `f()`, the dotted
+    text for `x.f()` / `self.f()` / `this.f()`, `''` when the receiver is not a plain name.
+    Decorator calls are now visited.
+  - New `app/ingest/parse_js.py` (`parse_js`): grammar by suffix (.ts typescript, .tsx tsx, else
+    javascript). Symbols: module, class (incl. abstract), function (declarations, generators,
+    top-level `const f = () =>` / function expressions), method. JS qualified names: module = path,
+    members `path:Name`, `path:Class.method`. Imports: `import`, `export ... from`,
+    `require('x')` (with `const x` / `{a, b: c}` bindings), `import('x')`, literal strings only.
+    Calls include `new X()`; `require` / `import()` are not calls.
+  - Parse stage stores symbols for Python and JS/TS; imports/calls are stored by the edges stage
+    (task 4).
+  - Fixture repo: root `tsconfig.json` (`@lib/*` alias) + `web/src/` (app.ts, view.tsx, util.js,
+    legacy.cjs, lib/index.ts, lib/math.ts) covering require, index, `.js`->`.ts`, alias,
+    export-from, dynamic import, an unresolved `./missing`; `sample_app/__init__.py` got two
+    relative imports.
+  - Deps: `tree-sitter-javascript` 0.25.0, `tree-sitter-typescript` 0.23.2 (on tree-sitter 0.25.2).
+  - Tests: 61 passed, 2 skipped (network). Crash check: all 98 JS/TS files of
+    `sindresorhus/ky` parsed 15 times, no crash (1003 symbols, 311 imports per pass).
+  - `test_db` connects with `connect_timeout=5`, so a stopped database fails fast instead of hanging.
 
 ## Next
 - Scope change (27 Oct, `7233e27`): Python and JS/TS both get full analysis; CLAUDE.md updated.
-- Day 2: task 3 of the Day 2 plan below (parsers return symbols, imports and calls; `parse_js`).
+- Day 2: task 4 of the Day 2 plan below (Python import resolution + `edges` stage).
 - Running tests locally: `uv run --env-file ../.env pytest` (`.env` has `TEST_DATABASE_URL`).
 
 ## Day 2 plan
@@ -153,6 +176,10 @@ Plan decisions:
   with `uv run uvicorn`. The full compose stack (`db`, `api`, later `web`) is kept for the demo.
 
 ## Known issues
+- PyPI fetches sometimes time out on this network (`uv add` failed once); `UV_HTTP_TIMEOUT=180` worked.
+- Docker Desktop can stop on its own; if DB tests error on connect, start it and `docker compose up -d db`.
+- JS `module.exports = function f() {}` and object-literal methods are not symbols (only declarations
+  and top-level arrow/function consts are).
 - `hardcoded-secret` is noisy on test code (placeholder keys in `tests/`). Consider lower severity
   for test paths when the Day 3 detectors land.
 - Fixture tests do not reproduce the 0.26.0 crash (only bigger files did); the pin is the guard.
