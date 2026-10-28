@@ -15,6 +15,7 @@ const STAGES = [
   { id: "parse", label: "Parsing code" },
   { id: "edges", label: "Resolving imports and calls" },
   { id: "detect", label: "Running detectors" },
+  { id: "embed", label: "Preparing search for questions" },
 ] as const;
 
 type RowState = "pending" | "active" | "done" | "failed";

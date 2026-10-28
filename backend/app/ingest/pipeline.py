@@ -1,4 +1,4 @@
-"""Runs one ingestion job: fetch -> discover -> parse -> edges -> detect.
+"""Runs one ingestion job: fetch -> discover -> parse -> edges -> detect -> embed.
 
 Each stage replaces its own rows (delete-then-insert in one transaction), so a rerun never
 duplicates anything. Progress goes to the job row. The clone is always deleted afterwards.
@@ -21,6 +21,8 @@ from app.ingest.parse import ParsedFile, ParsedImport, ParsedSymbol, parse_pytho
 from app.ingest.parse_js import parse_js
 from app.ingest.resolve import JsModules, PythonModules, Target, resolve_js, resolve_python
 from app.paths import is_test_path
+from app.qa.chunks import Chunk, build_chunks, search_words
+from app.qa.embed import get_embedder
 
 log = logging.getLogger("repolens.ingest")
 
@@ -279,6 +281,63 @@ def store_findings(snapshot_id: int, parsed: dict[str, Parsed]) -> int:
     return len(rows)
 
 
+def store_chunks(snapshot_id: int, job_id: int, parsed: dict[str, Parsed],
+                 deadline: float) -> dict:
+    """Embed stage: chunks (functions, methods, classes, top-level code) from the redacted
+    content, embedded with the configured model. Returns stats for the log and PROGRESS."""
+    embedder = get_embedder()
+    chunks: list[Chunk] = []
+    split_units: set[tuple[str, str, int]] = set()
+    for path, p in parsed.items():
+        for c in build_chunks(path, p.content, p.result.symbols, embedder.count_tokens,
+                              embedder.max_tokens):
+            chunks.append(c)
+            if c.window:
+                split_units.add((c.path, c.qualified_name, c.unit_start))
+    _check_deadline(deadline)
+
+    started = time.monotonic()
+    vectors: list[list[float]] = []
+    step = 256
+    for i in range(0, len(chunks), step):
+        vectors += embedder.embed([c.embed_text for c in chunks[i:i + step]])
+        _check_deadline(deadline)
+        _set_job(job_id, "embed", 92 + int(7 * min(i + step, len(chunks)) / max(len(chunks), 1)))
+    embed_seconds = time.monotonic() - started
+
+    with pool().connection() as conn, conn.transaction():
+        conn.execute("DELETE FROM chunks WHERE snapshot_id = %s", (snapshot_id,))
+        symbol_ids: dict[tuple[str, str], int] = {}
+        for r in conn.execute(
+            "SELECT f.path, s.qualified_name, s.id FROM symbols s JOIN files f ON f.id = s.file_id"
+            " WHERE s.snapshot_id = %s ORDER BY s.id DESC",
+            (snapshot_id,),
+        ):
+            symbol_ids[(r["path"], r["qualified_name"])] = r["id"]  # lowest id wins
+        rows = [
+            (snapshot_id, symbol_ids[(c.path, c.qualified_name)], c.start_line, c.end_line,
+             c.token_count, c.text, search_words(c), "[" + ",".join(f"{x:.6f}" for x in v) + "]")
+            for c, v in zip(chunks, vectors, strict=True)
+            if (c.path, c.qualified_name) in symbol_ids
+        ]
+        with conn.cursor() as cur:
+            cur.executemany(
+                "INSERT INTO chunks (snapshot_id, symbol_id, start_line, end_line, token_count,"
+                " text, search_tsv, embedding)"
+                " VALUES (%s, %s, %s, %s, %s, %s, to_tsvector('simple', %s), %s::vector)",
+                rows,
+            )
+    return {
+        "chunks": len(rows),
+        "windows": sum(1 for c in chunks if c.window),
+        "split_units": len(split_units),
+        "max_tokens": max((c.token_count for c in chunks), default=0),
+        "model_max_tokens": embedder.max_tokens,
+        "embed_seconds": round(embed_seconds, 1),
+        "model": f"{embedder.name}@{embedder.revision}",
+    }
+
+
 def _fetch_with_retry(job_id: int, url: str, sha: str, workdir: Path, deadline: float) -> None:
     """Fetch the commit; on a network error or timeout, try once more on a clean workspace,
     if a full attempt still fits before the deadline. Other git errors fail at once."""
@@ -328,6 +387,12 @@ def run_job(job_id: int, snapshot_id: int, url: str, sha: str) -> None:
         _set_job(job_id, stage, 90)
         n_findings = store_findings(snapshot_id, parsed)
         log.info("job %s: %d findings from detectors", job_id, n_findings)
+        _check_deadline(deadline)
+
+        stage = "embed"
+        _set_job(job_id, stage, 92)
+        stats = store_chunks(snapshot_id, job_id, parsed, deadline)
+        log.info("job %s: embed %s", job_id, stats)
 
         _set_job(job_id, "done", 100, status="done")
     except (clone.CloneError, JobError) as e:

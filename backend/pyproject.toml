@@ -13,6 +13,12 @@ dependencies = [
     "uvicorn[standard]>=0.54.0",
 ]
 
+[project.optional-dependencies]
+embed = [
+    "sentence-transformers>=3.0",
+    "torch>=2.4",
+]
+
 [dependency-groups]
 dev = [
     "httpx>=0.28.1",
@@ -33,3 +39,12 @@ select = ["E", "F", "W", "I", "B", "UP"]
 testpaths = ["tests"]
 pythonpath = ["."]
 markers = ["db: needs a Postgres test database (TEST_DATABASE_URL)"]
+
+# torch from the CPU-only index: the default Linux wheels bundle CUDA (several GB).
+[[tool.uv.index]]
+name = "pytorch-cpu"
+url = "https://download.pytorch.org/whl/cpu"
+explicit = true
+
+[tool.uv.sources]
+torch = { index = "pytorch-cpu" }

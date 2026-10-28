@@ -33,6 +33,8 @@ def check_test_database_url(url: str) -> str:
 def pytest_configure(config):
     # The app must never see the dev database during tests.
     os.environ.pop("DATABASE_URL", None)
+    # Deterministic stub embeddings: tests never download the model (design doc 19.4).
+    os.environ["EMBEDDER"] = "stub"
     url = os.environ.get("TEST_DATABASE_URL")
     if url:
         check_test_database_url(url)

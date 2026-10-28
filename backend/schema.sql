@@ -98,6 +98,9 @@ CREATE TABLE chunks (
   id           BIGSERIAL PRIMARY KEY,
   snapshot_id  BIGINT NOT NULL REFERENCES snapshots(id) ON DELETE CASCADE,
   symbol_id    BIGINT NOT NULL REFERENCES symbols(id) ON DELETE CASCADE,
+  start_line   INT NOT NULL,                      -- the chunk's own range (a window of a long
+  end_line     INT NOT NULL,                      -- symbol has its own), cited as path:start-end
+  token_count  INT NOT NULL,                      -- model tokens of the embedded text
   text         TEXT NOT NULL,                     -- redacted
   search_tsv   TSVECTOR,
   embedding    vector(384)                        -- all-MiniLM-L6-v2 / bge-small class models

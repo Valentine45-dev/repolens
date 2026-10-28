@@ -301,15 +301,57 @@
     counts ignore filters, node_id fallback, 422/404/409, raw fixture secret never in any
     response. 151 passed, 2 skipped.
   - Real snapshots (re-ingested): itsdangerous 7 findings, all `hardcoded-secret` in `tests/`
-    (low, `in_test`, "... in a test file."; were high on Day 1); express 1 (placeholder password in
-    `examples/auth/index.js`, low, `in_test`). Snapshots ingested before 28 Oct (old jQuery, black,
-    etc.) have `in_test=false`: re-ingest them before demoing findings.
+    (low, `in_test`; were high on Day 1); express 1 (placeholder password in
+    `examples/auth/index.js`, low, `in_test`).
+  - Follow-up fixes: the message says "... in test or example code." (examples/ counts as test
+    code, so "in a test file" was wrong). All dev snapshots were re-run in place (same ids) so
+    none has stale `in_test` values; the bogus `example/broken` snapshot was deleted.
+- **Day 3 task 4 done (28 Oct): chunks + embeddings** (`app/qa/chunks.py`, `app/qa/embed.py`,
+  `embed` stage in the pipeline, 92–99%).
+  - Model `sentence-transformers/all-MiniLM-L6-v2`, revision pinned in `app/config.py`
+    (`EMBED_MODEL_REVISION=1110a243fdf4706b3f48f1d95db1a4f5529b4d41`), 384 dims, CPU only.
+    **`max_seq_length` is 256 word pieces, checked in code** (`model.max_seq_length`; the embedder
+    refuses to start if the dimension is not 384). Every job logs `model@revision` with its stats
+    so eval runs can report them.
+  - Chunks: one per function, method and class (class = header up to its first method; nested
+    functions stay inside their enclosing function), plus module-level chunks: one per contiguous
+    run of top-level code (lines outside every function/class), so a file can have several.
+    Text only from the redacted `files.content`. Blank edge lines trimmed.
+  - Embedded text = `"{path} {qualified_name}\n" + code`. Tokens counted with the model's own
+    tokenizer (special tokens included). A unit over 256 tokens is split into line windows with
+    3 lines of overlap, each with its own start/end lines; each window's exact count is re-checked
+    and shrunk if needed; a single line too long on its own is cut.
+  - Vectors normalized; cosine `<=>`; exact scan scoped to `snapshot_id`, no HNSW. Model loads
+    once per process; encode in batches of 64; delete-then-insert in one transaction.
+    `chunks` gained `start_line`, `end_line`, `token_count`; `search_tsv` holds identifier parts
+    (`getUserById` -> get user by id) for the stretch hybrid retrieval.
+  - Dependencies: optional extra `embed` (`sentence-transformers`, `torch`), with torch from the
+    explicit `pytorch-cpu` uv index (CPU wheels, no CUDA). Run the API with
+    `uv run --extra embed --env-file ../.env uvicorn app.main:app --port 8000`; a plain `uv run`
+    re-syncs and removes the extra. Tests and CI use `EMBEDDER=stub` (hashing embedder, design
+    §19.4): CI never downloads the model. Real-model test: `RUN_MODEL_TESTS=1 uv run --extra embed
+    pytest -k real_model`.
+  - Tests: unit ranges, windows within budget with overlap and no gaps, JS units, DB rows valid
+    (ranges match file lines, ≤256 tokens, 384-dim unit vectors, no raw secret), cosine search
+    scoped to the snapshot, rerun replaces rows. 159 passed, 3 skipped.
+  - Real runs (both jobs ran at the same time, so times include CPU contention):
+
+    | repo | chunks | windows | units split | of which functions/methods/classes | max tokens | embed time |
+    |---|---|---|---|---|---|---|
+    | expressjs/express | 1219 | 852 | 148 | 30 (18 in tests) | 256 | 83.1 s |
+    | pallets/itsdangerous | 181 | 38 | 13 | 12 (3 in tests) | 251 | 19.4 s |
+
+    No chunk over 256 tokens, no bad line ranges. Express: 1053 of 1219 chunks are in `test/`
+    (mocha `describe`/`it` callbacks are top-level code), and 118 of its 148 split units are
+    module-level runs in test files.
 
 ## Next
 - Scope change (27 Oct, `7233e27`): Python and JS/TS both get full analysis; CLAUDE.md updated.
 - **`feat/graph-api` merged into `main` (28 Oct, `0c514d2`)** after CI was green on `5111572` and
   on `main` (108 passed, 2 skipped). Includes the user's logo mark and favicons.
-- Day 3 on `feat/detectors`: task 4 of the Day 3 plan (chunks + embeddings).
+- Day 3 on `feat/detectors`: task 5 of the Day 3 plan (`/ask`). Before merging this branch:
+  the api `Dockerfile` needs `uv sync --extra embed` and a volume for the model cache (see Known
+  issues).
 - Running tests locally: `uv run --env-file ../.env pytest` (`.env` has `TEST_DATABASE_URL`).
 
 ## Day 2 plan
@@ -539,8 +581,13 @@ Agreed 27 Oct, to apply when building Day 3:
 - Docker Desktop can stop on its own; if DB tests error on connect, start it and `docker compose up -d db`.
 - JS member assignments and object-literal methods become symbols only at top level, not inside
   functions (e.g. `function setup(app) { app.get = ... }` is not a symbol).
-- `hardcoded-secret` is noisy on test code (placeholder keys in `tests/`). Consider lower severity
-  for test paths when the Day 3 detectors land.
+- `backend/Dockerfile` still runs `uv sync --locked --no-dev` without `--extra embed`, so in
+  `docker compose up` the embed stage fails (no sentence-transformers). Fix before merging
+  `feat/detectors`: add the extra and a volume for the Hugging Face cache (first load downloads
+  ~90 MB). Not yet verified in Docker.
+- Test code dominates retrieval on test-heavy repos (express: 86% of chunks in `test/`). Task 5
+  may need to down-rank or filter `in_test` chunks; decide with the Q&A eval.
+- First real-model load takes ~1–2 min (download + torch import); later loads are faster.
 - Fixture tests do not reproduce the 0.26.0 crash (only bigger files did); the pin is the guard.
   Re-check before ever lifting it.
 - `httpx` with Starlette TestClient emits a deprecation warning (suggests `httpx2`); harmless for now.
