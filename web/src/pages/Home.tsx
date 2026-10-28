@@ -82,7 +82,7 @@ export function Home() {
         Deep analysis for Python and JavaScript/TypeScript.
       </p>
 
-      <form onSubmit={onSubmit} noValidate>
+      <form onSubmit={onSubmit} noValidate aria-busy={submit.isPending}>
         <label htmlFor="repo-url" className="visually-hidden">
           GitHub repository URL
         </label>

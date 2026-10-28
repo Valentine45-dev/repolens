@@ -11,7 +11,17 @@
     <title>RepoLens</title>
   </head>
   <body>
-    <div id="root"></div>
+    <!-- Shown until the app mounts and replaces it, so a first load is never a blank page.
+         Styles are inline: the stylesheet is loaded by the app itself. -->
+    <div id="root">
+      <p
+        role="status"
+        aria-busy="true"
+        style="margin: 0; padding: 24px; font: 14px/1.5 system-ui, sans-serif; color: var(--text-muted, #52525b)"
+      >
+        Loading RepoLens…
+      </p>
+    </div>
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>

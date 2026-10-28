@@ -7,6 +7,7 @@ import { getGraph } from "../api";
 import type { AnalysisContext } from "../components/AnalysisShell";
 import { ConnectionNotice, isReconnecting } from "../components/ConnectionNotice";
 import { FileList } from "../components/FileList";
+import { GraphSkeleton } from "../components/GraphSkeleton";
 import { FIT_OPTIONS, GraphView } from "../components/GraphView";
 import { NodePanel } from "../components/NodePanel";
 import { applyCap, degrees, layoutGraph, RENDER_CAP } from "../graphModel";
@@ -139,9 +140,7 @@ function ExploreInner() {
               </button>
             </div>
           ) : !graph.data || !capped ? (
-            <div className="canvas-message" aria-busy="true">
-              <p className="caption">Loading graph…</p>
-            </div>
+            <GraphSkeleton />
           ) : graph.data.nodes.length === 0 ? (
             <div className="canvas-message">
               <p>No Python or JavaScript/TypeScript files to show.</p>
