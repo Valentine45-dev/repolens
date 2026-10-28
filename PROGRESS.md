@@ -738,6 +738,47 @@
     unchanged (39 rows, max id 53). Tests: pinned commit reuses the job without ls-remote;
     malformed commits are 422. 249 passed, 3 skipped.
 
+- **`feat/final-evals` merged into `main` (28 Oct, `57415d1`); merged branches deleted.**
+- **Blank screen after an example chip (28 Oct, `fix/blank-screen`).** Seen in the demo
+  rehearsal (native, `npm run dev`): a few seconds of white before the Explorer.
+  - **Cause (measured, then read in the code):** Progress, opened on an analysis that is already
+    done, rendered only `<Navigate>` (nothing on screen). React Router 7.18 applies every
+    navigation inside `React.startTransition` (`BrowserRouter`), so React keeps that empty screen
+    up until the next route is ready: the lazy Explore chunk plus its first render, which runs
+    the dagre layout synchronously. The blank length is that render time, so it grows with a
+    slower or busier CPU and with the dev build (dev React + StrictMode double render). The dev
+    server's first-visit compile is **not** the main cause: even with an empty optimizer cache
+    the first click was 1.19 s with 37 ms blank and no dependency re-bundle or page reload in the
+    server log.
+  - **Measurement:** Playwright Chromium, click the itsdangerous chip on Home, sample `<main>`
+    every frame until graph nodes exist; blank = no text and no skeleton/`aria-busy` element.
+    First click = fresh browser context (cold cache); repeat = back to Home in the same session.
+    6x = Chrome CPU throttling (stands in for the busy 8 GB laptop). The rehearsal's "few
+    seconds" was not reproduced exactly on this machine.
+
+    | build, CPU | before: to graph / blank (first) | before (repeat) | after: to graph / blank (first) | after (repeat) |
+    |---|---|---|---|---|
+    | dev, 1x | 1191 / 37 ms | 322 / 219 ms | 1428 / **0** ms | 437 / **0** ms |
+    | preview, 1x | 602 / 16 ms | 107 / 56 ms | 757 / **0** ms | 160 / **0** ms |
+    | dev, 6x | 2423 / 354 ms | 1304 / **1122** ms | 2532 / **0** ms | 467 / **0** ms |
+    | preview, 6x | 1854 / 195 ms | 149 / 62 ms | 1405 / **0** ms | 2318 / **0** ms * |
+
+    Before also: the running dev server (5173) 643 / 32 ms first, 306 / 116 ms repeat; a dev
+    server with a warm optimizer cache 811 / 16 ms. Times vary run to run by a few hundred ms.
+    \* that repeat waited 2.2 s on Home for `POST /repos` with the form in its "Starting" state.
+  - **Fix:** Progress shows "Opening the graph…" (skeleton, `role=status`, `aria-busy`) while it
+    redirects; a shared `GraphSkeleton` (spec §12.1 Graph: skeleton plus "Laying out…") is the
+    Suspense fallback for the lazy chunk and Explore's data wait (it lives outside the lazy
+    chunk); `index.html` has a static "Loading RepoLens…" in `#root` until the app mounts; Home's
+    form is `aria-busy` while a submit is pending. Traced after the fix (6x, both builds): Home ->
+    Progress skeleton -> "Opening the graph…" -> header + "Laying out…" -> graph; never empty.
+    Other waits already had their §12.1 state (analysis header skeleton + "Loading analysis…",
+    findings skeleton rows, node panel skeleton, Ask typing indicator).
+  - **Demo plan unchanged** (the condition for switching was "dev compile is the main cause",
+    which the measurements rule out). The production build is still about twice as fast to the
+    graph (first click 0.76 s vs 1.43 s at 1x); it can be run natively with `cd web; npm run build;
+    npm run preview -- --port 5173` (the `/api` proxy carries over).
+
 ## Demo plan (8 GB laptop)
 The full compose stack works (tested 28 Oct) but left ~0.66 GB free and crashed the machine
 once. Primary demo is native mode; compose is shown as tested, not run live.

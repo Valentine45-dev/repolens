@@ -100,7 +100,16 @@ export function Progress() {
     );
     return () => window.clearTimeout(timer);
   }, [done, navigate, snapshotId]);
-  if (done && !sawRunning.current) return <Navigate to={`/a/${snapshotId}/explore`} replace />;
+  // The router applies navigations in a transition, so this screen stays up until the graph
+  // route (a lazy chunk plus layout) is ready: it must never be empty.
+  if (done && !sawRunning.current) {
+    return (
+      <>
+        <OpeningGraph />
+        <Navigate to={`/a/${snapshotId}/explore`} replace />
+      </>
+    );
+  }
 
   if (!valid || (query.error instanceof ApiError && query.error.status === 404)) {
     return (
@@ -238,6 +247,17 @@ function FailedCallout({ status }: { status: SnapshotStatus }) {
         </Link>
       </div>
       {retry.isError ? <p className="field-message" data-tone="error">{retry.error.message}</p> : null}
+    </div>
+  );
+}
+
+function OpeningGraph() {
+  return (
+    <div className="page" role="status" aria-busy="true">
+      <div className="skeleton" style={{ width: 280, height: 24 }} />
+      <p className="caption" style={{ marginTop: 12 }}>
+        Opening the graph…
+      </p>
     </div>
   );
 }

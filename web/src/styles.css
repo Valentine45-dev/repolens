@@ -568,6 +568,22 @@ a {
   background: var(--surface-2);
 }
 
+.graph-skeleton-rows {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-6);
+}
+
+.graph-skeleton-row {
+  display: flex;
+  gap: var(--space-6);
+}
+
+.graph-skeleton-node {
+  width: 140px;
+  height: 36px;
+}
+
 .spin {
   animation: spin 900ms linear infinite;
 }
