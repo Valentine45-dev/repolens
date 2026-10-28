@@ -52,7 +52,8 @@ def test_graph_defaults_hide_tests_and_externals(client, snapshot):
     assert (g["min_confidence"], g["exclude_tests"], g["hidden_files"]) == (0.9, True, 2)
     nodes, edges = by_path(g)
     assert sorted(nodes) == [
-        "sample_app/__init__.py", "sample_app/broken.py", "sample_app/models.py",
+        "sample_app/__init__.py", "sample_app/broken.py", "sample_app/legacy_notes.py",
+        "sample_app/models.py",
         "sample_app/service.py", "sample_app/settings.py",
         "web/src/app.ts", "web/src/legacy.cjs", "web/src/lib/index.ts", "web/src/lib/math.ts",
         "web/src/server.js", "web/src/util.js", "web/src/view.tsx",
@@ -82,7 +83,7 @@ def test_graph_defaults_hide_tests_and_externals(client, snapshot):
 def test_graph_with_tests(client, snapshot):
     g = client.get(f"/snapshots/{snapshot}/graph", params={"exclude_tests": "false"}).json()
     nodes, edges = by_path(g)
-    assert g["hidden_files"] == 0 and len(nodes) == 14
+    assert g["hidden_files"] == 0 and len(nodes) == 15
     assert edges[("tests/check_service.py", "sample_app/service.py")]["calls"] == 1
     assert edges[("web/src/lib/math.spec.ts", "web/src/lib/math.ts")]["weight"] == 2
 

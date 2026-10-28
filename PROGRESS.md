@@ -360,6 +360,61 @@
   - api `Dockerfile`: `uv sync --locked --no-dev` (keeps the embed group; the lock resolves Linux
     torch to `2.14.1+cpu`, no `nvidia-*` packages); downloads the pinned model revision at build
     time into `HF_HOME=/opt/hf`, then sets `HF_HUB_OFFLINE=1`; runs as uid 1000 `repolens`.
+- **Task 5: `POST /snapshots/{id}/ask` (28 Oct, `feat/qa`).** Built to the approved plan below
+  with the 28 Oct changes. Tested with FakeProvider only; the real-model check waits for the key.
+  - Router (`app/qa/router.py`): 17 patterns (dependents/dependencies x imports/calls/any). Target
+    resolution: exact path, path suffix, bare file name, dotted module, qualified name, name or
+    `Class.method` suffix, external package; test files dropped when non-test candidates exist.
+    No match: AI route. Several matches: `status: "ambiguous"`, up to 5 candidates with paths,
+    "Which one do you mean?". Graph answers return `results` (node_id, file_id, path, edge,
+    confidence, in_test), never citations; calls at confidence >= 0.9 plus a count of the
+    lower-confidence name matches; capped at 50.
+  - Retrieval (`app/qa/retrieve.py`): exact cosine top-8, `(include_tests OR NOT in_test)` in SQL,
+    one retry with test code when nothing else matches, `used_test_code` in the response.
+    1-hop expansion (`QA_GRAPH_EXPANSION`, default on): callers/callees (>= 0.9) and imports of the
+    hit symbols, each neighbour's chunk closest to the question, at most 8, ~6,000-token budget.
+  - Prompt: `app/qa/prompts/system.md` (`PROMPT_VERSION: 2026-10-28.1`; identity, grounding,
+    citations, trust boundary, format). A test pins its SHA-256 (CRLF normalised), so an edit
+    without a version bump fails CI. Snippets: `<snippet source="path:start-end" symbol="...">`
+    with line-numbered code; `<snippet`/`<question` in repo text or the question are escaped.
+    Single-turn: one user message per question, no history.
+  - LLM (`app/qa/llm.py`): `LLMProvider` with `AnthropicProvider` (anthropic 2.3.0, checked) and
+    `FakeProvider`. One 40 s deadline per question (`QA_DEADLINE_S`); one retry on timeout,
+    connection, 408/409/429/5xx, only with >= 5 s left after any wait; a 429 `retry-after` is
+    honoured only if it fits; SDK retries off. Answer = `text` blocks by type (thinking blocks
+    can come first); `thinking: {"type": "between_tools"}` (`LLM_THINKING`) and
+    `output_config.effort` (`LLM_EFFORT`, default `low`); `stop_reason: "refusal"` is its own
+    status. Token cap `LLM_TOKEN_CAP_PER_SNAPSHOT=500000` on `snapshots.llm_tokens_used`:
+    estimate reserved atomically before the call, corrected to actual usage after, refunded on
+    failure. Logs: error kind + HTTP status, question length + hash; never key, prompt or text.
+  - Citations (`app/qa/citations.py`): `path:N`, `path:N-M`, hyphen/en dash/em dash, optional
+    `L`, backticks, `./`. Valid only inside one sent snippet; invalid ones removed (tidying only
+    around them, so code keeps its spacing) and counted in `dropped`.
+  - Statuses: graph `answered | ambiguous`; AI `answered | unverified` (no citation survived,
+    except "could not find" answers) `| refused | no_context | unavailable | cap_reached`.
+  - D5: an embed failure no longer fails the job (`jobs.search_error`); status reports
+    `features: {ask, ask_reason, ai}`. The embedding model loads at API startup.
+  - Injection fixture `sample_app/legacy_notes.py`; test: the text is sent only inside its own
+    snippet and the system prompt never appears in the user turn.
+  - Tests: 222 passed, 3 skipped (`test_qa.py` 38 without DB: routes, prompt, hash guard, every
+    citation form, deadline/retry, settings, thinking-first and refusal responses through
+    FakeProvider; `test_ask_db.py` 24: graph, ambiguity, retrieval filters/fallback/expansion,
+    every AI status, budget refund, injection, 404/409/422, D5).
+  - Run on the dev DB (real embedder, no key): graph questions 14–63 ms on express and
+    itsdangerous ("Who calls dumps?" -> ambiguous, 3 candidates); AI questions `unavailable` with
+    the spec's copy. Expansion on "How does res.send set the content type?" (express) adds 7
+    graph snippets, among them `res.send` itself (lib/response.js:204-222), which search missed;
+    no test code sent by default.
+
+## Planned vs delivered
+- **Temperature 0 (CLAUDE.md) is not possible on current models.** `temperature`, `top_p` and
+  `top_k` return 400 (Sonnet 5.5 and Haiku 5.5 migration guides; the installed SDK's
+  `messages.create` has no `temperature` parameter). Reproducibility = fixed model + effort +
+  thinking setting + prompt version; the eval output records all four.
+- Haiku 5.5 (possible dev model) differs from Sonnet 5.5: its guide documents only adaptive
+  thinking (no `between_tools`), thinking tokens count toward `max_tokens` (default raised to
+  4000), and it has no server-side fallback for refusals. Use `LLM_THINKING=adaptive` with it.
+  Both: no sampling parameters, no assistant prefill, read blocks by type, handle `refusal`.
 
 ## Next
 - Scope change (27 Oct, `7233e27`): Python and JS/TS both get full analysis; CLAUDE.md updated.
@@ -373,8 +428,11 @@
   From now on a manual re-run writes `error = 'Re-run: <why>'`.
 - express and itsdangerous re-run for `chunks.in_test` (jobs 44, 45): 1053/1219 and 68/181
   chunks in test code. The first attempt (jobs 42, 43) failed for real, see Known issues.
-- Day 3 on `feat/qa`: task 5 (`/ask`), plan below awaiting approval. Full `docker compose up`
-  check is Day 4.
+- Day 3 on `feat/qa`: task 5 (`/ask`) built and tested with FakeProvider. Next: task 6
+  (Findings UI), task 7 (Ask drawer). The real-model check (graph + AI questions on express and
+  itsdangerous, expansion on/off, tokens used) waits until the user confirms the key is in
+  `.env`. Full `docker compose up` check is Day 4.
+- Stop the API before any `uv sync` / `uv add` (Windows locks loaded `.pyd` files).
 - Running tests locally: `uv run --env-file ../.env pytest` (`.env` has `TEST_DATABASE_URL`).
 
 ## Day 2 plan
@@ -561,7 +619,11 @@ Decisions to confirm:
 - If time runs short: task 7's suggested questions and "Ask about this" shrink first, then the node
   panel Findings tab.
 
-## Task 5 plan: `POST /snapshots/{id}/ask` (draft 28 Oct, awaiting approval)
+## Task 5 plan: `POST /snapshots/{id}/ask` (approved 28 Oct with changes, built)
+Approved changes: D1 ambiguous targets list candidates and ask; D2 graph answers return
+`results`, not citations; D3 one 40 s deadline, retry only with >= 5 s left; D4 approved plus
+`used_test_code`; D5 approved with `features.ask` + reason; `unverified` when every citation is
+dropped; single-turn; token cap 500k. As built, see "Done".
 Branch `feat/qa`. Builds on the Day 3 plan item 5 and its approved changes. New dependency:
 `anthropic` (official SDK); before writing the call I check the installed version's Messages API
 (parameters, error classes, usage fields) instead of guessing. No frontend work in this task.
@@ -735,8 +797,12 @@ Agreed 27 Oct, to apply when building Day 3:
   functions (e.g. `function setup(app) { app.get = ... }` is not a symbol).
 - The api image is built and loads the model offline, but the full `docker compose up` stack
   with the model is not checked yet (Day 4).
-- Test code dominates retrieval on test-heavy repos (express: 86% of chunks in `test/`). Task 5
-  leaves `in_test` chunks out by default; decide the default with the Q&A eval.
+- Test code dominates retrieval on test-heavy repos (express: 86% of chunks in `test/`). `/ask`
+  leaves `in_test` chunks out by default; confirm the default with the Q&A eval.
+- An answer without any citation counts as `unverified` (the prompt requires citations), unless
+  it is the "could not find" answer.
+- Graph target resolution drops test-file candidates when non-test ones exist, so "Who calls
+  handle?" on express resolves to `app.handle` even though tests define `handle` too.
 - On Windows, `uv sync` fails with "Access is denied" on a `.pyd` while the API is running from
   the same venv: stop uvicorn first. Worse, the failed sync leaves that package half removed
   (files gone, metadata kept), so later syncs skip it: on 28 Oct markupsafe lost its files,

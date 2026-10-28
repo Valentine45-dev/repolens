@@ -104,6 +104,7 @@ def test_fixture_repo_discovers_and_reports_secret():
     assert sorted(by_path) == [
         "sample_app/__init__.py",
         "sample_app/broken.py",
+        "sample_app/legacy_notes.py",
         "sample_app/models.py",
         "sample_app/service.py",
         "sample_app/settings.py",
