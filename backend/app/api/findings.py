@@ -57,7 +57,7 @@ def findings(
     path_prefix: str | None = None,
     in_test: bool | None = None,
     limit: int = Query(50, ge=1, le=200),
-    offset: int = Query(0, ge=0),
+    offset: int = Query(0, ge=0, le=1_000_000),  # larger overflows SQL: a 500
 ) -> dict:
     if rule is not None and rule not in RULES:
         raise HTTPException(status_code=422, detail=f"Unknown rule: {rule}")
