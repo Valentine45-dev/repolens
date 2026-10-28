@@ -169,7 +169,7 @@ def store_edges(snapshot_id: int, parsed: dict[str, Parsed]) -> Counter:
     counts: Counter = Counter()
     with pool().connection() as conn, conn.transaction():
         conn.execute(
-            "DELETE FROM edges WHERE snapshot_id = %s AND type IN ('imports', 'calls')",
+            "DELETE FROM edges WHERE snapshot_id = %s AND type IN ('imports', 'calls', 'defines')",
             (snapshot_id,),
         )
         conn.execute(
@@ -206,12 +206,30 @@ def store_edges(snapshot_id: int, parsed: dict[str, Parsed]) -> Counter:
             )
 
         symbol_ids: dict[tuple[str, str], int] = {}
+        kinds: dict[int, str] = {}
         for r in conn.execute(
-            "SELECT f.path, s.qualified_name, s.id FROM symbols s JOIN files f ON f.id = s.file_id"
-            " WHERE s.snapshot_id = %s ORDER BY s.id",
+            "SELECT f.path, s.qualified_name, s.id, s.kind FROM symbols s"
+            " JOIN files f ON f.id = s.file_id WHERE s.snapshot_id = %s ORDER BY s.id",
             (snapshot_id,),
         ):
             symbol_ids.setdefault((r["path"], r["qualified_name"]), r["id"])
+            kinds[r["id"]] = r["kind"]
+
+        # A class defines its methods: `Pkg.mod.Class.m` / `path:Class.m` -> `...Class`.
+        define_rows = []
+        for (path, qname), sid in symbol_ids.items():
+            if kinds[sid] != "method" or "." not in qname:
+                continue
+            parent = symbol_ids.get((path, qname.rsplit(".", 1)[0]))
+            if parent is not None and kinds[parent] == "class":
+                define_rows.append((snapshot_id, parent, sid))
+        with conn.cursor() as cur:
+            cur.executemany(
+                "INSERT INTO edges (snapshot_id, src_id, dst_id, type, confidence)"
+                " VALUES (%s, %s, %s, 'defines', 1.0)",
+                define_rows,
+            )
+        counts["defines"] = len(define_rows)
         call_rows = []
         for edge in calls:
             src, dst = symbol_ids.get(edge.src), symbol_ids.get(edge.dst)

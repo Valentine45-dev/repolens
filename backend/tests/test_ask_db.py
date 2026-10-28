@@ -130,6 +130,57 @@ def test_expansion_adds_graph_neighbours(snapshot):
     assert expanded.summary()["from_graph"] == len(extra)
 
 
+def _hit(snapshot, qualified_name, start_line=None):
+    """A search-hit row for `_expand`, as `_search` returns it."""
+    rows = query(
+        "SELECT c.id, c.symbol_id, c.start_line, c.end_line, s.kind, s.file_id FROM chunks c"
+        " JOIN symbols s ON s.id = c.symbol_id WHERE c.snapshot_id = %s"
+        " AND s.qualified_name = %s ORDER BY c.start_line",
+        snapshot, qualified_name,
+    )
+    return next(r for r in rows if start_line is None or r["start_line"] == start_line)
+
+
+def _expanded(snapshot, hit):
+    from app.db import pool
+    from app.qa.embed import get_embedder
+    from app.qa.retrieve import _expand, _vector
+
+    q = _vector(get_embedder().embed(["user"])[0])
+    with pool().connection() as conn:
+        return {r["qualified_name"] for r in _expand(conn, snapshot, q, [hit], False, 8)}
+
+
+def test_classes_define_their_methods(snapshot):
+    rows = query(
+        "SELECT c.qualified_name AS cls, m.qualified_name AS method FROM edges e"
+        " JOIN symbols c ON c.id = e.src_id JOIN symbols m ON m.id = e.dst_id"
+        " WHERE e.snapshot_id = %s AND e.type = 'defines'",
+        snapshot,
+    )
+    pairs = {(r["cls"], r["method"]) for r in rows}
+    assert ("sample_app.models.User", "sample_app.models.User.save") in pairs
+    assert ("web/src/lib/index.ts:Cache", "web/src/lib/index.ts:Cache.get") in pairs
+    assert ("sample_app.models.Base", "sample_app.models.User.save") not in pairs
+
+
+def test_defines_edges_are_not_dependencies(client, snapshot):
+    (save,) = query("SELECT id FROM symbols WHERE snapshot_id = %s"
+                    " AND qualified_name = 'sample_app.models.User.save'", snapshot)
+    items = client.get(f"/symbols/{save['id']}/dependents", params={"min_confidence": 0}).json()
+    assert {i["type"] for i in items["items"]} <= {"imports", "calls"}
+
+
+def test_expansion_from_a_class_adds_its_methods(snapshot):
+    got = _expanded(snapshot, _hit(snapshot, "sample_app.models.User"))
+    assert {"sample_app.models.User.save", "sample_app.models.User.display_name"} <= got
+
+
+def test_expansion_from_top_level_code_goes_to_the_definition_below(snapshot):
+    hit = _hit(snapshot, "sample_app.service", start_line=1)  # imports + `log = ...`, then def
+    assert _expanded(snapshot, hit) == {"sample_app.service.create_user"}
+
+
 # --- AI route with FakeProvider --------------------------------------------------------------
 
 def test_ai_answer_with_validated_citations(client, snapshot, fake):

@@ -90,6 +90,74 @@ def test_js_chunks():
                    ("s/a.js", 1, 1)]
 
 
+def test_leading_comments_belong_to_the_code_they_document():
+    source = (
+        "var x = require('x');\n"  # 1
+        "\n"  # 2
+        "/**\n"  # 3
+        " * Send a response.\n"  # 4
+        " */\n"  # 5
+        "\n"  # 6  one blank line, Express style
+        "function send(body) {\n"  # 7
+        "  return body;\n"  # 8
+        "}\n"  # 9
+        "// counts things\n"  # 10
+        "// twice\n"  # 11
+        "function count(a) {\n"  # 12
+        "  return a;\n"  # 13
+        "}\n"  # 14
+        "\n"  # 15
+        "\n"  # 16
+        "/* too far away */\n"  # 17
+        "\n"  # 18
+        "\n"  # 19
+        "function far() {}\n"  # 20
+        "class C {\n"  # 21
+        "  /** a method doc */\n"  # 22
+        "  m() {}\n"  # 23
+        "}\n"  # 24
+    )
+    got = [(c.qualified_name, c.start_line, c.end_line) for c in chunks_of(source, "s/a.js")]
+    assert ("s/a.js:send", 3, 9) in got  # JSDoc + blank line + function
+    assert ("s/a.js:count", 10, 14) in got  # run of // lines, right after the previous code
+    assert ("s/a.js:far", 20, 20) in got  # two blank lines: not attached
+    assert ("s/a.js:C.m", 22, 23) in got  # method doc stays with the method
+    assert ("s/a.js:C", 21, 21) in got  # so the class header ends before it
+    module = [(s, e) for name, s, e in got if name == "s/a.js"]
+    assert module == [(1, 1), (17, 17)]  # the doc comments are no longer top-level chunks
+    lines = source.split("\n")
+    for c in chunks_of(source, "s/a.js"):
+        assert c.text == "\n".join(lines[c.start_line - 1:c.end_line])
+
+
+def test_jsdoc_containing_slash_star_still_attaches():
+    # express lib/request.js: the req.accepts JSDoc mentions "Accept: text/*".
+    source = (
+        "/**\n * // Accept: text/*, application/json\n * @public\n */\n\n"
+        "req.accepts = function(){\n  return 1;\n};\n"
+    )
+    got = [(c.qualified_name, c.start_line, c.end_line) for c in chunks_of(source, "r.js")]
+    assert got == [("r.js:req.accepts", 1, 8)]
+
+
+def test_python_comment_attaches_and_docstring_stays_inside():
+    source = (
+        "import os\n"
+        "\n"
+        "# Builds the key.\n"
+        "def key(a):\n"
+        '    """Docstring."""\n'
+        "    return a\n"
+        "x = 1  # not a leading comment\n"
+        "def other():\n"
+        "    return 2\n"
+    )
+    got = [(c.qualified_name, c.start_line, c.end_line) for c in chunks_of(source, "k.py")]
+    assert ("k.key", 3, 6) in got
+    assert ("k.other", 8, 9) in got  # a trailing comment on code is not a leading comment
+    assert ("k", 1, 1) in got and ("k", 7, 7) in got
+
+
 def test_search_words_split_identifiers():
     (c,) = [c for c in chunks_of("def getUserById(user_id):\n    return user_id\n", "a.py")]
     words = search_words(c).split()

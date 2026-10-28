@@ -1,0 +1,1430 @@
+{
+  "run": {
+    "commit_sha": "3e2cd400fc88dec929941252799e35437bbaba88",
+    "dirty": false,
+    "run_at": "2026-10-28T07:59:03+00:00",
+    "embedder": "sentence-transformers",
+    "embed_model": "sentence-transformers/all-MiniLM-L6-v2",
+    "embed_revision": "1110a243fdf4706b3f48f1d95db1a4f5529b4d41",
+    "llm_used": false,
+    "llm": {
+      "provider": "anthropic",
+      "model": null,
+      "effort": "low",
+      "thinking": "between_tools",
+      "max_tokens": 4000,
+      "prompt_version": "2026-10-28.1"
+    },
+    "retrieval": {
+      "top_k": 8,
+      "graph_expansion": true,
+      "expand_max": 8,
+      "context_tokens": 6000
+    }
+  },
+  "tools": {
+    "bandit": "bandit==1.9.4",
+    "semgrep": "semgrep==1.182.1 (native)",
+    "semgrep_configs": [
+      "p/javascript",
+      "p/secrets"
+    ]
+  },
+  "labels": [
+    {
+      "file": "python/shop.py",
+      "line": 15,
+      "kind": "vuln",
+      "category": "hardcoded-secret",
+      "language": "python"
+    },
+    {
+      "file": "python/shop.py",
+      "line": 16,
+      "kind": "vuln",
+      "category": "hardcoded-secret",
+      "language": "python"
+    },
+    {
+      "file": "python/shop.py",
+      "line": 17,
+      "kind": "safe",
+      "category": "hardcoded-secret",
+      "language": "python"
+    },
+    {
+      "file": "python/shop.py",
+      "line": 18,
+      "kind": "safe",
+      "category": "hardcoded-secret",
+      "language": "python"
+    },
+    {
+      "file": "python/shop.py",
+      "line": 22,
+      "kind": "vuln",
+      "category": "code-injection",
+      "language": "python"
+    },
+    {
+      "file": "python/shop.py",
+      "line": 26,
+      "kind": "vuln",
+      "category": "code-injection",
+      "language": "python"
+    },
+    {
+      "file": "python/shop.py",
+      "line": 30,
+      "kind": "safe",
+      "category": "code-injection",
+      "language": "python"
+    },
+    {
+      "file": "python/shop.py",
+      "line": 34,
+      "kind": "safe",
+      "category": "code-injection",
+      "language": "python"
+    },
+    {
+      "file": "python/shop.py",
+      "line": 38,
+      "kind": "vuln",
+      "category": "shell-command",
+      "language": "python"
+    },
+    {
+      "file": "python/shop.py",
+      "line": 42,
+      "kind": "vuln",
+      "category": "shell-command",
+      "language": "python"
+    },
+    {
+      "file": "python/shop.py",
+      "line": 46,
+      "kind": "safe",
+      "category": "shell-command",
+      "language": "python"
+    },
+    {
+      "file": "python/shop.py",
+      "line": 50,
+      "kind": "safe",
+      "category": "shell-command",
+      "language": "python"
+    },
+    {
+      "file": "python/shop.py",
+      "line": 54,
+      "kind": "vuln",
+      "category": "sql-injection",
+      "language": "python"
+    },
+    {
+      "file": "python/shop.py",
+      "line": 58,
+      "kind": "vuln",
+      "category": "sql-injection",
+      "language": "python"
+    },
+    {
+      "file": "python/shop.py",
+      "line": 62,
+      "kind": "vuln",
+      "category": "sql-injection",
+      "language": "python"
+    },
+    {
+      "file": "python/shop.py",
+      "line": 66,
+      "kind": "vuln",
+      "category": "sql-injection",
+      "language": "python"
+    },
+    {
+      "file": "python/shop.py",
+      "line": 70,
+      "kind": "safe",
+      "category": "sql-injection",
+      "language": "python"
+    },
+    {
+      "file": "python/shop.py",
+      "line": 74,
+      "kind": "safe",
+      "category": "sql-injection",
+      "language": "python"
+    },
+    {
+      "file": "python/shop.py",
+      "line": 78,
+      "kind": "safe",
+      "category": "sql-injection",
+      "language": "python"
+    },
+    {
+      "file": "python/shop.py",
+      "line": 85,
+      "kind": "vuln",
+      "category": "bare-except",
+      "language": "python"
+    },
+    {
+      "file": "python/shop.py",
+      "line": 93,
+      "kind": "safe",
+      "category": "bare-except",
+      "language": "python"
+    },
+    {
+      "file": "python/shop.py",
+      "line": 101,
+      "kind": "safe",
+      "category": "bare-except",
+      "language": "python"
+    },
+    {
+      "file": "js/routes.js",
+      "line": 19,
+      "kind": "safe",
+      "category": "hardcoded-secret",
+      "language": "javascript"
+    },
+    {
+      "file": "js/routes.js",
+      "line": 20,
+      "kind": "vuln",
+      "category": "hardcoded-secret",
+      "language": "javascript"
+    },
+    {
+      "file": "js/routes.js",
+      "line": 23,
+      "kind": "vuln",
+      "category": "hardcoded-secret",
+      "language": "javascript"
+    },
+    {
+      "file": "js/routes.js",
+      "line": 31,
+      "kind": "vuln",
+      "category": "code-injection",
+      "language": "javascript"
+    },
+    {
+      "file": "js/routes.js",
+      "line": 35,
+      "kind": "vuln",
+      "category": "code-injection",
+      "language": "javascript"
+    },
+    {
+      "file": "js/routes.js",
+      "line": 40,
+      "kind": "safe",
+      "category": "code-injection",
+      "language": "javascript"
+    },
+    {
+      "file": "js/routes.js",
+      "line": 44,
+      "kind": "vuln",
+      "category": "shell-command",
+      "language": "javascript"
+    },
+    {
+      "file": "js/routes.js",
+      "line": 48,
+      "kind": "vuln",
+      "category": "shell-command",
+      "language": "javascript"
+    },
+    {
+      "file": "js/routes.js",
+      "line": 52,
+      "kind": "safe",
+      "category": "shell-command",
+      "language": "javascript"
+    },
+    {
+      "file": "js/routes.js",
+      "line": 56,
+      "kind": "vuln",
+      "category": "sql-injection",
+      "language": "javascript"
+    },
+    {
+      "file": "js/routes.js",
+      "line": 60,
+      "kind": "vuln",
+      "category": "sql-injection",
+      "language": "javascript"
+    },
+    {
+      "file": "js/routes.js",
+      "line": 64,
+      "kind": "safe",
+      "category": "sql-injection",
+      "language": "javascript"
+    },
+    {
+      "file": "js/routes.js",
+      "line": 68,
+      "kind": "vuln",
+      "category": "html-injection",
+      "language": "javascript"
+    },
+    {
+      "file": "js/routes.js",
+      "line": 72,
+      "kind": "safe",
+      "category": "html-injection",
+      "language": "javascript"
+    },
+    {
+      "file": "js/routes.js",
+      "line": 78,
+      "kind": "vuln",
+      "category": "html-injection",
+      "language": "javascript"
+    },
+    {
+      "file": "js/routes.js",
+      "line": 79,
+      "kind": "safe",
+      "category": "html-injection",
+      "language": "javascript"
+    },
+    {
+      "file": "js/server.js",
+      "line": 10,
+      "kind": "vuln",
+      "category": "hardcoded-secret",
+      "language": "javascript"
+    },
+    {
+      "file": "js/server.js",
+      "line": 11,
+      "kind": "safe",
+      "category": "hardcoded-secret",
+      "language": "javascript"
+    },
+    {
+      "file": "js/server.js",
+      "line": 12,
+      "kind": "safe",
+      "category": "hardcoded-secret",
+      "language": "javascript"
+    },
+    {
+      "file": "js/server.js",
+      "line": 15,
+      "kind": "vuln",
+      "category": "code-injection",
+      "language": "javascript"
+    },
+    {
+      "file": "js/server.js",
+      "line": 19,
+      "kind": "safe",
+      "category": "code-injection",
+      "language": "javascript"
+    },
+    {
+      "file": "js/server.js",
+      "line": 23,
+      "kind": "vuln",
+      "category": "code-injection",
+      "language": "javascript"
+    },
+    {
+      "file": "js/server.js",
+      "line": 26,
+      "kind": "safe",
+      "category": "code-injection",
+      "language": "javascript"
+    },
+    {
+      "file": "js/server.js",
+      "line": 29,
+      "kind": "vuln",
+      "category": "shell-command",
+      "language": "javascript"
+    },
+    {
+      "file": "js/server.js",
+      "line": 33,
+      "kind": "vuln",
+      "category": "shell-command",
+      "language": "javascript"
+    },
+    {
+      "file": "js/server.js",
+      "line": 37,
+      "kind": "safe",
+      "category": "shell-command",
+      "language": "javascript"
+    },
+    {
+      "file": "js/server.js",
+      "line": 41,
+      "kind": "safe",
+      "category": "shell-command",
+      "language": "javascript"
+    },
+    {
+      "file": "js/server.js",
+      "line": 45,
+      "kind": "vuln",
+      "category": "html-injection",
+      "language": "javascript"
+    },
+    {
+      "file": "js/server.js",
+      "line": 49,
+      "kind": "vuln",
+      "category": "html-injection",
+      "language": "javascript"
+    },
+    {
+      "file": "js/server.js",
+      "line": 53,
+      "kind": "safe",
+      "category": "html-injection",
+      "language": "javascript"
+    },
+    {
+      "file": "js/server.js",
+      "line": 57,
+      "kind": "safe",
+      "category": "html-injection",
+      "language": "javascript"
+    },
+    {
+      "file": "js/server.js",
+      "line": 61,
+      "kind": "vuln",
+      "category": "sql-injection",
+      "language": "javascript"
+    },
+    {
+      "file": "js/server.js",
+      "line": 65,
+      "kind": "vuln",
+      "category": "sql-injection",
+      "language": "javascript"
+    },
+    {
+      "file": "js/server.js",
+      "line": 69,
+      "kind": "safe",
+      "category": "sql-injection",
+      "language": "javascript"
+    }
+  ],
+  "scores": {
+    "python/RepoLens": {
+      "tp": 11,
+      "fp": 6,
+      "fn": 0,
+      "precision": 0.6470588235294118,
+      "recall": 1.0,
+      "per_category": {
+        "hardcoded-secret": {
+          "tp": 2,
+          "fp": 1,
+          "fn": 0,
+          "rule": true
+        },
+        "code-injection": {
+          "tp": 2,
+          "fp": 1,
+          "fn": 0,
+          "rule": true
+        },
+        "shell-command": {
+          "tp": 2,
+          "fp": 1,
+          "fn": 0,
+          "rule": true
+        },
+        "sql-injection": {
+          "tp": 4,
+          "fp": 2,
+          "fn": 0,
+          "rule": true
+        },
+        "bare-except": {
+          "tp": 1,
+          "fp": 1,
+          "fn": 0,
+          "rule": true
+        }
+      },
+      "false_positives": [
+        {
+          "file": "python/shop.py",
+          "line": 18,
+          "rule": "hardcoded-secret",
+          "category": "hardcoded-secret",
+          "on_safe_line": true
+        },
+        {
+          "file": "python/shop.py",
+          "line": 30,
+          "rule": "py-eval-exec",
+          "category": "code-injection",
+          "on_safe_line": true
+        },
+        {
+          "file": "python/shop.py",
+          "line": 46,
+          "rule": "py-subprocess-shell",
+          "category": "shell-command",
+          "on_safe_line": true
+        },
+        {
+          "file": "python/shop.py",
+          "line": 74,
+          "rule": "py-sql-string",
+          "category": "sql-injection",
+          "on_safe_line": true
+        },
+        {
+          "file": "python/shop.py",
+          "line": 78,
+          "rule": "py-sql-string",
+          "category": "sql-injection",
+          "on_safe_line": true
+        },
+        {
+          "file": "python/shop.py",
+          "line": 93,
+          "rule": "py-bare-except",
+          "category": "bare-except",
+          "on_safe_line": true
+        }
+      ],
+      "missed": []
+    },
+    "python/Bandit": {
+      "tp": 8,
+      "fp": 5,
+      "fn": 3,
+      "precision": 0.6153846153846154,
+      "recall": 0.7272727272727273,
+      "per_category": {
+        "hardcoded-secret": {
+          "tp": 0,
+          "fp": 1,
+          "fn": 2,
+          "rule": true
+        },
+        "code-injection": {
+          "tp": 2,
+          "fp": 1,
+          "fn": 0,
+          "rule": true
+        },
+        "shell-command": {
+          "tp": 2,
+          "fp": 1,
+          "fn": 0,
+          "rule": true
+        },
+        "sql-injection": {
+          "tp": 4,
+          "fp": 2,
+          "fn": 0,
+          "rule": true
+        },
+        "bare-except": {
+          "tp": 0,
+          "fp": 0,
+          "fn": 1,
+          "rule": false
+        }
+      },
+      "false_positives": [
+        {
+          "file": "python/shop.py",
+          "line": 18,
+          "rule": "B105 hardcoded_password_string",
+          "category": "hardcoded-secret",
+          "on_safe_line": true
+        },
+        {
+          "file": "python/shop.py",
+          "line": 30,
+          "rule": "B307 blacklist",
+          "category": "code-injection",
+          "on_safe_line": true
+        },
+        {
+          "file": "python/shop.py",
+          "line": 46,
+          "rule": "B602 subprocess_popen_with_shell_equals_true",
+          "category": "shell-command",
+          "on_safe_line": true
+        },
+        {
+          "file": "python/shop.py",
+          "line": 74,
+          "rule": "B608 hardcoded_sql_expressions",
+          "category": "sql-injection",
+          "on_safe_line": true
+        },
+        {
+          "file": "python/shop.py",
+          "line": 78,
+          "rule": "B608 hardcoded_sql_expressions",
+          "category": "sql-injection",
+          "on_safe_line": true
+        }
+      ],
+      "missed": [
+        {
+          "file": "python/shop.py",
+          "line": 15,
+          "kind": "vuln",
+          "category": "hardcoded-secret",
+          "language": "python"
+        },
+        {
+          "file": "python/shop.py",
+          "line": 16,
+          "kind": "vuln",
+          "category": "hardcoded-secret",
+          "language": "python"
+        },
+        {
+          "file": "python/shop.py",
+          "line": 85,
+          "kind": "vuln",
+          "category": "bare-except",
+          "language": "python"
+        }
+      ]
+    },
+    "javascript/RepoLens": {
+      "tp": 17,
+      "fp": 4,
+      "fn": 2,
+      "precision": 0.8095238095238095,
+      "recall": 0.8947368421052632,
+      "per_category": {
+        "hardcoded-secret": {
+          "tp": 2,
+          "fp": 1,
+          "fn": 1,
+          "rule": true
+        },
+        "code-injection": {
+          "tp": 4,
+          "fp": 3,
+          "fn": 0,
+          "rule": true
+        },
+        "shell-command": {
+          "tp": 4,
+          "fp": 0,
+          "fn": 0,
+          "rule": true
+        },
+        "sql-injection": {
+          "tp": 4,
+          "fp": 0,
+          "fn": 0,
+          "rule": true
+        },
+        "html-injection": {
+          "tp": 3,
+          "fp": 0,
+          "fn": 1,
+          "rule": true
+        }
+      },
+      "false_positives": [
+        {
+          "file": "js/routes.js",
+          "line": 40,
+          "rule": "js-eval",
+          "category": "code-injection",
+          "on_safe_line": true
+        },
+        {
+          "file": "js/server.js",
+          "line": 12,
+          "rule": "hardcoded-secret",
+          "category": "hardcoded-secret",
+          "on_safe_line": true
+        },
+        {
+          "file": "js/server.js",
+          "line": 19,
+          "rule": "js-eval",
+          "category": "code-injection",
+          "on_safe_line": true
+        },
+        {
+          "file": "js/server.js",
+          "line": 26,
+          "rule": "js-new-function",
+          "category": "code-injection",
+          "on_safe_line": true
+        }
+      ],
+      "missed": [
+        {
+          "file": "js/routes.js",
+          "line": 23,
+          "kind": "vuln",
+          "category": "hardcoded-secret",
+          "language": "javascript"
+        },
+        {
+          "file": "js/routes.js",
+          "line": 68,
+          "kind": "vuln",
+          "category": "html-injection",
+          "language": "javascript"
+        }
+      ]
+    },
+    "javascript/Semgrep": {
+      "tp": 4,
+      "fp": 4,
+      "fn": 15,
+      "precision": 0.5,
+      "recall": 0.21052631578947367,
+      "per_category": {
+        "hardcoded-secret": {
+          "tp": 1,
+          "fp": 1,
+          "fn": 2,
+          "rule": true
+        },
+        "code-injection": {
+          "tp": 2,
+          "fp": 0,
+          "fn": 2,
+          "rule": true
+        },
+        "shell-command": {
+          "tp": 0,
+          "fp": 0,
+          "fn": 4,
+          "rule": true
+        },
+        "sql-injection": {
+          "tp": 0,
+          "fp": 0,
+          "fn": 4,
+          "rule": true
+        },
+        "html-injection": {
+          "tp": 1,
+          "fp": 3,
+          "fn": 3,
+          "rule": true
+        }
+      },
+      "false_positives": [
+        {
+          "file": "js/routes.js",
+          "line": 23,
+          "rule": "javascript.express.security.audit.xss.direct-response-write.direct-response-write",
+          "category": "html-injection",
+          "on_safe_line": false
+        },
+        {
+          "file": "js/routes.js",
+          "line": 27,
+          "rule": "javascript.express.security.audit.xss.direct-response-write.direct-response-write",
+          "category": "html-injection",
+          "on_safe_line": false
+        },
+        {
+          "file": "js/routes.js",
+          "line": 27,
+          "rule": "javascript.jsonwebtoken.security.jwt-hardcode.hardcoded-jwt-secret",
+          "category": "hardcoded-secret",
+          "on_safe_line": false
+        },
+        {
+          "file": "js/server.js",
+          "line": 15,
+          "rule": "javascript.express.security.audit.xss.direct-response-write.direct-response-write",
+          "category": "html-injection",
+          "on_safe_line": false
+        }
+      ],
+      "missed": [
+        {
+          "file": "js/routes.js",
+          "line": 20,
+          "kind": "vuln",
+          "category": "hardcoded-secret",
+          "language": "javascript"
+        },
+        {
+          "file": "js/routes.js",
+          "line": 35,
+          "kind": "vuln",
+          "category": "code-injection",
+          "language": "javascript"
+        },
+        {
+          "file": "js/routes.js",
+          "line": 44,
+          "kind": "vuln",
+          "category": "shell-command",
+          "language": "javascript"
+        },
+        {
+          "file": "js/routes.js",
+          "line": 48,
+          "kind": "vuln",
+          "category": "shell-command",
+          "language": "javascript"
+        },
+        {
+          "file": "js/routes.js",
+          "line": 56,
+          "kind": "vuln",
+          "category": "sql-injection",
+          "language": "javascript"
+        },
+        {
+          "file": "js/routes.js",
+          "line": 60,
+          "kind": "vuln",
+          "category": "sql-injection",
+          "language": "javascript"
+        },
+        {
+          "file": "js/routes.js",
+          "line": 78,
+          "kind": "vuln",
+          "category": "html-injection",
+          "language": "javascript"
+        },
+        {
+          "file": "js/server.js",
+          "line": 10,
+          "kind": "vuln",
+          "category": "hardcoded-secret",
+          "language": "javascript"
+        },
+        {
+          "file": "js/server.js",
+          "line": 23,
+          "kind": "vuln",
+          "category": "code-injection",
+          "language": "javascript"
+        },
+        {
+          "file": "js/server.js",
+          "line": 29,
+          "kind": "vuln",
+          "category": "shell-command",
+          "language": "javascript"
+        },
+        {
+          "file": "js/server.js",
+          "line": 33,
+          "kind": "vuln",
+          "category": "shell-command",
+          "language": "javascript"
+        },
+        {
+          "file": "js/server.js",
+          "line": 45,
+          "kind": "vuln",
+          "category": "html-injection",
+          "language": "javascript"
+        },
+        {
+          "file": "js/server.js",
+          "line": 49,
+          "kind": "vuln",
+          "category": "html-injection",
+          "language": "javascript"
+        },
+        {
+          "file": "js/server.js",
+          "line": 61,
+          "kind": "vuln",
+          "category": "sql-injection",
+          "language": "javascript"
+        },
+        {
+          "file": "js/server.js",
+          "line": 65,
+          "kind": "vuln",
+          "category": "sql-injection",
+          "language": "javascript"
+        }
+      ]
+    }
+  },
+  "scores_per_fixture": {
+    "js/routes.js/RepoLens": {
+      "tp": 8,
+      "fp": 1,
+      "fn": 2,
+      "precision": 0.8888888888888888,
+      "recall": 0.8,
+      "per_category": {
+        "hardcoded-secret": {
+          "tp": 1,
+          "fp": 0,
+          "fn": 1,
+          "rule": true
+        },
+        "code-injection": {
+          "tp": 2,
+          "fp": 1,
+          "fn": 0,
+          "rule": true
+        },
+        "shell-command": {
+          "tp": 2,
+          "fp": 0,
+          "fn": 0,
+          "rule": true
+        },
+        "sql-injection": {
+          "tp": 2,
+          "fp": 0,
+          "fn": 0,
+          "rule": true
+        },
+        "html-injection": {
+          "tp": 1,
+          "fp": 0,
+          "fn": 1,
+          "rule": true
+        }
+      },
+      "false_positives": [
+        {
+          "file": "js/routes.js",
+          "line": 40,
+          "rule": "js-eval",
+          "category": "code-injection",
+          "on_safe_line": true
+        }
+      ],
+      "missed": [
+        {
+          "file": "js/routes.js",
+          "line": 23,
+          "kind": "vuln",
+          "category": "hardcoded-secret",
+          "language": "javascript"
+        },
+        {
+          "file": "js/routes.js",
+          "line": 68,
+          "kind": "vuln",
+          "category": "html-injection",
+          "language": "javascript"
+        }
+      ]
+    },
+    "js/routes.js/Semgrep": {
+      "tp": 3,
+      "fp": 3,
+      "fn": 7,
+      "precision": 0.5,
+      "recall": 0.3,
+      "per_category": {
+        "hardcoded-secret": {
+          "tp": 1,
+          "fp": 1,
+          "fn": 1,
+          "rule": true
+        },
+        "code-injection": {
+          "tp": 1,
+          "fp": 0,
+          "fn": 1,
+          "rule": true
+        },
+        "shell-command": {
+          "tp": 0,
+          "fp": 0,
+          "fn": 2,
+          "rule": true
+        },
+        "sql-injection": {
+          "tp": 0,
+          "fp": 0,
+          "fn": 2,
+          "rule": true
+        },
+        "html-injection": {
+          "tp": 1,
+          "fp": 2,
+          "fn": 1,
+          "rule": true
+        }
+      },
+      "false_positives": [
+        {
+          "file": "js/routes.js",
+          "line": 23,
+          "rule": "javascript.express.security.audit.xss.direct-response-write.direct-response-write",
+          "category": "html-injection",
+          "on_safe_line": false
+        },
+        {
+          "file": "js/routes.js",
+          "line": 27,
+          "rule": "javascript.express.security.audit.xss.direct-response-write.direct-response-write",
+          "category": "html-injection",
+          "on_safe_line": false
+        },
+        {
+          "file": "js/routes.js",
+          "line": 27,
+          "rule": "javascript.jsonwebtoken.security.jwt-hardcode.hardcoded-jwt-secret",
+          "category": "hardcoded-secret",
+          "on_safe_line": false
+        }
+      ],
+      "missed": [
+        {
+          "file": "js/routes.js",
+          "line": 20,
+          "kind": "vuln",
+          "category": "hardcoded-secret",
+          "language": "javascript"
+        },
+        {
+          "file": "js/routes.js",
+          "line": 35,
+          "kind": "vuln",
+          "category": "code-injection",
+          "language": "javascript"
+        },
+        {
+          "file": "js/routes.js",
+          "line": 44,
+          "kind": "vuln",
+          "category": "shell-command",
+          "language": "javascript"
+        },
+        {
+          "file": "js/routes.js",
+          "line": 48,
+          "kind": "vuln",
+          "category": "shell-command",
+          "language": "javascript"
+        },
+        {
+          "file": "js/routes.js",
+          "line": 56,
+          "kind": "vuln",
+          "category": "sql-injection",
+          "language": "javascript"
+        },
+        {
+          "file": "js/routes.js",
+          "line": 60,
+          "kind": "vuln",
+          "category": "sql-injection",
+          "language": "javascript"
+        },
+        {
+          "file": "js/routes.js",
+          "line": 78,
+          "kind": "vuln",
+          "category": "html-injection",
+          "language": "javascript"
+        }
+      ]
+    },
+    "js/server.js/RepoLens": {
+      "tp": 9,
+      "fp": 3,
+      "fn": 0,
+      "precision": 0.75,
+      "recall": 1.0,
+      "per_category": {
+        "hardcoded-secret": {
+          "tp": 1,
+          "fp": 1,
+          "fn": 0,
+          "rule": true
+        },
+        "code-injection": {
+          "tp": 2,
+          "fp": 2,
+          "fn": 0,
+          "rule": true
+        },
+        "shell-command": {
+          "tp": 2,
+          "fp": 0,
+          "fn": 0,
+          "rule": true
+        },
+        "html-injection": {
+          "tp": 2,
+          "fp": 0,
+          "fn": 0,
+          "rule": true
+        },
+        "sql-injection": {
+          "tp": 2,
+          "fp": 0,
+          "fn": 0,
+          "rule": true
+        }
+      },
+      "false_positives": [
+        {
+          "file": "js/server.js",
+          "line": 12,
+          "rule": "hardcoded-secret",
+          "category": "hardcoded-secret",
+          "on_safe_line": true
+        },
+        {
+          "file": "js/server.js",
+          "line": 19,
+          "rule": "js-eval",
+          "category": "code-injection",
+          "on_safe_line": true
+        },
+        {
+          "file": "js/server.js",
+          "line": 26,
+          "rule": "js-new-function",
+          "category": "code-injection",
+          "on_safe_line": true
+        }
+      ],
+      "missed": []
+    },
+    "js/server.js/Semgrep": {
+      "tp": 1,
+      "fp": 1,
+      "fn": 8,
+      "precision": 0.5,
+      "recall": 0.1111111111111111,
+      "per_category": {
+        "hardcoded-secret": {
+          "tp": 0,
+          "fp": 0,
+          "fn": 1,
+          "rule": true
+        },
+        "code-injection": {
+          "tp": 1,
+          "fp": 0,
+          "fn": 1,
+          "rule": true
+        },
+        "shell-command": {
+          "tp": 0,
+          "fp": 0,
+          "fn": 2,
+          "rule": true
+        },
+        "html-injection": {
+          "tp": 0,
+          "fp": 1,
+          "fn": 2,
+          "rule": true
+        },
+        "sql-injection": {
+          "tp": 0,
+          "fp": 0,
+          "fn": 2,
+          "rule": true
+        }
+      },
+      "false_positives": [
+        {
+          "file": "js/server.js",
+          "line": 15,
+          "rule": "javascript.express.security.audit.xss.direct-response-write.direct-response-write",
+          "category": "html-injection",
+          "on_safe_line": false
+        }
+      ],
+      "missed": [
+        {
+          "file": "js/server.js",
+          "line": 10,
+          "kind": "vuln",
+          "category": "hardcoded-secret",
+          "language": "javascript"
+        },
+        {
+          "file": "js/server.js",
+          "line": 23,
+          "kind": "vuln",
+          "category": "code-injection",
+          "language": "javascript"
+        },
+        {
+          "file": "js/server.js",
+          "line": 29,
+          "kind": "vuln",
+          "category": "shell-command",
+          "language": "javascript"
+        },
+        {
+          "file": "js/server.js",
+          "line": 33,
+          "kind": "vuln",
+          "category": "shell-command",
+          "language": "javascript"
+        },
+        {
+          "file": "js/server.js",
+          "line": 45,
+          "kind": "vuln",
+          "category": "html-injection",
+          "language": "javascript"
+        },
+        {
+          "file": "js/server.js",
+          "line": 49,
+          "kind": "vuln",
+          "category": "html-injection",
+          "language": "javascript"
+        },
+        {
+          "file": "js/server.js",
+          "line": 61,
+          "kind": "vuln",
+          "category": "sql-injection",
+          "language": "javascript"
+        },
+        {
+          "file": "js/server.js",
+          "line": 65,
+          "kind": "vuln",
+          "category": "sql-injection",
+          "language": "javascript"
+        }
+      ]
+    },
+    "python/shop.py/RepoLens": {
+      "tp": 11,
+      "fp": 6,
+      "fn": 0,
+      "precision": 0.6470588235294118,
+      "recall": 1.0,
+      "per_category": {
+        "hardcoded-secret": {
+          "tp": 2,
+          "fp": 1,
+          "fn": 0,
+          "rule": true
+        },
+        "code-injection": {
+          "tp": 2,
+          "fp": 1,
+          "fn": 0,
+          "rule": true
+        },
+        "shell-command": {
+          "tp": 2,
+          "fp": 1,
+          "fn": 0,
+          "rule": true
+        },
+        "sql-injection": {
+          "tp": 4,
+          "fp": 2,
+          "fn": 0,
+          "rule": true
+        },
+        "bare-except": {
+          "tp": 1,
+          "fp": 1,
+          "fn": 0,
+          "rule": true
+        }
+      },
+      "false_positives": [
+        {
+          "file": "python/shop.py",
+          "line": 18,
+          "rule": "hardcoded-secret",
+          "category": "hardcoded-secret",
+          "on_safe_line": true
+        },
+        {
+          "file": "python/shop.py",
+          "line": 30,
+          "rule": "py-eval-exec",
+          "category": "code-injection",
+          "on_safe_line": true
+        },
+        {
+          "file": "python/shop.py",
+          "line": 46,
+          "rule": "py-subprocess-shell",
+          "category": "shell-command",
+          "on_safe_line": true
+        },
+        {
+          "file": "python/shop.py",
+          "line": 74,
+          "rule": "py-sql-string",
+          "category": "sql-injection",
+          "on_safe_line": true
+        },
+        {
+          "file": "python/shop.py",
+          "line": 78,
+          "rule": "py-sql-string",
+          "category": "sql-injection",
+          "on_safe_line": true
+        },
+        {
+          "file": "python/shop.py",
+          "line": 93,
+          "rule": "py-bare-except",
+          "category": "bare-except",
+          "on_safe_line": true
+        }
+      ],
+      "missed": []
+    },
+    "python/shop.py/Bandit": {
+      "tp": 8,
+      "fp": 5,
+      "fn": 3,
+      "precision": 0.6153846153846154,
+      "recall": 0.7272727272727273,
+      "per_category": {
+        "hardcoded-secret": {
+          "tp": 0,
+          "fp": 1,
+          "fn": 2,
+          "rule": true
+        },
+        "code-injection": {
+          "tp": 2,
+          "fp": 1,
+          "fn": 0,
+          "rule": true
+        },
+        "shell-command": {
+          "tp": 2,
+          "fp": 1,
+          "fn": 0,
+          "rule": true
+        },
+        "sql-injection": {
+          "tp": 4,
+          "fp": 2,
+          "fn": 0,
+          "rule": true
+        },
+        "bare-except": {
+          "tp": 0,
+          "fp": 0,
+          "fn": 1,
+          "rule": false
+        }
+      },
+      "false_positives": [
+        {
+          "file": "python/shop.py",
+          "line": 18,
+          "rule": "B105 hardcoded_password_string",
+          "category": "hardcoded-secret",
+          "on_safe_line": true
+        },
+        {
+          "file": "python/shop.py",
+          "line": 30,
+          "rule": "B307 blacklist",
+          "category": "code-injection",
+          "on_safe_line": true
+        },
+        {
+          "file": "python/shop.py",
+          "line": 46,
+          "rule": "B602 subprocess_popen_with_shell_equals_true",
+          "category": "shell-command",
+          "on_safe_line": true
+        },
+        {
+          "file": "python/shop.py",
+          "line": 74,
+          "rule": "B608 hardcoded_sql_expressions",
+          "category": "sql-injection",
+          "on_safe_line": true
+        },
+        {
+          "file": "python/shop.py",
+          "line": 78,
+          "rule": "B608 hardcoded_sql_expressions",
+          "category": "sql-injection",
+          "on_safe_line": true
+        }
+      ],
+      "missed": [
+        {
+          "file": "python/shop.py",
+          "line": 15,
+          "kind": "vuln",
+          "category": "hardcoded-secret",
+          "language": "python"
+        },
+        {
+          "file": "python/shop.py",
+          "line": 16,
+          "kind": "vuln",
+          "category": "hardcoded-secret",
+          "language": "python"
+        },
+        {
+          "file": "python/shop.py",
+          "line": 85,
+          "kind": "vuln",
+          "category": "bare-except",
+          "language": "python"
+        }
+      ]
+    }
+  },
+  "out_of_scope": {
+    "RepoLens": [],
+    "Bandit": [
+      {
+        "file": "python/shop.py",
+        "line": 11,
+        "rule": "B404 blacklist"
+      },
+      {
+        "file": "python/shop.py",
+        "line": 46,
+        "rule": "B607 start_process_with_partial_path"
+      },
+      {
+        "file": "python/shop.py",
+        "line": 50,
+        "rule": "B607 start_process_with_partial_path"
+      },
+      {
+        "file": "python/shop.py",
+        "line": 50,
+        "rule": "B603 subprocess_without_shell_equals_true"
+      }
+    ],
+    "Semgrep": []
+  }
+}

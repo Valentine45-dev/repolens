@@ -452,6 +452,154 @@
     whether the eval called it). `save_results()` writes `eval/results/<name>-<time>-<sha7>.json`.
     Tested in `backend/tests/test_runinfo.py`.
 
+- **`feat/qa` merged into `main` (28 Oct, `7555b69`).** Eval work continues on `feat/eval`.
+- **Eval questions and labels (28 Oct, `feat/eval`), committed before any eval run.**
+  - `eval/questions.yaml`: the 16 questions as given (8 express, 8 itsdangerous; 8 and 16 are
+    unanswerable traps), wording unchanged; the "(unanswerable)" marker is a field.
+  - Labels found by reading each repo at the snapshot commit (express `1c6f1b0`, itsdangerous
+    `672971d`, fetched into a scratch checkout) with grep; RepoLens retrieval was not used. Q1 is
+    labelled at the hand-off `lib/application.js:152-178` (`app.handle -> this.router.handle`;
+    Express 5 routes in the external `router` package). Every range was checked to start and end
+    on the intended code. No "encrypt" anywhere in itsdangerous (trap 16).
+  - Scoring rule fixed in the file: hit at k = any retrieved chunk overlapping any labelled
+    range of the same path. Unanswerable questions are listed, not scored.
+  - `eval/retrieval_recall.py` (not run yet): recall@k (1, 3, 5, 8) with and without graph
+    expansion and MRR, through the same `retrieve()` /ask uses (test code left out); reads any
+    questions file (`--questions`), finds the snapshot by URL + commit, saves results with the
+    run info. Scoring tested on synthetic data (`backend/tests/test_eval_scoring.py`).
+  - `pyyaml` added as an explicit dev dependency (it was only present through the embed group,
+    which CI skips).
+
+- **Retrieval eval, first run (28 Oct, `e7cbfd3`, result
+  `eval/results/retrieval_recall-20261028T072005Z-e7cbfd3.json`).** Labels approved first.
+  - Checks before the run: on express + itsdangerous all 1400 chunks' ranges equal the lines of
+    their text (0 mismatches); one chunk spans a whole file (`test/res.locals.js:1-40`, all
+    top-level code, and test code is left out by default). Widest chunks: `lib/response.js`
+    45 lines (function `sendfile`), module chunks at most 34; `lib/application.js` at most 35
+    (module, the requires at 23-57). Unanswerable Q8 and Q16 are not scored (unit-tested); they
+    stay in questions.yaml for the real-model smoke eval.
+  - Results, 14 answerable questions, test code left out, embedder all-MiniLM-L6-v2:
+
+    | set | R@1 | R@3 | R@5 | R@8 | MRR |
+    |---|---|---|---|---|---|
+    | all (14) | 0.21 | 0.43 | 0.50 | 0.64 | 0.35 |
+    | express (7) | 0.14 | 0.29 | 0.43 | 0.57 | 0.27 |
+    | itsdangerous (7) | 0.29 | 0.57 | 0.57 | 0.71 | 0.43 |
+
+    Graph expansion changed nothing at any k (same numbers with and without).
+  - Misses: Q1, Q2, Q5 (express), Q9, Q11 (itsdangerous). Q6 and Q10 only at k=8.
+  - Why (from the per-question chunk lists): express's JSDoc blocks become separate
+    module-level chunks, detached from the function they document, and they win the search
+    (Q2's 3rd hit is the `res.send` doc at `response.js:113-124`, the function starts at 126;
+    Q5 retrieves the `req.accepts` and `res.format` docs). Expansion from a module-level chunk
+    follows the file's imports, so it adds the top of `utils.js` / `express.js`, not the
+    documented function. For itsdangerous Q9/Q11, search finds class headers and `__init__`
+    instead of `dumps`/`loads`; expansion adds `TimestampSigner.sign` and `get_signature`, next to
+    but not on the labels.
+  - Run info "dirty" now means uncommitted changes to tracked files only (an untracked result
+    file had marked a clean run dirty); the two earlier identical runs were removed.
+
+- **Retrieval eval, measurement fixed and two fixes (28 Oct).** The first run's recall@1-8
+  could not show expansion by construction (expansion chunks come after the top 8; it stays as
+  the historical baseline). New measure: recall over the full context sent to the LLM, three
+  configs on the same frozen questions.yaml: A = search top 8, B = search top 16, C = top 8 +
+  expansion (up to 16). Expansion helps only if C beats B.
+  - Fix 1, chunker (`app/qa/chunks.py`): a leading JSDoc/block comment or run of `//`/`#`
+    lines (one blank line allowed) starts the unit it documents. A second commit fixed the
+    block search stopping at `text/*` inside a JSDoc (express `req.accepts`).
+  - Fix 2, expansion (`app/qa/retrieve.py`): function/method -> callers and callees (as before);
+    class -> its methods via new `defines` edges (class -> method, added in the edges stage,
+    filtered out of dependents/dependencies); top-level chunk -> the definition starting within
+    3 lines below it; file imports no longer used. express has no classes (0 `defines`),
+    itsdangerous 91.
+  - express and itsdangerous re-run (jobs 48, 49); 1358 chunks, ranges = text, 0 mismatches.
+
+    | set | A base | A fixed | B base | B fixed | C base | C fixed |
+    |---|---|---|---|---|---|---|
+    | all (14) | 0.64 | 0.71 | 0.79 | 0.86 | 0.64 | **0.93** |
+    | express (7) | 0.57 | 0.71 | 0.71 | 0.86 | 0.57 | 0.86 |
+    | itsdangerous (7) | 0.71 | 0.71 | 0.86 | 0.86 | 0.71 | **1.00** |
+
+    MRR (search order to 16): 0.36 -> 0.43. **Graph expansion helped by one question (13/14 vs
+    12/14 for the same context size), which is not conclusive at this size.** The one question
+    is Q11 (itsdangerous: only a graph-added chunk reaches `Serializer.loads`); on express
+    C = B. Q5 still misses everywhere:
+    `res.format` is doc + code over 256 tokens, and its first window (516-541, doc only) is the
+    top hit, which does not overlap the labelled code (574-599). Small sample: 14 questions,
+    one question is the whole C-over-B margin.
+  - Results: `eval/results/retrieval_context-baseline-...-cc526fb.json`,
+    `...-fixed-...-1f0729b.json` (before the `text/*` fix, same numbers),
+    `...-fixed-...-6f96059.json`.
+
+- **Detector eval, first run (28 Oct, `0403bcb`, `eval/results/detectors-...-0403bcb.json`).**
+  - New fixtures written for the eval (not the unit-test fixtures RepoLens was tuned on):
+    `eval/detector_fixtures/python/shop.py`, `js/server.js`; labels are trailing
+    `vuln:`/`safe:` comments, committed before any tool ran. 40 labels: Python 11 vuln / 11
+    safe, JS 9 vuln / 9 safe. Categories: code-injection, shell-command, sql-injection,
+    html-injection, bare-except (Python), hardcoded-secret.
+  - Tools: Bandit 1.9.4 (all tests) on Python; Semgrep 1.182.1 natively on Windows (no Docker
+    needed), `p/javascript` + `p/secrets`, 104 rules run, no errors. Rule ids mapped to the
+    categories by fixed tables in `eval/detector_eval.py`; unmapped findings listed, not
+    counted. Match = same file, line and category on a `vuln` line.
+
+    | language | tool | TP | FP | FN | precision | recall |
+    |---|---|---|---|---|---|---|
+    | python | RepoLens | 11 | 6 | 0 | 0.65 | 1.00 |
+    | python | Bandit | 8 | 5 | 3 | 0.62 | 0.73 |
+    | javascript | RepoLens | 9 | 3 | 0 | 0.75 | 1.00 |
+    | javascript | Semgrep | 1 | 1 | 8 | 0.50 | 0.11 |
+
+  - RepoLens and Bandit flag the same Python negatives: constant `eval`, `shell=True` with a
+    fixed string, SQL with a constant table name, a logged (never executed) SQL string, and a
+    placeholder password. Bandit misses both hardcoded secrets (an API key and a URL password:
+    its B105 only looks at names like `password`) and has no bare-except rule (B110 is
+    try/except/pass). RepoLens's JS FPs: a placeholder token, constant `eval` and constant
+    `new Function`.
+  - Semgrep: its `p/javascript` rules are mostly taint rules that need request input (`req.*`)
+    flowing into the sink; only one fixture function takes `req`, so most sinks never fire.
+    Its one hit (`code-string-concat` on the `eval(req.query.expr)` line) counted; its other
+    finding on that line (`direct-response-write`, an XSS rule) maps to html-injection, which is
+    not the label there, so it is an FP. This is a property of the fixture, not a Semgrep
+    failure; a fixture variant where input comes from `req` would be a separate, pre-labelled
+    run. Not changed after seeing results.
+  - Caveats: small, hand-written fixtures by the same author as the detectors; "safe" labels
+    for logged SQL and constant table names are judgement calls.
+- **Detector eval, run 2 (28 Oct, `3e2cd40`, `eval/results/detectors-...-3e2cd40.json`).**
+  - **Fixture 2 (`eval/detector_fixtures/js/routes.js`) was added after run 1**, because fixture
+    1 passed plain function parameters into its sinks and Semgrep's `p/javascript` rules are
+    mostly taint rules that need request (`req.query`/`body`/`params`) or browser-location
+    input. Every dangerous value in fixture 2 comes from such a source. It was written and
+    labelled (16 labels: 10 vuln, 6 safe) and committed before any tool ran on it. Fixture 1 is
+    unchanged and its run-1 results are kept; in run 2 its scores are identical.
+  - Per fixture (same tools and settings as run 1):
+
+    | fixture | tool | TP | FP | FN | precision | recall |
+    |---|---|---|---|---|---|---|
+    | js/server.js (1) | RepoLens | 9 | 3 | 0 | 0.75 | 1.00 |
+    | js/server.js (1) | Semgrep | 1 | 1 | 8 | 0.50 | 0.11 |
+    | js/routes.js (2) | RepoLens | 8 | 1 | 2 | 0.89 | 0.80 |
+    | js/routes.js (2) | Semgrep | 3 | 3 | 7 | 0.50 | 0.30 |
+    | python/shop.py | RepoLens | 11 | 6 | 0 | 0.65 | 1.00 |
+    | python/shop.py | Bandit | 8 | 5 | 3 | 0.62 | 0.73 |
+
+  - Fixture 2 details. RepoLens misses the secret passed inline to `jwt.sign(...)` (its secret
+    rule needs a `name = "value"` assignment) and the XSS through `res.send("<h1>" +
+    req.query.name)` (it only checks `innerHTML`/`outerHTML`); FP on constant `eval("1 + 1")`.
+    Semgrep finds the inline JWT secret, `eval(req.query.expr)` and the `res.send` XSS; it
+    misses `new Function("item", req.body.filter)`, the browser `innerHTML` from
+    `location.search`, and every `exec` command injection and `connection.query` SQL injection
+    with request input. Two of its FPs are its
+    `direct-response-write` XSS rule on `res.send(jwt.sign(...))` lines (labelled as a secret
+    or unlabelled), and one is `hardcoded-jwt-secret` reported where the variable is used
+    (line 27) instead of where it is assigned (line 20, which then counts as missed): the
+    pre-set same-line rule is strict about that.
+  - **How to read these numbers:** recall on self-written fixtures shows that the rules work
+    as designed on the patterns they target; it is not real-world recall. Semgrep was run with
+    one pre-chosen configuration (`p/javascript` + `p/secrets`); other rulesets may score
+    differently and were not tried. Next: run all detectors on an intentionally vulnerable
+    repo (supplied by the user) and hand-label a sample of each tool's findings for real-world
+    precision.
+
 ## Planned vs delivered
 - **Temperature 0 (CLAUDE.md) is not possible on current models.** `temperature`, `top_p` and
   `top_k` return 400 (Sonnet 5.5 and Haiku 5.5 migration guides; the installed SDK's
@@ -477,9 +625,9 @@
 - Day 3 on `feat/qa`: tasks 5, 6 and 7 built; `/ask` tested with FakeProvider only. Next: the
   real-model check (graph + AI questions on express and itsdangerous, expansion on/off,
   citations and dropped, tokens used, the AI answer view in the browser) once the user confirms
-  the key is in `.env`. Merge `feat/qa` into `main` after the user approves; then the no-LLM
-  eval on a new branch (retrieval recall@k with/without expansion from a questions file;
-  detectors vs Bandit and Semgrep on labeled fixtures). Full `docker compose up` is Day 4.
+  the key is in `.env`. `feat/eval` (retrieval and detector evals) awaits the user's OK to
+  merge; after that, the detectors on the user's intentionally vulnerable repo with a
+  hand-labelled sample of each tool's findings. Full `docker compose up` is Day 4.
 - If the API cannot start with "pool initialization incomplete": the db container was healthy
   but Docker's port proxy accepted connections without forwarding them (28 Oct);
   `docker compose restart db` fixed it.
@@ -829,6 +977,20 @@ Agreed 27 Oct, to apply when building Day 3:
 - Local dev on this 8 GB RAM laptop: only the `db` service runs in Docker; the API runs natively
   with `uv run uvicorn`. The full compose stack (`db`, `api`, later `web`) is kept for the demo.
 
+## Known limitations (for the report)
+Found by the detector eval (run 2, fixture `eval/detector_fixtures/js/routes.js`). The rules
+are deliberately not changed after seeing eval results; these stay as documented limits.
+- **Secrets passed inline as an argument are not detected.** The hardcoded-secret check needs a
+  named assignment (`name = "value"` / `name: "value"` with a name like password, secret, token
+  or api key) or a known token format. `jwt.sign(payload, "inline-signing-key-456")` (line 23)
+  is missed; the same value assigned to `jwtSecret` first is found.
+- **Server-side XSS through response writes is not detected.** The JS HTML-injection rule only
+  checks assignments to `innerHTML` / `outerHTML`. `res.send("<h1>Hello " + req.query.name +
+  "</h1>")` (line 68) is missed.
+- More generally: the rules are syntactic (no taint tracking), so they flag constant arguments
+  too (constant `eval`, fixed-string `shell=True`, SQL with a constant table name, a logged SQL
+  string), and fixture recall shows the rules work as designed, not real-world recall.
+
 ## Known issues
 - A dagre layout of 300 nodes takes ~0.4s on the main thread (dev); fine at the cap, would need
   a worker if the cap grows.
@@ -859,8 +1021,8 @@ Agreed 27 Oct, to apply when building Day 3:
   (files gone, metadata kept), so later syncs skip it: on 28 Oct markupsafe lost its files,
   jinja2 (needed by sentence-transformers) failed to import, and jobs 42/43 failed in `embed`
   with `ImportError`. Fixed with `uv sync --reinstall-package markupsafe`.
-- An embed-stage error fails the whole job, so graph and findings become unavailable too even
-  though they were stored. See the task 5 plan, decision D5.
+- (Resolved in task 5, D5.) An embed-stage error used to fail the whole job; now the job ends
+  `done` and status reports `features.ask=false` with the reason.
 - First real-model load takes ~1–2 min (download + torch import); later loads are faster.
 - Fixture tests do not reproduce the 0.26.0 crash (only bigger files did); the pin is the guard.
   Re-check before ever lifting it.

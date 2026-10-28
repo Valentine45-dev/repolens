@@ -1,0 +1,554 @@
+{
+  "run": {
+    "commit_sha": "e7cbfd33b437fb3796d0924cc7457ae11bf04b93",
+    "dirty": false,
+    "run_at": "2026-10-28T07:20:05+00:00",
+    "embedder": "sentence-transformers",
+    "embed_model": "sentence-transformers/all-MiniLM-L6-v2",
+    "embed_revision": "1110a243fdf4706b3f48f1d95db1a4f5529b4d41",
+    "llm_used": false,
+    "llm": {
+      "provider": "anthropic",
+      "model": null,
+      "effort": "low",
+      "thinking": "between_tools",
+      "max_tokens": 4000,
+      "prompt_version": "2026-10-28.1"
+    },
+    "retrieval": {
+      "top_k": 8,
+      "graph_expansion": true,
+      "expand_max": 8,
+      "context_tokens": 6000
+    }
+  },
+  "questions": [
+    {
+      "repo": "express",
+      "snapshot_id": 24,
+      "id": 1,
+      "question": "How does the framework decide which part of the application should handle an incoming web request?",
+      "unanswerable": false,
+      "first_hit_rank": null,
+      "hits": {
+        "1": {
+          "plain": false,
+          "expanded": false,
+          "sent_expanded": 3
+        },
+        "3": {
+          "plain": false,
+          "expanded": false,
+          "sent_expanded": 6
+        },
+        "5": {
+          "plain": false,
+          "expanded": false,
+          "sent_expanded": 9
+        },
+        "8": {
+          "plain": false,
+          "expanded": false,
+          "sent_expanded": 12
+        }
+      },
+      "used_test_code": false
+    },
+    {
+      "repo": "express",
+      "snapshot_id": 24,
+      "id": 2,
+      "question": "How does it send a response back to someone who visits a page?",
+      "unanswerable": false,
+      "first_hit_rank": null,
+      "hits": {
+        "1": {
+          "plain": false,
+          "expanded": false,
+          "sent_expanded": 4
+        },
+        "3": {
+          "plain": false,
+          "expanded": false,
+          "sent_expanded": 8
+        },
+        "5": {
+          "plain": false,
+          "expanded": false,
+          "sent_expanded": 10
+        },
+        "8": {
+          "plain": false,
+          "expanded": false,
+          "sent_expanded": 13
+        }
+      },
+      "used_test_code": false
+    },
+    {
+      "repo": "express",
+      "snapshot_id": 24,
+      "id": 3,
+      "question": "How does it handle requests that need to redirect someone to a different page?",
+      "unanswerable": false,
+      "first_hit_rank": 1,
+      "hits": {
+        "1": {
+          "plain": true,
+          "expanded": true,
+          "sent_expanded": 4
+        },
+        "3": {
+          "plain": true,
+          "expanded": true,
+          "sent_expanded": 8
+        },
+        "5": {
+          "plain": true,
+          "expanded": true,
+          "sent_expanded": 11
+        },
+        "8": {
+          "plain": true,
+          "expanded": true,
+          "sent_expanded": 14
+        }
+      },
+      "used_test_code": false
+    },
+    {
+      "repo": "express",
+      "snapshot_id": 24,
+      "id": 4,
+      "question": "How does it help websites load faster by reusing saved responses instead of creating them again?",
+      "unanswerable": false,
+      "first_hit_rank": 5,
+      "hits": {
+        "1": {
+          "plain": false,
+          "expanded": false,
+          "sent_expanded": 3
+        },
+        "3": {
+          "plain": false,
+          "expanded": false,
+          "sent_expanded": 5
+        },
+        "5": {
+          "plain": true,
+          "expanded": true,
+          "sent_expanded": 13
+        },
+        "8": {
+          "plain": true,
+          "expanded": true,
+          "sent_expanded": 16
+        }
+      },
+      "used_test_code": false
+    },
+    {
+      "repo": "express",
+      "snapshot_id": 24,
+      "id": 5,
+      "question": "How does it decide which format to send back when a user\u2019s browser can handle different types of content?",
+      "unanswerable": false,
+      "first_hit_rank": null,
+      "hits": {
+        "1": {
+          "plain": false,
+          "expanded": false,
+          "sent_expanded": 3
+        },
+        "3": {
+          "plain": false,
+          "expanded": false,
+          "sent_expanded": 8
+        },
+        "5": {
+          "plain": false,
+          "expanded": false,
+          "sent_expanded": 11
+        },
+        "8": {
+          "plain": false,
+          "expanded": false,
+          "sent_expanded": 16
+        }
+      },
+      "used_test_code": false
+    },
+    {
+      "repo": "express",
+      "snapshot_id": 24,
+      "id": 6,
+      "question": "How does it let developers use different template engines to create web pages?",
+      "unanswerable": false,
+      "first_hit_rank": 6,
+      "hits": {
+        "1": {
+          "plain": false,
+          "expanded": false,
+          "sent_expanded": 4
+        },
+        "3": {
+          "plain": false,
+          "expanded": false,
+          "sent_expanded": 7
+        },
+        "5": {
+          "plain": false,
+          "expanded": false,
+          "sent_expanded": 8
+        },
+        "8": {
+          "plain": true,
+          "expanded": true,
+          "sent_expanded": 11
+        }
+      },
+      "used_test_code": false
+    },
+    {
+      "repo": "express",
+      "snapshot_id": 24,
+      "id": 7,
+      "question": "How does the system listen on a network port for incoming connections?",
+      "unanswerable": false,
+      "first_hit_rank": 2,
+      "hits": {
+        "1": {
+          "plain": false,
+          "expanded": false,
+          "sent_expanded": 4
+        },
+        "3": {
+          "plain": true,
+          "expanded": true,
+          "sent_expanded": 7
+        },
+        "5": {
+          "plain": true,
+          "expanded": true,
+          "sent_expanded": 9
+        },
+        "8": {
+          "plain": true,
+          "expanded": true,
+          "sent_expanded": 12
+        }
+      },
+      "used_test_code": false
+    },
+    {
+      "repo": "express",
+      "snapshot_id": 24,
+      "id": 8,
+      "question": "How does the tool that builds starter projects generate the folders and setup code for a new application?",
+      "unanswerable": true,
+      "top_paths": [
+        "lib/application.js:85-88",
+        "lib/application.js:385-397",
+        "lib/application.js:443-449"
+      ]
+    },
+    {
+      "repo": "itsdangerous",
+      "snapshot_id": 25,
+      "id": 9,
+      "question": "How does the library turn user information into a token that can be safely sent between web requests?",
+      "unanswerable": false,
+      "first_hit_rank": null,
+      "hits": {
+        "1": {
+          "plain": false,
+          "expanded": false,
+          "sent_expanded": 1
+        },
+        "3": {
+          "plain": false,
+          "expanded": false,
+          "sent_expanded": 9
+        },
+        "5": {
+          "plain": false,
+          "expanded": false,
+          "sent_expanded": 13
+        },
+        "8": {
+          "plain": false,
+          "expanded": false,
+          "sent_expanded": 16
+        }
+      },
+      "used_test_code": false
+    },
+    {
+      "repo": "itsdangerous",
+      "snapshot_id": 25,
+      "id": 10,
+      "question": "How does it check whether someone has changed the contents of a token?",
+      "unanswerable": false,
+      "first_hit_rank": 7,
+      "hits": {
+        "1": {
+          "plain": false,
+          "expanded": false,
+          "sent_expanded": 1
+        },
+        "3": {
+          "plain": false,
+          "expanded": false,
+          "sent_expanded": 7
+        },
+        "5": {
+          "plain": false,
+          "expanded": false,
+          "sent_expanded": 9
+        },
+        "8": {
+          "plain": true,
+          "expanded": true,
+          "sent_expanded": 16
+        }
+      },
+      "used_test_code": false
+    },
+    {
+      "repo": "itsdangerous",
+      "snapshot_id": 25,
+      "id": 11,
+      "question": "How does it turn the token back into the original data when the application receives it?",
+      "unanswerable": false,
+      "first_hit_rank": null,
+      "hits": {
+        "1": {
+          "plain": false,
+          "expanded": false,
+          "sent_expanded": 7
+        },
+        "3": {
+          "plain": false,
+          "expanded": false,
+          "sent_expanded": 11
+        },
+        "5": {
+          "plain": false,
+          "expanded": false,
+          "sent_expanded": 13
+        },
+        "8": {
+          "plain": false,
+          "expanded": false,
+          "sent_expanded": 16
+        }
+      },
+      "used_test_code": false
+    },
+    {
+      "repo": "itsdangerous",
+      "snapshot_id": 25,
+      "id": 12,
+      "question": "How does it keep the token safe when the data needs to travel through a URL?",
+      "unanswerable": false,
+      "first_hit_rank": 1,
+      "hits": {
+        "1": {
+          "plain": true,
+          "expanded": true,
+          "sent_expanded": 1
+        },
+        "3": {
+          "plain": true,
+          "expanded": true,
+          "sent_expanded": 3
+        },
+        "5": {
+          "plain": true,
+          "expanded": true,
+          "sent_expanded": 8
+        },
+        "8": {
+          "plain": true,
+          "expanded": true,
+          "sent_expanded": 16
+        }
+      },
+      "used_test_code": false
+    },
+    {
+      "repo": "itsdangerous",
+      "snapshot_id": 25,
+      "id": 13,
+      "question": "How does it decide when to compress the data to make the token smaller?",
+      "unanswerable": false,
+      "first_hit_rank": 1,
+      "hits": {
+        "1": {
+          "plain": true,
+          "expanded": true,
+          "sent_expanded": 2
+        },
+        "3": {
+          "plain": true,
+          "expanded": true,
+          "sent_expanded": 5
+        },
+        "5": {
+          "plain": true,
+          "expanded": true,
+          "sent_expanded": 9
+        },
+        "8": {
+          "plain": true,
+          "expanded": true,
+          "sent_expanded": 16
+        }
+      },
+      "used_test_code": false
+    },
+    {
+      "repo": "itsdangerous",
+      "snapshot_id": 25,
+      "id": 14,
+      "question": "How does it check whether a token has expired or is too old?",
+      "unanswerable": false,
+      "first_hit_rank": 3,
+      "hits": {
+        "1": {
+          "plain": false,
+          "expanded": false,
+          "sent_expanded": 1
+        },
+        "3": {
+          "plain": true,
+          "expanded": true,
+          "sent_expanded": 10
+        },
+        "5": {
+          "plain": true,
+          "expanded": true,
+          "sent_expanded": 11
+        },
+        "8": {
+          "plain": true,
+          "expanded": true,
+          "sent_expanded": 16
+        }
+      },
+      "used_test_code": false
+    },
+    {
+      "repo": "itsdangerous",
+      "snapshot_id": 25,
+      "id": 15,
+      "question": "How does the salt value keep different uses separate even when using the same secret key?",
+      "unanswerable": false,
+      "first_hit_rank": 2,
+      "hits": {
+        "1": {
+          "plain": false,
+          "expanded": false,
+          "sent_expanded": 1
+        },
+        "3": {
+          "plain": true,
+          "expanded": true,
+          "sent_expanded": 8
+        },
+        "5": {
+          "plain": true,
+          "expanded": true,
+          "sent_expanded": 12
+        },
+        "8": {
+          "plain": true,
+          "expanded": true,
+          "sent_expanded": 15
+        }
+      },
+      "used_test_code": false
+    },
+    {
+      "repo": "itsdangerous",
+      "snapshot_id": 25,
+      "id": 16,
+      "question": "How does it encrypt the data so nobody can read what\u2019s inside the token?",
+      "unanswerable": true,
+      "top_paths": [
+        "src/itsdangerous/serializer.py:40-55",
+        "src/itsdangerous/serializer.py:203-225",
+        "src/itsdangerous/serializer.py:190-205"
+      ]
+    }
+  ],
+  "summary": {
+    "all": {
+      "questions": 14,
+      "recall": {
+        "1": {
+          "plain": 0.21428571428571427,
+          "expanded": 0.21428571428571427
+        },
+        "3": {
+          "plain": 0.42857142857142855,
+          "expanded": 0.42857142857142855
+        },
+        "5": {
+          "plain": 0.5,
+          "expanded": 0.5
+        },
+        "8": {
+          "plain": 0.6428571428571429,
+          "expanded": 0.6428571428571429
+        }
+      },
+      "mrr_plain": 0.34591836734693876
+    },
+    "express": {
+      "questions": 7,
+      "recall": {
+        "1": {
+          "plain": 0.14285714285714285,
+          "expanded": 0.14285714285714285
+        },
+        "3": {
+          "plain": 0.2857142857142857,
+          "expanded": 0.2857142857142857
+        },
+        "5": {
+          "plain": 0.42857142857142855,
+          "expanded": 0.42857142857142855
+        },
+        "8": {
+          "plain": 0.5714285714285714,
+          "expanded": 0.5714285714285714
+        }
+      },
+      "mrr_plain": 0.26666666666666666
+    },
+    "itsdangerous": {
+      "questions": 7,
+      "recall": {
+        "1": {
+          "plain": 0.2857142857142857,
+          "expanded": 0.2857142857142857
+        },
+        "3": {
+          "plain": 0.5714285714285714,
+          "expanded": 0.5714285714285714
+        },
+        "5": {
+          "plain": 0.5714285714285714,
+          "expanded": 0.5714285714285714
+        },
+        "8": {
+          "plain": 0.7142857142857143,
+          "expanded": 0.7142857142857143
+        }
+      },
+      "mrr_plain": 0.4251700680272109
+    }
+  },
+  "questions_file": "eval\\questions.yaml"
+}

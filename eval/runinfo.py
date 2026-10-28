@@ -41,7 +41,8 @@ def run_info(provider=None, *, llm_used: bool) -> dict:
     }
     return {
         "commit_sha": _git("rev-parse", "HEAD"),
-        "dirty": bool(_git("status", "--porcelain")),
+        # Uncommitted changes to tracked files (new result files do not count).
+        "dirty": bool(_git("status", "--porcelain", "--untracked-files=no")),
         "run_at": datetime.datetime.now(datetime.UTC).isoformat(timespec="seconds"),
         "embedder": config.EMBEDDER,
         "embed_model": config.EMBED_MODEL,

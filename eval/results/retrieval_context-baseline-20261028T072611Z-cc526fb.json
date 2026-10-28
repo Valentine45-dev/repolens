@@ -1,0 +1,491 @@
+{
+  "run": {
+    "commit_sha": "cc526fbe35ab2d0df297f60eac78a2516d944835",
+    "dirty": false,
+    "run_at": "2026-10-28T07:26:11+00:00",
+    "embedder": "sentence-transformers",
+    "embed_model": "sentence-transformers/all-MiniLM-L6-v2",
+    "embed_revision": "1110a243fdf4706b3f48f1d95db1a4f5529b4d41",
+    "llm_used": false,
+    "llm": {
+      "provider": "anthropic",
+      "model": null,
+      "effort": "low",
+      "thinking": "between_tools",
+      "max_tokens": 4000,
+      "prompt_version": "2026-10-28.1"
+    },
+    "retrieval": {
+      "top_k": 8,
+      "graph_expansion": true,
+      "expand_max": 8,
+      "context_tokens": 6000
+    },
+    "label": "baseline"
+  },
+  "configs": {
+    "A": {
+      "k": 8,
+      "expand": false,
+      "expand_max": 0
+    },
+    "B": {
+      "k": 16,
+      "expand": false,
+      "expand_max": 0
+    },
+    "C": {
+      "k": 8,
+      "expand": true,
+      "expand_max": 8
+    }
+  },
+  "questions": [
+    {
+      "repo": "express",
+      "snapshot_id": 24,
+      "id": 1,
+      "question": "How does the framework decide which part of the application should handle an incoming web request?",
+      "unanswerable": false,
+      "first_hit_rank": 16,
+      "configs": {
+        "A": {
+          "hit": false,
+          "sent": 8,
+          "from_graph": 0,
+          "hit_from_graph": false
+        },
+        "B": {
+          "hit": true,
+          "sent": 16,
+          "from_graph": 0,
+          "hit_from_graph": false
+        },
+        "C": {
+          "hit": false,
+          "sent": 12,
+          "from_graph": 4,
+          "hit_from_graph": false
+        }
+      }
+    },
+    {
+      "repo": "express",
+      "snapshot_id": 24,
+      "id": 2,
+      "question": "How does it send a response back to someone who visits a page?",
+      "unanswerable": false,
+      "first_hit_rank": null,
+      "configs": {
+        "A": {
+          "hit": false,
+          "sent": 8,
+          "from_graph": 0,
+          "hit_from_graph": false
+        },
+        "B": {
+          "hit": false,
+          "sent": 16,
+          "from_graph": 0,
+          "hit_from_graph": false
+        },
+        "C": {
+          "hit": false,
+          "sent": 13,
+          "from_graph": 5,
+          "hit_from_graph": false
+        }
+      }
+    },
+    {
+      "repo": "express",
+      "snapshot_id": 24,
+      "id": 3,
+      "question": "How does it handle requests that need to redirect someone to a different page?",
+      "unanswerable": false,
+      "first_hit_rank": 1,
+      "configs": {
+        "A": {
+          "hit": true,
+          "sent": 8,
+          "from_graph": 0,
+          "hit_from_graph": false
+        },
+        "B": {
+          "hit": true,
+          "sent": 16,
+          "from_graph": 0,
+          "hit_from_graph": false
+        },
+        "C": {
+          "hit": true,
+          "sent": 14,
+          "from_graph": 6,
+          "hit_from_graph": true
+        }
+      }
+    },
+    {
+      "repo": "express",
+      "snapshot_id": 24,
+      "id": 4,
+      "question": "How does it help websites load faster by reusing saved responses instead of creating them again?",
+      "unanswerable": false,
+      "first_hit_rank": 5,
+      "configs": {
+        "A": {
+          "hit": true,
+          "sent": 8,
+          "from_graph": 0,
+          "hit_from_graph": false
+        },
+        "B": {
+          "hit": true,
+          "sent": 16,
+          "from_graph": 0,
+          "hit_from_graph": false
+        },
+        "C": {
+          "hit": true,
+          "sent": 16,
+          "from_graph": 8,
+          "hit_from_graph": false
+        }
+      }
+    },
+    {
+      "repo": "express",
+      "snapshot_id": 24,
+      "id": 5,
+      "question": "How does it decide which format to send back when a user\u2019s browser can handle different types of content?",
+      "unanswerable": false,
+      "first_hit_rank": null,
+      "configs": {
+        "A": {
+          "hit": false,
+          "sent": 8,
+          "from_graph": 0,
+          "hit_from_graph": false
+        },
+        "B": {
+          "hit": false,
+          "sent": 16,
+          "from_graph": 0,
+          "hit_from_graph": false
+        },
+        "C": {
+          "hit": false,
+          "sent": 16,
+          "from_graph": 8,
+          "hit_from_graph": false
+        }
+      }
+    },
+    {
+      "repo": "express",
+      "snapshot_id": 24,
+      "id": 6,
+      "question": "How does it let developers use different template engines to create web pages?",
+      "unanswerable": false,
+      "first_hit_rank": 6,
+      "configs": {
+        "A": {
+          "hit": true,
+          "sent": 8,
+          "from_graph": 0,
+          "hit_from_graph": false
+        },
+        "B": {
+          "hit": true,
+          "sent": 16,
+          "from_graph": 0,
+          "hit_from_graph": false
+        },
+        "C": {
+          "hit": true,
+          "sent": 11,
+          "from_graph": 3,
+          "hit_from_graph": false
+        }
+      }
+    },
+    {
+      "repo": "express",
+      "snapshot_id": 24,
+      "id": 7,
+      "question": "How does the system listen on a network port for incoming connections?",
+      "unanswerable": false,
+      "first_hit_rank": 2,
+      "configs": {
+        "A": {
+          "hit": true,
+          "sent": 8,
+          "from_graph": 0,
+          "hit_from_graph": false
+        },
+        "B": {
+          "hit": true,
+          "sent": 16,
+          "from_graph": 0,
+          "hit_from_graph": false
+        },
+        "C": {
+          "hit": true,
+          "sent": 12,
+          "from_graph": 4,
+          "hit_from_graph": false
+        }
+      }
+    },
+    {
+      "repo": "express",
+      "snapshot_id": 24,
+      "id": 8,
+      "question": "How does the tool that builds starter projects generate the folders and setup code for a new application?",
+      "unanswerable": true,
+      "top_paths": [
+        "lib/application.js:85-88",
+        "lib/application.js:385-397",
+        "lib/application.js:443-449"
+      ]
+    },
+    {
+      "repo": "itsdangerous",
+      "snapshot_id": 25,
+      "id": 9,
+      "question": "How does the library turn user information into a token that can be safely sent between web requests?",
+      "unanswerable": false,
+      "first_hit_rank": 13,
+      "configs": {
+        "A": {
+          "hit": false,
+          "sent": 8,
+          "from_graph": 0,
+          "hit_from_graph": false
+        },
+        "B": {
+          "hit": true,
+          "sent": 16,
+          "from_graph": 0,
+          "hit_from_graph": false
+        },
+        "C": {
+          "hit": false,
+          "sent": 16,
+          "from_graph": 8,
+          "hit_from_graph": false
+        }
+      }
+    },
+    {
+      "repo": "itsdangerous",
+      "snapshot_id": 25,
+      "id": 10,
+      "question": "How does it check whether someone has changed the contents of a token?",
+      "unanswerable": false,
+      "first_hit_rank": 7,
+      "configs": {
+        "A": {
+          "hit": true,
+          "sent": 8,
+          "from_graph": 0,
+          "hit_from_graph": false
+        },
+        "B": {
+          "hit": true,
+          "sent": 16,
+          "from_graph": 0,
+          "hit_from_graph": false
+        },
+        "C": {
+          "hit": true,
+          "sent": 16,
+          "from_graph": 8,
+          "hit_from_graph": false
+        }
+      }
+    },
+    {
+      "repo": "itsdangerous",
+      "snapshot_id": 25,
+      "id": 11,
+      "question": "How does it turn the token back into the original data when the application receives it?",
+      "unanswerable": false,
+      "first_hit_rank": null,
+      "configs": {
+        "A": {
+          "hit": false,
+          "sent": 8,
+          "from_graph": 0,
+          "hit_from_graph": false
+        },
+        "B": {
+          "hit": false,
+          "sent": 16,
+          "from_graph": 0,
+          "hit_from_graph": false
+        },
+        "C": {
+          "hit": false,
+          "sent": 16,
+          "from_graph": 8,
+          "hit_from_graph": false
+        }
+      }
+    },
+    {
+      "repo": "itsdangerous",
+      "snapshot_id": 25,
+      "id": 12,
+      "question": "How does it keep the token safe when the data needs to travel through a URL?",
+      "unanswerable": false,
+      "first_hit_rank": 1,
+      "configs": {
+        "A": {
+          "hit": true,
+          "sent": 8,
+          "from_graph": 0,
+          "hit_from_graph": false
+        },
+        "B": {
+          "hit": true,
+          "sent": 16,
+          "from_graph": 0,
+          "hit_from_graph": false
+        },
+        "C": {
+          "hit": true,
+          "sent": 16,
+          "from_graph": 8,
+          "hit_from_graph": false
+        }
+      }
+    },
+    {
+      "repo": "itsdangerous",
+      "snapshot_id": 25,
+      "id": 13,
+      "question": "How does it decide when to compress the data to make the token smaller?",
+      "unanswerable": false,
+      "first_hit_rank": 1,
+      "configs": {
+        "A": {
+          "hit": true,
+          "sent": 8,
+          "from_graph": 0,
+          "hit_from_graph": false
+        },
+        "B": {
+          "hit": true,
+          "sent": 16,
+          "from_graph": 0,
+          "hit_from_graph": false
+        },
+        "C": {
+          "hit": true,
+          "sent": 16,
+          "from_graph": 8,
+          "hit_from_graph": false
+        }
+      }
+    },
+    {
+      "repo": "itsdangerous",
+      "snapshot_id": 25,
+      "id": 14,
+      "question": "How does it check whether a token has expired or is too old?",
+      "unanswerable": false,
+      "first_hit_rank": 3,
+      "configs": {
+        "A": {
+          "hit": true,
+          "sent": 8,
+          "from_graph": 0,
+          "hit_from_graph": false
+        },
+        "B": {
+          "hit": true,
+          "sent": 16,
+          "from_graph": 0,
+          "hit_from_graph": false
+        },
+        "C": {
+          "hit": true,
+          "sent": 16,
+          "from_graph": 8,
+          "hit_from_graph": false
+        }
+      }
+    },
+    {
+      "repo": "itsdangerous",
+      "snapshot_id": 25,
+      "id": 15,
+      "question": "How does the salt value keep different uses separate even when using the same secret key?",
+      "unanswerable": false,
+      "first_hit_rank": 2,
+      "configs": {
+        "A": {
+          "hit": true,
+          "sent": 8,
+          "from_graph": 0,
+          "hit_from_graph": false
+        },
+        "B": {
+          "hit": true,
+          "sent": 16,
+          "from_graph": 0,
+          "hit_from_graph": false
+        },
+        "C": {
+          "hit": true,
+          "sent": 15,
+          "from_graph": 7,
+          "hit_from_graph": false
+        }
+      }
+    },
+    {
+      "repo": "itsdangerous",
+      "snapshot_id": 25,
+      "id": 16,
+      "question": "How does it encrypt the data so nobody can read what\u2019s inside the token?",
+      "unanswerable": true,
+      "top_paths": [
+        "src/itsdangerous/serializer.py:40-55",
+        "src/itsdangerous/serializer.py:203-225",
+        "src/itsdangerous/serializer.py:190-205"
+      ]
+    }
+  ],
+  "summary": {
+    "all": {
+      "questions": 14,
+      "recall": {
+        "A": 0.6428571428571429,
+        "B": 0.7857142857142857,
+        "C": 0.6428571428571429
+      },
+      "mrr_search_16": 0.35587715855573
+    },
+    "express": {
+      "questions": 7,
+      "recall": {
+        "A": 0.5714285714285714,
+        "B": 0.7142857142857143,
+        "C": 0.5714285714285714
+      },
+      "mrr_search_16": 0.2755952380952381
+    },
+    "itsdangerous": {
+      "questions": 7,
+      "recall": {
+        "A": 0.7142857142857143,
+        "B": 0.8571428571428571,
+        "C": 0.7142857142857143
+      },
+      "mrr_search_16": 0.43615907901622186
+    }
+  },
+  "questions_file": "eval\\questions.yaml"
+}

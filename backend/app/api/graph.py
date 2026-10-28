@@ -163,7 +163,9 @@ def _neighbours(symbol_id: int, min_confidence: float, direction: str) -> dict:
             f"SELECT e.type, {CONFIDENCE} AS confidence, o.id, o.kind, o.name,"
             " o.qualified_name, o.file_id, o.start_line, o.end_line, f.path FROM edges e"
             f" JOIN symbols o ON o.id = e.{far} LEFT JOIN files f ON f.id = o.file_id"
-            f" WHERE {scope.format(near=near)} AND {CONFIDENCE} >= %s{same_file}"
+            # `defines` (class -> method) is structure, not a dependency.
+            f" WHERE {scope.format(near=near)} AND e.type IN ('imports', 'calls')"
+            f" AND {CONFIDENCE} >= %s{same_file}"
             " ORDER BY f.path NULLS LAST, o.start_line NULLS FIRST, o.qualified_name, e.type",
             args,
         ).fetchall()
