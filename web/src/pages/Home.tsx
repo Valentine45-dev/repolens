@@ -9,13 +9,14 @@ import { age, loadRecent, rememberAnalysis } from "../recent";
 // Same shape the API accepts (app/ingest/clone.py normalize_repo_url).
 const GITHUB_URL = /^https:\/\/github\.com\/[A-Za-z0-9-]+\/[A-Za-z0-9._-]+?(\.git)?\/?$/;
 
-// Repos ingested and checked end to end (PROGRESS.md); resubmitting one reuses its finished job.
+// Repos ingested and checked end to end (PROGRESS.md), pinned to the analysed commit so a click
+// always reopens that finished analysis and never starts a new one when the repo moves on.
 const EXAMPLES = [
-  "https://github.com/pallets/itsdangerous",
-  "https://github.com/expressjs/express",
-  "https://github.com/sindresorhus/ky",
+  { url: "https://github.com/pallets/itsdangerous", commit: "672971d66a2ef9f85151e53283113f33d642dabd" },
+  { url: "https://github.com/expressjs/express", commit: "1c6f1b0fe4000977b9a7b4f34097e4d527dd9824" },
+  { url: "https://github.com/sindresorhus/ky", commit: "3541888878c4d303a8bc2ad61815f4e048f55a5d" },
   // Intentionally vulnerable Django app; used for the real-world precision eval.
-  "https://github.com/adeyosemanputra/pygoat",
+  { url: "https://github.com/adeyosemanputra/pygoat", commit: "46fef968f3f44d1191363baf936aaa3335dc5c6d" },
 ];
 
 function validate(value: string): string | null {
@@ -41,10 +42,10 @@ export function Home() {
 
   const submit = useMutation({
     mutationFn: submitRepo,
-    onSuccess: (result, submittedUrl) => {
+    onSuccess: (result, submitted) => {
       rememberAnalysis({
         snapshotId: result.snapshot_id,
-        url: submittedUrl,
+        url: submitted.url,
         commitSha: result.commit_sha,
         submittedAt: Date.now(),
       });
@@ -57,10 +58,10 @@ export function Home() {
   const serverError = submit.isError ? submit.error.message : null;
   const message = showFormatError ? formatError : serverError;
 
-  function start(target: string) {
+  function start(target: string, commit?: string) {
     setUrl(target);
     setTouched(true);
-    if (validate(target) === null) submit.mutate(target.trim());
+    if (validate(target) === null) submit.mutate({ url: target.trim(), commit });
   }
 
   function onSubmit(event: FormEvent) {
@@ -131,13 +132,13 @@ export function Home() {
         <span className="examples-label">Try an example</span>
         {EXAMPLES.map((example) => (
           <button
-            key={example}
+            key={example.url}
             type="button"
             className="chip"
-            onClick={() => start(example)}
+            onClick={() => start(example.url, example.commit)}
             disabled={submit.isPending}
           >
-            {repoName(example)}
+            {repoName(example.url)}
           </button>
         ))}
       </div>

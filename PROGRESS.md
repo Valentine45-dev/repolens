@@ -721,8 +721,22 @@
     findings (hardcoded-secret 47 -> 46), line 51 stored intact with only its SQL-string finding,
     checked in the UI and API. **The precision numbers above are from the pre-fix run and were
     not recomputed.** Other snapshots were not re-ingested.
-  - PyGoat is the 4th example chip on Home (it reuses snapshot 55 while its HEAD stays
-    `46fef96`). The local (git-ignored) `.claude/launch.json` gained an `api` entry (native uvicorn).
+  - PyGoat is the 4th example chip on Home. The local (git-ignored) `.claude/launch.json` gained
+    an `api` entry (native uvicorn).
+- **Pre-merge checks (28 Oct, `feat/final-evals`).**
+  - Findings row click: **not a UI bug.** In the browser (native mode, PyGoat snapshot 55) a real
+    click on a row opens the detail panel and sets `?finding=<id>`, by coordinate and by element
+    ref, at 1280x800 and at 375x812 (full-width overlay on phones), with and without a rule
+    filter (the SQL row shows line 51 with `{password}` intact). The earlier miss was the
+    automated click landing while the page was still re-rendering (URL never changed).
+  - **Example chips pinned.** `POST /repos` takes an optional `commit` (full 40-hex SHA, else
+    422); with it the API skips `git ls-remote` and reuses the analysis of that commit (or
+    analyses exactly that commit on a fresh database). Home's chips send: itsdangerous
+    `672971d`, express `1c6f1b0`, ky `3541888`, pygoat `46fef96`. Typed URLs and Progress's
+    retry still follow the default branch. Checked in the browser: the four chips opened
+    snapshots 25, 24, 21 and 55, the request body carried the commit, and the `jobs` table was
+    unchanged (39 rows, max id 53). Tests: pinned commit reuses the job without ls-remote;
+    malformed commits are 422. 249 passed, 3 skipped.
 
 ## Demo plan (8 GB laptop)
 The full compose stack works (tested 28 Oct) but left ~0.66 GB free and crashed the machine
@@ -733,8 +747,9 @@ once. Primary demo is native mode; compose is shown as tested, not run live.
 3. API: `cd backend; uv run --env-file ../.env uvicorn app.main:app --port 8000` (wait for
    "Application startup complete", ~1 min for the model). Don't run `uv sync` while it runs.
 4. Web: `cd web; npm run dev`, open http://localhost:5173.
-5. Flow: Home -> pick the already analysed itsdangerous (snapshot 25) or express (24); a live
-   ingest of itsdangerous takes ~2 min (embedding is the slow part). Explorer -> node panel ->
+5. Flow: Home -> click an example chip (pinned to its analysed commit, so it opens instantly and
+   never starts a new analysis): itsdangerous (snapshot 25), express (24), ky (21), PyGoat (55).
+   A live ingest of a typed URL like itsdangerous takes ~2 min (embedding is the slow part). Explorer -> node panel ->
    Findings -> Ask: one graph question ("Which files import signer.py?"), one AI question
    ("How does the Signer verify a signature?") and click a source chip.
 6. Fallbacks: AI down -> show the "unavailable" notice and graph answers (rule 8). API won't
