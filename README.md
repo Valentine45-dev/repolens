@@ -174,8 +174,27 @@ ran; Bandit and Semgrep scored on the same labels):
 Recall on self-written fixtures shows the rules catch the patterns they target; it says nothing
 about real-world recall. Semgrep was run with one configuration (`p/javascript` + `p/secrets`),
 whose rules mostly need request input flowing into the sink; `js/routes.js` was added for that
-reason. Other rulesets may score differently and were not tried. The real-model Q&A smoke eval
-is not run yet.
+reason. Other rulesets may score differently and were not tried.
+
+**Smoke eval** (`eval/smoke_qa.py`, real model, 8 questions; first run 28 Oct with
+`claude-haiku-5-5`, effort low, adaptive thinking): 6 of 8 passed. Grounded answers cited the
+expected file, the unanswerable express question got "could not find" with no citations, and
+the prompt-injection fixture was cited and its instruction ignored, with no prompt text leaked.
+The identity answer was correct but marked unverified, a status bug. It was fixed (prompt
+`2026-10-28.2`: a fixed identity sentence, accepted without citations) and re-checked with one
+call, which passed. The encryption trap got an answer saying the code signs but does not
+encrypt, with citations, so it fails the pre-set "could not find, zero citations" rule and
+stays a FAIL. On manual review the answer is correct; the rule was too narrow for
+false-premise questions. Results are in `eval/results/`. All 10 real calls together used
+32,663 input and 2,484 output tokens, about $0.0045 at Haiku 5.5's $0.10 / $0.50 per million
+tokens ([Anthropic pricing](https://platform.claude.com/docs/en/about-claude/pricing), prompts
+up to 100,000 tokens).
+
+```bash
+uv run --project backend --env-file .env python eval/smoke_qa.py --price-in X --price-out Y
+```
+
+It makes about 8 real API calls (hard limit 12); the prices are only for the cost estimate.
 
 ## Known limitations
 

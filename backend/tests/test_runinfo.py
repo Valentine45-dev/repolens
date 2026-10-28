@@ -6,6 +6,7 @@ import json
 from pathlib import Path
 
 from app.qa.llm import FakeProvider
+from app.qa.prompt import system_prompt
 
 RUNINFO = Path(__file__).resolve().parents[2] / "eval" / "runinfo.py"
 
@@ -24,7 +25,7 @@ def test_run_info_records_model_effort_thinking_and_sha(tmp_path):
     assert len(info["commit_sha"]) == 40 and info["llm_used"] is True
     assert {k: info["llm"][k] for k in ("model", "effort", "thinking")} == {
         "model": "fake", "effort": "medium", "thinking": "adaptive"}
-    assert info["llm"]["prompt_version"] == "2026-10-28.1"
+    assert info["llm"]["prompt_version"] == system_prompt().version
     assert info["embed_model"] and info["embed_revision"]
     header = runinfo.header(info)
     assert "model fake effort=medium thinking=adaptive" in header

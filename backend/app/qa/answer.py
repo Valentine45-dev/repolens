@@ -13,7 +13,13 @@ from app import config
 from app.db import pool
 from app.qa import llm
 from app.qa.citations import validate
-from app.qa.prompt import COULD_NOT_FIND, build_user_message, format_snippet, system_prompt
+from app.qa.prompt import (
+    COULD_NOT_FIND,
+    IDENTITY_ANSWER,
+    build_user_message,
+    format_snippet,
+    system_prompt,
+)
 from app.qa.retrieve import CHARS_PER_TOKEN, retrieve
 
 log = logging.getLogger("repolens.qa")
@@ -88,7 +94,8 @@ def ai_answer(snapshot_id: int, question: str, include_tests: bool = False) -> d
         format_snippet(s.path, s.qualified_name, s.start_line, s.text) for s in found.snippets
     ])
     estimate = int(len(system.text + prompt) / CHARS_PER_TOKEN) + config.LLM_MAX_TOKENS
-    if not _reserve(snapshot_id, estimate):
+    charge = provider.counts_toward_budget  # False for FakeProvider: made-up token counts
+    if charge and not _reserve(snapshot_id, estimate):
         log.info("ask snapshot=%s %s: token cap reached", snapshot_id, q_log)
         return _reply("cap_reached", CAP_REACHED, found)
 
@@ -98,10 +105,12 @@ def ai_answer(snapshot_id: int, question: str, include_tests: bool = False) -> d
             deadline_s=config.QA_DEADLINE_S, min_retry_s=config.QA_MIN_RETRY_S,
         )
     except llm.LLMError as e:
-        _adjust(snapshot_id, -estimate)
+        if charge:
+            _adjust(snapshot_id, -estimate)
         log.warning("ask snapshot=%s %s: LLM %s", snapshot_id, q_log, e)
         return _reply("unavailable", UNAVAILABLE, found)
-    _adjust(snapshot_id, completion.tokens_in + completion.tokens_out - estimate)
+    if charge:
+        _adjust(snapshot_id, completion.tokens_in + completion.tokens_out - estimate)
     if completion.refused:
         # Any partial text before the refusal is not shown: it was not finished or checked.
         log.info("ask snapshot=%s %s: refused category=%s model=%s", snapshot_id, q_log,
@@ -114,7 +123,9 @@ def ai_answer(snapshot_id: int, question: str, include_tests: bool = False) -> d
 
     checked = validate(completion.text.strip(), found.snippets)
     not_found = COULD_NOT_FIND.rstrip(".").lower() in checked.text.lower()
-    status = "answered" if checked.citations or not_found else "unverified"
+    # Only the exact identity reply is exempt, so uncited claims cannot ride along with it.
+    identity = checked.text == IDENTITY_ANSWER
+    status = "answered" if checked.citations or not_found or identity else "unverified"
     log.info(
         "ask snapshot=%s %s: %s model=%s %s prompt=%s sent=%d cited=%d dropped=%d"
         " tokens=%d+%d",

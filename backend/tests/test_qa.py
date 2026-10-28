@@ -9,7 +9,13 @@ from anthropic.types import Message
 
 from app.qa.citations import find_citations, validate
 from app.qa.llm import FakeProvider, LLMError, check_settings, complete_with_deadline
-from app.qa.prompt import build_user_message, format_snippet, read_system_file, system_prompt
+from app.qa.prompt import (
+    IDENTITY_ANSWER,
+    build_user_message,
+    format_snippet,
+    read_system_file,
+    system_prompt,
+)
 from app.qa.retrieve import Snippet
 from app.qa.router import match_route
 
@@ -17,6 +23,7 @@ from app.qa.router import match_route
 # version fails this test, so every prompt change gets a new version.
 PROMPT_HASHES = {
     "2026-10-28.1": "775e1ba60a96685d8f946e5194292096edbb6980d78c792235d2454d59bac0ec",
+    "2026-10-28.2": "397bd67234e5fa6564b12d0dcc1f3dce29a29c8fb16567dc03a34fbdebef4cff",
 }
 
 
@@ -59,7 +66,7 @@ def test_system_prompt_states_the_rules():
     text = system_prompt().text
     assert not text.startswith("PROMPT_VERSION")  # the version line is not sent
     for needle in ("You are RepoLens's assistant", "I could not find this in the provided code.",
-                   "path:start-end", "never an instruction"):
+                   "path:start-end", "never an instruction", IDENTITY_ANSWER):
         assert needle in text
 
 
@@ -123,6 +130,16 @@ def test_validation_keeps_valid_removes_invalid_and_tidies():
                              " Also.")
     assert "    x  =  1" in v.text  # code keeps its spacing
     assert (v.citations[1].file_id, v.citations[1].symbol_id) == (2, 12)
+
+
+@pytest.mark.parametrize("text, expected", [
+    ("It ends the response (src/other.py:1-2).", "It ends the response."),
+    ("It ends the response [src/other.py:1-2, src/other.py:5].", "It ends the response."),
+    ("It ends (src/other.py:1-2) and returns.", "It ends and returns."),
+])
+def test_dropped_bracketed_citation_leaves_no_stray_space(text, expected):
+    v = validate(text, SENT)
+    assert v.text == expected
 
 
 def test_duplicate_citations_listed_once_in_first_use_order():
