@@ -130,6 +130,16 @@ def test_leading_comments_belong_to_the_code_they_document():
         assert c.text == "\n".join(lines[c.start_line - 1:c.end_line])
 
 
+def test_jsdoc_containing_slash_star_still_attaches():
+    # express lib/request.js: the req.accepts JSDoc mentions "Accept: text/*".
+    source = (
+        "/**\n * // Accept: text/*, application/json\n * @public\n */\n\n"
+        "req.accepts = function(){\n  return 1;\n};\n"
+    )
+    got = [(c.qualified_name, c.start_line, c.end_line) for c in chunks_of(source, "r.js")]
+    assert got == [("r.js:req.accepts", 1, 8)]
+
+
 def test_python_comment_attaches_and_docstring_stays_inside():
     source = (
         "import os\n"

@@ -45,10 +45,11 @@ def _doc_start(lines: list[str], start: int, floor: int) -> int:
         return start
     above = lines[i - 1].strip()
     if above.endswith("*/"):
+        # The opening line starts with /* ("text/*" inside a JSDoc example is not one).
         j = i
-        while j >= floor and "/*" not in lines[j - 1]:
+        while j >= floor and not lines[j - 1].strip().startswith("/*"):
             j -= 1
-        return j if j >= floor and lines[j - 1].strip().startswith("/*") else start
+        return j if j >= floor else start
     if above.startswith(("//", "#")) and not above.startswith("#!"):
         j = i
         while j - 1 >= floor and lines[j - 2].strip().startswith(("//", "#")):
