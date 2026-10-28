@@ -112,3 +112,17 @@ def test_git_timeout_is_transient(monkeypatch):
     with pytest.raises(CloneError) as info:
         clone._git(["fetch", "x"], timeout=5)
     assert info.value.transient
+
+
+def test_every_git_command_gets_the_safe_config(monkeypatch):
+    from app.ingest import clone
+
+    seen = []
+    monkeypatch.setattr(clone.subprocess, "run",
+                        lambda args, **k: seen.append(args) or _Proc(0, ""))
+    clone._git(["status"], timeout=5)
+    args = seen[0]
+    pairs = {args[i + 1] for i, a in enumerate(args) if a == "-c"}
+    assert {"core.symlinks=false", "core.fsmonitor=false", "core.longpaths=true",
+            "submodule.recurse=false", "protocol.allow=never"} <= pairs
+    assert args[-1] == "status"
