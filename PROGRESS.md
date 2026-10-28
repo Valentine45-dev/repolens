@@ -520,8 +520,10 @@
     | express (7) | 0.57 | 0.71 | 0.71 | 0.86 | 0.57 | 0.86 |
     | itsdangerous (7) | 0.71 | 0.71 | 0.86 | 0.86 | 0.71 | **1.00** |
 
-    MRR (search order to 16): 0.36 -> 0.43. C beats B by one question (Q11, itsdangerous: only a
-    graph-added chunk reaches `Serializer.loads`); on express C = B. Q5 still misses everywhere:
+    MRR (search order to 16): 0.36 -> 0.43. **Graph expansion helped by one question (13/14 vs
+    12/14 for the same context size), which is not conclusive at this size.** The one question
+    is Q11 (itsdangerous: only a graph-added chunk reaches `Serializer.loads`); on express
+    C = B. Q5 still misses everywhere:
     `res.format` is doc + code over 256 tokens, and its first window (516-541, doc only) is the
     top hit, which does not overlap the labelled code (574-599). Small sample: 14 questions,
     one question is the whole C-over-B margin.
@@ -562,6 +564,41 @@
     run. Not changed after seeing results.
   - Caveats: small, hand-written fixtures by the same author as the detectors; "safe" labels
     for logged SQL and constant table names are judgement calls.
+- **Detector eval, run 2 (28 Oct, `3e2cd40`, `eval/results/detectors-...-3e2cd40.json`).**
+  - **Fixture 2 (`eval/detector_fixtures/js/routes.js`) was added after run 1**, because fixture
+    1 passed plain function parameters into its sinks and Semgrep's `p/javascript` rules are
+    mostly taint rules that need request (`req.query`/`body`/`params`) or browser-location
+    input. Every dangerous value in fixture 2 comes from such a source. It was written and
+    labelled (16 labels: 10 vuln, 6 safe) and committed before any tool ran on it. Fixture 1 is
+    unchanged and its run-1 results are kept; in run 2 its scores are identical.
+  - Per fixture (same tools and settings as run 1):
+
+    | fixture | tool | TP | FP | FN | precision | recall |
+    |---|---|---|---|---|---|---|
+    | js/server.js (1) | RepoLens | 9 | 3 | 0 | 0.75 | 1.00 |
+    | js/server.js (1) | Semgrep | 1 | 1 | 8 | 0.50 | 0.11 |
+    | js/routes.js (2) | RepoLens | 8 | 1 | 2 | 0.89 | 0.80 |
+    | js/routes.js (2) | Semgrep | 3 | 3 | 7 | 0.50 | 0.30 |
+    | python/shop.py | RepoLens | 11 | 6 | 0 | 0.65 | 1.00 |
+    | python/shop.py | Bandit | 8 | 5 | 3 | 0.62 | 0.73 |
+
+  - Fixture 2 details. RepoLens misses the secret passed inline to `jwt.sign(...)` (its secret
+    rule needs a `name = "value"` assignment) and the XSS through `res.send("<h1>" +
+    req.query.name)` (it only checks `innerHTML`/`outerHTML`); FP on constant `eval("1 + 1")`.
+    Semgrep finds the inline JWT secret, `eval(req.query.expr)` and the `res.send` XSS; it
+    misses `new Function("item", req.body.filter)`, the browser `innerHTML` from
+    `location.search`, and every `exec` command injection and `connection.query` SQL injection
+    with request input. Two of its FPs are its
+    `direct-response-write` XSS rule on `res.send(jwt.sign(...))` lines (labelled as a secret
+    or unlabelled), and one is `hardcoded-jwt-secret` reported where the variable is used
+    (line 27) instead of where it is assigned (line 20, which then counts as missed): the
+    pre-set same-line rule is strict about that.
+  - **How to read these numbers:** recall on self-written fixtures shows that the rules work
+    as designed on the patterns they target; it is not real-world recall. Semgrep was run with
+    one pre-chosen configuration (`p/javascript` + `p/secrets`); other rulesets may score
+    differently and were not tried. Next: run all detectors on an intentionally vulnerable
+    repo (supplied by the user) and hand-label a sample of each tool's findings for real-world
+    precision.
 
 ## Planned vs delivered
 - **Temperature 0 (CLAUDE.md) is not possible on current models.** `temperature`, `top_p` and
@@ -588,10 +625,9 @@
 - Day 3 on `feat/qa`: tasks 5, 6 and 7 built; `/ask` tested with FakeProvider only. Next: the
   real-model check (graph + AI questions on express and itsdangerous, expansion on/off,
   citations and dropped, tokens used, the AI answer view in the browser) once the user confirms
-  the key is in `.env`. On `feat/eval`: labels are awaiting the user's review; then run
-  retrieval recall@k, then detectors vs Bandit (Python) and Semgrep (JS, Docker image if it will
-  not run natively) on labeled fixtures, all three scored on the same labels. Full
-  `docker compose up` is Day 4.
+  the key is in `.env`. `feat/eval` (retrieval and detector evals) awaits the user's OK to
+  merge; after that, the detectors on the user's intentionally vulnerable repo with a
+  hand-labelled sample of each tool's findings. Full `docker compose up` is Day 4.
 - If the API cannot start with "pool initialization incomplete": the db container was healthy
   but Docker's port proxy accepted connections without forwarding them (28 Oct);
   `docker compose restart db` fixed it.
