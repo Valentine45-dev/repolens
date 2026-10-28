@@ -33,9 +33,36 @@ def prefix(path: str, qualified_name: str) -> str:
     return f"{path} {qualified_name}\n"
 
 
-def _units(symbols: list[ParsedSymbol], n_lines: int) -> list[tuple[ParsedSymbol, int, int]]:
+def _doc_start(lines: list[str], start: int, floor: int) -> int:
+    """First line of the comment that documents the unit starting at `start` (1-based): a block
+    comment (`/** ... */`) or a run of `//` / `#` lines directly above it, one blank line
+    between them allowed (Express puts one after its JSDoc). Never above `floor`; `start` if
+    there is no such comment. Python docstrings are inside the def already."""
+    i = start - 1
+    if i >= floor and not lines[i - 1].strip():
+        i -= 1  # one blank line
+    if i < floor:
+        return start
+    above = lines[i - 1].strip()
+    if above.endswith("*/"):
+        j = i
+        while j >= floor and "/*" not in lines[j - 1]:
+            j -= 1
+        return j if j >= floor and lines[j - 1].strip().startswith("/*") else start
+    if above.startswith(("//", "#")) and not above.startswith("#!"):
+        j = i
+        while j - 1 >= floor and lines[j - 2].strip().startswith(("//", "#")):
+            j -= 1
+        return j
+    return start
+
+
+def _units(symbols: list[ParsedSymbol], lines: list[str]) -> list[tuple[ParsedSymbol, int, int]]:
     """(symbol, start, end) for every chunk-worthy unit: classes (header up to the first
-    method), methods, functions not nested in another function, and runs of top-level code."""
+    method), methods, functions not nested in another function, and runs of top-level code.
+    A unit starts at the comment that documents it, so the comment is embedded and cited with
+    the code it describes instead of becoming a separate top-level chunk."""
+    n_lines = len(lines)
     module = next((s for s in symbols if s.kind == "module"), None)
     code = [s for s in symbols if s.kind in CODE_KINDS]
 
@@ -43,22 +70,36 @@ def _units(symbols: list[ParsedSymbol], n_lines: int) -> list[tuple[ParsedSymbol
         return outer is not inner and outer.start_line <= inner.start_line \
             and inner.end_line <= outer.end_line
 
+    def floor(s: ParsedSymbol) -> int:
+        """The comment search stops at the end of the code before s, or inside its parent."""
+        limit = 1
+        for o in code:
+            if o is s:
+                continue
+            if o.end_line < s.start_line:
+                limit = max(limit, o.end_line + 1)
+            elif o.start_line < s.start_line <= o.end_line:
+                limit = max(limit, o.start_line + 1)
+        return limit
+
+    start_of = {id(s): _doc_start(lines, s.start_line, floor(s)) for s in code}
+
     units = []
     for s in code:
         if any(inside(s, o) and o.kind in ("function", "method") for o in code):
             continue  # a nested helper is part of its enclosing function's chunk
-        start, end = s.start_line, s.end_line
+        start, end = start_of[id(s)], s.end_line
         if s.kind == "class":
             methods = [m for m in code if m.kind == "method" and inside(m, s)]
             if methods:
-                end = min(m.start_line for m in methods) - 1
+                end = min(start_of[id(m)] for m in methods) - 1
         if end >= start:
             units.append((s, start, end))
 
-    # Top-level code: lines outside every function/method/class, in contiguous runs.
+    # Top-level code: lines outside every function/method/class (and their comments).
     covered = [False] * (n_lines + 2)
     for s in code:
-        for i in range(s.start_line, min(s.end_line, n_lines) + 1):
+        for i in range(start_of[id(s)], min(s.end_line, n_lines) + 1):
             covered[i] = True
     if module is not None:
         run_start = None
@@ -97,7 +138,7 @@ def build_chunks(
 ) -> list[Chunk]:
     all_lines = content.split("\n")
     chunks: list[Chunk] = []
-    for symbol, start, end in _units(symbols, len(all_lines)):
+    for symbol, start, end in _units(symbols, all_lines):
         lines = all_lines[start - 1:end]
         # Trim blank lines at the edges; skip units that are only whitespace.
         while lines and not lines[0].strip():
