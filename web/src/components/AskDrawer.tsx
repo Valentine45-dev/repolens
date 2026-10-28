@@ -1,5 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { useEffect, useId, useMemo, useRef, useState, type FormEvent } from "react";
+import { Fragment, useEffect, useId, useMemo, useRef, useState, type FormEvent } from "react";
 import { Link, useSearchParams } from "react-router-dom";
 
 import {
@@ -18,7 +18,8 @@ import { Icon } from "./Icon";
 import { Markdown } from "./Markdown";
 
 const MAX_CHARS = 1000; // the API's limit
-const UNAVAILABLE = "AI answers are unavailable right now. Graph questions still work.";
+const SHOWN_RESULTS = 5; // graph results before "Show all N"
+const WIDE_KEY = "repolens.ask.wide";
 
 interface Turn {
   id: string;
@@ -52,6 +53,24 @@ function saveTurns(snapshotId: number, turns: Turn[]) {
   }
 }
 
+// The wide drawer is a per-viewer convenience, remembered in this browser when storage works.
+function loadWide(): boolean {
+  try {
+    return localStorage.getItem(WIDE_KEY) === "1";
+  } catch {
+    return false;
+  }
+}
+
+function saveWide(wide: boolean) {
+  try {
+    if (wide) localStorage.setItem(WIDE_KEY, "1");
+    else localStorage.removeItem(WIDE_KEY);
+  } catch {
+    // Not remembered; the toggle still works for this visit.
+  }
+}
+
 export function AskDrawer({
   snapshotId,
   status,
@@ -67,9 +86,11 @@ export function AskDrawer({
   const setParams = useSetParams();
   const [turns, setTurns] = useState<Turn[]>(() => loadTurns(snapshotId));
   const [draft, setDraft] = useState("");
+  const [wide, setWide] = useState(loadWide);
   const inputRef = useRef<HTMLTextAreaElement>(null);
   const endRef = useRef<HTMLDivElement>(null);
   const { features } = status;
+  const name = repoName(status.url);
 
   // Block bodies: an effect may return only a cleanup function, and newer browsers make
   // scrollIntoView return a Promise.
@@ -129,12 +150,22 @@ export function AskDrawer({
     send(draft);
   }
 
+  function toggleWide() {
+    setWide((w) => {
+      saveWide(!w);
+      return !w;
+    });
+  }
+
   return (
-    <aside id="ask-drawer" className="drawer" aria-labelledby={titleId}>
-      <header className="panel-header">
-        <div className="panel-heading">
-          <h2 id={titleId} className="panel-title">
-            Ask about <span className="mono">{repoName(status.url)}</span>
+    <aside id="ask-drawer" className="drawer" data-wide={wide || undefined} aria-labelledby={titleId}>
+      <header className="panel-header drawer-header">
+        <div className="panel-heading drawer-heading">
+          <h2 id={titleId} className="panel-title drawer-title">
+            <span className="drawer-title-lead">Ask about</span>{" "}
+            <span className="mono drawer-repo" title={name}>
+              {name}
+            </span>
           </h2>
           <p className="caption">Each question is answered on its own, from this commit.</p>
         </div>
@@ -148,18 +179,23 @@ export function AskDrawer({
             Clear
           </button>
         ) : null}
+        <button
+          type="button"
+          className="icon-button drawer-size"
+          onClick={toggleWide}
+          aria-pressed={wide}
+          aria-label={wide ? "Make the Ask panel narrower" : "Make the Ask panel wider"}
+          title={wide ? "Narrower" : "Wider"}
+        >
+          <Icon name={wide ? "collapse" : "expand"} />
+        </button>
         <button type="button" className="icon-button" onClick={onClose} aria-label="Close Ask (Esc)">
           <Icon name="x" />
         </button>
       </header>
 
       <div className="drawer-body">
-        {!features.ai ? (
-          <p className="note drawer-notice" data-tone="warning">
-            {UNAVAILABLE}
-          </p>
-        ) : null}
-        <SearchNotice snapshotId={snapshotId} status={status} />
+        <DrawerBanner snapshotId={snapshotId} status={status} />
 
         {turns.length === 0 ? (
           <Suggestions snapshotId={snapshotId} aiReady={features.ai && features.ask} onPick={send} />
@@ -168,7 +204,8 @@ export function AskDrawer({
             {turns.map((turn) => (
               <li key={turn.id} className="turn">
                 <p className="turn-question">
-                  <span className="turn-who">You</span> {turn.question}
+                  <span className="visually-hidden">You asked: </span>
+                  {turn.question}
                 </p>
                 <div className="turn-answer" aria-live="polite">
                   {turn.answer ? (
@@ -180,11 +217,11 @@ export function AskDrawer({
                       busy={ask.isPending}
                     />
                   ) : turn.error ? (
-                    <p className="note" data-tone="warning" role="alert">
-                      {turn.error}
+                    <p className="turn-note" role="alert">
+                      <Icon name="x" size={14} /> {turn.error}
                     </p>
                   ) : (
-                    <p className="caption thinking">
+                    <p className="turn-note thinking">
                       <Icon name="spinner" size={14} /> Looking through the code… this can take
                       up to 40 seconds.
                     </p>
@@ -290,13 +327,16 @@ function Suggestions({
   }
   return (
     <div className="suggestions">
-      <p className="caption">Suggested</p>
+      <h3 className="drawer-section-title">Suggested questions</h3>
       <ul>
         {questions.map((q) => (
           <li key={q.text}>
             <button type="button" className="suggestion" onClick={() => onPick(q.text)}>
-              {q.text}
-              <span className="caption">{q.kind === "graph" ? "From the graph" : "AI answer"}</span>
+              <span className="suggestion-text">{q.text}</span>
+              <span className="suggestion-kind caption">
+                <Icon name={q.kind === "graph" ? "graph" : "spark"} size={14} />
+                {q.kind === "graph" ? "From the graph" : "AI answer"}
+              </span>
             </button>
           </li>
         ))}
@@ -320,11 +360,114 @@ function shortName(r: GraphResult): string {
   return r.qualified_name.split(":").pop() ?? r.name;
 }
 
+const lineCount = new Intl.NumberFormat("en-US");
+
+/** A path that wraps only after a "/" (DESIGN.md), never inside a file or folder name. */
+function PathText({ path }: { path: string }) {
+  return (
+    <>
+      {path.split("/").map((part, i) => (
+        <Fragment key={i}>
+          {i ? (
+            <>
+              /<wbr />
+            </>
+          ) : null}
+          {part}
+        </Fragment>
+      ))}
+    </>
+  );
+}
+
+/** One line for a failed AI question; the reason that applies to all of them is the banner. */
+function failedLine(answer: Answer): string {
+  return answer.status === "unavailable" ? "No AI answer for this question." : answer.answer;
+}
+
+/** A file result spans its whole file; a function or class its own lines. Packages have none. */
+function linesOf(r: GraphResult): string | null {
+  if (r.start_line === null || r.end_line === null) return null;
+  const n = r.end_line - r.start_line + 1;
+  return `${lineCount.format(n)} ${n === 1 ? "line" : "lines"}`;
+}
+
+function kindIcon(r: GraphResult): "file" | "package" | "symbol" {
+  if (r.kind === "module") return "file";
+  if (r.kind === "external" || r.kind === "unresolved") return "package";
+  return "symbol";
+}
+
 /** The question again with the ambiguous target swapped for the chosen candidate. */
 function reask(question: string, query: string, r: GraphResult): string {
   const pick = r.kind === "module" ? (r.path ?? r.qualified_name) : r.qualified_name;
   const at = question.toLowerCase().indexOf(query.toLowerCase());
   return at === -1 ? question : question.slice(0, at) + pick + question.slice(at + query.length);
+}
+
+function ResultRow({
+  snapshotId,
+  question,
+  answer,
+  r,
+  onAsk,
+  busy,
+}: {
+  snapshotId: number;
+  question: string;
+  answer: Answer;
+  r: GraphResult;
+  onAsk: (question: string) => void;
+  busy: boolean;
+}) {
+  const body = (
+    <>
+      <Icon name={kindIcon(r)} size={14} />
+      <span className="result-name">
+        <span className="mono result-primary">
+          <PathText path={shortName(r)} />
+        </span>
+        {r.kind !== "module" && r.path ? (
+          <span className="mono result-path">
+            <PathText path={r.path} />
+          </span>
+        ) : null}
+      </span>
+      <span className="result-meta">
+        {r.edge ? <span className="caption">{r.edge}</span> : null}
+        {r.kind === "external" ? <span className="tag">external</span> : null}
+        {r.kind === "unresolved" ? (
+          <span className="tag" data-kind="unresolved">
+            unresolved
+          </span>
+        ) : null}
+        {r.in_test ? <span className="tag">test</span> : null}
+        {linesOf(r) ? <span className="caption mono num">{linesOf(r)}</span> : null}
+      </span>
+    </>
+  );
+  if (answer.status === "ambiguous" && answer.query) {
+    return (
+      <button
+        type="button"
+        className="result-row"
+        disabled={busy}
+        onClick={() => onAsk(reask(question, answer.query!, r))}
+      >
+        {body}
+      </button>
+    );
+  }
+  const href = resultHref(snapshotId, r);
+  return href ? (
+    <Link to={href} className="result-row">
+      {body}
+    </Link>
+  ) : (
+    <span className="result-row" data-static>
+      {body}
+    </span>
+  );
 }
 
 function AnswerView({
@@ -340,31 +483,34 @@ function AnswerView({
   onAsk: (question: string) => void;
   busy: boolean;
 }) {
+  const [showAll, setShowAll] = useState(false);
   const graph = answer.kind === "graph";
-  const degraded = ["unavailable", "cap_reached", "no_context", "refused"].includes(answer.status);
+
+  // A failed AI question gets one line; the reason that applies to every question (no model,
+  // search not ready) is the banner at the top of the drawer.
+  if (["unavailable", "cap_reached", "no_context", "refused"].includes(answer.status)) {
+    return (
+      <p className="turn-note" data-status={answer.status}>
+        <Icon name="x" size={14} /> {failedLine(answer)}
+      </p>
+    );
+  }
+
+  const results = showAll ? answer.results : answer.results.slice(0, SHOWN_RESULTS);
+  const hidden = answer.results.length - results.length;
   return (
     <div className="answer" data-status={answer.status}>
-      <p className="answer-meta">
-        <span className="turn-who">RepoLens</span>
-        <span className="answer-kind" data-kind={answer.kind}>
-          {graph ? "From the graph" : "AI answer"}
-        </span>
-      </p>
+      <h3 className="answer-head">
+        <Icon name={graph ? "graph" : "spark"} />
+        {graph ? "From the graph" : "AI answer"}
+      </h3>
 
-      {degraded ? (
-        <p className="note" data-tone="warning">
-          {answer.answer}
-        </p>
-      ) : graph ? (
-        <p>{answer.answer}</p>
-      ) : (
-        <Markdown text={answer.answer} />
-      )}
+      {graph ? <p>{answer.answer}</p> : <Markdown text={answer.answer} />}
 
       {answer.status === "unverified" ? (
-        <p className="note" data-tone="warning">
-          None of the sources this answer cited could be verified, so it is shown without sources.
-          Check the code before relying on it.
+        <p className="turn-note">
+          <Icon name="x" size={14} /> None of the sources this answer cited could be verified, so it
+          is shown without sources. Check the code before relying on it.
         </p>
       ) : null}
 
@@ -372,40 +518,32 @@ function AnswerView({
         <p className="caption">Pick one to ask the same question about it.</p>
       ) : null}
       {graph && answer.results.length ? (
-        <ul className="results">
-          {answer.results.map((r) => {
-            const href = resultHref(snapshotId, r);
-            return (
+        <>
+          <ul className="result-rows">
+            {results.map((r) => (
               <li key={`${r.node_id}-${r.edge ?? ""}`}>
-                {answer.status === "ambiguous" && answer.query ? (
-                  <button
-                    type="button"
-                    className="row-button mono"
-                    disabled={busy}
-                    onClick={() => onAsk(reask(question, answer.query!, r))}
-                  >
-                    {shortName(r)}
-                  </button>
-                ) : href ? (
-                  <Link to={href} className="row-button mono">
-                    {shortName(r)}
-                  </Link>
-                ) : (
-                  <span className="mono">{shortName(r)}</span>
-                )}
-                {r.kind !== "module" && r.path ? <span className="caption mono"> {r.path}</span> : null}
-                {r.edge ? <span className="caption"> · {r.edge}</span> : null}
-                {r.kind === "external" ? <span className="tag">external</span> : null}
-                {r.in_test ? <span className="tag">test</span> : null}
+                <ResultRow
+                  snapshotId={snapshotId}
+                  question={question}
+                  answer={answer}
+                  r={r}
+                  onAsk={onAsk}
+                  busy={busy}
+                />
               </li>
-            );
-          })}
-        </ul>
+            ))}
+          </ul>
+          {hidden > 0 ? (
+            <button type="button" className="link-button" onClick={() => setShowAll(true)}>
+              Show all {answer.results.length}
+            </button>
+          ) : null}
+        </>
       ) : null}
 
       {answer.citations.length ? (
         <div className="sources">
-          <p className="caption">Sources</p>
+          <h4 className="drawer-section-title">Relevant source files</h4>
           <ul className="citation-list">
             {answer.citations.map((c) => (
               <li key={`${c.path}:${c.start_line}-${c.end_line}`}>
@@ -418,8 +556,11 @@ function AnswerView({
                     ask: true,
                   })}
                 >
-                  {c.path}:{c.start_line}
-                  {c.end_line !== c.start_line ? `-${c.end_line}` : ""}
+                  <Icon name="file" size={14} />
+                  <span>
+                    <PathText path={c.path} />:{c.start_line}
+                    {c.end_line !== c.start_line ? `-${c.end_line}` : ""}
+                  </span>
                 </Link>
               </li>
             ))}
@@ -443,55 +584,62 @@ function AnswerView({
 
 const chunkCount = new Intl.NumberFormat("en-US");
 
-// Search for questions after the analysis (spec 5.2): progress while non-test code is embedded,
-// the reason and "Retry preparing search" when it failed. Graph questions work throughout.
-function SearchNotice({ snapshotId, status }: { snapshotId: number; status: SnapshotStatus }) {
+// The one place that says why AI answers are off or limited (spec 12.1: say what happened and
+// what to do next), with "Retry preparing search" when that is the fix. Graph questions always
+// work, so the banner says so; each failed AI turn below then needs only one line.
+function DrawerBanner({ snapshotId, status }: { snapshotId: number; status: SnapshotStatus }) {
   const queryClient = useQueryClient();
   const { features } = status;
   const retry = useMutation({
     mutationFn: () => retrySearch(snapshotId),
     onSettled: () => queryClient.invalidateQueries({ queryKey: ["status", snapshotId] }),
   });
-  const progress = features.search_progress;
-  const counts = progress
-    ? ` ${chunkCount.format(progress.done)} / ${chunkCount.format(progress.total)} chunks.`
-    : "";
 
-  if (features.search === "embedding") {
-    return (
-      <p className="note drawer-notice" role="status" aria-live="polite">
-        <Icon name="spinner" size={14} /> Preparing search for questions…{counts} Graph questions
-        work now.
+  let title: string | null = null;
+  let body: string | null = null;
+  let busy = false;
+  if (!features.ai) {
+    title = "AI answers are unavailable right now.";
+    body = "Graph questions still work: ask which files import, call or depend on something.";
+  } else if (features.search === "embedding") {
+    const p = features.search_progress;
+    title = "Preparing search for questions…";
+    body =
+      (p ? `${chunkCount.format(p.done)} / ${chunkCount.format(p.total)} chunks. ` : "") +
+      "Graph questions work now.";
+    busy = true;
+  } else if (features.retry_search) {
+    title = features.ask ? "Test code is not searchable." : "AI answers are unavailable for this analysis.";
+    body =
+      (features.search_error ?? features.ask_reason ?? "") +
+      (features.ask ? " AI answers still use the rest of the code." : " Graph questions still work.");
+  } else if (!features.ask && features.ask_reason) {
+    title = "AI answers are unavailable for this analysis.";
+    body = `${features.ask_reason} Graph questions still work.`;
+  }
+  if (!title) return null;
+
+  return (
+    <div className="callout drawer-banner" role="status" aria-live="polite" aria-busy={busy || undefined}>
+      <p className="callout-title">
+        {busy ? <Icon name="spinner" size={14} /> : null}
+        {title}
       </p>
-    );
-  }
-  if (features.retry_search) {
-    const reason = features.ask_reason ?? features.search_error;
-    return (
-      <div className="note drawer-notice" data-tone="warning" role="status">
-        <p>
-          {reason}
-          {features.ask ? " AI answers still use the rest of the code." : " Graph questions still work."}
-        </p>
-        <button
-          type="button"
-          className="button button-secondary button-small"
-          onClick={() => retry.mutate()}
-          disabled={retry.isPending}
-        >
-          {retry.isPending ? <Icon name="spinner" size={14} /> : null}
-          Retry preparing search
-        </button>
-        {retry.isError ? <p className="caption">{retry.error.message}</p> : null}
-      </div>
-    );
-  }
-  if (!features.ask && features.ask_reason) {
-    return (
-      <p className="note drawer-notice" data-tone="warning">
-        {features.ask_reason} Graph questions still work.
-      </p>
-    );
-  }
-  return null;
+      <p>{body}</p>
+      {features.retry_search && features.ai ? (
+        <div className="callout-actions">
+          <button
+            type="button"
+            className="button button-secondary button-small"
+            onClick={() => retry.mutate()}
+            disabled={retry.isPending}
+          >
+            {retry.isPending ? <Icon name="spinner" size={14} /> : null}
+            {retry.isPending ? "Starting" : "Retry preparing search"}
+          </button>
+          {retry.isError ? <p className="caption">{retry.error.message}</p> : null}
+        </div>
+      ) : null}
+    </div>
+  );
 }

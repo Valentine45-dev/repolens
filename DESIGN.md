@@ -229,7 +229,7 @@ The system is flat. No element carries a `box-shadow`. Depth is conveyed by 1px 
 
 Two radii and a pill. Controls (buttons, inputs) use gently rounded corners (6px). Grouped containers (the recent-analyses list, callouts) use slightly softer corners (10px) and clip their rows. Example chips are full pills (999px). Skeleton bars use 4px. The stage ledger has no container at all, only a top rule and a rule under each row.
 
-Icons are authored inline SVG on a 16px grid, one 1.5 stroke, round caps and joins, `currentColor`: check, x, circle, spinner, arrow-right. They inherit the state colour of their row.
+Icons are authored inline SVG on a 16px grid, one 1.5 stroke, round caps and joins, `currentColor`: check, x, circle, spinner, arrow-right, send, copy, the severity marks, and for the Ask drawer file, package, symbol (braces), graph (three nodes), spark (AI answer), expand and collapse. They inherit the state colour of their row.
 
 ## Components
 
@@ -273,6 +273,13 @@ A ruled vertical list: a 20px icon column, the stage label, and a right-aligned 
 - **Toolbar:** segmented Graph/List control (Bench Grey track, Paper pressed segment), native checkboxes with Ink accent for "Show test files" and "Show guessed calls", a small secondary Fit button, and a right-aligned caption carrying the file count, the render-cap note and hidden-test count.
 - **Node panel:** docked right, `min(480px, 42vw)`, Hairline left border (an overlay under 900px). Path in mono, a four-fact row (Used by, Uses, External imports, Unresolved imports), underline tabs (Code, Used by, Uses), and a code view with a sticky Bench Grey line-number gutter. Neighbours are grouped by file; external and unresolved entries carry a small tag (dashed External Grey for external).
 - **List view:** a full-width table with a sticky Bench Grey header, 36px rows, mono numbers right-aligned; the selected row takes Sunk Grey.
+
+### Ask drawer
+- **Frame:** docked right with a Hairline left edge, `min(480px, 40vw)`; an expand toggle widens it to `min(760px, 62vw)` (remembered in this browser). Under 900px it overlays the canvas at `min(100%, 560px)` with the same Hairline edge, never a shadow, and the toggle is hidden. The repo name in "Ask about owner/repo" is mono, truncated with an ellipsis, full name in the title.
+- **Banner:** one neutral callout at the top for whatever limits AI answers (no model, search being prepared with real chunk counts, search failed with a secondary "Retry preparing search" button). Not amber: nothing here is "slow". Graph questions are always said to work.
+- **Turns:** the question in its own Bench Grey box with a Hairline border (6px); the answer under a 600-weight header with its icon, "AI answer" (spark) or "From the graph" (graph); 24px and a Hairline between turns. A failed AI question is one muted line with an x.
+- **Graph results:** one ruled 10px container, a 40px row per result: kind icon (file / package / symbol) in Ash, the name in mono (paths wrap only after "/"), the file path under a symbol in Ash, and right-aligned real metadata only: `imports` / `calls`, `external` / `unresolved` / `test` tags, the line count where the result has lines. Five rows, then "Show all N". On phones the metadata moves under the name.
+- **Sources:** "Relevant source files", chips with a file icon and mono `path:start-end`, linking to the cited lines.
 
 ### Loading
 Skeleton bars in Sunk Grey at 4px radius, sized to the text they replace. Spinners rotate at 900ms linear; under reduced motion they slow to 2.4s and transitions collapse.

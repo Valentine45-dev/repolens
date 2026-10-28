@@ -857,6 +857,30 @@
     at 436 s. Then a full analysis (job 54 marked `Re-run: ...`, job 57): clone to detect 17 s,
     **job done with Ask at 277 s**, test code ready at 335 s; 3,599 non-test + 1,269 test chunks.
 
+- **Ask drawer redesign, `feat/ask-drawer` (28 Oct, branched from `feat/embed-retry` because the
+  banner's retry needs it).** Impeccable workflow (refinement, Operate mode) inside DESIGN.md;
+  the mockup `docs/inspiration/explorer-ask.png` used for structure only (no invented role labels,
+  no follow-up placeholder, no file tree).
+  - Turns: question in its own bordered box; answer under a header with an icon ("AI answer" /
+    "From the graph"); 24px and a rule between turns. Graph results as ruled rows (kind icon,
+    mono name, paths wrapping only after "/", right-aligned `imports`/`calls`, tags, real line
+    counts from the symbol's lines), five then "Show all N". "Relevant source files" chips with
+    a file icon. Drawer 480px with an expand toggle to 760px (remembered per browser); repo name
+    truncated with the full name on hover; under 900px a full overlay with a Hairline edge (the
+    old drawer had a box-shadow, which DESIGN.md bans). One neutral banner for no AI / search
+    preparing (chunk counts) / search failed (+ "Retry preparing search"); a failed AI turn is
+    one line; graph-only suggestions when AI is off. Old amber notices removed (amber is for
+    "slow" only). New icons: file, package, symbol, graph, spark, expand, collapse.
+  - Checked with a real conversation on itsdangerous through my API on 8001 (one real AI call,
+    the `.env` model): a 7-result graph answer, a 948-character AI answer with 7 validated
+    citations, an ambiguous question with 3 candidates; the no-AI state via a Playwright-modified
+    `/status` (ai=false) and a failed AI turn; the search-failed and search-preparing banners;
+    the wide toggle (480 -> 760 px); the long JARVIS name truncated at 390px. Desktop 1440px and
+    phone 390px, before and after (screenshots in `.playwright-mcp/`, not committed). Fixed from
+    the first look: mid-name path breaks on phones, the failed-turn line repeating the banner,
+    and answer text touching its header / glued markdown paragraphs (a margin rule outranking).
+  - Web: type-check clean, 17 tests pass.
+
 ## Demo plan (8 GB laptop)
 The full compose stack works (tested 28 Oct) but left ~0.66 GB free and crashed the machine
 once. Primary demo is native mode; compose is shown as tested, not run live.
