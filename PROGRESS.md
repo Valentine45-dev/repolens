@@ -778,7 +778,7 @@
     cause", which the measurements rule out); the owner then chose the production build anyway
     (see the next entry). The production build is still about twice as fast to the
     graph (first click 0.76 s vs 1.43 s at 1x); it can be run natively with `cd web; npm run build;
-    npm run preview -- --port 5173` (the `/api` proxy carries over).
+    npx vite preview --port 5173 --strictPort` (the `/api` proxy carries over).
 
 - **`fix/blank-screen` merged into `main` (28 Oct, `8e8b724`).** Demo plan switched to the
   production build served natively (owner's decision; about twice as fast to the graph).
@@ -892,8 +892,9 @@ once. Primary demo is native mode; compose is shown as tested, not run live.
    Once only, after the first restart on the `feat/polish` code: run
    `backend/migrations/2026-10-28-repo-case-and-progress.sql` (see the file).
 4. Web, production build served natively (about twice as fast to the graph as the dev server,
-   measured 28 Oct): `cd web; npm run build; npm run preview -- --port 5173`, open
-   http://localhost:5173. `/api` is proxied to the API on 8000 as before. Rebuild after any
+   measured 28 Oct): `cd web; npm run build; npx vite preview --port 5173 --strictPort`, open
+   http://localhost:5173. Not `npm run preview -- --port 5173`: Windows PowerShell 5.1 drops the
+   bare `--`, so Vite reads `5173` as a folder and fails with "dist does not exist" (28 Oct). `/api` is proxied to the API on 8000 as before. Rebuild after any
    web change; `npm run dev` stays the tool for development, not for the demo.
 5. Flow: Home -> click an example chip (pinned to its analysed commit, so it opens instantly and
    never starts a new analysis): itsdangerous (snapshot 25), express (24), ky (21), PyGoat (55).
