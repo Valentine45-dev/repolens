@@ -17,7 +17,14 @@ from app.detect.rules import DETECTOR_RULES, RULES, SECRET_RULE
 from app.ingest import clone
 from app.ingest.calls import resolve_calls
 from app.ingest.discover import DiscoveredFile, discover
-from app.ingest.parse import ParsedFile, ParsedImport, ParsedSymbol, parse_python
+from app.ingest.parse import (
+    ParsedFile,
+    ParsedImport,
+    ParsedSymbol,
+    line_count,
+    module_name,
+    parse_python,
+)
 from app.ingest.parse_js import parse_js
 from app.ingest.resolve import JsModules, PythonModules, Target, resolve_js, resolve_python
 from app.paths import is_test_path
@@ -51,7 +58,7 @@ def _check_deadline(deadline: float) -> None:
 
 
 def _secret_snippet(content: str, line: int) -> str:
-    lines = content.splitlines()
+    lines = content.split("\n")  # "\n" only, as the redactor counts lines
     text = lines[line - 1].strip() if 0 < line <= len(lines) else ""
     return text[:200]
 
@@ -92,9 +99,29 @@ def store_files(snapshot_id: int, files: list[DiscoveredFile]) -> None:
 
 
 def parse_file(path: str, language: str, content: str) -> ParsedFile:
-    if language == "python":
-        return parse_python(path, content)
-    return parse_js(path, content)
+    """Parse one file. A file the parser cannot handle (for example a RecursionError on a very
+    deeply nested expression) keeps only its module symbol, so one file never fails the job."""
+    try:
+        if language == "python":
+            return parse_python(path, content)
+        return parse_js(path, content)
+    except Exception as e:
+        log.warning("parse skipped for one file (%s); module symbol only", type(e).__name__)
+        if language == "python":
+            name = module_name(path)
+            stem = name.rsplit(".", 1)[-1]
+        else:
+            name, stem = path, path.rsplit("/", 1)[-1].split(".", 1)[0]
+        return ParsedFile(symbols=[ParsedSymbol("module", stem, name, 1, line_count(content))])
+
+
+def detect_file(path: str, language: str, content: str, parsed: ParsedFile) -> list:
+    """Detector hits for one file; a file the detectors cannot walk gets none (logged)."""
+    try:
+        return detect(path, language, content, parsed)
+    except Exception as e:
+        log.warning("detectors skipped for one file (%s)", type(e).__name__)
+        return []
 
 
 @dataclass
@@ -261,10 +288,12 @@ def store_findings(snapshot_id: int, parsed: dict[str, Parsed]) -> int:
     findings; hardcoded-secret findings belong to the discover stage."""
     rows = []
     for path, p in parsed.items():
-        hits = detect(path, p.language, p.content, p.result)
+        hits = detect_file(path, p.language, p.content, p.result)
         if not hits:
             continue
-        lines = p.content.splitlines()
+        # Split on "\n" only, like Tree-sitter and the redactor (splitlines() would also break
+        # on form feeds and U+2028 and shift the snippet off the reported line).
+        lines = p.content.split("\n")
         for hit in hits:
             rule = RULES[hit.rule_id]
             symbol = _innermost_symbol(p.result.symbols, hit.line)
