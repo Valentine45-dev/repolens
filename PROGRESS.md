@@ -977,6 +977,20 @@ Agreed 27 Oct, to apply when building Day 3:
 - Local dev on this 8 GB RAM laptop: only the `db` service runs in Docker; the API runs natively
   with `uv run uvicorn`. The full compose stack (`db`, `api`, later `web`) is kept for the demo.
 
+## Known limitations (for the report)
+Found by the detector eval (run 2, fixture `eval/detector_fixtures/js/routes.js`). The rules
+are deliberately not changed after seeing eval results; these stay as documented limits.
+- **Secrets passed inline as an argument are not detected.** The hardcoded-secret check needs a
+  named assignment (`name = "value"` / `name: "value"` with a name like password, secret, token
+  or api key) or a known token format. `jwt.sign(payload, "inline-signing-key-456")` (line 23)
+  is missed; the same value assigned to `jwtSecret` first is found.
+- **Server-side XSS through response writes is not detected.** The JS HTML-injection rule only
+  checks assignments to `innerHTML` / `outerHTML`. `res.send("<h1>Hello " + req.query.name +
+  "</h1>")` (line 68) is missed.
+- More generally: the rules are syntactic (no taint tracking), so they flag constant arguments
+  too (constant `eval`, fixed-string `shell=True`, SQL with a constant table name, a logged SQL
+  string), and fixture recall shows the rules work as designed, not real-world recall.
+
 ## Known issues
 - A dagre layout of 300 nodes takes ~0.4s on the main thread (dev); fine at the cap, would need
   a worker if the cap grows.
@@ -1007,8 +1021,8 @@ Agreed 27 Oct, to apply when building Day 3:
   (files gone, metadata kept), so later syncs skip it: on 28 Oct markupsafe lost its files,
   jinja2 (needed by sentence-transformers) failed to import, and jobs 42/43 failed in `embed`
   with `ImportError`. Fixed with `uv sync --reinstall-package markupsafe`.
-- An embed-stage error fails the whole job, so graph and findings become unavailable too even
-  though they were stored. See the task 5 plan, decision D5.
+- (Resolved in task 5, D5.) An embed-stage error used to fail the whole job; now the job ends
+  `done` and status reports `features.ask=false` with the reason.
 - First real-model load takes ~1–2 min (download + torch import); later loads are faster.
 - Fixture tests do not reproduce the 0.26.0 crash (only bigger files did); the pin is the guard.
   Re-check before ever lifting it.
