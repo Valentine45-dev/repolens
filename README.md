@@ -88,8 +88,11 @@ about twice as fast to open the graph); `/api` is still proxied to the API on 80
 ```bash
 cd web
 npm run build
-npm run preview -- --port 5173
+npx vite preview --port 5173 --strictPort
 ```
+
+(Not `npm run preview -- --port 5173`: Windows PowerShell 5.1 drops the bare `--`, so Vite
+gets `5173` as a folder name and stops with "dist does not exist".)
 
 A database volume created before 28 Oct needs one migration, run after restarting the API on
 the current code: `docker compose exec -T db psql -U repolens -d repolens <
