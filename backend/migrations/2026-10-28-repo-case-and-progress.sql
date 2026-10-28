@@ -11,9 +11,12 @@ CREATE UNIQUE INDEX IF NOT EXISTS repos_url_ci ON repos (lower(url));
 -- Counts within the slow stages (parse: files, embed: chunks) for the Progress page.
 ALTER TABLE jobs ADD COLUMN IF NOT EXISTS progress_done INT;
 ALTER TABLE jobs ADD COLUMN IF NOT EXISTS progress_total INT;
+-- Also in 2026-10-28-search-state.sql. Here too so the view below matches the current one and
+-- the two files can run in either order (dropping a view column is an error).
+ALTER TABLE jobs ADD COLUMN IF NOT EXISTS search_state TEXT;
 CREATE OR REPLACE VIEW snapshot_status AS
 SELECT DISTINCT ON (snapshot_id) snapshot_id, id AS job_id, status, stage, percent, error,
-  search_error, progress_done, progress_total
+  search_error, progress_done, progress_total, search_state
 FROM jobs
 ORDER BY snapshot_id, id DESC;
 
