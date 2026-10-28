@@ -4,7 +4,7 @@ import os
 from dataclasses import dataclass, field
 from pathlib import Path
 
-from app.ingest.redact import SecretMatch, redact
+from app.ingest.redact import CONFIG_SUFFIXES, SecretMatch, redact
 
 SKIP_DIRS = {
     ".git", "node_modules", "__pycache__", "venv", ".venv", ".tox", ".nox", ".eggs",
@@ -100,7 +100,7 @@ def discover(root: Path, max_files: int, max_file_bytes: int) -> DiscoverResult:
             if language in ("javascript", "typescript") and _looks_minified(text):
                 result.skipped += 1
                 continue
-            content, secrets = redact(text)
+            content, secrets = redact(text, config=path.suffix.lower() in CONFIG_SUFFIXES)
             result.files.append(
                 DiscoveredFile(
                     path=path.relative_to(root).as_posix(),

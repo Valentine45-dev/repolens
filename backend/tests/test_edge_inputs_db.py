@@ -14,6 +14,8 @@ DEEP_JS = "var page =\n  " + " +\n  ".join(f'"part{i}"' for i in range(1500)) + 
 OK_JS = "function stillParsed() {\n  return 1;\n}\n"
 # A form feed on line 2: splitlines() treats it as an extra line break, "\n" counting does not.
 FORM_FEED_PY = "x = 1\n\x0c\ndef f(data):\n    eval(data)\n"
+# An unquoted secret in a config file (the quoted-only rule used to miss it).
+COMPOSE_YML = "services:\n  db:\n    environment:\n      POSTGRES_PASSWORD: fixture-unquoted-pw\n"
 
 
 @pytest.fixture
@@ -26,6 +28,7 @@ def edge_snapshot(client, monkeypatch):
         (dest / "web" / "ok.js").write_text(OK_JS, encoding="utf-8")
         (dest / "app").mkdir()
         (dest / "app" / "ff.py").write_bytes(FORM_FEED_PY.encode("utf-8"))
+        (dest / "docker-compose.yml").write_text(COMPOSE_YML, encoding="utf-8")
 
     monkeypatch.setattr(clone, "fetch_commit", fetch)
     body = client.post("/repos", json={"url": "https://github.com/example/edges"}).json()
@@ -52,3 +55,13 @@ def test_finding_snippet_is_the_reported_line_despite_a_form_feed(edge_snapshot)
     rows = query("SELECT f.line, f.snippet FROM findings f JOIN files fi ON fi.id = f.file_id"
                  " WHERE fi.path = 'app/ff.py' AND f.rule_id = 'py-eval-exec'")
     assert [(r["line"], r["snippet"]) for r in rows] == [(4, "eval(data)")]
+
+
+def test_unquoted_secret_in_a_config_file_is_redacted_and_reported(edge_snapshot):
+    (f,) = query("SELECT id, content FROM files WHERE snapshot_id = %s"
+                 " AND path = 'docker-compose.yml'", edge_snapshot)
+    assert "fixture-unquoted-pw" not in f["content"]
+    assert "POSTGRES_PASSWORD: [REDACTED]" in f["content"]
+    rows = query("SELECT line, rule_id, snippet FROM findings WHERE file_id = %s", f["id"])
+    assert [(r["line"], r["rule_id"]) for r in rows] == [(4, "hardcoded-secret")]
+    assert "fixture-unquoted-pw" not in rows[0]["snippet"]
