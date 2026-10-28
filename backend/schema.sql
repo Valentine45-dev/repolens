@@ -15,6 +15,7 @@ CREATE TABLE snapshots (
   id          BIGSERIAL PRIMARY KEY,
   repo_id     BIGINT NOT NULL REFERENCES repos(id) ON DELETE CASCADE,
   commit_sha  TEXT NOT NULL,
+  llm_tokens_used BIGINT NOT NULL DEFAULT 0,    -- AI question budget (LLM_TOKEN_CAP_PER_SNAPSHOT)
   created_at  TIMESTAMPTZ DEFAULT now(),
   UNIQUE (repo_id, commit_sha)
 );
@@ -27,13 +28,15 @@ CREATE TABLE jobs (
   status        TEXT NOT NULL DEFAULT 'queued',   -- queued|running|done|failed
   percent       INT NOT NULL DEFAULT 0,
   error         TEXT,
+  search_error  TEXT,                             -- embed stage failed; the job still finishes
   created_at    TIMESTAMPTZ DEFAULT now()
 );
 CREATE INDEX jobs_snapshot ON jobs (snapshot_id);
 
 -- A snapshot is "ready" when its latest job is done.
 CREATE VIEW snapshot_status AS
-SELECT DISTINCT ON (snapshot_id) snapshot_id, id AS job_id, status, stage, percent, error
+SELECT DISTINCT ON (snapshot_id) snapshot_id, id AS job_id, status, stage, percent, error,
+  search_error
 FROM jobs
 ORDER BY snapshot_id, id DESC;
 

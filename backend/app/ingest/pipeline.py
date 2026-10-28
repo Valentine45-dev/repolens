@@ -352,6 +352,21 @@ def _fetch_with_retry(job_id: int, url: str, sha: str, workdir: Path, deadline: 
         clone.fetch_commit(url, sha, workdir, timeout=config.CLONE_TIMEOUT_S)
 
 
+def _embed(job_id: int, snapshot_id: int, parsed: dict[str, Parsed], deadline: float) -> str | None:
+    """The embed stage, which is not fatal: graph and findings are already stored, so a failure
+    here leaves the job done and only AI questions unavailable. Returns the reason, or None."""
+    try:
+        stats = store_chunks(snapshot_id, job_id, parsed, deadline)
+    except JobError as e:
+        log.warning("job %s: embed stopped: %s", job_id, e)
+        return f"Search for questions was not prepared: {e}"
+    except Exception as e:
+        log.error("job %s: embed failed: %s", job_id, type(e).__name__)
+        return "Search for questions could not be prepared (internal error)."
+    log.info("job %s: embed %s", job_id, stats)
+    return None
+
+
 def run_job(job_id: int, snapshot_id: int, url: str, sha: str) -> None:
     workdir = Path(config.WORKSPACE_DIR) / f"job-{job_id}"
     deadline = time.monotonic() + config.MAX_ANALYSIS_S
@@ -392,10 +407,13 @@ def run_job(job_id: int, snapshot_id: int, url: str, sha: str) -> None:
 
         stage = "embed"
         _set_job(job_id, stage, 92)
-        stats = store_chunks(snapshot_id, job_id, parsed, deadline)
-        log.info("job %s: embed %s", job_id, stats)
+        search_error = _embed(job_id, snapshot_id, parsed, deadline)
 
         _set_job(job_id, "done", 100, status="done")
+        if search_error:
+            with pool().connection() as conn:
+                conn.execute("UPDATE jobs SET search_error = %s WHERE id = %s",
+                             (search_error, job_id))
     except (clone.CloneError, JobError) as e:
         log.warning("job %s failed in %s: %s", job_id, stage, e)
         _set_job(job_id, stage, 100, status="failed", error=str(e))

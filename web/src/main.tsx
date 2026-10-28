@@ -10,7 +10,9 @@ import { BrowserRouter, Route, Routes, useLocation } from "react-router-dom";
 
 import { ApiError, isNetworkError } from "./api";
 import { ErrorBoundary } from "./components/ErrorBoundary";
+import { AnalysisShell } from "./components/AnalysisShell";
 import { TopBar } from "./components/TopBar";
+import { Findings } from "./pages/Findings";
 import { Home } from "./pages/Home";
 import { NotFound } from "./pages/NotFound";
 import { Progress } from "./pages/Progress";
@@ -45,14 +47,17 @@ function App() {
           <Routes>
             <Route path="/" element={<Home />} />
             <Route path="/a/:id" element={<Progress />} />
-            <Route
-              path="/a/:id/explore"
-              element={
-                <Suspense fallback={<p className="canvas-message caption">Loading graph…</p>}>
-                  <Explore />
-                </Suspense>
-              }
-            />
+            <Route element={<AnalysisShell />}>
+              <Route
+                path="/a/:id/explore"
+                element={
+                  <Suspense fallback={<p className="canvas-message caption">Loading graph…</p>}>
+                    <Explore />
+                  </Suspense>
+                }
+              />
+              <Route path="/a/:id/findings" element={<Findings />} />
+            </Route>
             <Route path="*" element={<NotFound />} />
           </Routes>
         </ErrorBoundary>

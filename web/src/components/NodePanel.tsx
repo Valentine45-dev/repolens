@@ -1,11 +1,13 @@
 import { useQuery } from "@tanstack/react-query";
-import { useEffect, useId, useMemo, useRef, useState } from "react";
+import { useEffect, useId, useMemo, useRef, useState, type CSSProperties } from "react";
 
-import { getFile, getNeighbours, type GraphNode, type Neighbour } from "../api";
+import { getFile, getNeighbours, type FileDetail, type GraphNode, type Neighbour } from "../api";
 import { GUESS_BELOW, languageLabel } from "../graphModel";
+import type { LineRange } from "../links";
 import { Icon } from "./Icon";
+import { SeverityBadge } from "./Severity";
 
-type Tab = "code" | "usedBy" | "uses";
+type Tab = "code" | "usedBy" | "uses" | "findings";
 
 // Every query below is keyed by this node's ids and cancelled when the node changes, so a slow
 // answer for one file can never be shown in another file's panel.
@@ -13,18 +15,29 @@ export function NodePanel({
   snapshotId,
   node,
   minConfidence,
+  highlight,
   isInGraph,
   onSelectFile,
+  onShowLines,
+  onAsk,
   onClose,
 }: {
   snapshotId: number;
   node: GraphNode;
   minConfidence: number;
+  highlight: LineRange | null; // cited or flagged lines, from the URL
   isInGraph: (fileId: number) => boolean;
   onSelectFile: (fileId: number) => void;
+  onShowLines: (lines: LineRange) => void;
+  onAsk: (path: string) => void;
   onClose: () => void;
 }) {
   const [tab, setTab] = useState<Tab>("code");
+  // New lines to show (a citation chip or a finding): open the code on them.
+  const highlightKey = highlight ? `${highlight.start}-${highlight.end}` : null;
+  useEffect(() => {
+    if (highlightKey) setTab("code");
+  }, [highlightKey]);
   const titleId = useId();
   const titleRef = useRef<HTMLHeadingElement>(null);
 
@@ -77,6 +90,13 @@ export function NodePanel({
         </div>
         <button
           type="button"
+          className="button button-secondary button-small"
+          onClick={() => onAsk(node.path)}
+        >
+          Ask about this
+        </button>
+        <button
+          type="button"
           className="icon-button"
           onClick={onClose}
           aria-label="Close panel (Esc)"
@@ -111,6 +131,7 @@ export function NodePanel({
             ["code", "Code"],
             ["usedBy", "Used by"],
             ["uses", "Uses"],
+            ["findings", `Findings (${node.findings})`],
           ] as const
         ).map(([id, label]) => (
           <button
@@ -129,7 +150,7 @@ export function NodePanel({
       <div className="panel-body" role="tabpanel">
         {tab === "code" ? (
           file.data ? (
-            <CodeView key={node.id} content={file.data.content} />
+            <CodeView key={node.id} content={file.data.content} highlight={highlight} />
           ) : (
             <PanelState query={file} />
           )
@@ -143,6 +164,12 @@ export function NodePanel({
             />
           ) : (
             <PanelState query={usedBy} />
+          )
+        ) : tab === "findings" ? (
+          file.data ? (
+            <FileFindings findings={file.data.findings} onShowLines={onShowLines} />
+          ) : (
+            <PanelState query={file} />
           )
         ) : uses.data ? (
           <NeighbourList
@@ -186,20 +213,78 @@ function PanelState({ query }: { query: { error: Error | null; refetch: () => un
   );
 }
 
-function CodeView({ content }: { content: string }) {
+function CodeView({ content, highlight }: { content: string; highlight: LineRange | null }) {
   const lines = useMemo(() => {
     const all = content.split("\n");
     if (all.length > 1 && all[all.length - 1] === "") all.pop();
     return all;
   }, [content]);
   const gutter = useMemo(() => lines.map((_, i) => i + 1).join("\n"), [lines]);
+  const markRef = useRef<HTMLDivElement>(null);
+  const range =
+    highlight && highlight.start <= lines.length
+      ? { start: highlight.start, end: Math.min(highlight.end, lines.length) }
+      : null;
+  const rangeKey = range ? `${range.start}-${range.end}` : null;
+  useEffect(() => {
+    markRef.current?.scrollIntoView({ block: "center" });
+  }, [rangeKey]);
   return (
-    <div className="code" tabIndex={0} aria-label="File contents">
+    <div
+      className="code"
+      tabIndex={0}
+      aria-label={
+        range ? `File contents, lines ${range.start} to ${range.end} highlighted` : "File contents"
+      }
+    >
+      {range ? (
+        <div
+          ref={markRef}
+          className="code-highlight"
+          style={{ "--hl-start": range.start, "--hl-len": range.end - range.start + 1 } as CSSProperties}
+          aria-hidden="true"
+        />
+      ) : null}
       <pre className="code-gutter" aria-hidden="true">
         {gutter}
       </pre>
       <pre className="code-text">{lines.join("\n")}</pre>
     </div>
+  );
+}
+
+function FileFindings({
+  findings,
+  onShowLines,
+}: {
+  findings: FileDetail["findings"];
+  onShowLines: (lines: LineRange) => void;
+}) {
+  if (findings.length === 0) {
+    return (
+      <p className="panel-message">
+        No findings in this file from our current rules. This does not guarantee it is safe.
+      </p>
+    );
+  }
+  return (
+    <ul className="neighbours">
+      {findings.map((f) => (
+        <li key={f.id} className="neighbour">
+          <div className="neighbour-head">
+            <SeverityBadge severity={f.severity} />
+            <button
+              type="button"
+              className="row-button"
+              onClick={() => onShowLines({ start: f.line, end: f.line })}
+            >
+              {f.message}
+            </button>
+          </div>
+          <p className="neighbour-what caption">line {f.line}</p>
+        </li>
+      ))}
+    </ul>
   );
 }
 
