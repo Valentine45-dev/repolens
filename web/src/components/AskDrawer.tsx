@@ -14,6 +14,7 @@ import {
 } from "../api";
 import { degrees } from "../graphModel";
 import { exploreHref, useSetParams } from "../links";
+import { scrollToStart } from "../scroll";
 import { Icon } from "./Icon";
 import { Markdown } from "./Markdown";
 import { PathText } from "./PathText";
@@ -90,6 +91,7 @@ export function AskDrawer({
   const [wide, setWide] = useState(loadWide);
   const inputRef = useRef<HTMLTextAreaElement>(null);
   const lastTurnRef = useRef<HTMLLIElement>(null);
+  const bodyRef = useRef<HTMLDivElement>(null);
   const { features } = status;
   const name = repoName(status.url);
 
@@ -101,7 +103,9 @@ export function AskDrawer({
   // Show the newest turn from its question down, so its "AI answer" / "From the graph" label is
   // read first; scrolling to the end would land a long answer mid-way.
   useEffect(() => {
-    lastTurnRef.current?.scrollIntoView({ block: "start" });
+    const list = bodyRef.current;
+    const turn = lastTurnRef.current;
+    if (list && turn) scrollToStart(list, turn);
   }, [turns]);
 
   // "Ask about this" (node panel) arrives as ?askq=...: prefill once, then drop it from the URL.
@@ -197,7 +201,7 @@ export function AskDrawer({
         </button>
       </header>
 
-      <div className="drawer-body">
+      <div className="drawer-body" ref={bodyRef}>
         <DrawerBanner snapshotId={snapshotId} status={status} />
 
         {turns.length === 0 ? (

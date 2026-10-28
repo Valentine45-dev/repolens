@@ -4,6 +4,7 @@ import { useEffect, useId, useMemo, useRef, useState, type CSSProperties } from 
 import { getFile, getNeighbours, type FileDetail, type GraphNode, type Neighbour } from "../api";
 import { GUESS_BELOW, languageLabel } from "../graphModel";
 import type { LineRange } from "../links";
+import { scrollToCenter } from "../scroll";
 import { Icon } from "./Icon";
 import { SeverityBadge } from "./Severity";
 
@@ -228,7 +229,9 @@ function CodeView({ content, highlight }: { content: string; highlight: LineRang
       : null;
   const rangeKey = range ? `${range.start}-${range.end}` : null;
   useEffect(() => {
-    markRef.current?.scrollIntoView({ block: "center" });
+    const mark = markRef.current;
+    const panel = mark?.closest<HTMLElement>(".panel-body");
+    if (mark && panel) scrollToCenter(panel, mark);
   }, [rangeKey]);
   return (
     <div

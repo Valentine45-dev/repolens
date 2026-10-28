@@ -658,6 +658,7 @@ a {
   flex-direction: column;
   min-width: 0; /* never wider than the viewport */
   height: calc(100dvh - var(--topbar-h));
+  overflow: clip; /* the shell fills the viewport; nothing inside may make the page scroll */
 }
 
 .analysis-header {
@@ -1147,6 +1148,7 @@ a {
 }
 
 .panel-body {
+  position: relative; /* keeps absolutely positioned content (.visually-hidden) inside the scroller */
   flex: 1;
   min-height: 0;
   overflow: auto;
@@ -1417,6 +1419,7 @@ a {
 }
 
 .drawer-body {
+  position: relative; /* the "You asked:" labels are absolute; without this they escape the scroller and make the page scrollable */
   flex: 1;
   min-height: 0;
   overflow: auto;

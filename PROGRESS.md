@@ -964,6 +964,23 @@
     N6 the send button's name is its visible "Ask"; N7 no focus box on a panel title after a
     deep link; N8 `--highlight` documented in DESIGN.md. Shared `PathText` replaces two copies.
   - Not changed: S5 (secret findings fill PyGoat's first screen): the demo uses the Rule filter.
+- **Page scroll bug (29 Oct, `fix/page-scroll`).** Whole page scrolled on Ask Enter (S3) and on
+  citation chips; top nav slid away, blank area below.
+  - Root cause (reproduced in Playwright on JARVIS snapshot 83, 1280x800): the Ask drawer's
+    `.visually-hidden` "You asked:" labels are `position: absolute` and the drawer body was not
+    positioned, so they escaped its scroller and sat at their unscrolled position far below. With
+    3 turns the document was 1128px high in an 800px viewport. `scrollIntoView` then scrolled the
+    window as well as the list/code panel.
+  - Fix: `src/scroll.ts` (`scrollToStart` / `scrollToCenter`) scrolls only the given container;
+    used for the newest Ask turn (drawer body) and the cited lines (`.panel-body`, centred).
+    `.drawer-body` and `.panel-body` are `position: relative` (the root cause);
+    `.analysis` is `overflow: clip` as a safety net.
+  - Checked at 1280x800 and 1440x900 on JARVIS `core/brain.py` (811 lines, ranges 787-791, 112-129,
+    119-121, 247-262, other files) and itsdangerous: new file and a different range in an already
+    open file; `scrollY` 0, document height = viewport, top nav at 0 every time; highlights
+    centred (within ~8px), except ranges at the very end of a file, which cannot centre.
+  - Known: clicking the same chip twice does nothing the second time (the range did not change),
+    even if the user scrolled the code away in between.
 
 ## Demo plan (8 GB laptop)
 The full compose stack works (tested 28 Oct) but left ~0.66 GB free and crashed the machine
