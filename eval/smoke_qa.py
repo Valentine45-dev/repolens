@@ -91,7 +91,9 @@ def fixture_snapshot() -> int:
     with db.pool().connection() as conn, conn.transaction():
         repo_id = conn.execute(
             "INSERT INTO repos (url) VALUES (%s)"
-            " ON CONFLICT (url) DO UPDATE SET url = EXCLUDED.url RETURNING id", (FIXTURE_URL,),
+            " ON CONFLICT ((lower(url))) DO UPDATE SET url = CASE"
+            " WHEN EXCLUDED.url <> lower(EXCLUDED.url) THEN EXCLUDED.url ELSE repos.url END"
+            " RETURNING id", (FIXTURE_URL,),
         ).fetchone()["id"]
         snapshot_id = conn.execute(
             "INSERT INTO snapshots (repo_id, commit_sha) VALUES (%s, %s)"
@@ -120,7 +122,8 @@ def repo_snapshot(url: str, commit: str) -> int:
         row = conn.execute(
             "SELECT s.id FROM snapshots s JOIN repos r ON r.id = s.repo_id"
             " JOIN snapshot_status st ON st.snapshot_id = s.id"
-            " WHERE r.url = %s AND s.commit_sha = %s AND st.status = 'done'", (url, commit),
+            " WHERE lower(r.url) = lower(%s) AND s.commit_sha = %s AND st.status = 'done'",
+            (url, commit),
         ).fetchone()
     if not row:
         raise SystemExit(f"{url}@{commit[:7]} is not analysed; submit it first")

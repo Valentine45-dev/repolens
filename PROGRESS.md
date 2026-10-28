@@ -774,10 +774,44 @@
     Progress skeleton -> "Opening the graph…" -> header + "Laying out…" -> graph; never empty.
     Other waits already had their §12.1 state (analysis header skeleton + "Loading analysis…",
     findings skeleton rows, node panel skeleton, Ask typing indicator).
-  - **Demo plan unchanged** (the condition for switching was "dev compile is the main cause",
-    which the measurements rule out). The production build is still about twice as fast to the
+  - Demo plan first left unchanged (the condition for switching was "dev compile is the main
+    cause", which the measurements rule out); the owner then chose the production build anyway
+    (see the next entry). The production build is still about twice as fast to the
     graph (first click 0.76 s vs 1.43 s at 1x); it can be run natively with `cd web; npm run build;
     npm run preview -- --port 5173` (the `/api` proxy carries over).
+
+- **`fix/blank-screen` merged into `main` (28 Oct, `8e8b724`).** Demo plan switched to the
+  production build served natively (owner's decision; about twice as fast to the graph).
+- **Polish (28 Oct, `feat/polish`).**
+  - Graph answers name what they counted: "6 files import …", "… imports 3 files and 4
+    packages", "matches 3 functions" (`count_phrase` in `app/qa/router.py`: module -> file,
+    external -> package, function/method -> function, class, unresolved import; mixed results
+    are listed, the verb agrees with the total).
+  - Findings "Path starts with" placeholder: "e.g. src/".
+  - **Repo names keep their capitalisation** (`Valentine45-dev/JARVIS`, not lower case).
+    `normalize_repo_url` no longer lowercases; `repos.url` is unique on `lower(url)`
+    (`repos_url_ci`), so any spelling finds the same repo. A spelling with capitals replaces an
+    all-lower-case one, never the other way round, so a lazy lower-case resubmit cannot undo it.
+    Limitation: this is the spelling as submitted. GitHub's own spelling would need its REST API
+    (not used, see Decisions); a URL pasted from GitHub has it. Existing rows stay lower case
+    until a capitalised submit.
+  - **Progress shows real counts** in the slow stages (spec §5.2): `jobs.progress_done` /
+    `progress_total` (parse: files, every 50; embed: chunks, every 256), in the view and in the
+    status API as `progress: {done, total}` (null otherwise); the Progress row shows e.g.
+    "2,048 / 3,428 chunks". Other stages are quick and show no count.
+  - **Dev DB migration pending:** `backend/migrations/2026-10-28-repo-case-and-progress.sql`
+    (case-insensitive index replaces `repos_url_key`; the two job columns; the view). Not run on
+    the dev DB yet because the owner's API (old code, `ON CONFLICT (url)`) was mid-analysis on
+    it; run it right after restarting the API on this code (command in the file).
+  - Checked without touching the owner's API on 8000: the dev DB copied with `pg_dump` into
+    `repolens_polish` and migrated (the migration applied cleanly), my API on 8001 (stub
+    embedder, no LLM key) and the production build on 4174. Seen: the answers above; Pallets/
+    ItsDangerous and pallets/itsdangerous -> snapshot 25, one repo row, display kept
+    capitalised; a live ingest of `Textualize/rich` showed "0 / 213 files", "150 / 213 files",
+    "2,048 / 3,428 chunks", "3,428 / 3,428 chunks" and the header "Textualize/rich"; the
+    Findings placeholder. The copy database was dropped afterwards.
+  - Tests: graph count phrases, case-insensitive repo matching and kept display, status
+    counts; web: stage count formatting and repo name. 258 backend passed, 3 skipped; 17 web.
 
 ## Demo plan (8 GB laptop)
 The full compose stack works (tested 28 Oct) but left ~0.66 GB free and crashed the machine
@@ -787,7 +821,12 @@ once. Primary demo is native mode; compose is shown as tested, not run live.
 2. `docker compose up -d db` (only the database in Docker, ~60 MB).
 3. API: `cd backend; uv run --env-file ../.env uvicorn app.main:app --port 8000` (wait for
    "Application startup complete", ~1 min for the model). Don't run `uv sync` while it runs.
-4. Web: `cd web; npm run dev`, open http://localhost:5173.
+   Once only, after the first restart on the `feat/polish` code: run
+   `backend/migrations/2026-10-28-repo-case-and-progress.sql` (see the file).
+4. Web, production build served natively (about twice as fast to the graph as the dev server,
+   measured 28 Oct): `cd web; npm run build; npm run preview -- --port 5173`, open
+   http://localhost:5173. `/api` is proxied to the API on 8000 as before. Rebuild after any
+   web change; `npm run dev` stays the tool for development, not for the demo.
 5. Flow: Home -> click an example chip (pinned to its analysed commit, so it opens instantly and
    never starts a new analysis): itsdangerous (snapshot 25), express (24), ky (21), PyGoat (55).
    A live ingest of a typed URL like itsdangerous takes ~2 min (embedding is the slow part). Explorer -> node panel ->

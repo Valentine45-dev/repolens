@@ -33,11 +33,15 @@ class JobError(RuntimeError):
     """An expected failure whose message is safe to show the user."""
 
 
-def _set_job(job_id: int, stage: str, percent: int, status: str = "running", error=None) -> None:
+def _set_job(job_id: int, stage: str, percent: int, status: str = "running", error=None,
+             done: int | None = None, total: int | None = None) -> None:
+    """`done` / `total` count within the stage (parse: files, embed: chunks) for the Progress
+    page; every other update clears them."""
     with pool().connection() as conn:
         conn.execute(
-            "UPDATE jobs SET stage = %s, percent = %s, status = %s, error = %s WHERE id = %s",
-            (stage, percent, status, error, job_id),
+            "UPDATE jobs SET stage = %s, percent = %s, status = %s, error = %s,"
+            " progress_done = %s, progress_total = %s WHERE id = %s",
+            (stage, percent, status, error, done, total, job_id),
         )
 
 
@@ -114,6 +118,7 @@ def store_symbols(snapshot_id: int, job_id: int, deadline: float) -> dict[str, P
 
     parsed: dict[str, Parsed] = {}
     rows = []
+    _set_job(job_id, "parse", 40, done=0, total=len(files))
     for i, f in enumerate(files, start=1):
         result = parse_file(f["path"], f["language"], f["content"])
         parsed[f["path"]] = Parsed(f["language"], result, f["content"])
@@ -124,7 +129,7 @@ def store_symbols(snapshot_id: int, job_id: int, deadline: float) -> dict[str, P
             )
         if i % 50 == 0:
             _check_deadline(deadline)
-            _set_job(job_id, "parse", 40 + int(40 * i / len(files)))
+            _set_job(job_id, "parse", 40 + int(40 * i / len(files)), done=i, total=len(files))
 
     with pool().connection() as conn, conn.transaction():
         conn.execute(
@@ -317,10 +322,13 @@ def store_chunks(snapshot_id: int, job_id: int, parsed: dict[str, Parsed],
     started = time.monotonic()
     vectors: list[list[float]] = []
     step = 256
+    _set_job(job_id, "embed", 92, done=0, total=len(chunks))
     for i in range(0, len(chunks), step):
         vectors += embedder.embed([c.embed_text for c in chunks[i:i + step]])
         _check_deadline(deadline)
-        _set_job(job_id, "embed", 92 + int(7 * min(i + step, len(chunks)) / max(len(chunks), 1)))
+        done = min(i + step, len(chunks))
+        _set_job(job_id, "embed", 92 + int(7 * done / max(len(chunks), 1)),
+                 done=done, total=len(chunks))
     embed_seconds = time.monotonic() - started
 
     with pool().connection() as conn, conn.transaction():

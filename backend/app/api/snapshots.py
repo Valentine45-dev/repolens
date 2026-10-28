@@ -25,7 +25,7 @@ def snapshot_status(snapshot_id: int) -> dict:
     with pool().connection() as conn:
         row = conn.execute(
             "SELECT s.id AS snapshot_id, r.url, s.commit_sha, st.job_id, st.status, st.stage,"
-            " st.percent, st.error, st.search_error,"
+            " st.percent, st.error, st.search_error, st.progress_done, st.progress_total,"
             " EXISTS (SELECT 1 FROM chunks c WHERE c.snapshot_id = s.id) AS has_chunks"
             " FROM snapshots s JOIN repos r ON r.id = s.repo_id"
             " JOIN snapshot_status st ON st.snapshot_id = s.id"
@@ -36,4 +36,7 @@ def snapshot_status(snapshot_id: int) -> dict:
         raise HTTPException(status_code=404, detail="Snapshot not found.")
     features = _features(row, row.pop("has_chunks"))
     row.pop("search_error")  # reported as features.ask_reason
-    return {**row, "features": features}
+    done, total = row.pop("progress_done"), row.pop("progress_total")
+    # Counts within the current stage (parse: files, embed: chunks), or null.
+    progress = {"done": done, "total": total} if total is not None else None
+    return {**row, "progress": progress, "features": features}

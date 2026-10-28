@@ -27,9 +27,13 @@ def submit_repo(body: SubmitRepo, background: BackgroundTasks) -> dict:
         raise HTTPException(status_code=422, detail=str(e)) from e
 
     with pool().connection() as conn, conn.transaction():
+        # One row per repo whatever the case (unique on lower(url)); a spelling with capitals
+        # replaces an all-lower-case one, so the display shows the real owner/repo name.
         repo_id = conn.execute(
             "INSERT INTO repos (url) VALUES (%s)"
-            " ON CONFLICT (url) DO UPDATE SET url = EXCLUDED.url RETURNING id",
+            " ON CONFLICT ((lower(url))) DO UPDATE SET url = CASE"
+            " WHEN EXCLUDED.url <> lower(EXCLUDED.url) THEN EXCLUDED.url ELSE repos.url END"
+            " RETURNING id",
             (url,),
         ).fetchone()["id"]
         snapshot_id = conn.execute(

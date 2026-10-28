@@ -132,7 +132,30 @@ def _label(row: dict) -> str:
     return f"{short} in {row['path']}"
 
 
-# (some found, none found); {n} is "1 item" / "3 items", {t} the target.
+# Symbol kind -> (singular, plural) for counted results. Methods are counted as functions.
+_NOUNS = {
+    "module": ("file", "files"),
+    "external": ("package", "packages"),
+    "function": ("function", "functions"),
+    "method": ("function", "functions"),
+    "class": ("class", "classes"),
+    "unresolved": ("unresolved import", "unresolved imports"),
+}
+
+
+def count_phrase(kinds: list[str]) -> str:
+    """'6 files', '1 package', '2 files and 1 package', '3 files, 2 functions and 1 class'."""
+    counts: dict[tuple[str, str], int] = {}
+    for kind in kinds:
+        noun = _NOUNS.get(kind, ("item", "items"))
+        counts[noun] = counts.get(noun, 0) + 1
+    parts = [f"{n} {one if n == 1 else many}" for (one, many), n in counts.items()]
+    if len(parts) <= 1:
+        return parts[0] if parts else "0 items"
+    return ", ".join(parts[:-1]) + " and " + parts[-1]
+
+
+# (some found, none found); {n} is a count phrase ("6 files"), {t} the target.
 _SENTENCE = {
     ("in", "imports"): ("{n} import{s} {t}.", "Nothing in the graph imports {t}."),
     ("in", "calls"): ("{n} call{s} {t}.", "Nothing in the graph calls {t}."),
@@ -157,7 +180,8 @@ def graph_answer(snapshot_id: int, route: Route) -> dict | None:
         return {
             **base,
             "status": "ambiguous",
-            "answer": f"“{route.target}” matches {len(candidates)} items in this"
+            "answer": f"“{route.target}” matches {count_phrase([c['kind'] for c in candidates])}"
+                      " in this"
                       f" repository{f' (showing {len(shown)})' if more else ''}."
                       " Which one do you mean? Ask again with its file path.",
             "target": None,
@@ -178,7 +202,7 @@ def graph_answer(snapshot_id: int, route: Route) -> dict | None:
     lower = len(everything) - len(found)
 
     some, none = _SENTENCE[(route.direction, route.edge)]
-    count = f"{len(found)} {'item' if len(found) == 1 else 'items'}"
+    count = count_phrase([item["symbol"]["kind"] for item in found])
     answer = (some if found else none).format(
         n=count, t=_label(target), s="s" if len(found) == 1 else "")
     if len(found) > MAX_RESULTS:

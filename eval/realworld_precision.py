@@ -47,7 +47,9 @@ def snapshot_for(url: str) -> tuple[int, str]:
     with db.pool().connection() as conn, conn.transaction():
         repo_id = conn.execute(
             "INSERT INTO repos (url) VALUES (%s)"
-            " ON CONFLICT (url) DO UPDATE SET url = EXCLUDED.url RETURNING id", (url,),
+            " ON CONFLICT ((lower(url))) DO UPDATE SET url = CASE"
+            " WHEN EXCLUDED.url <> lower(EXCLUDED.url) THEN EXCLUDED.url ELSE repos.url END"
+            " RETURNING id", (url,),
         ).fetchone()["id"]
         snapshot_id = conn.execute(
             "INSERT INTO snapshots (repo_id, commit_sha) VALUES (%s, %s)"

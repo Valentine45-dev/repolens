@@ -64,7 +64,7 @@ def snapshot_for(repo: dict) -> int:
         row = conn.execute(
             "SELECT s.id, st.status FROM snapshots s JOIN repos r ON r.id = s.repo_id"
             " JOIN snapshot_status st ON st.snapshot_id = s.id"
-            " WHERE r.url = %s AND s.commit_sha = %s",
+            " WHERE lower(r.url) = lower(%s) AND s.commit_sha = %s",
             (repo["url"], repo["commit"]),
         ).fetchone()
     if row is None or row["status"] != "done":

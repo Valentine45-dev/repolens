@@ -11,6 +11,8 @@ export interface SnapshotStatus {
   stage: string; // queued | fetch | discover | parse | edges | done
   percent: number;
   error: string | null;
+  /** Counts within the current stage (parse: files, embed: chunks); null in other stages. */
+  progress: { done: number; total: number } | null;
   features: Features;
 }
 

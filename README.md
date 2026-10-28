@@ -82,6 +82,19 @@ npm run dev
 The API reads `os.environ` only, so `--env-file ../.env` is needed. On Windows, stop uvicorn
 before `uv sync` (a running API locks the native `.pyd` files).
 
+For a demo on a small machine, serve the production build instead of the dev server (it is
+about twice as fast to open the graph); `/api` is still proxied to the API on 8000:
+
+```bash
+cd web
+npm run build
+npm run preview -- --port 5173
+```
+
+A database volume created before 28 Oct needs one migration, run after restarting the API on
+the current code: `docker compose exec -T db psql -U repolens -d repolens <
+backend/migrations/2026-10-28-repo-case-and-progress.sql`.
+
 ## Configuration (`.env`)
 
 Copy `.env.example`. Only the backend reads these; the key never reaches the browser.
