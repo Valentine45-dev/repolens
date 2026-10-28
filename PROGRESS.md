@@ -452,6 +452,24 @@
     whether the eval called it). `save_results()` writes `eval/results/<name>-<time>-<sha7>.json`.
     Tested in `backend/tests/test_runinfo.py`.
 
+- **`feat/qa` merged into `main` (28 Oct, `7555b69`).** Eval work continues on `feat/eval`.
+- **Eval questions and labels (28 Oct, `feat/eval`), committed before any eval run.**
+  - `eval/questions.yaml`: the 16 questions as given (8 express, 8 itsdangerous; 8 and 16 are
+    unanswerable traps), wording unchanged; the "(unanswerable)" marker is a field.
+  - Labels found by reading each repo at the snapshot commit (express `1c6f1b0`, itsdangerous
+    `672971d`, fetched into a scratch checkout) with grep; RepoLens retrieval was not used. Q1 is
+    labelled at the hand-off `lib/application.js:152-178` (`app.handle -> this.router.handle`;
+    Express 5 routes in the external `router` package). Every range was checked to start and end
+    on the intended code. No "encrypt" anywhere in itsdangerous (trap 16).
+  - Scoring rule fixed in the file: hit at k = any retrieved chunk overlapping any labelled
+    range of the same path. Unanswerable questions are listed, not scored.
+  - `eval/retrieval_recall.py` (not run yet): recall@k (1, 3, 5, 8) with and without graph
+    expansion and MRR, through the same `retrieve()` /ask uses (test code left out); reads any
+    questions file (`--questions`), finds the snapshot by URL + commit, saves results with the
+    run info. Scoring tested on synthetic data (`backend/tests/test_eval_scoring.py`).
+  - `pyyaml` added as an explicit dev dependency (it was only present through the embed group,
+    which CI skips).
+
 ## Planned vs delivered
 - **Temperature 0 (CLAUDE.md) is not possible on current models.** `temperature`, `top_p` and
   `top_k` return 400 (Sonnet 5.5 and Haiku 5.5 migration guides; the installed SDK's
@@ -477,9 +495,10 @@
 - Day 3 on `feat/qa`: tasks 5, 6 and 7 built; `/ask` tested with FakeProvider only. Next: the
   real-model check (graph + AI questions on express and itsdangerous, expansion on/off,
   citations and dropped, tokens used, the AI answer view in the browser) once the user confirms
-  the key is in `.env`. Merge `feat/qa` into `main` after the user approves; then the no-LLM
-  eval on a new branch (retrieval recall@k with/without expansion from a questions file;
-  detectors vs Bandit and Semgrep on labeled fixtures). Full `docker compose up` is Day 4.
+  the key is in `.env`. On `feat/eval`: labels are awaiting the user's review; then run
+  retrieval recall@k, then detectors vs Bandit (Python) and Semgrep (JS, Docker image if it will
+  not run natively) on labeled fixtures, all three scored on the same labels. Full
+  `docker compose up` is Day 4.
 - If the API cannot start with "pool initialization incomplete": the db container was healthy
   but Docker's port proxy accepted connections without forwarding them (28 Oct);
   `docker compose restart db` fixed it.

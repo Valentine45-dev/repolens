@@ -1151,6 +1151,7 @@ dependencies = [
 dev = [
     { name = "httpx" },
     { name = "pytest" },
+    { name = "pyyaml" },
     { name = "ruff" },
 ]
 embed = [
@@ -1175,6 +1176,7 @@ requires-dist = [
 dev = [
     { name = "httpx", specifier = ">=0.28.1" },
     { name = "pytest", specifier = ">=9.1.1" },
+    { name = "pyyaml", specifier = ">=6" },
     { name = "ruff", specifier = ">=0.17.2" },
 ]
 embed = [
