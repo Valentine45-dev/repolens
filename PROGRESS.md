@@ -881,6 +881,63 @@
     and answer text touching its header / glued markdown paragraphs (a margin rule outranking).
   - Web: type-check clean, 17 tests pass.
 
+- **Backend review fixes, `fix/backend-review` (28 Oct evening).** An independent review of
+  `backend/` and `eval/` on `main` (`c722d91`) found 1 blocker, 10 should-fix and 9
+  nice-to-have items; these were fixed, each code fix with a test (283 passed, 3 skipped; was 263):
+  - B1: compose publishes db, api and web on `127.0.0.1` only (the db was on `0.0.0.0:5433`
+    with the default password). Follow-up: `DATABASE_URL` / `TEST_DATABASE_URL` use `127.0.0.1`,
+    not `localhost` (`localhost` tries IPv6 first; with no IPv6 listener each connection waited
+    ~10 s on Windows and the API's pool timed out at startup). `.env` and `.env.example` updated.
+  - S1: one file the parser or detectors cannot walk (RecursionError, e.g. a JS `+` chain of
+    ~600+ terms) keeps its module symbol only instead of failing the whole job.
+  - S2: only the bare "could not find" sentence is exempt from the citation rule; with other
+    uncited text around it the answer is `unverified`.
+  - S3: unquoted secret values are redacted in YAML, INI/CFG, TOML and shell files
+    (`POSTGRES_PASSWORD: x`, `password = x`, `export TOKEN=x`), skipping placeholders
+    (`${VAR}`, `$VAR`, `{{ }}`, `<...>`, `%(x)s`, YAML aliases/tags), paths, URLs, numbers and
+    booleans. Code, Markdown and text keep the quoted rule only.
+  - S4: `host:port` and IP addresses in answers are no longer treated (and dropped) as citations.
+  - S5: if the embedding model fails to load, the failure is remembered and `/ask` answers
+    `unavailable` instead of reloading the model and returning a 500.
+  - S6: the repo-case migration keeps `search_state` in the view; both migrations run in either
+    order (tested); the README lists both.
+  - S7: README says the eval numbers predate these fixes, that retrieval was tuned on the same
+    14 questions, and that the PyGoat labels were proposed by the AI assistant and confirmed by
+    the owner.
+  - S8: one analysis or search retry at a time (a lock; a waiting job stays `queued`).
+  - S9: finding snippets split on `\n` only (form feeds no longer shift the snippet line).
+  - S10: `.env` set to the demo model: `claude-sonnet-5-5`, effort `low`, `between_tools`.
+  - N1 malformed tsconfig shapes ignored; N2 findings `offset` bounded (422, not 500);
+    N5 `git -c core.longpaths=true` and unreadable files skipped in discover; N6 answers cut
+    off at `max_tokens` are `unverified` with a note; N9 "one API per database" documented;
+    N3 pinned commits not checked against the repo, documented as a limitation.
+  - **Came after the evals:** every fix above is later than all results in `eval/results/`
+    (retrieval, detectors, smoke runs 1-2, final Q&A, PyGoat). Those numbers were not re-run
+    and not changed. The fixes that could move them: S2 (stricter `answered`), S4 (fewer
+    dropped citations), N6, and S3 (PyGoat gains 2 hardcoded-secret findings, see below; its
+    precision sample and population of 59 are from before both redaction fixes).
+  - **Demo snapshots and S3:** checked the stored config files of the four chips (itsdangerous
+    25, express 24, ky 21, PyGoat 55) and JARVIS (83) with the new rule. Only two had new matches
+    and were re-ingested in place at the same commits through the API on this code (jobs 53 and
+    57 marked `Re-run: config-file redaction fix (review S3, 28 Oct)`; new jobs 58, 59; they ran
+    one after the other under the new lock). PyGoat: `dockerized_labs/sec_misconfig/
+    docker-compose.yml:12-13` (`SECRET_KEY`, `JWT_SECRET_KEY`) redacted; findings 58 -> 60
+    (hardcoded-secret 46 -> 48); 834 chunks. JARVIS: `.github/workflows/test.yml:62-65` (four
+    `*_API_KEY` values, 8-character CI placeholders) redacted and reported high; findings
+    2 -> 6; 3,599 + 1,269 chunks, embed 212.6 s + 72.5 s. The other three are unchanged.
+  - **Known gap found while checking (not changed):** ky (snapshot 21) was analysed on 27 Oct,
+    before the embed stage existed: 0 chunks and no search state, so its Ask says "There is no
+    code to search" and offers no retry. Graph and findings work.
+  - Dev DB container recreated for the new port binding (volume kept); API restarted on this
+    branch (native, 8000).
+  - **Smoke eval after the fixes** (`eval/results/smoke_qa-20261028T150919Z-50d4c35.json`, one
+    run, demo model `claude-sonnet-5-5`, effort low, `between_tools`, prompt `2026-10-28.2`,
+    API stopped for RAM): **6/8 passed**, the same two traps as the final Q&A run (Q8: "could
+    not find" with 2 citations; Q16: signs-not-encrypts answer with 4 citations) fail the
+    pre-set zero-citation rule. Identity and injection passed; Q2, Q7, Q10, Q14 cited the
+    expected file. 8 calls, 28,402 in + 2,780 out tokens, ~$0.085 at $2 / $10 per MTok; 1
+    dropped citation; median 4.6 s. Marked `dirty` because this PROGRESS edit was uncommitted.
+
 ## Demo plan (8 GB laptop)
 The full compose stack works (tested 28 Oct) but left ~0.66 GB free and crashed the machine
 once. Primary demo is native mode; compose is shown as tested, not run live.
@@ -889,8 +946,10 @@ once. Primary demo is native mode; compose is shown as tested, not run live.
 2. `docker compose up -d db` (only the database in Docker, ~60 MB).
 3. API: `cd backend; uv run --env-file ../.env uvicorn app.main:app --port 8000` (wait for
    "Application startup complete", ~1 min for the model). Don't run `uv sync` while it runs.
-   Once only, after the first restart on the `feat/polish` code: run
-   `backend/migrations/2026-10-28-repo-case-and-progress.sql` (see the file).
+   `.env` has the demo model: `LLM_MODEL=claude-sonnet-5-5`, `LLM_EFFORT=low`,
+   `LLM_THINKING=between_tools` (28 Oct). Both migrations are applied to the dev DB already.
+   **Run only one API against the database**: a second one (e.g. a branch API on 8001) marks
+   every running analysis and search as interrupted when it starts.
 4. Web, production build served natively (about twice as fast to the graph as the dev server,
    measured 28 Oct): `cd web; npm run build; npx vite preview --port 5173 --strictPort`, open
    http://localhost:5173. Not `npm run preview -- --port 5173`: Windows PowerShell 5.1 drops the
@@ -906,7 +965,8 @@ once. Primary demo is native mode; compose is shown as tested, not run live.
 7. Compose: show `docker-compose.yml`, the README section and these notes (all three services
    ran, itsdangerous ingested inside the container, UI checked) instead of starting it live.
 8. Before the demo: `uv run --project backend --env-file .env python eval/smoke_qa.py --price-in
-   0.10 --price-out 0.50` (8 calls, < $0.01).
+   2 --price-out 10 --max-calls 10` (8 calls with Sonnet 5.5, about $0.10). Stop the API first if
+   free RAM is under ~1 GB: the eval loads its own copy of the embedding model.
 
 ## Planned vs delivered
 - **Temperature 0 (CLAUDE.md) is not possible on current models.** `temperature`, `top_p` and
@@ -1335,3 +1395,5 @@ are deliberately not changed after seeing eval results; these stay as documented
   Re-check before ever lifting it.
 - `httpx` with Starlette TestClient emits a deprecation warning (suggests `httpx2`); harmless for now.
 - Git for Windows `autocrlf` converts working copies to CRLF; repo stores LF. `.sh` files forced LF.
+- ky (snapshot 21) has no chunks (analysed before the embed stage, 27 Oct), so Ask is off
+  for that example chip; old snapshots with no chunks and no `search_error` offer no retry.

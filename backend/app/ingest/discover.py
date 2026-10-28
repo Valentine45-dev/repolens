@@ -4,7 +4,7 @@ import os
 from dataclasses import dataclass, field
 from pathlib import Path
 
-from app.ingest.redact import SecretMatch, redact
+from app.ingest.redact import CONFIG_SUFFIXES, SecretMatch, redact
 
 SKIP_DIRS = {
     ".git", "node_modules", "__pycache__", "venv", ".venv", ".tox", ".nox", ".eggs",
@@ -84,10 +84,14 @@ def discover(root: Path, max_files: int, max_file_bytes: int) -> DiscoverResult:
             if not path.resolve().is_relative_to(root):
                 result.skipped += 1
                 continue
-            if path.stat().st_size > max_file_bytes:
+            try:
+                if path.stat().st_size > max_file_bytes:
+                    result.skipped += 1
+                    continue
+                raw = path.read_bytes()
+            except OSError:  # e.g. a path over 260 characters on Windows without long paths
                 result.skipped += 1
                 continue
-            raw = path.read_bytes()
             if b"\0" in raw[:8192]:
                 result.skipped += 1
                 continue
@@ -100,7 +104,7 @@ def discover(root: Path, max_files: int, max_file_bytes: int) -> DiscoverResult:
             if language in ("javascript", "typescript") and _looks_minified(text):
                 result.skipped += 1
                 continue
-            content, secrets = redact(text)
+            content, secrets = redact(text, config=path.suffix.lower() in CONFIG_SUFFIXES)
             result.files.append(
                 DiscoveredFile(
                     path=path.relative_to(root).as_posix(),

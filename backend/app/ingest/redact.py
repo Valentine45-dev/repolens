@@ -41,6 +41,31 @@ _PATTERNS: list[tuple[str, re.Pattern[str]]] = [
     ),
 ]
 
+_SECRET_NAME = (
+    r"[\w.-]*(?:password|passwd|pwd|secret|token|api_?key|access_?key|private_?key)[\w.-]*"
+)
+
+# Config files only (YAML, INI/CFG, TOML, shell): an unquoted value on its own line, like
+# `POSTGRES_PASSWORD: hunter2pass`, `password = hunter2pass`, `export API_TOKEN=abc123def`,
+# `- DB_PASSWORD=hunter2pass`. Not used for code, where `password = get_password()` is common,
+# nor for Markdown/text, where prose would match.
+_CONFIG_PATTERNS: list[tuple[str, re.Pattern[str]]] = [
+    (
+        "secret-assignment",
+        re.compile(
+            rf"(?im)^[ \t]*(?:-[ \t]+)?(?:export[ \t]+)?{_SECRET_NAME}[ \t]*[:=][ \t]*"
+            r"(?P<secret>[^\s'\"#;]{6,})[ \t]*(?:#.*)?$"
+        ),
+    ),
+]
+CONFIG_SUFFIXES = {".yaml", ".yml", ".ini", ".cfg", ".toml", ".sh"}
+
+# Unquoted config values that are not secrets: references filled in elsewhere (${VAR}, $VAR,
+# {{ var }}, <your-key>, %(var)s, YAML aliases and tags), paths, URLs (a password inside a URL
+# is the url-password pattern's job), numbers and booleans.
+_CONFIG_NOT_SECRET = re.compile(
+    r"^(?:[$<{*!&~./%]|https?:|\d+$|(?:true|false|yes|no|on|off|null|none)$)", re.IGNORECASE
+)
 
 # A value made only of f-string placeholders ("{password}", "{user}{pw}") is filled in at run
 # time, so it is not a secret (found by the PyGoat eval: an f-string SQL query was redacted).
@@ -55,13 +80,17 @@ class SecretMatch:
     kind: str
 
 
-def redact(text: str) -> tuple[str, list[SecretMatch]]:
-    """Return (redacted text, matches). Line count is unchanged."""
+def redact(text: str, config: bool = False) -> tuple[str, list[SecretMatch]]:
+    """Return (redacted text, matches). Line count is unchanged. `config` adds the unquoted
+    config-value rule (for CONFIG_SUFFIXES files)."""
     spans: list[tuple[int, int, str]] = []
-    for kind, pattern in _PATTERNS:
+    for kind, pattern in _PATTERNS + (_CONFIG_PATTERNS if config else []):
         for m in pattern.finditer(text):
             if "secret" in pattern.groupindex:
                 if _PLACEHOLDER_ONLY.fullmatch(m["secret"]):
+                    continue
+                if pattern in (p for _, p in _CONFIG_PATTERNS) and \
+                        _CONFIG_NOT_SECRET.match(m["secret"]):
                     continue
                 start, end = m.span("secret")
             else:

@@ -106,7 +106,7 @@ def test_raw_secret_never_in_any_response(client, detector_repo):
 @pytest.mark.parametrize(
     "params",
     [{"severity": "critical"}, {"rule": "no-such-rule"}, {"limit": 201}, {"limit": 0},
-     {"offset": -1}, {"language": "go"}],
+     {"offset": -1}, {"offset": 10**20}, {"language": "go"}],
 )
 def test_invalid_params_are_422(client, detector_repo, params):
     r = client.get(f"/snapshots/{detector_repo}/findings", params=params)

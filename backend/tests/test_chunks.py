@@ -179,3 +179,28 @@ def test_real_model_limit_and_windows():
     assert len(chunks) > 1
     # Checked with the tokenizer directly, special tokens ([CLS], [SEP]) included.
     assert all(len(model.tokenizer(c.embed_text)["input_ids"]) <= 256 for c in chunks)
+
+
+def test_a_failed_model_load_is_remembered(monkeypatch):
+    from app import config
+    from app.qa import embed
+
+    loads = []
+
+    class Broken:
+        def __init__(self, *args):
+            loads.append(args)
+            raise OSError("model files missing")
+
+    monkeypatch.setattr(config, "EMBEDDER", "sentence-transformers")
+    monkeypatch.setattr(embed, "SentenceTransformerEmbedder", Broken)
+    monkeypatch.setattr(embed, "_load_error", None)
+    embed.get_embedder.cache_clear()
+    try:
+        with pytest.raises(OSError):
+            embed.get_embedder()
+        with pytest.raises(embed.EmbedderUnavailable, match="OSError"):
+            embed.get_embedder()
+        assert len(loads) == 1  # the second call did not try to load the model again
+    finally:
+        embed.get_embedder.cache_clear()

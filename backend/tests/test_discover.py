@@ -99,3 +99,19 @@ def test_crlf_normalised(tmp_path):
     (f,) = discover(tmp_path, max_files=10, max_file_bytes=1000).files
     assert f.content == "a = 1\nb = 2"
     assert f.loc == 2
+
+
+def test_an_unreadable_file_is_skipped_not_fatal(tmp_path, monkeypatch):
+    (tmp_path / "ok.py").write_text("x = 1\n", encoding="utf-8")
+    (tmp_path / "deep.py").write_text("y = 2\n", encoding="utf-8")
+    real = Path.read_bytes
+
+    def read_bytes(self):
+        if self.name == "deep.py":  # stands in for a path too long for Windows to open
+            raise FileNotFoundError(self)
+        return real(self)
+
+    monkeypatch.setattr(Path, "read_bytes", read_bytes)
+    result = discover(tmp_path, max_files=100, max_file_bytes=1_000_000)
+    assert [f.path for f in result.files] == ["ok.py"]
+    assert result.skipped == 1

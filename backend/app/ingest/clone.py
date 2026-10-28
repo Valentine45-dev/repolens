@@ -23,6 +23,8 @@ _SAFE_CONFIG = [
     "-c", f"core.hooksPath={os.devnull}",
     "-c", "core.symlinks=false",
     "-c", "core.fsmonitor=false",
+    # Windows only (ignored elsewhere): deep repos otherwise fail checkout, "Filename too long".
+    "-c", "core.longpaths=true",
     "-c", "submodule.recurse=false",
     "-c", "credential.helper=",
     "-c", "protocol.allow=never",

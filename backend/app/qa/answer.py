@@ -1,9 +1,9 @@
 """AI answers: retrieve, build the prompt, call the LLM inside the token cap and the deadline,
 validate citations. Degraded states are answers with a status, never HTTP errors.
 
-Statuses: answered | unverified (no citation survived validation) | refused (the model's
-safety classifiers declined) | no_context (nothing to search) | unavailable (no key, provider
-down, deadline passed, empty answer) | cap_reached.
+Statuses: answered | unverified (no citation survived validation, or the answer was cut off
+at max_tokens) | refused (the model's safety classifiers declined) | no_context (nothing to
+search) | unavailable (no key, provider down, deadline passed, empty answer) | cap_reached.
 """
 
 import hashlib
@@ -29,6 +29,7 @@ UNAVAILABLE = "AI answers are unavailable right now. Graph questions still work.
 NO_CODE = "I could not find code related to that question in this repository."
 NO_SEARCH = "Search for questions is not available for this analysis. Graph questions still work."
 CAP_REACHED = "This analysis has used its AI question budget. Graph questions still work."
+TRUNCATED = "(This answer was cut off at the length limit, so it may be incomplete.)"
 REFUSED = (
     "The AI declined to answer this question. Security-related questions are sometimes"
     " declined; asking what a specific function or file does may work. Graph questions and"
@@ -69,6 +70,11 @@ def _adjust(snapshot_id: int, delta: int) -> None:
         )
 
 
+def _bare(text: str) -> str:
+    """Lower case, without surrounding whitespace, quotes, asterisks or a final full stop."""
+    return text.strip().strip("*_\"'` ").rstrip(".").lower()
+
+
 def search_ready(snapshot_id: int) -> bool:
     """Code search can answer: no search run is replacing the non-test chunks, and a failed
     search left some chunks behind. Test code may still be on its way (state 'tests'). A repo
@@ -95,7 +101,12 @@ def ai_answer(snapshot_id: int, question: str, include_tests: bool = False) -> d
     if not search_ready(snapshot_id):
         return _reply("no_context", NO_SEARCH)
 
-    found = retrieve(snapshot_id, question, include_tests=include_tests)
+    try:
+        found = retrieve(snapshot_id, question, include_tests=include_tests)
+    except Exception as e:  # e.g. the embedding model failed to load: no search, no 500
+        log.error("ask snapshot=%s %s: retrieval failed: %s", snapshot_id, q_log,
+                  type(e).__name__)
+        return _reply("unavailable", UNAVAILABLE)
     if not found.snippets:
         return _reply("no_context", NO_CODE, found)
 
@@ -132,10 +143,16 @@ def ai_answer(snapshot_id: int, question: str, include_tests: bool = False) -> d
         return _reply("unavailable", UNAVAILABLE, found)
 
     checked = validate(completion.text.strip(), found.snippets)
-    not_found = COULD_NOT_FIND.rstrip(".").lower() in checked.text.lower()
-    # Only the exact identity reply is exempt, so uncited claims cannot ride along with it.
+    # Only the bare "could not find" sentence and the exact identity reply are exempt from
+    # the citation rule, so uncited claims cannot ride along with either of them.
+    not_found = _bare(checked.text) == _bare(COULD_NOT_FIND)
     identity = checked.text == IDENTITY_ANSWER
     status = "answered" if checked.citations or not_found or identity else "unverified"
+    text = checked.text
+    if completion.stop_reason == "max_tokens":
+        # Cut off at the length limit: what is there may be fine, but it is not the full answer.
+        status = "unverified"
+        text += "\n\n" + TRUNCATED
     log.info(
         "ask snapshot=%s %s: %s model=%s %s prompt=%s sent=%d cited=%d dropped=%d"
         " tokens=%d+%d",
@@ -143,4 +160,4 @@ def ai_answer(snapshot_id: int, question: str, include_tests: bool = False) -> d
         len(found.snippets),
         len(checked.citations), checked.dropped, completion.tokens_in, completion.tokens_out,
     )
-    return _reply(status, checked.text, found, checked.citations, checked.dropped)
+    return _reply(status, text, found, checked.citations, checked.dropped)

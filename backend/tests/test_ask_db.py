@@ -229,6 +229,13 @@ def test_could_not_find_answer_is_answered_without_citations(client, snapshot, f
     assert (a["status"], a["citations"], a["dropped"]) == ("answered", [], 0)
 
 
+def test_could_not_find_with_extra_uncited_claims_is_unverified(client, snapshot, fake):
+    fake.script = ["The gateway is configured in settings. I could not find this in the "
+                   "provided code."]
+    a = ask(client, snapshot, "Where is the payment gateway configured?")
+    assert (a["status"], a["citations"]) == ("unverified", [])
+
+
 def test_no_key_is_unavailable(client, snapshot, monkeypatch):
     monkeypatch.setattr(llm, "get_provider", lambda: None)
     a = ask(client, snapshot, "How is a user created?")
@@ -314,6 +321,22 @@ def test_thinking_first_response_is_answered(client, snapshot, fake):
                             {"type": "text", "text": f"See sample_app/service.py:{line}."}])]
     a = ask(client, snapshot, "How is a user created?")
     assert a["status"] == "answered" and len(a["citations"]) == 1
+
+
+def test_answer_cut_off_at_max_tokens_is_unverified(client, snapshot, fake):
+    from test_qa import message
+
+    (chunk,) = query(
+        "SELECT c.start_line FROM chunks c JOIN symbols s ON s.id = c.symbol_id"
+        " WHERE c.snapshot_id = %s AND s.qualified_name = 'sample_app.service.create_user'",
+        snapshot,
+    )
+    fake.script = [message([{"type": "text",
+                             "text": f"See sample_app/service.py:{chunk['start_line']}. It th"}],
+                           stop_reason="max_tokens")]
+    a = ask(client, snapshot, "How is a user created?")
+    assert (a["status"], len(a["citations"])) == ("unverified", 1)
+    assert a["answer"].endswith("cut off at the length limit, so it may be incomplete.)")
 
 
 def test_no_chunks_makes_no_call(client, snapshot, fake):
@@ -477,3 +500,19 @@ def test_retry_preparing_search_after_a_failed_search(client, monkeypatch, fake)
 
 def test_retry_is_refused_while_the_analysis_runs_or_search_is_fine(client, snapshot):
     assert client.post(f"/snapshots/{snapshot}/search").status_code == 409
+
+
+# --- the embedding model is not available ----------------------------------------------------
+
+def test_retrieval_failure_is_unavailable_not_a_500(client, snapshot, fake, monkeypatch):
+    from app.qa import retrieve as retrieve_module
+    from app.qa.embed import EmbedderUnavailable
+
+    def broken():
+        raise EmbedderUnavailable("embedder failed to load earlier (OSError)")
+
+    monkeypatch.setattr(retrieve_module, "get_embedder", broken)
+    a = ask(client, snapshot, "How is a user created?")
+    assert (a["kind"], a["status"], fake.calls) == ("ai", "unavailable", [])
+    g = ask(client, snapshot, "Which files import sample_app/service.py?")
+    assert (g["kind"], g["status"]) == ("graph", "answered")  # graph questions still work

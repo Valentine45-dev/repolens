@@ -4,11 +4,15 @@ snippet we actually sent survive. Everything else is removed from the text and c
 Accepted forms: `path:N`, `path:N-M`, with a hyphen, en dash or em dash, an optional `L`
 before the numbers, optionally in backticks. A range is valid only when it lies inside one
 sent snippet: the same file is not enough, and neither is a range spanning two snippets.
+A match is a citation only if its path has the extension of a file RepoLens stores (or is a
+path that was sent); `db.internal:5432` or `127.0.0.1:8000` in an answer stays as written.
 """
 
 import re
 from dataclasses import dataclass
+from pathlib import PurePosixPath
 
+from app.ingest.discover import LANGUAGES, TEXT_SUFFIXES
 from app.qa.retrieve import Snippet
 
 # A path is word characters, dots, slashes, @, + and -, ending in a file extension.
@@ -43,6 +47,14 @@ def find_citations(text: str) -> list[tuple[str, int, int]]:
     return out
 
 
+# Extensions of the files RepoLens stores; `host.tld:port` and IP addresses have none of these.
+FILE_SUFFIXES = {s.lstrip(".") for s in (*LANGUAGES, *TEXT_SUFFIXES)}
+
+
+def _could_be_file(path: str, sent_paths: set[str]) -> bool:
+    return path in sent_paths or PurePosixPath(path).suffix.lstrip(".").lower() in FILE_SUFFIXES
+
+
 def _inside(snippets: list[Snippet], path: str, start: int, end: int) -> Snippet | None:
     if start < 1 or end < start:
         return None
@@ -70,9 +82,13 @@ def validate(text: str, snippets: list[Snippet]) -> Validated:
     citations: dict[tuple[str, int, int], Citation] = {}  # ordered by first use
     dropped = 0
 
+    sent_paths = {s.path for s in snippets}
+
     def check(m: re.Match) -> str:
         nonlocal dropped
         path = m["path"].removeprefix("./")
+        if not _could_be_file(path, sent_paths):
+            return m[0]  # `db.internal:5432`, `127.0.0.1:8000`: not a citation, left as written
         start = int(m["start"])
         end = int(m["end"] or start)
         snippet = _inside(snippets, path, start, end)
