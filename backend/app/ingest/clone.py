@@ -96,6 +96,10 @@ def _git(args: list[str], timeout: int, cwd: Path | None = None) -> str:
     return proc.stdout
 
 
+def is_full_sha(value: str) -> bool:
+    return bool(_SHA.match(value))
+
+
 def resolve_sha(url: str, timeout: int) -> str:
     """Resolve the default branch's commit with `git ls-remote` (no clone)."""
     try:

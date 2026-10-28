@@ -237,8 +237,9 @@ export function isNetworkError(error: unknown): boolean {
   return error instanceof ApiError && error.network;
 }
 
-export function submitRepo(url: string): Promise<Submitted> {
-  return request("/repos", { method: "POST", body: JSON.stringify({ url }) });
+/** `commit` pins a full SHA (the Home examples); without it the API follows the default branch. */
+export function submitRepo({ url, commit }: { url: string; commit?: string }): Promise<Submitted> {
+  return request("/repos", { method: "POST", body: JSON.stringify({ url, commit }) });
 }
 
 export function getStatus(snapshotId: number, signal?: AbortSignal): Promise<SnapshotStatus> {

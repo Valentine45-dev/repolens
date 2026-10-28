@@ -100,6 +100,30 @@ def test_rejects_non_github_url(client):
     assert r.status_code == 422
 
 
+def test_pinned_commit_skips_ls_remote_and_reuses_the_analysis(client, monkeypatch):
+    from conftest import SHA
+
+    from app.ingest import clone
+
+    first = client.post("/repos", json={"url": "https://github.com/example/sample"}).json()
+
+    def no_ls_remote(url, timeout):
+        raise AssertionError("ls-remote must not run for a pinned commit")
+
+    monkeypatch.setattr(clone, "resolve_sha", no_ls_remote)
+    again = client.post("/repos", json={"url": "https://github.com/example/sample", "commit": SHA})
+    assert again.status_code == 202
+    body = again.json()
+    assert (body["snapshot_id"], body["job_id"], body["commit_sha"], body["status"]) == (
+        first["snapshot_id"], first["job_id"], SHA, "done")
+
+
+@pytest.mark.parametrize("commit", ["abc123", "A" * 40, "1c6f1b0", ""])
+def test_pinned_commit_must_be_a_full_sha(client, commit):
+    r = client.post("/repos", json={"url": "https://github.com/example/sample", "commit": commit})
+    assert r.status_code == 422
+
+
 def test_unknown_snapshot_is_404(client):
     assert client.get("/snapshots/999999/status").status_code == 404
 

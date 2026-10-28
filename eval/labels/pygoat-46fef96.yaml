@@ -1,0 +1,63 @@
+# Proposed labels for eval/results/realworld_precision-20261028T101058Z-986f0b6.json
+# (pygoat @ 46fef968f3f44d1191363baf936aaa3335dc5c6d, seed 20261028, n 20 per tool).
+# Definitions are in eval/realworld_precision.py. Proposed by Claude from the stored
+# (redacted) lines plus context; RepoLens #19 also checked against the original line via the
+# GitHub contents API. Confirmed by the project owner on 28 Oct 2026, unchanged, under the
+# definition below (it replaces the draft definition in eval/realworld_precision.py for scoring).
+confirmed: true
+confirmed_by: project owner
+confirmed_on: 2026-10-28
+definition:
+  real: "a reviewer should act on it (security risk or genuine code-quality problem)"
+  false_alarm: "correctly matched pattern but no action needed (by design, test-only, documentation)"
+judgement_calls:
+  - "Bandit B104 (bind 0.0.0.0) labelled false alarm: these lab apps run in containers, where
+    binding all interfaces is needed for port mapping and is not a weakness by itself. debug=True
+    on the same lines is reported separately (B201) and labelled real. 24 of Bandit's 130
+    findings are B104, so this choice moves Bandit's precision most."
+  - "Bandit #6: the 'your-secret-key-here' placeholder is the app's actual SECRET_KEY, so real."
+  - "RepoLens #16: a README line documenting the lab's test login, not a secret in code: false alarm."
+
+RepoLens:
+  1:  {label: real, reason: "SECRET_KEY literal in the app's exposed config dict"}
+  2:  {label: real, reason: "database URL with an inline password literal"}
+  3:  {label: real, reason: "Stripe API key literal in config"}
+  4:  {label: real, reason: "weak secret key literal (comment says so)"}
+  5:  {label: real, reason: "api_key literal in SENSITIVE_DATA"}
+  6:  {label: real, reason: "admin password literal in the user store"}
+  7:  {label: real, reason: "bare except around requests.get swallows every error"}
+  8:  {label: real, reason: "AWS secret key literal"}
+  9:  {label: real, reason: "bare except"}
+  10: {label: real, reason: "bare except"}
+  11: {label: real, reason: "admin password literal in the users dict"}
+  12: {label: real, reason: "user token literal"}
+  13: {label: real, reason: "user password literal in the user store"}
+  14: {label: real, reason: "Flask secret_key literal (marked vulnerable in the code)"}
+  15: {label: real, reason: "user password literal"}
+  16: {label: false_alarm, reason: "README documents the lab's test login; not a secret in code"}
+  17: {label: real, reason: "bare except"}
+  18: {label: real, reason: "secret_key literal in config"}
+  19: {label: false_alarm, reason: "password='{password}' is an f-string variable, not a literal (redactor matched it)"}
+  20: {label: real, reason: "Flask secret_key literal"}
+
+Bandit:
+  1:  {label: false_alarm, reason: "B104 0.0.0.0 bind in a containerised lab app (see judgement_calls)"}
+  2:  {label: false_alarm, reason: "B104 0.0.0.0 bind in a containerised lab app"}
+  3:  {label: real, reason: "password literal in the user dict"}
+  4:  {label: false_alarm, reason: "fixed argument list, no shell, no untrusted input"}
+  5:  {label: real, reason: "MD5 used to generate a security token"}
+  6:  {label: real, reason: "placeholder is the app's actual SECRET_KEY"}
+  7:  {label: real, reason: "password literal in the user dict"}
+  8:  {label: false_alarm, reason: "test fixture password in a Django unit test"}
+  9:  {label: real, reason: "Flask secret_key literal"}
+  10: {label: real, reason: "Flask debug=True on 0.0.0.0 exposes the Werkzeug debugger"}
+  11: {label: real, reason: "Flask secret_key literal"}
+  12: {label: real, reason: "password literal in the user dict"}
+  13: {label: real, reason: "requests.get on user input with no timeout can hang"}
+  14: {label: false_alarm, reason: "B104 0.0.0.0 bind in a containerised lab app"}
+  15: {label: real, reason: "db_password literal"}
+  16: {label: false_alarm, reason: "test fixture password in a Django unit test"}
+  17: {label: real, reason: "user password literal in the user store"}
+  18: {label: real, reason: "user token literal"}
+  19: {label: real, reason: "plaintext admin password literal (hashed only at startup)"}
+  20: {label: false_alarm, reason: "B104 0.0.0.0 bind in a containerised lab app"}

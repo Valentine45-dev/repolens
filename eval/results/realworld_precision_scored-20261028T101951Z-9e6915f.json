@@ -1,0 +1,609 @@
+{
+  "run": {
+    "commit_sha": "9e6915fcb28dbf242fadc31619b89df8ee34635a",
+    "dirty": false,
+    "run_at": "2026-10-28T10:19:51+00:00",
+    "embedder": "sentence-transformers",
+    "embed_model": "sentence-transformers/all-MiniLM-L6-v2",
+    "embed_revision": "1110a243fdf4706b3f48f1d95db1a4f5529b4d41",
+    "llm_used": false,
+    "llm": {
+      "provider": "anthropic",
+      "model": null,
+      "effort": "low",
+      "thinking": "between_tools",
+      "max_tokens": 4000,
+      "prompt_version": "2026-10-28.2"
+    },
+    "retrieval": {
+      "top_k": 8,
+      "graph_expansion": true,
+      "expand_max": 8,
+      "context_tokens": 6000
+    }
+  },
+  "source": {
+    "samples": "realworld_precision-20261028T101058Z-986f0b6.json",
+    "labels": "pygoat-46fef96.yaml",
+    "repo": {
+      "url": "https://github.com/adeyosemanputra/pygoat",
+      "commit": "46fef968f3f44d1191363baf936aaa3335dc5c6d",
+      "snapshot_id": 55,
+      "files_kept": 222,
+      "python_files": 115
+    },
+    "sampling": {
+      "seed": 20261028,
+      "n": 20,
+      "order": "path, line, rule"
+    },
+    "definition": {
+      "real": "a reviewer should act on it (security risk or genuine code-quality problem)",
+      "false_alarm": "correctly matched pattern but no action needed (by design, test-only, documentation)"
+    }
+  },
+  "tools": {
+    "RepoLens": {
+      "overall": {
+        "real": 18,
+        "n": 20,
+        "precision": 0.9,
+        "wilson95": [
+          0.7,
+          0.97
+        ]
+      },
+      "population": 59,
+      "per_rule": {
+        "hardcoded-secret": {
+          "real": 14,
+          "n": 16,
+          "precision": 0.88,
+          "wilson95": [
+            0.64,
+            0.97
+          ]
+        },
+        "py-bare-except": {
+          "real": 4,
+          "n": 4,
+          "precision": 1.0,
+          "wilson95": [
+            0.51,
+            1.0
+          ]
+        }
+      },
+      "rows": [
+        {
+          "path": "dockerized_labs/sec_misconfig/app.py",
+          "line": 55,
+          "rule": "hardcoded-secret",
+          "severity": "high",
+          "message": "Possible hardcoded secret (secret-assignment).",
+          "in_test": false,
+          "code": "\"SECRET_KEY\": \"[REDACTED]\",",
+          "label": "real",
+          "reason": "SECRET_KEY literal in the app's exposed config dict"
+        },
+        {
+          "path": "dockerized_labs/sde/app.py",
+          "line": 9,
+          "rule": "hardcoded-secret",
+          "severity": "high",
+          "message": "Possible hardcoded secret (url-password).",
+          "in_test": false,
+          "code": "\"postgresql://admin:[REDACTED]@localhost:5432/sensitive_db\"",
+          "label": "real",
+          "reason": "database URL with an inline password literal"
+        },
+        {
+          "path": "dockerized_labs/sec_misconfig/app.py",
+          "line": 60,
+          "rule": "hardcoded-secret",
+          "severity": "high",
+          "message": "Possible hardcoded secret (stripe-key).",
+          "in_test": false,
+          "code": "\"STRIPE_API_KEY\": \"[REDACTED]\",",
+          "label": "real",
+          "reason": "Stripe API key literal in config"
+        },
+        {
+          "path": "dockerized_labs/sec_misconfig/app.py",
+          "line": 98,
+          "rule": "hardcoded-secret",
+          "severity": "high",
+          "message": "Possible hardcoded secret (secret-assignment).",
+          "in_test": false,
+          "code": "secret = \"[REDACTED]\"",
+          "label": "real",
+          "reason": "weak secret key literal (comment says so)"
+        },
+        {
+          "path": "dockerized_labs/sec_misconfig/app.py",
+          "line": 13,
+          "rule": "hardcoded-secret",
+          "severity": "high",
+          "message": "Possible hardcoded secret (secret-assignment).",
+          "in_test": false,
+          "code": "\"api_key\": \"[REDACTED]\",",
+          "label": "real",
+          "reason": "api_key literal in SENSITIVE_DATA"
+        },
+        {
+          "path": "challenge/labs/bopla_lab/app.py",
+          "line": 50,
+          "rule": "hardcoded-secret",
+          "severity": "high",
+          "message": "Possible hardcoded secret (secret-assignment).",
+          "in_test": false,
+          "code": "\"admin\": {\"password\": \"[REDACTED]\", \"role\": \"admin\"},",
+          "label": "real",
+          "reason": "admin password literal in the user store"
+        },
+        {
+          "path": "dockerized_labs/ssrf_lab/app.py",
+          "line": 40,
+          "rule": "py-bare-except",
+          "severity": "low",
+          "message": "Bare except",
+          "in_test": false,
+          "code": "except:",
+          "label": "real",
+          "reason": "bare except around requests.get swallows every error"
+        },
+        {
+          "path": "dockerized_labs/sec_misconfig/app.py",
+          "line": 59,
+          "rule": "hardcoded-secret",
+          "severity": "high",
+          "message": "Possible hardcoded secret (secret-assignment).",
+          "in_test": false,
+          "code": "\"AWS_SECRET_KEY\": \"[REDACTED]\",",
+          "label": "real",
+          "reason": "AWS secret key literal"
+        },
+        {
+          "path": "dockerized_labs/auth_failure_lab/app.py",
+          "line": 157,
+          "rule": "py-bare-except",
+          "severity": "low",
+          "message": "Bare except",
+          "in_test": false,
+          "code": "except:",
+          "label": "real",
+          "reason": "bare except"
+        },
+        {
+          "path": "dockerized_labs/ssrf_lab/app.py",
+          "line": 26,
+          "rule": "py-bare-except",
+          "severity": "low",
+          "message": "Bare except",
+          "in_test": false,
+          "code": "except:",
+          "label": "real",
+          "reason": "bare except"
+        },
+        {
+          "path": "dockerized_labs/insufficient_logging_lab/app.py",
+          "line": 15,
+          "rule": "hardcoded-secret",
+          "severity": "high",
+          "message": "Possible hardcoded secret (secret-assignment).",
+          "in_test": false,
+          "code": "users = {\"admin\": {\"password\": \"[REDACTED]\", \"role\": \"admin\", \"failed_attempts\": 0}}",
+          "label": "real",
+          "reason": "admin password literal in the users dict"
+        },
+        {
+          "path": "dockerized_labs/package_injection_lab/app.py",
+          "line": 13,
+          "rule": "hardcoded-secret",
+          "severity": "high",
+          "message": "Possible hardcoded secret (secret-assignment).",
+          "in_test": false,
+          "code": "\"user_token\": \"[REDACTED]\",",
+          "label": "real",
+          "reason": "user token literal"
+        },
+        {
+          "path": "dockerized_labs/auth_failure_lab/app.py",
+          "line": 53,
+          "rule": "hardcoded-secret",
+          "severity": "high",
+          "message": "Possible hardcoded secret (secret-assignment).",
+          "in_test": false,
+          "code": "\"password\": \"[REDACTED]\",",
+          "label": "real",
+          "reason": "user password literal in the user store"
+        },
+        {
+          "path": "dockerized_labs/broken_auth_lab/app.py",
+          "line": 16,
+          "rule": "hardcoded-secret",
+          "severity": "high",
+          "message": "Possible hardcoded secret (secret-assignment).",
+          "in_test": false,
+          "code": "app.secret_key = \"[REDACTED]\"  # Vulnerable: Hardcoded secret key",
+          "label": "real",
+          "reason": "Flask secret_key literal (marked vulnerable in the code)"
+        },
+        {
+          "path": "challenge/labs/bopla_lab/app.py",
+          "line": 48,
+          "rule": "hardcoded-secret",
+          "severity": "high",
+          "message": "Possible hardcoded secret (secret-assignment).",
+          "in_test": false,
+          "code": "\"user1\": {\"password\": \"[REDACTED]\", \"role\": \"developer\"},",
+          "label": "real",
+          "reason": "user password literal"
+        },
+        {
+          "path": "dockerized_labs/insufficient_logging_lab/README.md",
+          "line": 20,
+          "rule": "hardcoded-secret",
+          "severity": "high",
+          "message": "Possible hardcoded secret (secret-assignment).",
+          "in_test": false,
+          "code": "- Credentials for testing: username=\"admin\", password=\"[REDACTED]\"",
+          "label": "false_alarm",
+          "reason": "README documents the lab's test login; not a secret in code"
+        },
+        {
+          "path": "dockerized_labs/auth_failure_lab/app.py",
+          "line": 198,
+          "rule": "py-bare-except",
+          "severity": "low",
+          "message": "Bare except",
+          "in_test": false,
+          "code": "except:",
+          "label": "real",
+          "reason": "bare except"
+        },
+        {
+          "path": "dockerized_labs/sec_misconfig/app.py",
+          "line": 14,
+          "rule": "hardcoded-secret",
+          "severity": "high",
+          "message": "Possible hardcoded secret (secret-assignment).",
+          "in_test": false,
+          "code": "\"secret_key\": \"[REDACTED]\",",
+          "label": "real",
+          "reason": "secret_key literal in config"
+        },
+        {
+          "path": "dockerized_labs/sql_injection_lab/app.py",
+          "line": 51,
+          "rule": "hardcoded-secret",
+          "severity": "high",
+          "message": "Possible hardcoded secret (secret-assignment).",
+          "in_test": false,
+          "code": "f\"SELECT * FROM users WHERE username='{username}' AND password='[REDACTED]'\"",
+          "label": "false_alarm",
+          "reason": "password='{password}' is an f-string variable, not a literal (redactor matched it)"
+        },
+        {
+          "path": "dockerized_labs/ssrf_lab/app.py",
+          "line": 6,
+          "rule": "hardcoded-secret",
+          "severity": "high",
+          "message": "Possible hardcoded secret (secret-assignment).",
+          "in_test": false,
+          "code": "app.secret_key = \"[REDACTED]\"  # Required for flash messages",
+          "label": "real",
+          "reason": "Flask secret_key literal"
+        }
+      ]
+    },
+    "Bandit": {
+      "overall": {
+        "real": 13,
+        "n": 20,
+        "precision": 0.65,
+        "wilson95": [
+          0.43,
+          0.82
+        ]
+      },
+      "population": 130,
+      "per_rule": {
+        "B104 hardcoded_bind_all_interfaces": {
+          "real": 0,
+          "n": 4,
+          "precision": 0.0,
+          "wilson95": [
+            0.0,
+            0.49
+          ]
+        },
+        "B105 hardcoded_password_string": {
+          "real": 10,
+          "n": 10,
+          "precision": 1.0,
+          "wilson95": [
+            0.72,
+            1.0
+          ]
+        },
+        "B106 hardcoded_password_funcarg": {
+          "real": 0,
+          "n": 2,
+          "precision": 0.0,
+          "wilson95": [
+            0.0,
+            0.66
+          ]
+        },
+        "B113 request_without_timeout": {
+          "real": 1,
+          "n": 1,
+          "precision": 1.0,
+          "wilson95": [
+            0.21,
+            1.0
+          ]
+        },
+        "B201 flask_debug_true": {
+          "real": 1,
+          "n": 1,
+          "precision": 1.0,
+          "wilson95": [
+            0.21,
+            1.0
+          ]
+        },
+        "B324 hashlib": {
+          "real": 1,
+          "n": 1,
+          "precision": 1.0,
+          "wilson95": [
+            0.21,
+            1.0
+          ]
+        },
+        "B603 subprocess_without_shell_equals_true": {
+          "real": 0,
+          "n": 1,
+          "precision": 0.0,
+          "wilson95": [
+            0.0,
+            0.79
+          ]
+        }
+      },
+      "rows": [
+        {
+          "path": "challenge/labs/security_headers_lab/app.py",
+          "line": 233,
+          "rule": "B104 hardcoded_bind_all_interfaces",
+          "severity": "medium",
+          "confidence": "medium",
+          "message": "Possible binding to all interfaces.",
+          "code": "app.run(host='0.0.0.0', port=5011, debug=True)",
+          "label": "false_alarm",
+          "reason": "B104 0.0.0.0 bind in a containerised lab app (see judgement_calls)"
+        },
+        {
+          "path": "dockerized_labs/dependency_attack_lab/app.py",
+          "line": 198,
+          "rule": "B104 hardcoded_bind_all_interfaces",
+          "severity": "medium",
+          "confidence": "medium",
+          "message": "Possible binding to all interfaces.",
+          "code": "app.run(host=\"0.0.0.0\", port=5020, debug=True)",
+          "label": "false_alarm",
+          "reason": "B104 0.0.0.0 bind in a containerised lab app"
+        },
+        {
+          "path": "challenge/labs/security_headers_lab/app.py",
+          "line": 20,
+          "rule": "B105 hardcoded_password_string",
+          "severity": "low",
+          "confidence": "medium",
+          "message": "Possible hardcoded password: 'password123'",
+          "code": "\"password\": \"[REDACTED]\",",
+          "label": "real",
+          "reason": "password literal in the user dict"
+        },
+        {
+          "path": "uninstaller.py",
+          "line": 46,
+          "rule": "B603 subprocess_without_shell_equals_true",
+          "severity": "low",
+          "confidence": "high",
+          "message": "subprocess call - check for execution of untrusted input.",
+          "code": "subprocess.run(",
+          "label": "false_alarm",
+          "reason": "fixed argument list, no shell, no untrusted input"
+        },
+        {
+          "path": "dockerized_labs/broken_auth_lab/app.py",
+          "line": 103,
+          "rule": "B324 hashlib",
+          "severity": "high",
+          "confidence": "high",
+          "message": "Use of weak MD5 hash for security. Consider usedforsecurity=False",
+          "code": "token = hashlib.md5(f\"{email}:{datetime.now()}\".encode()).hexdigest()",
+          "label": "real",
+          "reason": "MD5 used to generate a security token"
+        },
+        {
+          "path": "dockerized_labs/open_source_library_attack_lab/app.py",
+          "line": 5,
+          "rule": "B105 hardcoded_password_string",
+          "severity": "low",
+          "confidence": "medium",
+          "message": "Possible hardcoded password: 'your-secret-key-here'",
+          "code": "app.config[\"SECRET_KEY\"] = \"your-secret-key-here\"",
+          "label": "real",
+          "reason": "placeholder is the app's actual SECRET_KEY"
+        },
+        {
+          "path": "challenge/labs/bopla_lab/app.py",
+          "line": 49,
+          "rule": "B105 hardcoded_password_string",
+          "severity": "low",
+          "confidence": "medium",
+          "message": "Possible hardcoded password: 'pass456'",
+          "code": "\"user2\": {\"password\": \"[REDACTED]\", \"role\": \"manager\"},",
+          "label": "real",
+          "reason": "password literal in the user dict"
+        },
+        {
+          "path": "introduction/tests.py",
+          "line": 14,
+          "rule": "B106 hardcoded_password_funcarg",
+          "severity": "low",
+          "confidence": "medium",
+          "message": "Possible hardcoded password: 'pw'",
+          "code": "self.alice = User.objects.create_user(\"alice\", password=\"pw\")",
+          "label": "false_alarm",
+          "reason": "test fixture password in a Django unit test"
+        },
+        {
+          "path": "dockerized_labs/insecure_design_lab/app.py",
+          "line": 8,
+          "rule": "B105 hardcoded_password_string",
+          "severity": "low",
+          "confidence": "medium",
+          "message": "Possible hardcoded password: 'your-secret-key-here'",
+          "code": "app.secret_key = \"[REDACTED]\"  # Change in production",
+          "label": "real",
+          "reason": "Flask secret_key literal"
+        },
+        {
+          "path": "dockerized_labs/dependency_attack_lab/app.py",
+          "line": 198,
+          "rule": "B201 flask_debug_true",
+          "severity": "high",
+          "confidence": "medium",
+          "message": "A Flask app appears to be run with debug=True, which exposes the Werkzeug debugger and allows the execution of arbitrary code.",
+          "code": "app.run(host=\"0.0.0.0\", port=5020, debug=True)",
+          "label": "real",
+          "reason": "Flask debug=True on 0.0.0.0 exposes the Werkzeug debugger"
+        },
+        {
+          "path": "challenge/labs/security_headers_lab/app.py",
+          "line": 15,
+          "rule": "B105 hardcoded_password_string",
+          "severity": "low",
+          "confidence": "medium",
+          "message": "Possible hardcoded password: 'security_headers_secret_key_2024'",
+          "code": "app.secret_key = \"[REDACTED]\"",
+          "label": "real",
+          "reason": "Flask secret_key literal"
+        },
+        {
+          "path": "challenge/labs/bopla_lab/app.py",
+          "line": 48,
+          "rule": "B105 hardcoded_password_string",
+          "severity": "low",
+          "confidence": "medium",
+          "message": "Possible hardcoded password: 'password123'",
+          "code": "\"user1\": {\"password\": \"[REDACTED]\", \"role\": \"developer\"},",
+          "label": "real",
+          "reason": "password literal in the user dict"
+        },
+        {
+          "path": "dockerized_labs/ssrf_lab/app.py",
+          "line": 37,
+          "rule": "B113 request_without_timeout",
+          "severity": "medium",
+          "confidence": "low",
+          "message": "Call to requests without timeout",
+          "code": "response = requests.get(url)",
+          "label": "real",
+          "reason": "requests.get on user input with no timeout can hang"
+        },
+        {
+          "path": "dockerized_labs/sec_misconfig/app.py",
+          "line": 135,
+          "rule": "B104 hardcoded_bind_all_interfaces",
+          "severity": "medium",
+          "confidence": "medium",
+          "message": "Possible binding to all interfaces.",
+          "code": "app.run(debug=True, host='0.0.0.0', port=5009)",
+          "label": "false_alarm",
+          "reason": "B104 0.0.0.0 bind in a containerised lab app"
+        },
+        {
+          "path": "dockerized_labs/dependency_attack_lab/app.py",
+          "line": 12,
+          "rule": "B105 hardcoded_password_string",
+          "severity": "low",
+          "confidence": "medium",
+          "message": "Possible hardcoded password: 'SuperSecret123!'",
+          "code": "\"db_password\": \"[REDACTED]\",",
+          "label": "real",
+          "reason": "db_password literal"
+        },
+        {
+          "path": "introduction/tests.py",
+          "line": 15,
+          "rule": "B106 hardcoded_password_funcarg",
+          "severity": "low",
+          "confidence": "medium",
+          "message": "Possible hardcoded password: 'pw'",
+          "code": "self.alice_bob = User.objects.create_user(\"alice-bob\", password=\"pw\")",
+          "label": "false_alarm",
+          "reason": "test fixture password in a Django unit test"
+        },
+        {
+          "path": "dockerized_labs/auth_failure_lab/app.py",
+          "line": 53,
+          "rule": "B105 hardcoded_password_string",
+          "severity": "low",
+          "confidence": "medium",
+          "message": "Possible hardcoded password: '0b14d501a594442a01c6859541bcb3e8164d183d32937b851835442f69d5c94e'",
+          "code": "\"password\": \"[REDACTED]\",",
+          "label": "real",
+          "reason": "user password literal in the user store"
+        },
+        {
+          "path": "dockerized_labs/dependency_attack_lab/app.py",
+          "line": 13,
+          "rule": "B105 hardcoded_password_string",
+          "severity": "low",
+          "confidence": "medium",
+          "message": "Possible hardcoded password: 'token_abc123'",
+          "code": "\"user_token\": \"[REDACTED]\",",
+          "label": "real",
+          "reason": "user token literal"
+        },
+        {
+          "path": "dockerized_labs/auth_failure_lab/app.py",
+          "line": 44,
+          "rule": "B105 hardcoded_password_string",
+          "severity": "low",
+          "confidence": "medium",
+          "message": "Possible hardcoded password: '2022_in_pygoat@pygoat.com'",
+          "code": "ADMIN_PASSWORD = \"[REDACTED]\"  # This will be hashed with Argon2",
+          "label": "real",
+          "reason": "plaintext admin password literal (hashed only at startup)"
+        },
+        {
+          "path": "dockerized_labs/crypto_failure_lab/app.py",
+          "line": 115,
+          "rule": "B104 hardcoded_bind_all_interfaces",
+          "severity": "medium",
+          "confidence": "medium",
+          "message": "Possible binding to all interfaces.",
+          "code": "app.run(host='0.0.0.0', port=5000)",
+          "label": "false_alarm",
+          "reason": "B104 0.0.0.0 bind in a containerised lab app"
+        }
+      ],
+      "overall_b104_as_real": {
+        "real": 17,
+        "n": 20,
+        "precision": 0.85,
+        "wilson95": [
+          0.64,
+          0.95
+        ]
+      }
+    }
+  }
+}

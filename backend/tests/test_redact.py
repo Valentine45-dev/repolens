@@ -64,6 +64,22 @@ def test_overlapping_patterns_count_once():
     assert [m.kind for m in matches] == ["github-token"]
 
 
+def test_fstring_placeholder_is_not_a_secret():
+    # PyGoat dockerized_labs/sql_injection_lab/app.py:51, which was stored corrupted.
+    text = (
+        "sql = f\"SELECT * FROM users WHERE username='{username}' AND password='{password}'\"\n"
+        "dsn = f\"postgresql://app:{db_password}@db:5432/app\"\n"
+        "creds = {\"password\": \"{user}{pw}\"}\n"
+    )
+    assert redact(text) == (text, [])
+
+
+def test_placeholder_mixed_with_a_literal_is_still_redacted():
+    text = 'password = "{prefix}hunter2hunter2"\n'
+    redacted, matches = redact(text)
+    assert "hunter2" not in redacted and [m.kind for m in matches] == ["secret-assignment"]
+
+
 def test_plain_words_are_not_secrets():
     text = 'error = "invalid token provided"\npassword_hint = "short"\n'
     assert redact(text) == (text, [])

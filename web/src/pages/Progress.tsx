@@ -200,7 +200,7 @@ function FailedCallout({ status }: { status: SnapshotStatus }) {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const retry = useMutation({
-    mutationFn: () => submitRepo(status.url),
+    mutationFn: () => submitRepo({ url: status.url }),
     onSuccess: async (result) => {
       rememberAnalysis({
         snapshotId: result.snapshot_id,

@@ -664,6 +664,80 @@
     re-run (spend); the prompt change touched only the identity rule.
   - **Real-model spend so far: 10 calls, 32,663 in + 2,484 out tokens, ~$0.0045.**
 
+- **`feat/smoke-eval` merged into `main` (28 Oct, `f538ec8`).** Work continues on `feat/final-evals`.
+- **Final Q&A run (28 Oct, `feat/final-evals`, `36556cf`,
+  `eval/results/final_qa-20261028T100701Z-36556cf.json`).** Demo model `claude-sonnet-5-5`,
+  thinking `between_tools`, effort `low`, prompt `2026-10-28.2`, set by env override for this run
+  only (`.env` still says Haiku). All 16 questions + identity + injection, same frozen
+  questions.yaml and pass rules; `smoke_qa.py --all` and the extra metrics (faithfulness, expected
+  range, latency) were committed before the run. Native mode, db only in Docker.
+  - **16/18 passed.** FAIL 8: exact "I could not find this in the provided code." plus one valid
+    citation (`lib/express.js:36-56`) describing what the snippets do cover; the pre-set rule needs
+    zero citations. FAIL 16: "the snippets don't show any encryption ... signs rather than
+    encrypting", 6 valid citations. On manual review both answers are correct; the rule was too
+    narrow for false-premise questions. They stay FAILs.
+  - Expected file cited: 14/14 answerable. Expected line range overlapped: 13/14 (Q5 cited
+    `lib/response.js` but not the labelled `res.format` lines).
+  - Faithfulness (no dropped citation): 15/18 = 0.83 (14/17 = 0.82 over answers that cited).
+    4 dropped citations: Q2 1, Q3 2, Q14 1.
+  - Latency: median 4.3 s, max 28.5 s (identity, the first question: includes loading the
+    embedding model); the rest 2.1–7.6 s.
+  - 18 calls, no retries, 73,905 in + 7,515 out tokens, ~$0.22 at Sonnet 5.5's $2 / $10 per MTok
+    (https://platform.claude.com/docs/en/about-claude/pricing, checked 28 Oct).
+- **PyGoat real-world precision, samples drawn (28 Oct, `986f0b6`,
+  `eval/results/realworld_precision-20261028T101058Z-986f0b6.json`).** `adeyosemanputra/pygoat`
+  @ `46fef968f3f44d1191363baf936aaa3335dc5c6d`, analysed by the normal pipeline (snapshot kept in
+  the dev DB), parse only, clones deleted. 222 files kept, 115 Python.
+  - Populations: RepoLens 59 (hardcoded-secret 47, py-bare-except 9, subprocess-shell 1,
+    eval-exec 1, sql-string 1); Bandit 1.9.4 130 (B105 49, B104 24, B201 19, B106 9, others
+    small), on the same 115 Python files, 0 parse errors.
+  - Seed 20261028, 20 per tool. Labels in `eval/labels/pygoat-46fef96.yaml`, **confirmed by the
+    owner unchanged** under the owner's definition (written into the file): real = a reviewer
+    should act on it (security risk or genuine code-quality problem); false alarm = correctly
+    matched pattern but no action needed (by design, test-only, documentation).
+  - **Precision** (`eval/score_realworld.py`,
+    `eval/results/realworld_precision_scored-20261028T101951Z-9e6915f.json`; Wilson 95%):
+
+    | tool | sample | precision | 95% interval |
+    |---|---|---|---|
+    | RepoLens | 18/20 | 0.90 | 0.70–0.97 |
+    | Bandit, B104 as false alarm (as labelled) | 13/20 | 0.65 | 0.43–0.82 |
+    | Bandit, B104 counted as real | 17/20 | 0.85 | 0.64–0.95 |
+
+    Per rule: RepoLens hardcoded-secret 14/16, py-bare-except 4/4. Bandit B105 10/10, B104 0/4,
+    B106 0/2 (test passwords), B603 0/1, B113 1/1, B201 1/1, B324 1/1.
+  - **How to read this:** PyGoat is vulnerable by design, so its lab secrets flatter any secret
+    rule (secrets are 16 of RepoLens's 20 sampled findings). The two tools flag different things
+    (Bandit: binds, debug mode, weak hashes, timeouts; RepoLens: secrets, bare excepts), the
+    samples are 20 each, and the intervals overlap, so this does not show that either tool is
+    more precise overall. Recall is not measured (no full answer key).
+  - **Bug found by this eval, fixed afterwards (`116ca46`):** the redactor treated
+    `password='{password}'` inside an f-string as a secret, so
+    `dockerized_labs/sql_injection_lab/app.py:51` was stored as `... password='[REDACTED]'` (UI,
+    Q&A snippets and findings showed a corrupted line) and a false hardcoded-secret finding was
+    raised (RepoLens sample #19). Fix: a value made only of f-string placeholders (`{name}`,
+    `{a}{b}`) is not a secret; a placeholder mixed with a literal still is. Tests added. PyGoat
+    re-ingested in place at the same commit (job 53, `error='Re-run: ...'` on job 52): 58
+    findings (hardcoded-secret 47 -> 46), line 51 stored intact with only its SQL-string finding,
+    checked in the UI and API. **The precision numbers above are from the pre-fix run and were
+    not recomputed.** Other snapshots were not re-ingested.
+  - PyGoat is the 4th example chip on Home. The local (git-ignored) `.claude/launch.json` gained
+    an `api` entry (native uvicorn).
+- **Pre-merge checks (28 Oct, `feat/final-evals`).**
+  - Findings row click: **not a UI bug.** In the browser (native mode, PyGoat snapshot 55) a real
+    click on a row opens the detail panel and sets `?finding=<id>`, by coordinate and by element
+    ref, at 1280x800 and at 375x812 (full-width overlay on phones), with and without a rule
+    filter (the SQL row shows line 51 with `{password}` intact). The earlier miss was the
+    automated click landing while the page was still re-rendering (URL never changed).
+  - **Example chips pinned.** `POST /repos` takes an optional `commit` (full 40-hex SHA, else
+    422); with it the API skips `git ls-remote` and reuses the analysis of that commit (or
+    analyses exactly that commit on a fresh database). Home's chips send: itsdangerous
+    `672971d`, express `1c6f1b0`, ky `3541888`, pygoat `46fef96`. Typed URLs and Progress's
+    retry still follow the default branch. Checked in the browser: the four chips opened
+    snapshots 25, 24, 21 and 55, the request body carried the commit, and the `jobs` table was
+    unchanged (39 rows, max id 53). Tests: pinned commit reuses the job without ls-remote;
+    malformed commits are 422. 249 passed, 3 skipped.
+
 ## Demo plan (8 GB laptop)
 The full compose stack works (tested 28 Oct) but left ~0.66 GB free and crashed the machine
 once. Primary demo is native mode; compose is shown as tested, not run live.
@@ -673,8 +747,9 @@ once. Primary demo is native mode; compose is shown as tested, not run live.
 3. API: `cd backend; uv run --env-file ../.env uvicorn app.main:app --port 8000` (wait for
    "Application startup complete", ~1 min for the model). Don't run `uv sync` while it runs.
 4. Web: `cd web; npm run dev`, open http://localhost:5173.
-5. Flow: Home -> pick the already analysed itsdangerous (snapshot 25) or express (24); a live
-   ingest of itsdangerous takes ~2 min (embedding is the slow part). Explorer -> node panel ->
+5. Flow: Home -> click an example chip (pinned to its analysed commit, so it opens instantly and
+   never starts a new analysis): itsdangerous (snapshot 25), express (24), ky (21), PyGoat (55).
+   A live ingest of a typed URL like itsdangerous takes ~2 min (embedding is the slow part). Explorer -> node panel ->
    Findings -> Ask: one graph question ("Which files import signer.py?"), one AI question
    ("How does the Signer verify a signature?") and click a source chip.
 6. Fallbacks: AI down -> show the "unavailable" notice and graph answers (rule 8). API won't
