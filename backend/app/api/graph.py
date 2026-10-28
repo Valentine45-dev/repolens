@@ -1,28 +1,14 @@
 """Graph, file and symbol endpoints. Read-only; everything comes from the ingested snapshot."""
 
-from pathlib import PurePosixPath
-
 from fastapi import APIRouter, HTTPException, Query
 
 from app.db import pool
+from app.paths import is_test_path
 
 router = APIRouter()
 
-TEST_DIRS = {"test", "tests", "__tests__", "examples"}
 # Confidence is stored as REAL (0.9 -> 0.8999...), so compare and return it rounded.
 CONFIDENCE = "round(e.confidence::numeric, 2)"
-
-
-def is_test_path(path: str) -> bool:
-    """test/, tests/, __tests__/, examples/ anywhere in the path, *.test.* / *.spec.*, or
-    Python test_*.py / *_test.py."""
-    p = PurePosixPath(path)
-    parts = p.name.split(".")
-    if TEST_DIRS & set(p.parts[:-1]):
-        return True
-    if len(parts) > 2 and parts[-2] in ("test", "spec"):
-        return True
-    return p.suffix == ".py" and (p.stem.startswith("test_") or p.stem.endswith("_test"))
 
 
 def _require_done(conn, snapshot_id: int) -> None:

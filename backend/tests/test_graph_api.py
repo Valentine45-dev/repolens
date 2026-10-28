@@ -3,7 +3,7 @@
 import pytest
 from conftest import query
 
-from app.api.graph import is_test_path
+from app.paths import is_test_path
 
 pytestmark = pytest.mark.db
 

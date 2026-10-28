@@ -27,7 +27,7 @@ FUNCTION_TYPES = {"function_declaration", "generator_function_declaration"}
 FUNCTION_VALUES = {"arrow_function", "function_expression", "function", "generator_function"}
 
 
-def _grammar(path: str) -> Language:
+def grammar_for(path: str) -> Language:
     if path.endswith(".tsx"):
         return _TSX
     if path.endswith(".ts"):
@@ -132,7 +132,7 @@ def _value_signature(lead: str, value: Node) -> str:
 
 
 def parse_js(path: str, source: str) -> ParsedFile:
-    tree = Parser(_grammar(path)).parse(source.encode("utf-8"))
+    tree = Parser(grammar_for(path)).parse(source.encode("utf-8"))
     module = path
     out = ParsedFile()
     stem = path.rsplit("/", 1)[-1].split(".", 1)[0]

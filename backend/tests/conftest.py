@@ -15,6 +15,8 @@ from psycopg.conninfo import conninfo_to_dict
 
 SCHEMA = Path(__file__).resolve().parent.parent / "schema.sql"
 FIXTURE = Path(__file__).parent / "fixtures" / "sample_repo"
+DETECTORS = Path(__file__).parent / "fixtures" / "detectors"
+SECRET_VALUE = "fixture-not-a-real-password"
 SHA = "a" * 40
 
 
@@ -31,6 +33,8 @@ def check_test_database_url(url: str) -> str:
 def pytest_configure(config):
     # The app must never see the dev database during tests.
     os.environ.pop("DATABASE_URL", None)
+    # Deterministic stub embeddings: tests never download the model (design doc 19.4).
+    os.environ["EMBEDDER"] = "stub"
     url = os.environ.get("TEST_DATABASE_URL")
     if url:
         check_test_database_url(url)
@@ -89,3 +93,24 @@ def query(sql, *args):
 
     with pool().connection() as conn:
         return conn.execute(sql, args).fetchall()
+
+
+SECRET = 'DB_PASSWORD = "fixture-not-a-real-password"\n'
+
+
+@pytest.fixture
+def detector_repo(client, monkeypatch, tmp_path):
+    from app.ingest import clone
+
+    def fetch(url, sha, dest, timeout):
+        shutil.copytree(DETECTORS, dest)
+        (dest / "src").mkdir()
+        (dest / "src" / "config.py").write_text(SECRET, encoding="utf-8")
+        (dest / "tests").mkdir()
+        (dest / "tests" / "conftest.py").write_text(SECRET, encoding="utf-8")
+
+    monkeypatch.setattr(clone, "fetch_commit", fetch)
+    body = client.post("/repos", json={"url": "https://github.com/example/detectors"}).json()
+    status = client.get(f"/snapshots/{body['snapshot_id']}/status").json()
+    assert status["status"] == "done", status
+    return body["snapshot_id"]

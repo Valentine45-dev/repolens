@@ -242,11 +242,131 @@
     panel focus (all fixed).
   - Tests: 108 passed, 2 skipped (fetch retry: transient classification, retried once, not for
     other errors, not without time left).
+- **Day 3 task 1 done (28 Oct, `feat/detectors`): detect stage + Python rules.**
+  - `app/detect/rules.py`: rule catalogue (id, language, severity, label, what it looks for, why
+    it is risky, possible-false-positive hint), including `hardcoded-secret`. `app/detect/python.py`:
+    one Tree-sitter walk for `py-eval-exec` (builtins only, not `obj.eval()`), `py-subprocess-shell`
+    (`subprocess.*`, aliases and `from subprocess import …`, with `shell=True`), `py-sql-string`
+    (f-string, `+`, `%`, `.format()` with a non-constant part), `py-bare-except`.
+  - SQL shape: the string must start with the statement (any case) or use upper-case keywords, so
+    prose like "select an item from the list" is not SQL (the negative fixture caught this).
+  - New pipeline stage `detect` (after `edges`, 90%): re-parses each code file, stores line,
+    innermost enclosing symbol, rule severity and label, and the redacted line as snippet;
+    delete-then-insert only for detector rule ids. Progress page lists "Running detectors".
+  - `hardcoded-secret` in a test path (shared `app/paths.is_test_path`, same as `exclude_tests`) is
+    severity low with "… in a test file."
+  - Fixtures `tests/fixtures/detectors/py_positive.py` / `py_negative.py` with `# expect: <rule>`
+    marks; tests compare exact (line, rule) sets. DB test ingests the fixtures as a repo.
+    Fixture tsconfig now uses `./web/src/lib/*` (no baseUrl); resolver tests cover `./` targets.
+  - Tests: 125 passed, 2 skipped.
+  - Real repos (re-ingested): itsdangerous, requests, flask-sqlalchemy: 0 detector findings.
+    psf/black: 17, all hand-checked as genuine matches of their rule: 9 bare `except:` and 7
+    `eval`/`exec` in test data (deliberately odd code that black formats), plus
+    `src/blib2to3/pgen2/pgen.py:100` `value = eval(label)` in source. No real-repo SQL hits yet;
+    the SQL rule is covered by the fixtures.
+- **Day 3 task 2 done (28 Oct): JS/TS rules** (`app/detect/javascript.py`, grammar by suffix).
+  - `js-eval` (global `eval(...)`), `js-new-function` (`new Function(...)` and `Function(...)`),
+    `js-child-process-exec` (`exec`/`execSync` bound to `child_process` / `node:child_process`
+    via require, destructuring, aliases, namespace/default/named imports or inline
+    `require("child_process").exec`, with a non-constant command), `js-inner-html` (`=` or `+=`
+    to `.innerHTML`/`.outerHTML` with a non-constant value), `js-sql-string` (template with `${}`
+    or `+` with a SQL-shaped literal). Unrelated `exec` (regex, DB driver) is not flagged.
+  - "Constant" means a string, a template without `${}`, or a `+` chain of only those (jQuery's
+    test files caught `"<style>" + "..."` being flagged; fixed and added to the negative fixture).
+  - Fixtures `js_positive.js` (CommonJS), `ts_positive.ts` (ESM, TS syntax), `js_negative.js`.
+    Tests: 130 passed, 2 skipped.
+  - Real repos: express and ky have 0 findings. A grep of their source for every rule pattern
+    finds only strings (an XSS payload in `test/res.redirect.js`, `waitForFunction` in ky), so
+    no misses. jquery/jquery @ HEAD (222 code files): 8 findings, all genuine: `innerHTML` in
+    `src/manipulation.js:276` and `src/manipulation/buildFragment.js:47` (by design: `.html()`),
+    the same in the vendored `test/data/jquery-3.7.1.js` (3), and 3 `eval` calls in tests.
+- **Day 3 task 3 done (28 Oct): findings API** (`app/api/findings.py`).
+  - `GET /snapshots/{id}/findings` with filters `severity`, `rule`, `language`, `path_prefix`,
+    `in_test`, and `limit` (default 50, 1..200, else 422) / `offset`. Response:
+    `{snapshot_id, total, limit, offset, items, counts}`. Items: id, rule_id, severity, message,
+    file_id, path, language, line, `symbol` (name, null at module level), masked snippet,
+    `in_test`, `node_id` (finding's symbol, else the file's module symbol, for "Open in Explorer").
+  - Order: severity rank via CASE (high, medium, low), then path (`COLLATE "C"`), line, id.
+  - `counts` (total, by_severity, by_rule) are over the whole snapshot, not the filter.
+  - 404 unknown snapshot; 422 bad severity / unknown rule / language / limit / offset; 409 with
+    the reason while detection has not finished ("…not finished yet (current stage: parse)") or
+    if the analysis failed ("Detection did not run: the analysis failed during fetch."), never
+    an empty list that reads as "no findings".
+  - `GET /rules`: the catalogue from `app/detect/rules.py` (id, language, severity, title, checks,
+    why, false_positive).
+  - Schema: `findings.in_test` (set when stored, same rule as `exclude_tests`); dev DB got one
+    `ALTER TABLE`. Index `findings_snapshot (snapshot_id, severity)` was already there.
+    Test-file findings are included by default and marked.
+  - Tests (detector fixtures as a repo): order, pages of 7 neither overlap nor skip, each filter,
+    counts ignore filters, node_id fallback, 422/404/409, raw fixture secret never in any
+    response. 151 passed, 2 skipped.
+  - Real snapshots (re-ingested): itsdangerous 7 findings, all `hardcoded-secret` in `tests/`
+    (low, `in_test`; were high on Day 1); express 1 (placeholder password in
+    `examples/auth/index.js`, low, `in_test`).
+  - Follow-up fixes: the message says "... in test or example code." (examples/ counts as test
+    code, so "in a test file" was wrong). All dev snapshots were re-run in place (same ids) so
+    none has stale `in_test` values; the bogus `example/broken` snapshot was deleted.
+- **Day 3 task 4 done (28 Oct): chunks + embeddings** (`app/qa/chunks.py`, `app/qa/embed.py`,
+  `embed` stage in the pipeline, 92–99%).
+  - Model `sentence-transformers/all-MiniLM-L6-v2`, revision pinned in `app/config.py`
+    (`EMBED_MODEL_REVISION=1110a243fdf4706b3f48f1d95db1a4f5529b4d41`), 384 dims, CPU only.
+    **`max_seq_length` is 256 word pieces, checked in code** (`model.max_seq_length`; the embedder
+    refuses to start if the dimension is not 384). Every job logs `model@revision` with its stats
+    so eval runs can report them.
+  - Chunks: one per function, method and class (class = header up to its first method; nested
+    functions stay inside their enclosing function), plus module-level chunks: one per contiguous
+    run of top-level code (lines outside every function/class), so a file can have several.
+    Text only from the redacted `files.content`. Blank edge lines trimmed.
+  - Embedded text = `"{path} {qualified_name}\n" + code`. Tokens counted with the model's own
+    tokenizer (special tokens included). A unit over 256 tokens is split into line windows with
+    3 lines of overlap, each with its own start/end lines; each window's exact count is re-checked
+    and shrunk if needed; a single line too long on its own is cut.
+  - Vectors normalized; cosine `<=>`; exact scan scoped to `snapshot_id`, no HNSW. Model loads
+    once per process; encode in batches of 64; delete-then-insert in one transaction.
+    `chunks` gained `start_line`, `end_line`, `token_count`; `search_tsv` holds identifier parts
+    (`getUserById` -> get user by id) for the stretch hybrid retrieval.
+  - Dependencies: first an optional extra `embed`; replaced the same day (see "Task 4
+    follow-ups" below) by a default dependency group. torch comes from the explicit
+    `pytorch-cpu` uv index (CPU wheels, no CUDA). Tests and CI use `EMBEDDER=stub` (hashing
+    embedder, design §19.4). Real-model test: `RUN_MODEL_TESTS=1 uv run pytest -k real_model`.
+  - Tests: unit ranges, windows within budget with overlap and no gaps, JS units, DB rows valid
+    (ranges match file lines, ≤256 tokens, 384-dim unit vectors, no raw secret), cosine search
+    scoped to the snapshot, rerun replaces rows. 159 passed, 3 skipped.
+  - Real runs (both jobs ran at the same time, so times include CPU contention):
+
+    | repo | chunks | windows | units split | of which functions/methods/classes | max tokens | embed time |
+    |---|---|---|---|---|---|---|
+    | expressjs/express | 1219 | 852 | 148 | 30 (18 in tests) | 256 | 83.1 s |
+    | pallets/itsdangerous | 181 | 38 | 13 | 12 (3 in tests) | 251 | 19.4 s |
+
+    No chunk over 256 tokens, no bad line ranges. Express: 1053 of 1219 chunks are in `test/`
+    (mocha `describe`/`it` callbacks are top-level code), and 118 of its 148 split units are
+    module-level runs in test files.
+- **Task 4 follow-ups (28 Oct).**
+  - Token limit re-checked with the tokenizer itself (`len(tokenizer(text)["input_ids"])`,
+    [CLS]/[SEP] included) on every stored chunk of express and itsdangerous: max 256 and 251,
+    none at 257–258, every stored `token_count` equal to the recount. No window change needed.
+    The real-model test now asserts the same per chunk.
+  - `chunks.in_test` (same rule as `findings.in_test`, `app/paths.is_test_path`), stored at write
+    time, so retrieval can leave test code out in SQL (`AND NOT in_test`). Dev DB got one
+    `ALTER TABLE`; the express/itsdangerous chunks predate it (all `false`) until re-run.
+  - Embedding packages are a **default dependency group** `embed` (`[tool.uv] default-groups =
+    ["dev", "embed"]`, uv 0.11.14). Plain `uv sync` / `uv run` installs them, so the
+    `--extra embed` trap is gone: run the API with
+    `uv run --env-file ../.env uvicorn app.main:app --port 8000`. CI sets `UV_NO_GROUP=embed`
+    (applies to `uv run` too) and `EMBEDDER=stub`, so torch and the model are not even installed
+    there. Checked locally both ways (without the group: neither installed, suite green; plain
+    sync: torch 2.14.1+cpu back).
+  - api `Dockerfile`: `uv sync --locked --no-dev` (keeps the embed group; the lock resolves Linux
+    torch to `2.14.1+cpu`, no `nvidia-*` packages); downloads the pinned model revision at build
+    time into `HF_HOME=/opt/hf`, then sets `HF_HUB_OFFLINE=1`; runs as uid 1000 `repolens`.
 
 ## Next
 - Scope change (27 Oct, `7233e27`): Python and JS/TS both get full analysis; CLAUDE.md updated.
-- Day 2 is done on `feat/graph-api`: end-to-end run, green CI, then ask before merging into `main`.
-- Day 3: detectors + findings API, then Q&A (see Day 3 notes).
+- **`feat/graph-api` merged into `main` (28 Oct, `0c514d2`)** after CI was green on `5111572` and
+  on `main` (108 passed, 2 skipped). Includes the user's logo mark and favicons.
+- Day 3 on `feat/detectors`: merge into `main` when approved, then task 5 (`/ask`). Full
+  `docker compose up` check is Day 4.
 - Running tests locally: `uv run --env-file ../.env pytest` (`.env` has `TEST_DATABASE_URL`).
 
 ## Day 2 plan
@@ -321,6 +441,118 @@ Plan decisions:
 - `unresolved` as a symbol kind is the smallest schema change that lets an unresolved import be an edge.
 - If time runs short, task 6 (call edges) shrinks first: same-file and explicitly imported calls only.
 
+## Day 3 plan
+Approved 28 Oct with these changes (they override the task text below where they differ):
+- `react-markdown` yes; never add `rehype-raw` (no raw HTML, ever).
+- Token cap 200k tokens per snapshot.
+- `hardcoded-secret` in a test path (same rule as `exclude_tests`) is severity low, and its message
+  says it is in a test file.
+- No similarity threshold to skip the LLM unless it is calibrated: skip the LLM only when the
+  snapshot has no chunks; otherwise the grounding prompt handles "could not find".
+- Chunk windows stay within the embedding model's input limit (check `max_seq_length` of
+  all-MiniLM-L6-v2 and record it here).
+- 1-hop graph expansion is a config switch (for the Day 4 with/without comparison).
+- Task 5 adds the prompt-injection fixture file for the smoke eval.
+- Fixture tsconfig: `paths` targets use a leading `./` without `baseUrl` (`"./web/src/lib/*"`); the
+  resolver must handle it.
+
+Original draft (28 Oct): Order from CLAUDE.md: detectors + findings API, then Q&A
+(chunks, embeddings, /ask), then the UI panels. Each task ends with: run it, show the result,
+commit, push, check CI, update this file, stop.
+
+1. **Detect stage + Python rules** (`app/detect/`, new pipeline stage after `edges`).
+   - Re-parse each code file's redacted content with Tree-sitter (the parse stage keeps no trees;
+     re-parsing is cheap). Each rule: id, language, severity, label, what it looks for, why it is
+     risky, "possible false positive if…". Finding = file, line, enclosing symbol, masked snippet.
+   - Delete-then-insert only its own rule ids; `hardcoded-secret` (discover stage) is untouched.
+   - Python rules:
+     - `py-eval-exec` (high): calls to the builtins `eval(...)` / `exec(...)`; `obj.eval()` is not
+       flagged.
+     - `py-subprocess-shell` (high): `subprocess.*(..., shell=True)`, including `from subprocess
+       import run` and aliases.
+     - `py-sql-string` (high): a SQL-shaped literal (`SELECT … FROM`, `INSERT INTO`, `UPDATE … SET`,
+       `DELETE FROM`) built with an f-string, `+`, `%` or `.format(...)` with a non-literal part.
+     - `py-bare-except` (low): `except:` with no exception type.
+   - Fixtures: `tests/fixtures/detectors/` with positive and negative samples per rule (committed,
+     never executed); one test per rule that checks the exact lines it reports.
+2. **JS/TS rules** (same stage).
+   - `js-eval` (high): `eval(...)`; `js-new-function` (high): `new Function(...)`.
+   - `js-child-process-exec` (high): `exec` / `execSync` bound to `child_process` (require or
+     import, incl. `cp.exec`, destructured and aliased) with a non-literal first argument.
+   - `js-inner-html` (medium): assignment to `.innerHTML` / `.outerHTML` with a non-literal value.
+   - `js-sql-string` (high): SQL-shaped template literal with `${}`, or `+` concatenation with a
+     SQL-shaped literal.
+   - Same fixture/test pattern. Run on express, ky and black and hand-check the findings
+     (a quick precision check now; the measured eval with Bandit/Semgrep is Day 4).
+3. **Findings API.** `GET /snapshots/{id}/findings?severity=&rule=&language=&path=&limit=&offset=`
+   - Paginated (Day 3 note): `{ total, limit, offset, items, counts: {by_severity, by_rule} }`,
+     sorted by severity, then path, then line.
+   - Rule catalogue served from the backend (`GET /rules` or inside the response), so UI labels
+     always match real rule ids.
+   - Graph and file endpoints already carry finding counts; no change needed there.
+4. **Chunks + embeddings** (new stages `chunk` and `embed`).
+   - One chunk per function, method and class (class chunk = header and body up to its first
+     method) + one module chunk per file (top-level code outside any symbol). Each chunk text starts
+     with `path:start-end` and the qualified name. Very long symbols are split by line windows.
+   - Text comes from the redacted file content; `search_tsv` fills identifiers split into words
+     (`getUserById` -> get user by id), ready for the hybrid stretch item.
+   - Embeddings: `sentence-transformers` with `all-MiniLM-L6-v2` (384 dims, matches the schema).
+     torch must come from the CPU wheel index (uv index config), otherwise the Linux Docker image
+     pulls multi-GB CUDA wheels. The model (~90 MB) is downloaded once and cached (a Docker volume
+     for the api service; pre-fetch in the Dockerfile).
+   - Behind an `Embedder` interface; tests and CI use a deterministic stub (no model download).
+5. **Q&A: `POST /snapshots/{id}/ask`** (`app/qa/`).
+   - Route: structural questions ("which files import X", "who/what calls Y", "what does X
+     import/call") are answered from the graph, labelled `graph`, with no LLM.
+   - Retrieve: embed the question, exact top-k (k=8) cosine scan for this snapshot, then 1-hop
+     expansion through import/call edges (up to 8 more chunks, highest confidence first), within a
+     context budget; every snippet tagged `path:start-end`.
+   - If the snapshot has no chunks, answer "I could not find this in the provided code." with no
+     LLM call; otherwise the grounding prompt handles it (no uncalibrated threshold).
+   - `LLMProvider` with `AnthropicProvider` (official `anthropic` SDK; check the installed Messages
+     API first; model from `LLM_MODEL`; temperature 0) and `FakeProvider` for tests.
+   - Day 3 notes: timeout (30 s), at most one retry, per-snapshot token cap
+     (`LLM_TOKEN_CAP_PER_SNAPSHOT`, counted in a new `snapshots.llm_tokens_used` column). If any of
+     these trips, or no key is set: "AI answers are unavailable right now. Graph questions still
+     work." The key never reaches logs, errors or the frontend.
+   - `app/qa/prompts/system.md` with `PROMPT_VERSION` (identity, grounding, citations, trust
+     boundary as CLAUDE.md states them), returned in every `/ask` response.
+   - Citation validation: only `path:start-end` tags whose path was in the context and whose range
+     lies inside a provided snippet are kept; the rest are stripped from the text and counted
+     (`dropped`). Response: `{ route, answer, citations[], dropped, prompt_version }`.
+   - Tests: router, citation validator, retrieval with the stub embedder, `/ask` with FakeProvider
+     (incl. LLM down, cap reached, no relevant code). No API key in CI.
+6. **Findings UI** (`/a/:id/findings`).
+   - Analysis tabs under the repo header: Explorer | Findings (n) (spec §3.4; no other tabs).
+   - Filters for severity, rule, language and path in the URL. The spec's notice: "These are
+     rule-based checks. They can miss issues and can flag safe code. Review each one."
+   - Rows with severity shown as icon + text + colour. A detail panel shows what the rule looks for,
+     why it is risky, the false-positive hint, the masked snippet, "Open in Explorer" (file selected,
+     line highlighted) and "Copy location". Secrets are always "value hidden".
+   - Empty: "No findings from our current rules. This does not guarantee the code is safe."
+   - Node panel gets a Findings tab; Progress lists the new stages (detectors, search).
+7. **Ask drawer.**
+   - "Ask" button in the analysis header opens a right drawer, kept open across tabs. The
+     conversation is per snapshot, in sessionStorage, with a one-click clear.
+   - Answers are labelled "AI answer" or "From the graph"; validated citations are chips that open
+     the Explorer on that file with the lines highlighted; "1 source could not be verified and was
+     removed" when `dropped > 0`.
+   - Suggested questions are built from real data (top hub files, files with findings).
+   - Markdown rendered without raw HTML. Unavailable, no-answer and cap states use the spec's copy.
+   - "Ask about this" from the node panel pre-fills the file.
+
+Decisions to confirm:
+- New dependencies:
+  - `anthropic` (required);
+  - `sentence-transformers` with CPU-only torch (required by CLAUDE.md);
+  - `react-markdown` for safe rendering (escapes HTML by default). The alternative is a small
+    hand-written formatter for paragraphs, lists and code.
+- Token cap default: 200k tokens per snapshot, in a new `snapshots.llm_tokens_used` column (a
+  one-line schema change plus an `ALTER TABLE` on the dev DB).
+- Severities as listed (secrets stay high).
+- If time runs short: task 7's suggested questions and "Ask about this" shrink first, then the node
+  panel Findings tab.
+
 ## Day 3 notes
 Agreed 27 Oct, to apply when building Day 3:
 - `GET /snapshots/{id}/findings` is paginated (limit/offset with a total), not one unbounded list.
@@ -364,8 +596,13 @@ Agreed 27 Oct, to apply when building Day 3:
 - Docker Desktop can stop on its own; if DB tests error on connect, start it and `docker compose up -d db`.
 - JS member assignments and object-literal methods become symbols only at top level, not inside
   functions (e.g. `function setup(app) { app.get = ... }` is not a symbol).
-- `hardcoded-secret` is noisy on test code (placeholder keys in `tests/`). Consider lower severity
-  for test paths when the Day 3 detectors land.
+- The api image is built and loads the model offline, but the full `docker compose up` stack
+  with the model is not checked yet (Day 4).
+- Test code dominates retrieval on test-heavy repos (express: 86% of chunks in `test/`). Task 5
+  leaves `in_test` chunks out by default; decide the default with the Q&A eval.
+- On Windows, `uv sync` fails with "Access is denied" on a `.pyd` while the API is running from
+  the same venv: stop uvicorn first.
+- First real-model load takes ~1–2 min (download + torch import); later loads are faster.
 - Fixture tests do not reproduce the 0.26.0 crash (only bigger files did); the pin is the guard.
   Re-check before ever lifting it.
 - `httpx` with Starlette TestClient emits a deprecation warning (suggests `httpx2`); harmless for now.
