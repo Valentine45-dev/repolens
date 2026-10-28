@@ -204,9 +204,23 @@ removed 4 invalid ones in total). Both failures are the unanswerable traps answe
 but with citations: on manual review the answers are correct; the rule was too narrow for
 false-premise questions. Median latency 4.3 s. 18 calls cost about $0.22.
 
-**Real-world precision on PyGoat** (an intentionally vulnerable Django app): samples of 20
-findings per tool are drawn and labelled, but the labels are not confirmed yet, so no number
-is reported here.
+**Real-world precision on PyGoat** (an intentionally vulnerable Django app, commit `46fef96`):
+a random sample of 20 findings per tool (seed 20261028), each labelled real ("a reviewer should
+act on it") or false alarm ("correctly matched, but no action needed: by design, test-only,
+documentation"), labels confirmed before scoring.
+
+| Tool | Precision | 95% interval |
+|---|---|---|
+| RepoLens | 18/20 = 0.90 | 0.70–0.97 |
+| Bandit 1.9.4, binding to 0.0.0.0 (B104) counted as false alarm | 13/20 = 0.65 | 0.43–0.82 |
+| Bandit 1.9.4, B104 counted as real | 17/20 = 0.85 | 0.64–0.95 |
+
+PyGoat's deliberate lab secrets flatter any secret rule, and 16 of RepoLens's 20 sampled
+findings are secrets. The tools flag different kinds of problems, the samples are small and the
+intervals overlap, so this does not show that either tool is more precise overall. Recall is
+not measured. The eval also found a redaction bug (an f-string placeholder like `{password}`
+was treated as a secret and stored redacted); it was fixed afterwards, and the numbers above
+are from the run before the fix.
 
 ## Known limitations
 

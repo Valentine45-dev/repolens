@@ -14,6 +14,8 @@ const EXAMPLES = [
   "https://github.com/pallets/itsdangerous",
   "https://github.com/expressjs/express",
   "https://github.com/sindresorhus/ky",
+  // Intentionally vulnerable Django app; used for the real-world precision eval.
+  "https://github.com/adeyosemanputra/pygoat",
 ];
 
 function validate(value: string): string | null {

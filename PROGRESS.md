@@ -691,13 +691,38 @@
   - Populations: RepoLens 59 (hardcoded-secret 47, py-bare-except 9, subprocess-shell 1,
     eval-exec 1, sql-string 1); Bandit 1.9.4 130 (B105 49, B104 24, B201 19, B106 9, others
     small), on the same 115 Python files, 0 parse errors.
-  - Seed 20261028, 20 per tool. Proposed labels in `eval/labels/pygoat-46fef96.yaml`
-    (`confirmed: false`): RepoLens 18 real / 2 false alarm, Bandit 13 / 7. **Waiting for the
-    owner's confirmation; no precision number until then.** Recall is not measured.
-  - **Bug found:** the redactor treats `password='{password}'` inside an f-string as a secret.
-    `dockerized_labs/sql_injection_lab/app.py:51` is stored as `... password='[REDACTED]'`, so
-    the UI, Q&A snippets and findings show a corrupted line, and a false hardcoded-secret
-    finding is raised (the SQL-string finding on that line is still found). Not fixed yet.
+  - Seed 20261028, 20 per tool. Labels in `eval/labels/pygoat-46fef96.yaml`, **confirmed by the
+    owner unchanged** under the owner's definition (written into the file): real = a reviewer
+    should act on it (security risk or genuine code-quality problem); false alarm = correctly
+    matched pattern but no action needed (by design, test-only, documentation).
+  - **Precision** (`eval/score_realworld.py`,
+    `eval/results/realworld_precision_scored-20261028T101951Z-9e6915f.json`; Wilson 95%):
+
+    | tool | sample | precision | 95% interval |
+    |---|---|---|---|
+    | RepoLens | 18/20 | 0.90 | 0.70–0.97 |
+    | Bandit, B104 as false alarm (as labelled) | 13/20 | 0.65 | 0.43–0.82 |
+    | Bandit, B104 counted as real | 17/20 | 0.85 | 0.64–0.95 |
+
+    Per rule: RepoLens hardcoded-secret 14/16, py-bare-except 4/4. Bandit B105 10/10, B104 0/4,
+    B106 0/2 (test passwords), B603 0/1, B113 1/1, B201 1/1, B324 1/1.
+  - **How to read this:** PyGoat is vulnerable by design, so its lab secrets flatter any secret
+    rule (secrets are 16 of RepoLens's 20 sampled findings). The two tools flag different things
+    (Bandit: binds, debug mode, weak hashes, timeouts; RepoLens: secrets, bare excepts), the
+    samples are 20 each, and the intervals overlap, so this does not show that either tool is
+    more precise overall. Recall is not measured (no full answer key).
+  - **Bug found by this eval, fixed afterwards (`116ca46`):** the redactor treated
+    `password='{password}'` inside an f-string as a secret, so
+    `dockerized_labs/sql_injection_lab/app.py:51` was stored as `... password='[REDACTED]'` (UI,
+    Q&A snippets and findings showed a corrupted line) and a false hardcoded-secret finding was
+    raised (RepoLens sample #19). Fix: a value made only of f-string placeholders (`{name}`,
+    `{a}{b}`) is not a secret; a placeholder mixed with a literal still is. Tests added. PyGoat
+    re-ingested in place at the same commit (job 53, `error='Re-run: ...'` on job 52): 58
+    findings (hardcoded-secret 47 -> 46), line 51 stored intact with only its SQL-string finding,
+    checked in the UI and API. **The precision numbers above are from the pre-fix run and were
+    not recomputed.** Other snapshots were not re-ingested.
+  - PyGoat is the 4th example chip on Home (it reuses snapshot 55 while its HEAD stays
+    `46fef96`). The local (git-ignored) `.claude/launch.json` gained an `api` entry (native uvicorn).
 
 ## Demo plan (8 GB laptop)
 The full compose stack works (tested 28 Oct) but left ~0.66 GB free and crashed the machine
