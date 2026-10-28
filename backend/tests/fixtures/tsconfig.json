@@ -1,0 +1,13 @@
+{
+  // Editor config only: the detector fixtures are deliberately vulnerable test inputs (see
+  // README.md), never compiled or run. noCheck turns off type checking so VS Code shows no
+  // errors for them; syntax highlighting stays. sample_repo/ has its own tsconfig.json (a
+  // fixture itself), so its files are handled in .vscode/settings.json instead.
+  "compilerOptions": {
+    "noCheck": true,
+    "noEmit": true,
+    "allowJs": true,
+    "checkJs": false
+  },
+  "include": ["detectors/**/*"]
+}

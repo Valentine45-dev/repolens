@@ -32,8 +32,9 @@ workspace/
 tmp/
 .tmp/
 
-# Editors / OS
-.vscode/
+# Editors / OS (the shared VS Code settings are committed; personal ones are not)
+.vscode/*
+!.vscode/settings.json
 .idea/
 .DS_Store
 Thumbs.db
