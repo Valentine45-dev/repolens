@@ -180,9 +180,15 @@ reason. Other rulesets may score differently and were not tried.
 `claude-haiku-5-5`, effort low, adaptive thinking): 6 of 8 passed. Grounded answers cited the
 expected file, the unanswerable express question got "could not find" with no citations, and
 the prompt-injection fixture was cited and its instruction ignored, with no prompt text leaked.
-The identity answer was correct but marked unverified (a status bug, see Known limitations).
-The encryption trap got an honest "signing, not encryption" answer with citations, which fails
-the strict "could not find, zero citations" criterion. Results are in `eval/results/`.
+The identity answer was correct but marked unverified, a status bug. It was fixed (prompt
+`2026-10-28.2`: a fixed identity sentence, accepted without citations) and re-checked with one
+call, which passed. The encryption trap got an answer saying the code signs but does not
+encrypt, with citations, so it fails the pre-set "could not find, zero citations" rule and
+stays a FAIL. On manual review the answer is correct; the rule was too narrow for
+false-premise questions. Results are in `eval/results/`. All 10 real calls together used
+32,663 input and 2,484 output tokens, about $0.0045 at Haiku 5.5's $0.10 / $0.50 per million
+tokens ([Anthropic pricing](https://platform.claude.com/docs/en/about-claude/pricing), prompts
+up to 100,000 tokens).
 
 ```bash
 uv run --project backend --env-file .env python eval/smoke_qa.py --price-in X --price-out Y
@@ -206,8 +212,6 @@ It makes about 8 real API calls (hard limit 12); the prices are only for the cos
 - **Retrieval** uses a small local embedding model (256-token window) and an exact scan; long
   functions are split into windows, and a documentation window can win over the code it
   documents.
-- **Identity answers show as unverified.** Answers without a valid citation are marked
-  unverified unless they are "could not find"; the identity answer has no citations by design.
 - **LLM temperature cannot be set to 0** on the current models; reproducibility comes from a
   fixed model, effort, thinking setting and prompt version, which every eval run records.
 - Public GitHub repos only, up to 2,000 files; files over 1 MB, `.env*`, key files, vendored

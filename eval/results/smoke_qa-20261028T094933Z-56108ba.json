@@ -1,0 +1,70 @@
+{
+  "run": {
+    "commit_sha": "56108baf6b25b17ee8ebcc68f54b4f384efb653c",
+    "dirty": false,
+    "run_at": "2026-10-28T09:49:33+00:00",
+    "embedder": "sentence-transformers",
+    "embed_model": "sentence-transformers/all-MiniLM-L6-v2",
+    "embed_revision": "1110a243fdf4706b3f48f1d95db1a4f5529b4d41",
+    "llm_used": true,
+    "llm": {
+      "provider": "anthropic",
+      "model": "claude-haiku-5-5",
+      "effort": "low",
+      "thinking": "adaptive",
+      "max_tokens": 4000,
+      "prompt_version": "2026-10-28.2"
+    },
+    "retrieval": {
+      "top_k": 8,
+      "graph_expansion": true,
+      "expand_max": 8,
+      "context_tokens": 6000
+    }
+  },
+  "totals": {
+    "questions": 1,
+    "passed": 1,
+    "calls": 1,
+    "tokens_in": 1385,
+    "tokens_out": 27,
+    "prices_usd_per_mtok": {
+      "in": 0.1,
+      "out": 0.5
+    },
+    "cost_usd": 0.000152
+  },
+  "questions": [
+    {
+      "id": "identity",
+      "type": "identity",
+      "repo": "fixture",
+      "question": "Who are you?",
+      "pass": true,
+      "reasons": [],
+      "status": "answered",
+      "answer": "I am RepoLens's assistant. I answer questions about the code in this repository.",
+      "citations": [],
+      "dropped": 0,
+      "retrieval": {
+        "k": 8,
+        "expand": true,
+        "include_tests": false,
+        "used_test_code": false,
+        "sent": 10,
+        "from_graph": 2
+      },
+      "sources_sent": [
+        "sample_app/broken.py",
+        "sample_app/models.py",
+        "sample_app/service.py",
+        "web/src/lib/index.ts",
+        "web/src/server.js"
+      ],
+      "calls": 1,
+      "seconds": 27.6,
+      "tokens_in": 1385,
+      "tokens_out": 27
+    }
+  ]
+}
