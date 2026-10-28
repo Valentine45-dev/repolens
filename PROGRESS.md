@@ -529,6 +529,40 @@
     `...-fixed-...-1f0729b.json` (before the `text/*` fix, same numbers),
     `...-fixed-...-6f96059.json`.
 
+- **Detector eval, first run (28 Oct, `0403bcb`, `eval/results/detectors-...-0403bcb.json`).**
+  - New fixtures written for the eval (not the unit-test fixtures RepoLens was tuned on):
+    `eval/detector_fixtures/python/shop.py`, `js/server.js`; labels are trailing
+    `vuln:`/`safe:` comments, committed before any tool ran. 40 labels: Python 11 vuln / 11
+    safe, JS 9 vuln / 9 safe. Categories: code-injection, shell-command, sql-injection,
+    html-injection, bare-except (Python), hardcoded-secret.
+  - Tools: Bandit 1.9.4 (all tests) on Python; Semgrep 1.182.1 natively on Windows (no Docker
+    needed), `p/javascript` + `p/secrets`, 104 rules run, no errors. Rule ids mapped to the
+    categories by fixed tables in `eval/detector_eval.py`; unmapped findings listed, not
+    counted. Match = same file, line and category on a `vuln` line.
+
+    | language | tool | TP | FP | FN | precision | recall |
+    |---|---|---|---|---|---|---|
+    | python | RepoLens | 11 | 6 | 0 | 0.65 | 1.00 |
+    | python | Bandit | 8 | 5 | 3 | 0.62 | 0.73 |
+    | javascript | RepoLens | 9 | 3 | 0 | 0.75 | 1.00 |
+    | javascript | Semgrep | 1 | 1 | 8 | 0.50 | 0.11 |
+
+  - RepoLens and Bandit flag the same Python negatives: constant `eval`, `shell=True` with a
+    fixed string, SQL with a constant table name, a logged (never executed) SQL string, and a
+    placeholder password. Bandit misses both hardcoded secrets (an API key and a URL password:
+    its B105 only looks at names like `password`) and has no bare-except rule (B110 is
+    try/except/pass). RepoLens's JS FPs: a placeholder token, constant `eval` and constant
+    `new Function`.
+  - Semgrep: its `p/javascript` rules are mostly taint rules that need request input (`req.*`)
+    flowing into the sink; only one fixture function takes `req`, so most sinks never fire.
+    Its one hit (`code-string-concat` on the `eval(req.query.expr)` line) counted; its other
+    finding on that line (`direct-response-write`, an XSS rule) maps to html-injection, which is
+    not the label there, so it is an FP. This is a property of the fixture, not a Semgrep
+    failure; a fixture variant where input comes from `req` would be a separate, pre-labelled
+    run. Not changed after seeing results.
+  - Caveats: small, hand-written fixtures by the same author as the detectors; "safe" labels
+    for logged SQL and constant table names are judgement calls.
+
 ## Planned vs delivered
 - **Temperature 0 (CLAUDE.md) is not possible on current models.** `temperature`, `top_p` and
   `top_k` return 400 (Sonnet 5.5 and Haiku 5.5 migration guides; the installed SDK's
