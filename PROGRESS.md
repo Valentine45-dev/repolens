@@ -600,6 +600,25 @@
     repo (supplied by the user) and hand-label a sample of each tool's findings for real-world
     precision.
 
+- **Full `docker compose up` demo test (28 Oct, `feat/demo-readme`).**
+  - Build OK; the api loads the model in ~60 s at startup (810 MB of its 2 GB limit at idle).
+    itsdangerous re-ingested through the UI inside the container (job 50, `error='Re-run: full
+    docker compose demo test'` on job 48): done, 181 chunks, embed 72.9 s on 2 CPUs. Explorer,
+    node panel, Findings (7, all low/test), Ask: graph answer "From the graph", AI answer
+    "unavailable" (checked with `LLM_API_KEY=""` through a scratch compose override, because
+    `.env` got a key mid-test).
+  - **Broke:** the `web` container ran the Vite dev server; through Docker Desktop's port proxy
+    on Windows, some of its ~100 module requests per page load got `ERR_CONNECTION_RESET`
+    (first Findings load was a blank page) and the HMR websocket failed. **Fix:** `web/Dockerfile`
+    now runs `npm run build` and serves with `vite preview` (same `/api` proxy, since
+    `preview.proxy` falls back to `server.proxy`). Pages then loaded every time.
+  - Afterwards the user stopped the stack because the laptop ran low on memory (8 GB RAM: api 2 GB
+    limit + db + web + Docker Desktop). For the demo, close other apps; don't also run the
+    native dev API/Vite (they held 8000/5173 on loopback during this test).
+  - README written. PyGoat vs NodeGoat checked with `gh api` (metadata only, nothing cloned):
+    PyGoat MIT, 462 files (115 .py), 1.7 MB of files; NodeGoat Apache-2.0, 111 files (40 .js,
+    19 in vendor dirs), 3.0 MB. Both fit the limits.
+
 ## Planned vs delivered
 - **Temperature 0 (CLAUDE.md) is not possible on current models.** `temperature`, `top_p` and
   `top_k` return 400 (Sonnet 5.5 and Haiku 5.5 migration guides; the installed SDK's
@@ -1008,8 +1027,7 @@ are deliberately not changed after seeing eval results; these stay as documented
 - Docker Desktop can stop on its own; if DB tests error on connect, start it and `docker compose up -d db`.
 - JS member assignments and object-literal methods become symbols only at top level, not inside
   functions (e.g. `function setup(app) { app.get = ... }` is not a symbol).
-- The api image is built and loads the model offline, but the full `docker compose up` stack
-  with the model is not checked yet (Day 4).
+- Full `docker compose up` stack checked 28 Oct (see Done); it is heavy for an 8 GB laptop.
 - Test code dominates retrieval on test-heavy repos (express: 86% of chunks in `test/`). `/ask`
   leaves `in_test` chunks out by default; confirm the default with the Q&A eval.
 - An answer without any citation counts as `unverified` (the prompt requires citations), unless
