@@ -42,6 +42,11 @@ _PATTERNS: list[tuple[str, re.Pattern[str]]] = [
 ]
 
 
+# A value made only of f-string placeholders ("{password}", "{user}{pw}") is filled in at run
+# time, so it is not a secret (found by the PyGoat eval: an f-string SQL query was redacted).
+_PLACEHOLDER_ONLY = re.compile(r"(?:\{[^{}\s]*\})+")
+
+
 @dataclass(frozen=True)
 class SecretMatch:
     """Where a secret was found. Never holds the secret value."""
@@ -56,6 +61,8 @@ def redact(text: str) -> tuple[str, list[SecretMatch]]:
     for kind, pattern in _PATTERNS:
         for m in pattern.finditer(text):
             if "secret" in pattern.groupindex:
+                if _PLACEHOLDER_ONLY.fullmatch(m["secret"]):
+                    continue
                 start, end = m.span("secret")
             else:
                 start, end = m.span()
