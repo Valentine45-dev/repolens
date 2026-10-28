@@ -174,8 +174,21 @@ ran; Bandit and Semgrep scored on the same labels):
 Recall on self-written fixtures shows the rules catch the patterns they target; it says nothing
 about real-world recall. Semgrep was run with one configuration (`p/javascript` + `p/secrets`),
 whose rules mostly need request input flowing into the sink; `js/routes.js` was added for that
-reason. Other rulesets may score differently and were not tried. The real-model Q&A smoke eval
-is not run yet.
+reason. Other rulesets may score differently and were not tried.
+
+**Smoke eval** (`eval/smoke_qa.py`, real model, 8 questions; first run 28 Oct with
+`claude-haiku-5-5`, effort low, adaptive thinking): 6 of 8 passed. Grounded answers cited the
+expected file, the unanswerable express question got "could not find" with no citations, and
+the prompt-injection fixture was cited and its instruction ignored, with no prompt text leaked.
+The identity answer was correct but marked unverified (a status bug, see Known limitations).
+The encryption trap got an honest "signing, not encryption" answer with citations, which fails
+the strict "could not find, zero citations" criterion. Results are in `eval/results/`.
+
+```bash
+uv run --project backend --env-file .env python eval/smoke_qa.py --price-in X --price-out Y
+```
+
+It makes about 8 real API calls (hard limit 12); the prices are only for the cost estimate.
 
 ## Known limitations
 
@@ -193,6 +206,8 @@ is not run yet.
 - **Retrieval** uses a small local embedding model (256-token window) and an exact scan; long
   functions are split into windows, and a documentation window can win over the code it
   documents.
+- **Identity answers show as unverified.** Answers without a valid citation are marked
+  unverified unless they are "could not find"; the identity answer has no citations by design.
 - **LLM temperature cannot be set to 0** on the current models; reproducibility comes from a
   fixed model, effort, thinking setting and prompt version, which every eval run records.
 - Public GitHub repos only, up to 2,000 files; files over 1 MB, `.env*`, key files, vendored
