@@ -5,6 +5,7 @@ import { Link, Navigate, useNavigate, useParams } from "react-router-dom";
 import { ApiError, getStatus, isFinished, repoName, submitRepo, type SnapshotStatus } from "../api";
 import { ConnectionNotice, isReconnecting } from "../components/ConnectionNotice";
 import { Icon } from "../components/Icon";
+import { stageProgress } from "../progress";
 import { rememberAnalysis } from "../recent";
 
 // The pipeline's real stages, in order (app/ingest/pipeline.py run_job). Search for questions
@@ -19,14 +20,6 @@ const STAGES = [
 ] as const;
 
 type RowState = "pending" | "active" | "done" | "failed";
-
-// The job's percent is a fixed milestone for every stage except parse, which moves from 40 to 80
-// as files are parsed (pipeline.py). Only that stage gets a number, relative to the stage.
-function stageProgress(status: SnapshotStatus): string | null {
-  if (status.stage !== "parse") return null;
-  const parsed = Math.round(((status.percent - 40) / 40) * 100);
-  return `${Math.min(Math.max(parsed, 0), 100)}%`;
-}
 
 const SLOW_AFTER_MS = 60_000;
 

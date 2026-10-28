@@ -16,7 +16,7 @@ def test_ingest_fixture_repo(client, tmp_path):
     status = client.get(f"/snapshots/{body['snapshot_id']}/status").json()
     assert status["status"] == "done", status
     assert status["percent"] == 100
-    assert status["url"] == "https://github.com/example/sample"
+    assert status["url"] == "https://github.com/Example/Sample"  # capitalisation kept, .git dropped
 
     files = query("SELECT path FROM files ORDER BY path")
     assert len(files) == 16  # 7 Python, 8 JS/TS, tsconfig.json
@@ -122,6 +122,31 @@ def test_pinned_commit_skips_ls_remote_and_reuses_the_analysis(client, monkeypat
 def test_pinned_commit_must_be_a_full_sha(client, commit):
     r = client.post("/repos", json={"url": "https://github.com/example/sample", "commit": commit})
     assert r.status_code == 422
+
+
+def test_repo_matching_ignores_case_and_keeps_the_capitalised_name(client):
+    lower = client.post("/repos", json={"url": "https://github.com/example/sample"}).json()
+    mixed = client.post("/repos", json={"url": "https://github.com/Example/Sample"}).json()
+    again = client.post("/repos", json={"url": "https://github.com/EXAMPLE/sample.git"}).json()
+    assert lower["snapshot_id"] == mixed["snapshot_id"] == again["snapshot_id"]
+    assert query("SELECT count(*) AS n FROM repos")[0]["n"] == 1
+    # A capitalised spelling replaces the all-lower-case one; a later spelling with capitals
+    # replaces it again; an all-lower-case resubmit keeps the last capitalised one.
+    client.post("/repos", json={"url": "https://github.com/Example/Sample"})
+    client.post("/repos", json={"url": "https://github.com/example/sample"})
+    status = client.get(f"/snapshots/{lower['snapshot_id']}/status").json()
+    assert status["url"] == "https://github.com/Example/Sample"
+
+
+def test_status_reports_stage_counts_only_while_a_slow_stage_runs(client):
+    body = client.post("/repos", json={"url": "https://github.com/example/sample"}).json()
+    status = client.get(f"/snapshots/{body['snapshot_id']}/status").json()
+    assert status["status"] == "done" and status["progress"] is None
+    from app.ingest.pipeline import _set_job
+
+    _set_job(body["job_id"], "embed", 95, done=256, total=1600)
+    status = client.get(f"/snapshots/{body['snapshot_id']}/status").json()
+    assert (status["stage"], status["progress"]) == ("embed", {"done": 256, "total": 1600})
 
 
 def test_unknown_snapshot_is_404(client):

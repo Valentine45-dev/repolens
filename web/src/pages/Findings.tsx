@@ -198,7 +198,7 @@ function PathFilter({ value, onChange }: { value: string; onChange: (value: stri
         id={id}
         className="input input-small mono"
         value={draft}
-        placeholder="src/"
+        placeholder="e.g. src/"
         spellCheck={false}
         onChange={(e) => setDraft(e.target.value)}
         onBlur={apply}

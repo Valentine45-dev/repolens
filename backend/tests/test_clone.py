@@ -16,7 +16,9 @@ from app.ingest.clone import (
     "url, expected",
     [
         ("https://github.com/pallets/itsdangerous", "https://github.com/pallets/itsdangerous"),
-        ("https://github.com/Pallets/ItsDangerous/", "https://github.com/pallets/itsdangerous"),
+        # Capitalisation is kept for display; the database matches on lower(url).
+        ("https://github.com/Pallets/ItsDangerous/", "https://github.com/Pallets/ItsDangerous"),
+        ("https://github.com/Valentine45-dev/JARVIS.git", "https://github.com/Valentine45-dev/JARVIS"),
         ("https://github.com/psf/requests.git", "https://github.com/psf/requests"),
         ("  https://github.com/a-b/c.d_e  ", "https://github.com/a-b/c.d_e"),
     ],

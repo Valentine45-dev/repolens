@@ -17,7 +17,7 @@ from app.qa.prompt import (
     system_prompt,
 )
 from app.qa.retrieve import Snippet
-from app.qa.router import match_route
+from app.qa.router import count_phrase, match_route
 
 # Edit system.md -> bump PROMPT_VERSION -> add its hash here. A changed file with an old
 # version fails this test, so every prompt change gets a new version.
@@ -44,6 +44,19 @@ PROMPT_HASHES = {
 def test_routes(question, expected):
     route = match_route(question)
     assert route is not None and (route.direction, route.edge, route.target) == expected
+
+
+@pytest.mark.parametrize("kinds, phrase", [
+    (["module"] * 6, "6 files"),
+    (["module"], "1 file"),
+    (["external"], "1 package"),
+    (["module", "module", "external"], "2 files and 1 package"),
+    (["function", "method", "class"], "2 functions and 1 class"),
+    (["module", "function", "class", "unresolved"],
+     "1 file, 1 function, 1 class and 1 unresolved import"),
+])
+def test_graph_answer_counts_name_what_was_found(kinds, phrase):
+    assert count_phrase(kinds) == phrase
 
 
 @pytest.mark.parametrize("question", [

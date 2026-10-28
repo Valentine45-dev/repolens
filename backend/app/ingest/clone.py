@@ -51,14 +51,16 @@ _NETWORK_ERRORS = re.compile(
 
 
 def normalize_repo_url(url: str) -> str:
-    """Accept only https://github.com/<owner>/<repo>; return a lower-case canonical form."""
+    """Accept only https://github.com/<owner>/<repo>; return https://github.com/<owner>/<repo>
+    with the capitalisation as given (GitHub names are case-insensitive, so the database matches
+    repos on lower(url), and the display keeps e.g. "Valentine45-dev/JARVIS")."""
     m = _GITHUB_URL.match(url.strip())
     if not m:
         raise InvalidRepoUrl("Only https://github.com/<owner>/<repo> URLs are accepted.")
     repo = m["repo"].removesuffix(".git")
     if repo in ("", ".", ".."):
         raise InvalidRepoUrl("Only https://github.com/<owner>/<repo> URLs are accepted.")
-    return f"https://github.com/{m['owner'].lower()}/{repo.lower()}"
+    return f"https://github.com/{m['owner']}/{repo}"
 
 
 def _git_env() -> dict[str, str]:

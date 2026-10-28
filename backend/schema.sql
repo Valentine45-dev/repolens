@@ -6,9 +6,11 @@ CREATE EXTENSION IF NOT EXISTS vector;
 
 CREATE TABLE repos (
   id          BIGSERIAL PRIMARY KEY,
-  url         TEXT NOT NULL UNIQUE,             -- normalized https://github.com/owner/repo
+  url         TEXT NOT NULL,                    -- https://github.com/Owner/Repo, case as given
   created_at  TIMESTAMPTZ DEFAULT now()
 );
+-- GitHub names are case-insensitive: one row per repo whatever the capitalisation.
+CREATE UNIQUE INDEX repos_url_ci ON repos (lower(url));
 
 -- A snapshot is one repo at one exact commit (SHA resolved with `git ls-remote`).
 CREATE TABLE snapshots (
@@ -29,6 +31,9 @@ CREATE TABLE jobs (
   percent       INT NOT NULL DEFAULT 0,
   error         TEXT,
   search_error  TEXT,                             -- embed stage failed; the job still finishes
+  -- Counts within the current stage (parse: files, embed: chunks); NULL in other stages.
+  progress_done  INT,
+  progress_total INT,
   created_at    TIMESTAMPTZ DEFAULT now()
 );
 CREATE INDEX jobs_snapshot ON jobs (snapshot_id);
@@ -36,7 +41,7 @@ CREATE INDEX jobs_snapshot ON jobs (snapshot_id);
 -- A snapshot is "ready" when its latest job is done.
 CREATE VIEW snapshot_status AS
 SELECT DISTINCT ON (snapshot_id) snapshot_id, id AS job_id, status, stage, percent, error,
-  search_error
+  search_error, progress_done, progress_total
 FROM jobs
 ORDER BY snapshot_id, id DESC;
 
