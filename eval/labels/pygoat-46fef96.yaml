@@ -2,8 +2,14 @@
 # (pygoat @ 46fef968f3f44d1191363baf936aaa3335dc5c6d, seed 20261028, n 20 per tool).
 # Definitions are in eval/realworld_precision.py. Proposed by Claude from the stored
 # (redacted) lines plus context; RepoLens #19 also checked against the original line via the
-# GitHub contents API. NOT CONFIRMED: no precision is computed until the owner confirms.
-confirmed: false
+# GitHub contents API. Confirmed by the project owner on 28 Oct 2026, unchanged, under the
+# definition below (it replaces the draft definition in eval/realworld_precision.py for scoring).
+confirmed: true
+confirmed_by: project owner
+confirmed_on: 2026-10-28
+definition:
+  real: "a reviewer should act on it (security risk or genuine code-quality problem)"
+  false_alarm: "correctly matched pattern but no action needed (by design, test-only, documentation)"
 judgement_calls:
   - "Bandit B104 (bind 0.0.0.0) labelled false alarm: these lab apps run in containers, where
     binding all interfaces is needed for port mapping and is not a weakness by itself. debug=True
