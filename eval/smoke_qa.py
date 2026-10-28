@@ -60,6 +60,7 @@ class CountingProvider:
     def __init__(self, inner, max_calls: int):
         self.inner, self.max_calls = inner, max_calls
         self.name, self.settings = inner.name, inner.settings
+        self.counts_toward_budget = inner.counts_toward_budget
         self.calls = 0
         self.log: list[dict] = []
 

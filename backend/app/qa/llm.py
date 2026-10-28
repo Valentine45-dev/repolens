@@ -63,6 +63,7 @@ class LLMError(Exception):
 class LLMProvider(Protocol):
     name: str  # model id, for the log and the eval output (never in API responses)
     settings: dict  # effort and thinking, recorded with the model in eval results
+    counts_toward_budget: bool  # False: calls are not charged to the snapshot's token budget
 
     def complete(self, system: str, prompt: str, max_tokens: int, timeout: float) -> Completion:
         """One attempt, no retry. Raises LLMError."""
@@ -87,6 +88,8 @@ def _retry_after(headers) -> float | None:
 
 
 class AnthropicProvider:
+    counts_toward_budget = True
+
     def __init__(self, model: str, api_key: str, effort: str, thinking: str):
         import anthropic
 
@@ -128,12 +131,14 @@ class AnthropicProvider:
 class FakeProvider:
     """Scripted provider for tests. Each call takes the next item: a string (a plain text
     answer), an SDK `Message` (read exactly like a real response), or an LLMError to raise.
-    Records what it was sent."""
+    Records what it was sent. Its made-up token counts are not charged to the snapshot's
+    budget unless `counts_toward_budget` is set (the budget tests do)."""
 
     script: list = field(default_factory=list)
     name: str = "fake"
     settings: dict = field(default_factory=lambda: {"effort": "low", "thinking": "between_tools"})
     calls: list = field(default_factory=list)
+    counts_toward_budget: bool = False
 
     def complete(self, system: str, prompt: str, max_tokens: int, timeout: float) -> Completion:
         self.calls.append({"system": system, "prompt": prompt, "timeout": timeout})

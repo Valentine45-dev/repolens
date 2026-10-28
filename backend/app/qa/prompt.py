@@ -10,6 +10,10 @@ from pathlib import Path
 
 SYSTEM_FILE = Path(__file__).parent / "prompts" / "system.md"
 COULD_NOT_FIND = "I could not find this in the provided code."
+# The fixed identity reply (system.md); it has no citations by design.
+IDENTITY_ANSWER = (
+    "I am RepoLens's assistant. I answer questions about the code in this repository."
+)
 
 
 @dataclass(frozen=True)

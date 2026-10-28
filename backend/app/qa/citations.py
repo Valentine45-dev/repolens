@@ -59,7 +59,8 @@ def _tidy(text: str) -> str:
     """Clean up only around removed citations (code elsewhere keeps its spacing): the space
     before it, a separator next to it, and brackets left empty."""
     text = re.sub(r"[ \t]*\x00", _GONE, text)
-    text = re.sub(r"[(\[][ \t]*\x00(?:[ \t]*[,;]?[ \t]*\x00)*[ \t]*[)\]]", "", text)
+    # The space before an emptied bracket goes too, or "response (x)." becomes "response .".
+    text = re.sub(r"[ \t]*[(\[][ \t]*\x00(?:[ \t]*[,;]?[ \t]*\x00)*[ \t]*[)\]]", "", text)
     text = re.sub(r"\x00[ \t]*[,;][ \t]*", _GONE, text)
     text = re.sub(r"[ \t]*[,;][ \t]*\x00", _GONE, text)
     return text.replace(_GONE, "").strip()

@@ -7,6 +7,7 @@ from conftest import query
 from app import config
 from app.qa import llm
 from app.qa.llm import FakeProvider, LLMError
+from app.qa.prompt import IDENTITY_ANSWER, system_prompt
 from app.qa.retrieve import retrieve
 from app.qa.router import resolve_target
 
@@ -200,7 +201,7 @@ def test_ai_answer_with_validated_citations(client, snapshot, fake):
         "in_test": False,
     }]
     assert "400-410" not in a["answer"]
-    assert a["prompt_version"] == "2026-10-28.1"
+    assert a["prompt_version"] == system_prompt().version
     assert a["retrieval"]["sent"] >= 1 and a["retrieval"]["used_test_code"] is False
     assert "model" not in a and "fake" not in str(a)  # the model name is not returned
 
@@ -244,6 +245,7 @@ def test_timeout_then_retry_succeeds(client, snapshot, fake):
 
 
 def test_provider_down_is_unavailable_and_refunds_the_budget(client, snapshot, fake):
+    fake.counts_toward_budget = True
     fake.script = [LLMError("server", retryable=True, status=529)] * 2
     a = ask(client, snapshot, "How is a user created?")
     assert a["status"] == "unavailable" and len(fake.calls) == 2
@@ -252,6 +254,7 @@ def test_provider_down_is_unavailable_and_refunds_the_budget(client, snapshot, f
 
 
 def test_token_cap_reached_makes_no_call(client, snapshot, fake, monkeypatch):
+    fake.counts_toward_budget = True
     monkeypatch.setattr(config, "LLM_TOKEN_CAP_PER_SNAPSHOT", 500)
     a = ask(client, snapshot, "How is a user created?")
     assert a["status"] == "cap_reached" and fake.calls == []
@@ -259,11 +262,31 @@ def test_token_cap_reached_makes_no_call(client, snapshot, fake, monkeypatch):
 
 
 def test_tokens_used_are_counted(client, snapshot, fake):
+    fake.counts_toward_budget = True
     fake.script = [NOT_FOUND]
     ask(client, snapshot, "How is a user created?")
     (row,) = query("SELECT llm_tokens_used FROM snapshots WHERE id = %s", snapshot)
     call = fake.calls[0]  # FakeProvider reports len // 4 tokens; the estimate is corrected to it
     assert row["llm_tokens_used"] == len(call["system"] + call["prompt"]) // 4 + len(NOT_FOUND) // 4
+
+
+def test_fake_provider_is_not_charged_to_the_budget(client, snapshot, fake, monkeypatch):
+    monkeypatch.setattr(config, "LLM_TOKEN_CAP_PER_SNAPSHOT", 500)  # would block a real call
+    fake.script = [NOT_FOUND]
+    assert ask(client, snapshot, "How is a user created?")["status"] == "answered"
+    (row,) = query("SELECT llm_tokens_used FROM snapshots WHERE id = %s", snapshot)
+    assert row["llm_tokens_used"] == 0
+
+
+def test_identity_reply_is_answered_without_citations(client, snapshot, fake):
+    fake.script = [IDENTITY_ANSWER]
+    a = ask(client, snapshot, "Who are you?")
+    assert (a["status"], a["answer"], a["citations"]) == ("answered", IDENTITY_ANSWER, [])
+
+
+def test_identity_reply_with_extra_uncited_claims_is_unverified(client, snapshot, fake):
+    fake.script = [IDENTITY_ANSWER + " This repo stores users in Postgres."]
+    assert ask(client, snapshot, "Who are you?")["status"] == "unverified"
 
 
 def test_refusal_is_its_own_status(client, snapshot, fake):
