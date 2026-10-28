@@ -1,9 +1,9 @@
 """AI answers: retrieve, build the prompt, call the LLM inside the token cap and the deadline,
 validate citations. Degraded states are answers with a status, never HTTP errors.
 
-Statuses: answered | unverified (no citation survived validation) | refused (the model's
-safety classifiers declined) | no_context (nothing to search) | unavailable (no key, provider
-down, deadline passed, empty answer) | cap_reached.
+Statuses: answered | unverified (no citation survived validation, or the answer was cut off
+at max_tokens) | refused (the model's safety classifiers declined) | no_context (nothing to
+search) | unavailable (no key, provider down, deadline passed, empty answer) | cap_reached.
 """
 
 import hashlib
@@ -29,6 +29,7 @@ UNAVAILABLE = "AI answers are unavailable right now. Graph questions still work.
 NO_CODE = "I could not find code related to that question in this repository."
 NO_SEARCH = "Search for questions is not available for this analysis. Graph questions still work."
 CAP_REACHED = "This analysis has used its AI question budget. Graph questions still work."
+TRUNCATED = "(This answer was cut off at the length limit, so it may be incomplete.)"
 REFUSED = (
     "The AI declined to answer this question. Security-related questions are sometimes"
     " declined; asking what a specific function or file does may work. Graph questions and"
@@ -147,6 +148,11 @@ def ai_answer(snapshot_id: int, question: str, include_tests: bool = False) -> d
     not_found = _bare(checked.text) == _bare(COULD_NOT_FIND)
     identity = checked.text == IDENTITY_ANSWER
     status = "answered" if checked.citations or not_found or identity else "unverified"
+    text = checked.text
+    if completion.stop_reason == "max_tokens":
+        # Cut off at the length limit: what is there may be fine, but it is not the full answer.
+        status = "unverified"
+        text += "\n\n" + TRUNCATED
     log.info(
         "ask snapshot=%s %s: %s model=%s %s prompt=%s sent=%d cited=%d dropped=%d"
         " tokens=%d+%d",
@@ -154,4 +160,4 @@ def ai_answer(snapshot_id: int, question: str, include_tests: bool = False) -> d
         len(found.snippets),
         len(checked.citations), checked.dropped, completion.tokens_in, completion.tokens_out,
     )
-    return _reply(status, checked.text, found, checked.citations, checked.dropped)
+    return _reply(status, text, found, checked.citations, checked.dropped)

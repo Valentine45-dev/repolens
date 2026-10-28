@@ -323,6 +323,22 @@ def test_thinking_first_response_is_answered(client, snapshot, fake):
     assert a["status"] == "answered" and len(a["citations"]) == 1
 
 
+def test_answer_cut_off_at_max_tokens_is_unverified(client, snapshot, fake):
+    from test_qa import message
+
+    (chunk,) = query(
+        "SELECT c.start_line FROM chunks c JOIN symbols s ON s.id = c.symbol_id"
+        " WHERE c.snapshot_id = %s AND s.qualified_name = 'sample_app.service.create_user'",
+        snapshot,
+    )
+    fake.script = [message([{"type": "text",
+                             "text": f"See sample_app/service.py:{chunk['start_line']}. It th"}],
+                           stop_reason="max_tokens")]
+    a = ask(client, snapshot, "How is a user created?")
+    assert (a["status"], len(a["citations"])) == ("unverified", 1)
+    assert a["answer"].endswith("cut off at the length limit, so it may be incomplete.)")
+
+
 def test_no_chunks_makes_no_call(client, snapshot, fake):
     from app.db import pool
 
