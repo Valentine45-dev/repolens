@@ -1,58 +1,92 @@
-// A small Markdown subset for AI answers: paragraphs, bullet and numbered lists, fenced code,
-// inline code and bold. It builds React elements only (no innerHTML), so the model's text can
-// never become HTML, links or images: LLM output is untrusted (CLAUDE.md rule 7). Used instead
-// of a Markdown library because answers are short and this is all the prompt asks for.
+// A small Markdown subset for AI answers: paragraphs, bullet and numbered lists (nested by
+// indentation), fenced code, inline code and bold. It builds React elements only (no innerHTML)
+// and renders no links or images at all: `[text](url)` stays text whatever the scheme, so a
+// `javascript:` URL can never become clickable. LLM output is untrusted (CLAUDE.md rule 7).
+// Used instead of a Markdown library because answers are short and this is all the prompt asks
+// for. Tests: Markdown.test.tsx.
 
 import type { ReactNode } from "react";
 
-type Block =
-  | { kind: "p"; text: string }
-  | { kind: "ul" | "ol"; items: string[] }
-  | { kind: "code"; text: string };
+interface ListNode {
+  ordered: boolean;
+  items: { text: string; children: ListNode[] }[];
+}
 
-const BULLET = /^\s*[-*]\s+/;
-const NUMBER = /^\s*\d+[.)]\s+/;
+type Block = { kind: "p"; text: string } | { kind: "list"; list: ListNode } | { kind: "code"; text: string };
+
+interface RawItem {
+  indent: number;
+  ordered: boolean;
+  text: string;
+}
+
+const ITEM = /^(\s*)([-*]|\d+[.)])\s+(.*)$/;
+
+/** Nest items by indentation: deeper than the item before -> a child list of that item. */
+function buildList(raw: RawItem[]): ListNode {
+  const root: ListNode = { ordered: raw[0].ordered, items: [] };
+  const stack: { indent: number; list: ListNode }[] = [{ indent: raw[0].indent, list: root }];
+  for (const r of raw) {
+    while (stack.length > 1 && r.indent < stack[stack.length - 1].indent) stack.pop();
+    const top = stack[stack.length - 1];
+    if (r.indent > top.indent && top.list.items.length) {
+      const child: ListNode = { ordered: r.ordered, items: [] };
+      top.list.items[top.list.items.length - 1].children.push(child);
+      stack.push({ indent: r.indent, list: child });
+      child.items.push({ text: r.text, children: [] });
+    } else {
+      top.list.items.push({ text: r.text, children: [] });
+    }
+  }
+  return root;
+}
 
 function parse(source: string): Block[] {
   const blocks: Block[] = [];
   const lines = source.replace(/\r\n/g, "\n").split("\n");
   let para: string[] = [];
-  const flush = () => {
+  let items: RawItem[] = [];
+  const flushPara = () => {
     if (para.length) blocks.push({ kind: "p", text: para.join(" ") });
     para = [];
   };
+  const flushList = () => {
+    if (items.length) blocks.push({ kind: "list", list: buildList(items) });
+    items = [];
+  };
+
   for (let i = 0; i < lines.length; i++) {
     const line = lines[i];
     if (line.trim().startsWith("```")) {
-      flush();
+      flushPara();
+      flushList();
       const code: string[] = [];
       for (i++; i < lines.length && !lines[i].trim().startsWith("```"); i++) code.push(lines[i]);
       blocks.push({ kind: "code", text: code.join("\n") });
       continue;
     }
-    const list = BULLET.test(line) ? "ul" : NUMBER.test(line) ? "ol" : null;
-    if (list) {
-      flush();
-      const marker = list === "ul" ? BULLET : NUMBER;
-      const last = blocks[blocks.length - 1];
-      const item = line.replace(marker, "");
-      if (last && last.kind === list) last.items.push(item);
-      else blocks.push({ kind: list, items: [item] });
+    const m = line.match(ITEM);
+    if (m) {
+      flushPara();
+      const item = { indent: m[1].length, ordered: !m[2].startsWith("-") && !m[2].startsWith("*"), text: m[3] };
+      // A different list type at the outermost level starts a new list.
+      if (items.length && item.indent <= items[0].indent && item.ordered !== items[0].ordered) flushList();
+      items.push(item);
       continue;
     }
     if (!line.trim()) {
-      flush();
+      flushPara();
+      continue; // a blank line between items keeps the list going
+    }
+    if (items.length && !para.length && /^\s+/.test(line)) {
+      items[items.length - 1].text += ` ${line.trim()}`; // continuation of the item above
       continue;
     }
-    // A continuation line of a list item stays with it.
-    const last = blocks[blocks.length - 1];
-    if (!para.length && last && (last.kind === "ul" || last.kind === "ol") && /^\s+/.test(line)) {
-      last.items[last.items.length - 1] += ` ${line.trim()}`;
-      continue;
-    }
+    flushList();
     para.push(line.trim().replace(/^#{1,6}\s+/, ""));
   }
-  flush();
+  flushPara();
+  flushList();
   return blocks;
 }
 
@@ -69,20 +103,29 @@ function inline(text: string): ReactNode[] {
   return out;
 }
 
+function List({ list }: { list: ListNode }) {
+  const Tag = list.ordered ? "ol" : "ul";
+  return (
+    <Tag>
+      {list.items.map((item, i) => (
+        <li key={i}>
+          {inline(item.text)}
+          {item.children.map((child, j) => (
+            <List key={j} list={child} />
+          ))}
+        </li>
+      ))}
+    </Tag>
+  );
+}
+
 export function Markdown({ text }: { text: string }) {
   return (
     <div className="markdown">
       {parse(text).map((block, i) => {
         if (block.kind === "code") return <pre key={i} className="mono">{block.text}</pre>;
         if (block.kind === "p") return <p key={i}>{inline(block.text)}</p>;
-        const List = block.kind;
-        return (
-          <List key={i}>
-            {block.items.map((item, j) => (
-              <li key={j}>{inline(item)}</li>
-            ))}
-          </List>
-        );
+        return <List key={i} list={block.list} />;
       })}
     </div>
   );

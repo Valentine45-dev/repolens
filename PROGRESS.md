@@ -437,6 +437,21 @@
   - Bug found and fixed: arrow-bodied effects returning `scrollIntoView(...)`; this Chromium
     returns a Promise from it, which React treats as a bad cleanup and crashes.
 
+- **Renderer tests and eval run info (28 Oct, `feat/qa`).**
+  - `web/src/components/Markdown.test.tsx` (vitest 5.0.5, new dev dependency: the web app had
+    no test runner; it reuses the Vite config, and tests render with `react-dom/server`, no DOM
+    library). 14 tests: `[x](javascript:...)`, `<javascript:...>` and http links stay text (no
+    `<a>`, no `href`: answers render no links at all); raw HTML, `<script>` and images escaped,
+    also inside code; fenced code keeps blank lines and indentation, ignores list/bold syntax,
+    survives a missing closing fence; nested and mixed lists; continuation lines.
+    Nested lists were flattened before; the list parser now builds a tree from indentation.
+    Run with `npm test` in `web/` (not in CI: frontend CI is stretch item 5).
+  - `eval/runinfo.py`: every eval result records commit SHA (+ dirty flag), embedder and
+    revision, retrieval settings, and the LLM's provider, model, effort, thinking setting,
+    max_tokens and prompt version (taken from the provider actually used; `llm_used` says
+    whether the eval called it). `save_results()` writes `eval/results/<name>-<time>-<sha7>.json`.
+    Tested in `backend/tests/test_runinfo.py`.
+
 ## Planned vs delivered
 - **Temperature 0 (CLAUDE.md) is not possible on current models.** `temperature`, `top_p` and
   `top_k` return 400 (Sonnet 5.5 and Haiku 5.5 migration guides; the installed SDK's
@@ -462,7 +477,9 @@
 - Day 3 on `feat/qa`: tasks 5, 6 and 7 built; `/ask` tested with FakeProvider only. Next: the
   real-model check (graph + AI questions on express and itsdangerous, expansion on/off,
   citations and dropped, tokens used, the AI answer view in the browser) once the user confirms
-  the key is in `.env`; then merge `feat/qa` (ask first). Full `docker compose up` is Day 4.
+  the key is in `.env`. Merge `feat/qa` into `main` after the user approves; then the no-LLM
+  eval on a new branch (retrieval recall@k with/without expansion from a questions file;
+  detectors vs Bandit and Semgrep on labeled fixtures). Full `docker compose up` is Day 4.
 - If the API cannot start with "pool initialization incomplete": the db container was healthy
   but Docker's port proxy accepted connections without forwarding them (28 Oct);
   `docker compose restart db` fixed it.
