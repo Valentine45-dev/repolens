@@ -42,6 +42,19 @@ def test_first_hit_rank():
     assert rr.first_hit_rank(ranked[:2], LABELS) is None
 
 
+def test_unanswerable_questions_are_not_scored():
+    rr = load()
+    rows = [
+        {"repo": "a", "unanswerable": False, "first_hit_rank": 2,
+         "hits": {1: {"plain": False, "expanded": True}}},
+        {"repo": "a", "unanswerable": True, "top_paths": ["x.py:1-2"]},  # no hits: never scored
+    ]
+    summary = rr.summarise(rows, [1])
+    assert summary["all"]["questions"] == 1 and summary["a"]["questions"] == 1
+    assert summary["all"]["recall"]["1"] == {"plain": 0.0, "expanded": 1.0}
+    assert summary["all"]["mrr_plain"] == 0.5
+
+
 def test_questions_file_is_well_formed():
     rr = load()
     repos = rr.load_questions(EVAL / "questions.yaml")
