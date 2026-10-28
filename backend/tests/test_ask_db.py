@@ -229,6 +229,13 @@ def test_could_not_find_answer_is_answered_without_citations(client, snapshot, f
     assert (a["status"], a["citations"], a["dropped"]) == ("answered", [], 0)
 
 
+def test_could_not_find_with_extra_uncited_claims_is_unverified(client, snapshot, fake):
+    fake.script = ["The gateway is configured in settings. I could not find this in the "
+                   "provided code."]
+    a = ask(client, snapshot, "Where is the payment gateway configured?")
+    assert (a["status"], a["citations"]) == ("unverified", [])
+
+
 def test_no_key_is_unavailable(client, snapshot, monkeypatch):
     monkeypatch.setattr(llm, "get_provider", lambda: None)
     a = ask(client, snapshot, "How is a user created?")

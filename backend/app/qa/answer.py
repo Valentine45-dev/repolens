@@ -69,6 +69,11 @@ def _adjust(snapshot_id: int, delta: int) -> None:
         )
 
 
+def _bare(text: str) -> str:
+    """Lower case, without surrounding whitespace, quotes, asterisks or a final full stop."""
+    return text.strip().strip("*_\"'` ").rstrip(".").lower()
+
+
 def search_ready(snapshot_id: int) -> bool:
     """Code search can answer: no search run is replacing the non-test chunks, and a failed
     search left some chunks behind. Test code may still be on its way (state 'tests'). A repo
@@ -132,8 +137,9 @@ def ai_answer(snapshot_id: int, question: str, include_tests: bool = False) -> d
         return _reply("unavailable", UNAVAILABLE, found)
 
     checked = validate(completion.text.strip(), found.snippets)
-    not_found = COULD_NOT_FIND.rstrip(".").lower() in checked.text.lower()
-    # Only the exact identity reply is exempt, so uncited claims cannot ride along with it.
+    # Only the bare "could not find" sentence and the exact identity reply are exempt from
+    # the citation rule, so uncited claims cannot ride along with either of them.
+    not_found = _bare(checked.text) == _bare(COULD_NOT_FIND)
     identity = checked.text == IDENTITY_ANSWER
     status = "answered" if checked.citations or not_found or identity else "unverified"
     log.info(
