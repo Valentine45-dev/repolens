@@ -470,6 +470,35 @@
   - `pyyaml` added as an explicit dev dependency (it was only present through the embed group,
     which CI skips).
 
+- **Retrieval eval, first run (28 Oct, `e7cbfd3`, result
+  `eval/results/retrieval_recall-20261028T072005Z-e7cbfd3.json`).** Labels approved first.
+  - Checks before the run: on express + itsdangerous all 1400 chunks' ranges equal the lines of
+    their text (0 mismatches); one chunk spans a whole file (`test/res.locals.js:1-40`, all
+    top-level code, and test code is left out by default). Widest chunks: `lib/response.js`
+    45 lines (function `sendfile`), module chunks at most 34; `lib/application.js` at most 35
+    (module, the requires at 23-57). Unanswerable Q8 and Q16 are not scored (unit-tested); they
+    stay in questions.yaml for the real-model smoke eval.
+  - Results, 14 answerable questions, test code left out, embedder all-MiniLM-L6-v2:
+
+    | set | R@1 | R@3 | R@5 | R@8 | MRR |
+    |---|---|---|---|---|---|
+    | all (14) | 0.21 | 0.43 | 0.50 | 0.64 | 0.35 |
+    | express (7) | 0.14 | 0.29 | 0.43 | 0.57 | 0.27 |
+    | itsdangerous (7) | 0.29 | 0.57 | 0.57 | 0.71 | 0.43 |
+
+    Graph expansion changed nothing at any k (same numbers with and without).
+  - Misses: Q1, Q2, Q5 (express), Q9, Q11 (itsdangerous). Q6 and Q10 only at k=8.
+  - Why (from the per-question chunk lists): express's JSDoc blocks become separate
+    module-level chunks, detached from the function they document, and they win the search
+    (Q2's 3rd hit is the `res.send` doc at `response.js:113-124`, the function starts at 126;
+    Q5 retrieves the `req.accepts` and `res.format` docs). Expansion from a module-level chunk
+    follows the file's imports, so it adds the top of `utils.js` / `express.js`, not the
+    documented function. For itsdangerous Q9/Q11, search finds class headers and `__init__`
+    instead of `dumps`/`loads`; expansion adds `TimestampSigner.sign` and `get_signature`, next to
+    but not on the labels.
+  - Run info "dirty" now means uncommitted changes to tracked files only (an untracked result
+    file had marked a clean run dirty); the two earlier identical runs were removed.
+
 ## Planned vs delivered
 - **Temperature 0 (CLAUDE.md) is not possible on current models.** `temperature`, `top_p` and
   `top_k` return 400 (Sonnet 5.5 and Haiku 5.5 migration guides; the installed SDK's
