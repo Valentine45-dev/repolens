@@ -109,4 +109,5 @@ def test_real_model_limit_and_windows():
     parsed = parse_python("r.py", source)
     chunks = build_chunks("r.py", source, parsed.symbols, model.count_tokens, model.max_tokens)
     assert len(chunks) > 1
-    assert all(model.count_tokens([c.embed_text])[0] <= 256 for c in chunks)
+    # Checked with the tokenizer directly, special tokens ([CLS], [SEP]) included.
+    assert all(len(model.tokenizer(c.embed_text)["input_ids"]) <= 256 for c in chunks)

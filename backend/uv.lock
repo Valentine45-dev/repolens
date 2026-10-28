@@ -1023,39 +1023,38 @@ dependencies = [
     { name = "uvicorn", extra = ["standard"] },
 ]
 
-[package.optional-dependencies]
-embed = [
-    { name = "sentence-transformers" },
-    { name = "torch", version = "2.14.1", source = { registry = "https://download.pytorch.org/whl/cpu" }, marker = "sys_platform == 'darwin'" },
-    { name = "torch", version = "2.14.1+cpu", source = { registry = "https://download.pytorch.org/whl/cpu" }, marker = "sys_platform != 'darwin'" },
-]
-
 [package.dev-dependencies]
 dev = [
     { name = "httpx" },
     { name = "pytest" },
     { name = "ruff" },
 ]
+embed = [
+    { name = "sentence-transformers" },
+    { name = "torch", version = "2.14.1", source = { registry = "https://download.pytorch.org/whl/cpu" }, marker = "sys_platform == 'darwin'" },
+    { name = "torch", version = "2.14.1+cpu", source = { registry = "https://download.pytorch.org/whl/cpu" }, marker = "sys_platform != 'darwin'" },
+]
 
 [package.metadata]
 requires-dist = [
     { name = "fastapi", specifier = ">=0.162.0" },
     { name = "psycopg", extras = ["binary", "pool"], specifier = ">=3.3.6" },
-    { name = "sentence-transformers", marker = "extra == 'embed'", specifier = ">=3.0" },
-    { name = "torch", marker = "extra == 'embed'", specifier = ">=2.4", index = "https://download.pytorch.org/whl/cpu" },
     { name = "tree-sitter", specifier = ">=0.25.2,<0.26" },
     { name = "tree-sitter-javascript", specifier = ">=0.25.0" },
     { name = "tree-sitter-python", specifier = ">=0.25.0" },
     { name = "tree-sitter-typescript", specifier = ">=0.23.2" },
     { name = "uvicorn", extras = ["standard"], specifier = ">=0.54.0" },
 ]
-provides-extras = ["embed"]
 
 [package.metadata.requires-dev]
 dev = [
     { name = "httpx", specifier = ">=0.28.1" },
     { name = "pytest", specifier = ">=9.1.1" },
     { name = "ruff", specifier = ">=0.17.2" },
+]
+embed = [
+    { name = "sentence-transformers", specifier = ">=3.0" },
+    { name = "torch", specifier = ">=2.4", index = "https://download.pytorch.org/whl/cpu" },
 ]
 
 [[package]]

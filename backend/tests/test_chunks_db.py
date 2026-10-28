@@ -38,6 +38,23 @@ def test_chunks_stored_with_ranges_and_vectors(snapshot):
     assert all(SECRET_VALUE not in r["text"] for r in rows)
 
 
+def test_chunks_marked_in_test_like_findings(snapshot):
+    from app.paths import is_test_path
+
+    rows = query(
+        "SELECT f.path, c.in_test FROM chunks c JOIN symbols s ON s.id = c.symbol_id"
+        " JOIN files f ON f.id = s.file_id WHERE c.snapshot_id = %s",
+        snapshot,
+    )
+    assert all(r["in_test"] == is_test_path(r["path"]) for r in rows)
+    assert {r["path"] for r in rows if r["in_test"]} == {
+        "tests/check_service.py", "web/src/lib/math.spec.ts"}
+    (kept,) = query(
+        "SELECT count(*) AS n FROM chunks WHERE snapshot_id = %s AND NOT in_test", snapshot
+    )
+    assert 0 < kept["n"] < len(rows)  # retrieval can leave test code out in SQL
+
+
 def test_cosine_search_is_scoped_to_the_snapshot(snapshot):
     from app.qa.embed import get_embedder
 

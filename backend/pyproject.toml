@@ -13,18 +13,21 @@ dependencies = [
     "uvicorn[standard]>=0.54.0",
 ]
 
-[project.optional-dependencies]
-embed = [
-    "sentence-transformers>=3.0",
-    "torch>=2.4",
-]
-
 [dependency-groups]
 dev = [
     "httpx>=0.28.1",
     "pytest>=9.1.1",
     "ruff>=0.17.2",
 ]
+# The embedding model. Installed by default (plain `uv sync` / `uv run`); CI skips it with
+# UV_NO_GROUP=embed and uses the stub embedder, so it never downloads torch or the model.
+embed = [
+    "sentence-transformers>=3.0",
+    "torch>=2.4",
+]
+
+[tool.uv]
+default-groups = ["dev", "embed"]
 
 [tool.ruff]
 line-length = 100

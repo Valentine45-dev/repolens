@@ -325,12 +325,10 @@
     once per process; encode in batches of 64; delete-then-insert in one transaction.
     `chunks` gained `start_line`, `end_line`, `token_count`; `search_tsv` holds identifier parts
     (`getUserById` -> get user by id) for the stretch hybrid retrieval.
-  - Dependencies: optional extra `embed` (`sentence-transformers`, `torch`), with torch from the
-    explicit `pytorch-cpu` uv index (CPU wheels, no CUDA). Run the API with
-    `uv run --extra embed --env-file ../.env uvicorn app.main:app --port 8000`; a plain `uv run`
-    re-syncs and removes the extra. Tests and CI use `EMBEDDER=stub` (hashing embedder, design
-    §19.4): CI never downloads the model. Real-model test: `RUN_MODEL_TESTS=1 uv run --extra embed
-    pytest -k real_model`.
+  - Dependencies: first an optional extra `embed`; replaced the same day (see "Task 4
+    follow-ups" below) by a default dependency group. torch comes from the explicit
+    `pytorch-cpu` uv index (CPU wheels, no CUDA). Tests and CI use `EMBEDDER=stub` (hashing
+    embedder, design §19.4). Real-model test: `RUN_MODEL_TESTS=1 uv run pytest -k real_model`.
   - Tests: unit ranges, windows within budget with overlap and no gaps, JS units, DB rows valid
     (ranges match file lines, ≤256 tokens, 384-dim unit vectors, no raw secret), cosine search
     scoped to the snapshot, rerun replaces rows. 159 passed, 3 skipped.
@@ -344,14 +342,31 @@
     No chunk over 256 tokens, no bad line ranges. Express: 1053 of 1219 chunks are in `test/`
     (mocha `describe`/`it` callbacks are top-level code), and 118 of its 148 split units are
     module-level runs in test files.
+- **Task 4 follow-ups (28 Oct).**
+  - Token limit re-checked with the tokenizer itself (`len(tokenizer(text)["input_ids"])`,
+    [CLS]/[SEP] included) on every stored chunk of express and itsdangerous: max 256 and 251,
+    none at 257–258, every stored `token_count` equal to the recount. No window change needed.
+    The real-model test now asserts the same per chunk.
+  - `chunks.in_test` (same rule as `findings.in_test`, `app/paths.is_test_path`), stored at write
+    time, so retrieval can leave test code out in SQL (`AND NOT in_test`). Dev DB got one
+    `ALTER TABLE`; the express/itsdangerous chunks predate it (all `false`) until re-run.
+  - Embedding packages are a **default dependency group** `embed` (`[tool.uv] default-groups =
+    ["dev", "embed"]`, uv 0.11.14). Plain `uv sync` / `uv run` installs them, so the
+    `--extra embed` trap is gone: run the API with
+    `uv run --env-file ../.env uvicorn app.main:app --port 8000`. CI sets `UV_NO_GROUP=embed`
+    (applies to `uv run` too) and `EMBEDDER=stub`, so torch and the model are not even installed
+    there. Checked locally both ways (without the group: neither installed, suite green; plain
+    sync: torch 2.14.1+cpu back).
+  - api `Dockerfile`: `uv sync --locked --no-dev` (keeps the embed group; the lock resolves Linux
+    torch to `2.14.1+cpu`, no `nvidia-*` packages); downloads the pinned model revision at build
+    time into `HF_HOME=/opt/hf`, then sets `HF_HUB_OFFLINE=1`; runs as uid 1000 `repolens`.
 
 ## Next
 - Scope change (27 Oct, `7233e27`): Python and JS/TS both get full analysis; CLAUDE.md updated.
 - **`feat/graph-api` merged into `main` (28 Oct, `0c514d2`)** after CI was green on `5111572` and
   on `main` (108 passed, 2 skipped). Includes the user's logo mark and favicons.
-- Day 3 on `feat/detectors`: task 5 of the Day 3 plan (`/ask`). Before merging this branch:
-  the api `Dockerfile` needs `uv sync --extra embed` and a volume for the model cache (see Known
-  issues).
+- Day 3 on `feat/detectors`: merge into `main` when approved, then task 5 (`/ask`). Full
+  `docker compose up` check is Day 4.
 - Running tests locally: `uv run --env-file ../.env pytest` (`.env` has `TEST_DATABASE_URL`).
 
 ## Day 2 plan
@@ -581,12 +596,12 @@ Agreed 27 Oct, to apply when building Day 3:
 - Docker Desktop can stop on its own; if DB tests error on connect, start it and `docker compose up -d db`.
 - JS member assignments and object-literal methods become symbols only at top level, not inside
   functions (e.g. `function setup(app) { app.get = ... }` is not a symbol).
-- `backend/Dockerfile` still runs `uv sync --locked --no-dev` without `--extra embed`, so in
-  `docker compose up` the embed stage fails (no sentence-transformers). Fix before merging
-  `feat/detectors`: add the extra and a volume for the Hugging Face cache (first load downloads
-  ~90 MB). Not yet verified in Docker.
+- The api image is built and loads the model offline, but the full `docker compose up` stack
+  with the model is not checked yet (Day 4).
 - Test code dominates retrieval on test-heavy repos (express: 86% of chunks in `test/`). Task 5
-  may need to down-rank or filter `in_test` chunks; decide with the Q&A eval.
+  leaves `in_test` chunks out by default; decide the default with the Q&A eval.
+- On Windows, `uv sync` fails with "Access is denied" on a `.pyd` while the API is running from
+  the same venv: stop uvicorn first.
 - First real-model load takes ~1–2 min (download + torch import); later loads are faster.
 - Fixture tests do not reproduce the 0.26.0 crash (only bigger files did); the pin is the guard.
   Re-check before ever lifting it.

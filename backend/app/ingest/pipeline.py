@@ -316,15 +316,16 @@ def store_chunks(snapshot_id: int, job_id: int, parsed: dict[str, Parsed],
             symbol_ids[(r["path"], r["qualified_name"])] = r["id"]  # lowest id wins
         rows = [
             (snapshot_id, symbol_ids[(c.path, c.qualified_name)], c.start_line, c.end_line,
-             c.token_count, c.text, search_words(c), "[" + ",".join(f"{x:.6f}" for x in v) + "]")
+             c.token_count, is_test_path(c.path), c.text, search_words(c),
+             "[" + ",".join(f"{x:.6f}" for x in v) + "]")
             for c, v in zip(chunks, vectors, strict=True)
             if (c.path, c.qualified_name) in symbol_ids
         ]
         with conn.cursor() as cur:
             cur.executemany(
                 "INSERT INTO chunks (snapshot_id, symbol_id, start_line, end_line, token_count,"
-                " text, search_tsv, embedding)"
-                " VALUES (%s, %s, %s, %s, %s, %s, to_tsvector('simple', %s), %s::vector)",
+                " in_test, text, search_tsv, embedding)"
+                " VALUES (%s, %s, %s, %s, %s, %s, %s, to_tsvector('simple', %s), %s::vector)",
                 rows,
             )
     return {

@@ -101,6 +101,7 @@ CREATE TABLE chunks (
   start_line   INT NOT NULL,                      -- the chunk's own range (a window of a long
   end_line     INT NOT NULL,                      -- symbol has its own), cited as path:start-end
   token_count  INT NOT NULL,                      -- model tokens of the embedded text
+  in_test      BOOLEAN NOT NULL DEFAULT false,    -- test or example code (app/paths.py)
   text         TEXT NOT NULL,                     -- redacted
   search_tsv   TSVECTOR,
   embedding    vector(384)                        -- all-MiniLM-L6-v2 / bge-small class models
