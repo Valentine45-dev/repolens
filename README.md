@@ -196,6 +196,18 @@ uv run --project backend --env-file .env python eval/smoke_qa.py --price-in X --
 
 It makes about 8 real API calls (hard limit 12); the prices are only for the cost estimate.
 
+**Final Q&A run** (all 16 questions plus identity and injection, `--all`, with the demo model
+`claude-sonnet-5-5`, effort low, `between_tools` thinking, prompt `2026-10-28.2`): 16 of 18
+passed under the pre-set rules. Every answerable question cited the expected file (14/14), and
+13/14 also cited the labelled lines. 15 of 18 answers had no dropped citation (the server
+removed 4 invalid ones in total). Both failures are the unanswerable traps answered correctly
+but with citations: on manual review the answers are correct; the rule was too narrow for
+false-premise questions. Median latency 4.3 s. 18 calls cost about $0.22.
+
+**Real-world precision on PyGoat** (an intentionally vulnerable Django app): samples of 20
+findings per tool are drawn and labelled, but the labels are not confirmed yet, so no number
+is reported here.
+
 ## Known limitations
 
 - **Syntactic rules, no taint tracking.** Constant arguments are flagged too (`eval("1 + 1")`,

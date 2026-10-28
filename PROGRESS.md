@@ -664,6 +664,41 @@
     re-run (spend); the prompt change touched only the identity rule.
   - **Real-model spend so far: 10 calls, 32,663 in + 2,484 out tokens, ~$0.0045.**
 
+- **`feat/smoke-eval` merged into `main` (28 Oct, `f538ec8`).** Work continues on `feat/final-evals`.
+- **Final Q&A run (28 Oct, `feat/final-evals`, `36556cf`,
+  `eval/results/final_qa-20261028T100701Z-36556cf.json`).** Demo model `claude-sonnet-5-5`,
+  thinking `between_tools`, effort `low`, prompt `2026-10-28.2`, set by env override for this run
+  only (`.env` still says Haiku). All 16 questions + identity + injection, same frozen
+  questions.yaml and pass rules; `smoke_qa.py --all` and the extra metrics (faithfulness, expected
+  range, latency) were committed before the run. Native mode, db only in Docker.
+  - **16/18 passed.** FAIL 8: exact "I could not find this in the provided code." plus one valid
+    citation (`lib/express.js:36-56`) describing what the snippets do cover; the pre-set rule needs
+    zero citations. FAIL 16: "the snippets don't show any encryption ... signs rather than
+    encrypting", 6 valid citations. On manual review both answers are correct; the rule was too
+    narrow for false-premise questions. They stay FAILs.
+  - Expected file cited: 14/14 answerable. Expected line range overlapped: 13/14 (Q5 cited
+    `lib/response.js` but not the labelled `res.format` lines).
+  - Faithfulness (no dropped citation): 15/18 = 0.83 (14/17 = 0.82 over answers that cited).
+    4 dropped citations: Q2 1, Q3 2, Q14 1.
+  - Latency: median 4.3 s, max 28.5 s (identity, the first question: includes loading the
+    embedding model); the rest 2.1–7.6 s.
+  - 18 calls, no retries, 73,905 in + 7,515 out tokens, ~$0.22 at Sonnet 5.5's $2 / $10 per MTok
+    (https://platform.claude.com/docs/en/about-claude/pricing, checked 28 Oct).
+- **PyGoat real-world precision, samples drawn (28 Oct, `986f0b6`,
+  `eval/results/realworld_precision-20261028T101058Z-986f0b6.json`).** `adeyosemanputra/pygoat`
+  @ `46fef968f3f44d1191363baf936aaa3335dc5c6d`, analysed by the normal pipeline (snapshot kept in
+  the dev DB), parse only, clones deleted. 222 files kept, 115 Python.
+  - Populations: RepoLens 59 (hardcoded-secret 47, py-bare-except 9, subprocess-shell 1,
+    eval-exec 1, sql-string 1); Bandit 1.9.4 130 (B105 49, B104 24, B201 19, B106 9, others
+    small), on the same 115 Python files, 0 parse errors.
+  - Seed 20261028, 20 per tool. Proposed labels in `eval/labels/pygoat-46fef96.yaml`
+    (`confirmed: false`): RepoLens 18 real / 2 false alarm, Bandit 13 / 7. **Waiting for the
+    owner's confirmation; no precision number until then.** Recall is not measured.
+  - **Bug found:** the redactor treats `password='{password}'` inside an f-string as a secret.
+    `dockerized_labs/sql_injection_lab/app.py:51` is stored as `... password='[REDACTED]'`, so
+    the UI, Q&A snippets and findings show a corrupted line, and a false hardcoded-secret
+    finding is raised (the SQL-string finding on that line is still found). Not fixed yet.
+
 ## Demo plan (8 GB laptop)
 The full compose stack works (tested 28 Oct) but left ~0.66 GB free and crashed the machine
 once. Primary demo is native mode; compose is shown as tested, not run live.
