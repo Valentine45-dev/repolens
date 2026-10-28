@@ -79,7 +79,7 @@ def test_ambiguous_target_asks_which_one(client, snapshot, fake):
     assert (a["kind"], a["status"]) == ("graph", "ambiguous")
     assert {r["qualified_name"] for r in a["results"]} == {
         "sample_app.models.Base.save", "sample_app.models.User.save"}
-    assert "Which one do you mean?" in a["answer"]
+    assert "Which one do you mean?" in a["answer"] and a["query"] == "save"
     assert fake.calls == []
 
 
@@ -146,6 +146,7 @@ def test_ai_answer_with_validated_citations(client, snapshot, fake):
     assert a["citations"] == [{
         "path": "sample_app/service.py", "start_line": start, "end_line": end,
         "file_id": a["citations"][0]["file_id"], "symbol_id": a["citations"][0]["symbol_id"],
+        "in_test": False,
     }]
     assert "400-410" not in a["answer"]
     assert a["prompt_version"] == "2026-10-28.1"

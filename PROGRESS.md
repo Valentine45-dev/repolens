@@ -406,6 +406,37 @@
     graph snippets, among them `res.send` itself (lib/response.js:204-222), which search missed;
     no test code sent by default.
 
+- **Tasks 6 and 7: Findings UI and Ask drawer (28 Oct, `feat/qa`).**
+  - `AnalysisShell` (layout route for `/a/:id/explore` and `/a/:id/findings`): repo + commit,
+    tabs Explorer / Findings (count badge), Ask button. The drawer is `?ask=1`, kept across tabs.
+  - Findings page (spec 5.6): disclaimer, filters in the URL (severity, rule, language, path
+    prefix, hide test code), severity as icon + word + colour, secrets "(value hidden)", pages of
+    50. Detail panel: what the rule looks for, why it can be risky, "Possible false positive if…",
+    masked snippet, Open in Explorer (file + line highlighted), Copy location. Empty state
+    never a verdict.
+  - Node panel: Findings tab (click -> line highlighted in Code), "Ask about this" (prefills
+    "About <path>: "). Code view highlights `?lines=a-b` (new `--highlight` token) and scrolls to it.
+  - Ask drawer (spec 5.5): per-snapshot conversation in sessionStorage with Clear; each question
+    still sent alone. Labels "AI answer" / "From the graph". Suggestions from real data (most
+    depended-on files, a file with findings; AI ones only when AI works). Graph results link
+    to the Explorer; ambiguous answers list candidates that re-ask with the full name. Source
+    chips open the cited lines (test files turn on "Show test files"); "N sources could not be
+    verified" note; `unverified`, `refused`, `unavailable`, `cap_reached`, `no_context` shown with
+    the server's copy. No key: a notice "AI answers are unavailable right now. Graph questions
+    still work." and graph-only suggestions (`features.ai=false`).
+  - Markdown: a small hand-written renderer (paragraphs, lists, fenced code, inline code, bold)
+    that builds React elements only, so model output cannot become HTML, links or images. No new
+    dependency (react-markdown was the alternative).
+  - Backend additions for the UI: graph answers carry `query` (the target as written);
+    citations carry `in_test`.
+  - Checked in the browser on express and itsdangerous (no key): findings list, detail panel,
+    Open in Explorer with line 50 highlighted, Ask about this, graph answer, ambiguous ->
+    re-ask, unavailable answer, phone width (drawer overlays, no horizontal scroll). The AI
+    answer view (markdown, chips, dropped note, raw `<img onerror>` shown as text) was checked
+    with a stubbed `/ask` response in the browser only.
+  - Bug found and fixed: arrow-bodied effects returning `scrollIntoView(...)`; this Chromium
+    returns a Promise from it, which React treats as a bad cleanup and crashes.
+
 ## Planned vs delivered
 - **Temperature 0 (CLAUDE.md) is not possible on current models.** `temperature`, `top_p` and
   `top_k` return 400 (Sonnet 5.5 and Haiku 5.5 migration guides; the installed SDK's
@@ -428,10 +459,13 @@
   From now on a manual re-run writes `error = 'Re-run: <why>'`.
 - express and itsdangerous re-run for `chunks.in_test` (jobs 44, 45): 1053/1219 and 68/181
   chunks in test code. The first attempt (jobs 42, 43) failed for real, see Known issues.
-- Day 3 on `feat/qa`: task 5 (`/ask`) built and tested with FakeProvider. Next: task 6
-  (Findings UI), task 7 (Ask drawer). The real-model check (graph + AI questions on express and
-  itsdangerous, expansion on/off, tokens used) waits until the user confirms the key is in
-  `.env`. Full `docker compose up` check is Day 4.
+- Day 3 on `feat/qa`: tasks 5, 6 and 7 built; `/ask` tested with FakeProvider only. Next: the
+  real-model check (graph + AI questions on express and itsdangerous, expansion on/off,
+  citations and dropped, tokens used, the AI answer view in the browser) once the user confirms
+  the key is in `.env`; then merge `feat/qa` (ask first). Full `docker compose up` is Day 4.
+- If the API cannot start with "pool initialization incomplete": the db container was healthy
+  but Docker's port proxy accepted connections without forwarding them (28 Oct);
+  `docker compose restart db` fixed it.
 - Stop the API before any `uv sync` / `uv add` (Windows locks loaded `.pyd` files).
 - Running tests locally: `uv run --env-file ../.env pytest` (`.env` has `TEST_DATABASE_URL`).
 

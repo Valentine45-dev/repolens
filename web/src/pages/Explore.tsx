@@ -1,17 +1,20 @@
 import { keepPreviousData, useQuery } from "@tanstack/react-query";
 import { ReactFlowProvider, useReactFlow } from "@xyflow/react";
 import { useCallback, useMemo } from "react";
-import { Navigate, useParams, useSearchParams } from "react-router-dom";
+import { useOutletContext, useSearchParams } from "react-router-dom";
 
-import { ApiError, getGraph, getStatus, repoName } from "../api";
+import { getGraph } from "../api";
+import type { AnalysisContext } from "../components/AnalysisShell";
 import { ConnectionNotice, isReconnecting } from "../components/ConnectionNotice";
 import { FileList } from "../components/FileList";
 import { FIT_OPTIONS, GraphView } from "../components/GraphView";
 import { NodePanel } from "../components/NodePanel";
 import { applyCap, degrees, layoutGraph, RENDER_CAP } from "../graphModel";
+import { parseLines, useSetParams, type LineRange } from "../links";
 import { useMediaQuery } from "../useMediaQuery";
 
-// State lives in the URL (spec §3.6): ?tests=1&guesses=1&view=list&node=<file id>.
+// State lives in the URL (spec §3.6): ?tests=1&guesses=1&view=list&node=<file id>&lines=12-15.
+// The analysis header, tabs and Ask drawer come from AnalysisShell.
 export function Explore() {
   return (
     <ReactFlowProvider>
@@ -21,45 +24,43 @@ export function Explore() {
 }
 
 function ExploreInner() {
-  const { id } = useParams();
-  const snapshotId = Number(id);
-  const [params, setParams] = useSearchParams();
+  const { snapshotId } = useOutletContext<AnalysisContext>();
+  const [params] = useSearchParams();
   const showTests = params.get("tests") === "1";
   const showGuesses = params.get("guesses") === "1";
   // Spec §10: under 768px the graph is not readable, so phones get the list only.
   const phone = useMediaQuery("(max-width: 767px)");
   const listView = phone || params.get("view") === "list";
   const selectedId = params.get("node") ? Number(params.get("node")) : null;
+  const linesParam = params.get("lines");
+  const highlight = useMemo(() => parseLines(linesParam), [linesParam]);
   const { fitView } = useReactFlow();
 
+  const setParams = useSetParams();
   const setParam = useCallback(
-    (key: string, value: string | null, replace = true) => {
-      // Start from the address bar, not the router's `prev`: two quick changes (both toggles)
-      // would otherwise build on the same stale value and the first would be lost.
-      const next = new URLSearchParams(window.location.search);
-      if (value === null) next.delete(key);
-      else next.set(key, value);
-      setParams(next, { replace });
-    },
+    (key: string, value: string | null, replace = true) => setParams({ [key]: value }, replace),
     [setParams],
   );
-  // Selecting a node is a navigation step (Back undoes it); toggles replace the entry.
+  // Selecting a node is a navigation step (Back undoes it); toggles replace the entry. Lines
+  // belong to the file they were cited in, so a new selection drops them.
   const select = useCallback(
-    (fileId: number | null) => setParam("node", fileId === null ? null : String(fileId), false),
-    [setParam],
+    (fileId: number | null) =>
+      setParams({ node: fileId === null ? null : String(fileId), lines: null }, false),
+    [setParams],
   );
   const closePanel = useCallback(() => select(null), [select]);
+  const showLines = useCallback(
+    (lines: LineRange) => setParams({ lines: `${lines.start}-${lines.end}` }, false),
+    [setParams],
+  );
+  const askAbout = useCallback(
+    (path: string) => setParams({ ask: "1", askq: `About ${path}: ` }),
+    [setParams],
+  );
 
-  const status = useQuery({
-    queryKey: ["status", snapshotId],
-    queryFn: ({ signal }) => getStatus(snapshotId, signal),
-    enabled: Number.isInteger(snapshotId) && snapshotId > 0,
-    staleTime: 30_000,
-  });
   const graph = useQuery({
     queryKey: ["graph", snapshotId, showTests, showGuesses],
     queryFn: ({ signal }) => getGraph(snapshotId, { showTests, showGuesses }, signal),
-    enabled: status.data?.status === "done",
     placeholderData: keepPreviousData, // keep the old picture while a toggle refetches
     staleTime: Infinity,
   });
@@ -75,32 +76,13 @@ function ExploreInner() {
   const selected = graph.data?.nodes.find((n) => n.id === selectedId) ?? null;
   const isInGraph = useCallback((fileId: number) => allIds.has(fileId), [allIds]);
 
-  if (status.error instanceof ApiError && status.error.status === 404) {
-    return <Navigate to={`/a/${id}`} replace />;
-  }
-  if (status.data && status.data.status !== "done") {
-    return <Navigate to={`/a/${snapshotId}`} replace />;
-  }
-  const reconnecting = isReconnecting(status) || isReconnecting(graph);
-  const hardError = graph.error ?? status.error;
+  const reconnecting = isReconnecting(graph);
+  const hardError = graph.error;
 
   return (
     <div className="explore">
-      <div className="explore-header">
-        {status.data ? (
-          <h1 className="explore-title">
-            <a href={status.data.url} target="_blank" rel="noreferrer" className="mono">
-              {repoName(status.data.url)}
-            </a>{" "}
-            <span className="repo-sha mono">@ {status.data.commit_sha.slice(0, 7)}</span>
-          </h1>
-        ) : (
-          <div className="skeleton" style={{ width: 240, height: 20 }} />
-        )}
-        {reconnecting ? <ConnectionNotice /> : null}
-      </div>
-
       <div className="toolbar" role="toolbar" aria-label="Graph options">
+        {reconnecting ? <ConnectionNotice /> : null}
         {phone ? (
           <p className="caption">The graph view needs a larger screen.</p>
         ) : (
@@ -196,8 +178,11 @@ function ExploreInner() {
             snapshotId={snapshotId}
             node={selected}
             minConfidence={showGuesses ? 0.5 : 0.9}
+            highlight={highlight}
             isInGraph={isInGraph}
             onSelectFile={select}
+            onShowLines={showLines}
+            onAsk={askAbout}
             onClose={closePanel}
           />
         ) : null}

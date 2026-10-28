@@ -148,8 +148,9 @@ def graph_answer(snapshot_id: int, route: Route) -> dict | None:
     candidates = resolve_target(snapshot_id, route.target)
     if not candidates:
         return None
+    # `query` is the target as written, so a client can re-ask with a chosen candidate.
     base = {"kind": "graph", "citations": [], "dropped": 0, "prompt_version": None,
-            "retrieval": None, "lower_confidence": 0}
+            "retrieval": None, "lower_confidence": 0, "query": route.target}
     if len(candidates) > 1:
         shown = candidates[:MAX_CANDIDATES]
         more = len(candidates) - len(shown)

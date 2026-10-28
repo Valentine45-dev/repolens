@@ -25,6 +25,7 @@ class Citation:
     end_line: int
     file_id: int
     symbol_id: int
+    in_test: bool  # the Explorer hides test files unless asked, so the chip says so
 
 
 @dataclass
@@ -78,7 +79,8 @@ def validate(text: str, snippets: list[Snippet]) -> Validated:
             dropped += 1
             return _GONE
         citations.setdefault(
-            (path, start, end), Citation(path, start, end, snippet.file_id, snippet.symbol_id)
+            (path, start, end),
+            Citation(path, start, end, snippet.file_id, snippet.symbol_id, snippet.in_test),
         )
         return m[0]
 
