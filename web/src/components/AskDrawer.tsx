@@ -1,4 +1,4 @@
-import { useMutation, useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useId, useMemo, useRef, useState, type FormEvent } from "react";
 import { Link, useSearchParams } from "react-router-dom";
 
@@ -7,6 +7,7 @@ import {
   getFindings,
   getGraph,
   repoName,
+  retrySearch,
   type Answer,
   type GraphResult,
   type SnapshotStatus,
@@ -157,11 +158,8 @@ export function AskDrawer({
           <p className="note drawer-notice" data-tone="warning">
             {UNAVAILABLE}
           </p>
-        ) : !features.ask && features.ask_reason ? (
-          <p className="note drawer-notice" data-tone="warning">
-            {features.ask_reason} Graph questions still work.
-          </p>
         ) : null}
+        <SearchNotice snapshotId={snapshotId} status={status} />
 
         {turns.length === 0 ? (
           <Suggestions snapshotId={snapshotId} aiReady={features.ai && features.ask} onPick={send} />
@@ -441,4 +439,59 @@ function AnswerView({
       ) : null}
     </div>
   );
+}
+
+const chunkCount = new Intl.NumberFormat("en-US");
+
+// Search for questions after the analysis (spec 5.2): progress while non-test code is embedded,
+// the reason and "Retry preparing search" when it failed. Graph questions work throughout.
+function SearchNotice({ snapshotId, status }: { snapshotId: number; status: SnapshotStatus }) {
+  const queryClient = useQueryClient();
+  const { features } = status;
+  const retry = useMutation({
+    mutationFn: () => retrySearch(snapshotId),
+    onSettled: () => queryClient.invalidateQueries({ queryKey: ["status", snapshotId] }),
+  });
+  const progress = features.search_progress;
+  const counts = progress
+    ? ` ${chunkCount.format(progress.done)} / ${chunkCount.format(progress.total)} chunks.`
+    : "";
+
+  if (features.search === "embedding") {
+    return (
+      <p className="note drawer-notice" role="status" aria-live="polite">
+        <Icon name="spinner" size={14} /> Preparing search for questions…{counts} Graph questions
+        work now.
+      </p>
+    );
+  }
+  if (features.retry_search) {
+    const reason = features.ask_reason ?? features.search_error;
+    return (
+      <div className="note drawer-notice" data-tone="warning" role="status">
+        <p>
+          {reason}
+          {features.ask ? " AI answers still use the rest of the code." : " Graph questions still work."}
+        </p>
+        <button
+          type="button"
+          className="button button-secondary button-small"
+          onClick={() => retry.mutate()}
+          disabled={retry.isPending}
+        >
+          {retry.isPending ? <Icon name="spinner" size={14} /> : null}
+          Retry preparing search
+        </button>
+        {retry.isError ? <p className="caption">{retry.error.message}</p> : null}
+      </div>
+    );
+  }
+  if (!features.ask && features.ask_reason) {
+    return (
+      <p className="note drawer-notice" data-tone="warning">
+        {features.ask_reason} Graph questions still work.
+      </p>
+    );
+  }
+  return null;
 }

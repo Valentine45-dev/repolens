@@ -31,6 +31,9 @@ CREATE TABLE jobs (
   percent       INT NOT NULL DEFAULT 0,
   error         TEXT,
   search_error  TEXT,                             -- embed stage failed; the job still finishes
+  -- Search for questions: embedding (non-test code) | tests (Ask on, test code in the
+  -- background) | ready | failed (search_error says why; can be retried). NULL on old rows.
+  search_state  TEXT,
   -- Counts within the current stage (parse: files, embed: chunks); NULL in other stages.
   progress_done  INT,
   progress_total INT,
@@ -41,7 +44,7 @@ CREATE INDEX jobs_snapshot ON jobs (snapshot_id);
 -- A snapshot is "ready" when its latest job is done.
 CREATE VIEW snapshot_status AS
 SELECT DISTINCT ON (snapshot_id) snapshot_id, id AS job_id, status, stage, percent, error,
-  search_error, progress_done, progress_total
+  search_error, progress_done, progress_total, search_state
 FROM jobs
 ORDER BY snapshot_id, id DESC;
 

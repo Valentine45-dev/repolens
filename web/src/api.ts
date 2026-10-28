@@ -21,6 +21,11 @@ export interface Features {
   ask: boolean; // AI answers from code search
   ask_reason: string | null;
   ai: boolean; // an LLM is configured on the server
+  /** Search for questions: non-test code first, then test code in the background. */
+  search: "embedding" | "tests" | "ready" | "failed";
+  search_progress: { done: number; total: number } | null; // chunks, while search runs
+  search_error: string | null;
+  retry_search: boolean; // "Retry preparing search" is offered
 }
 
 export type Severity = "high" | "medium" | "low";
@@ -242,6 +247,11 @@ export function isNetworkError(error: unknown): boolean {
 /** `commit` pins a full SHA (the Home examples); without it the API follows the default branch. */
 export function submitRepo({ url, commit }: { url: string; commit?: string }): Promise<Submitted> {
   return request("/repos", { method: "POST", body: JSON.stringify({ url, commit }) });
+}
+
+/** Re-embed a finished analysis whose search failed (the same job; graph and findings stay). */
+export function retrySearch(snapshotId: number): Promise<{ search: string }> {
+  return request(`/snapshots/${snapshotId}/search`, { method: "POST" });
 }
 
 export function getStatus(snapshotId: number, signal?: AbortSignal): Promise<SnapshotStatus> {
