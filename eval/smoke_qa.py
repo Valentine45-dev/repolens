@@ -194,6 +194,8 @@ def main() -> None:
     parser.add_argument("--questions", default=ROOT / "eval" / "questions.yaml")
     parser.add_argument("--price-in", type=float, help="USD per million input tokens")
     parser.add_argument("--price-out", type=float, help="USD per million output tokens")
+    parser.add_argument("--only", nargs="+", metavar="ID",
+                        help="run only these question ids (e.g. identity 16) to save calls")
     args = parser.parse_args()
 
     inner = llm.get_provider()
@@ -204,6 +206,8 @@ def main() -> None:
 
     db.open_pool()
     todo = cases(Path(args.questions))
+    if args.only:
+        todo = [c for c in todo if str(c["id"]) in args.only]
     info = run_info(provider, llm_used=True)
     print(header(info))
     print(f"embedder {config.EMBEDDER}, {len(todo)} questions, call limit {MAX_CALLS}\n")
