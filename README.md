@@ -56,8 +56,10 @@ torch wheels and the embedding model, so the running stack works offline). On st
 loads the model, which takes about a minute; until then the web app shows connection errors.
 
 Services: `db` (host port 5433), `api` (8000), `web` (5173, a production build served by
-`vite preview`, which forwards `/api` to the API). Without `LLM_MODEL` and `LLM_API_KEY` the
-Ask panel says AI answers are unavailable and graph questions still work.
+`vite preview`, which forwards `/api` to the API). All three are published on `127.0.0.1`
+only: nothing has authentication and the database has a default password. Without
+`LLM_MODEL` and `LLM_API_KEY` the Ask panel says AI answers are unavailable and graph
+questions still work.
 
 ### Dev mode (API and web on the host)
 
@@ -94,9 +96,23 @@ npx vite preview --port 5173 --strictPort
 (Not `npm run preview -- --port 5173`: Windows PowerShell 5.1 drops the bare `--`, so Vite
 gets `5173` as a folder name and stops with "dist does not exist".)
 
-A database volume created before 28 Oct needs one migration, run after restarting the API on
-the current code: `docker compose exec -T db psql -U repolens -d repolens <
-backend/migrations/2026-10-28-repo-case-and-progress.sql`.
+A database volume created before 28 Oct needs the two migrations in
+[`backend/migrations/`](backend/migrations/), run after stopping any API on older code (a
+fresh volume needs neither). Both are idempotent and can run in either order:
+
+```bash
+docker compose exec -T db psql -U repolens -d repolens < backend/migrations/2026-10-28-repo-case-and-progress.sql
+```
+
+```bash
+docker compose exec -T db psql -U repolens -d repolens < backend/migrations/2026-10-28-search-state.sql
+```
+
+(In PowerShell, pipe the file instead: `Get-Content backend/migrations/<file> | docker compose
+exec -T db psql -U repolens -d repolens`.)
+
+Run only one API against a database at a time: on startup the API marks every running
+analysis and search in that database as interrupted, including another API's.
 
 ## Configuration (`.env`)
 
@@ -112,10 +128,10 @@ Copy `.env.example`. Only the backend reads these; the key never reaches the bro
 | `CLONE_TIMEOUT_S` | `120` | Clone time limit |
 | `MAX_ANALYSIS_S` | `600` | Whole-pipeline time limit |
 | `LLM_PROVIDER` | `anthropic` | Only Anthropic is implemented |
-| `LLM_MODEL` | – | Model id; empty means AI answers are off |
+| `LLM_MODEL` | – | Model id; empty means AI answers are off. The demo uses `claude-sonnet-5-5` |
 | `LLM_API_KEY` | – | Empty means AI answers are off |
 | `LLM_EFFORT` | `low` | Sent as `output_config.effort` |
-| `LLM_THINKING` | `between_tools` | `between_tools`, `adaptive` or `default` (use `adaptive` for Haiku) |
+| `LLM_THINKING` | `between_tools` | `between_tools` (demo, Sonnet 5.5), `adaptive` or `default` (use `adaptive` for Haiku) |
 | `LLM_TOKEN_CAP_PER_SNAPSHOT` | `500000` | AI token budget per analysed commit; does not reset |
 
 Less common settings (embedding model, retrieval `QA_*` values, deadlines) are in
@@ -160,8 +176,11 @@ through `uvx` at pinned versions (Semgrep falls back to its Docker image).
 
 ### Results so far (28 Oct)
 
-These are small, hand-labelled evaluations by the same author who wrote the rules and the
-retrieval code. Treat them as a check that things work as designed, not as general accuracy.
+These are small evaluations, labelled by the people who wrote the rules and the retrieval code:
+the project owner, working with an AI coding assistant (Claude). Treat them as a check that
+things work as designed, not as general accuracy. All numbers below were measured before the
+review fixes of 28 Oct evening (citation and answer-status rules, config-file redaction; listed
+in [`PROGRESS.md`](PROGRESS.md)) and were not re-run.
 
 **Retrieval** (14 answerable questions on express and itsdangerous, test code left out; a hit
 means the context sent to the LLM overlaps the labelled lines):
@@ -173,7 +192,10 @@ means the context sent to the LLM overlaps the labelled lines):
 | C: top 8 + 1-hop graph expansion (up to 16) | 0.93 |
 
 Graph expansion beat plain search of the same size by one question (13/14 vs 12/14). That is
-not conclusive at this sample size.
+not conclusive at this sample size. The chunker (doc comments joined to their code) and the
+expansion rules were changed after a first run on these same 14 questions, in which expansion
+added nothing (A = C = 0.64, B = 0.79), so these numbers come from tuning on the evaluation
+set itself.
 
 **Detectors** (hand-written fixtures with `vuln:` / `safe:` labels committed before any tool
 ran; Bandit and Semgrep scored on the same labels):
@@ -207,10 +229,11 @@ tokens ([Anthropic pricing](https://platform.claude.com/docs/en/about-claude/pri
 up to 100,000 tokens).
 
 ```bash
-uv run --project backend --env-file .env python eval/smoke_qa.py --price-in X --price-out Y
+uv run --project backend --env-file .env python eval/smoke_qa.py --price-in 2 --price-out 10
 ```
 
-It makes about 8 real API calls (hard limit 12); the prices are only for the cost estimate.
+It makes about 8 real API calls (hard limit 12); the prices are only for the cost estimate
+(2 / 10 USD per million tokens is Sonnet 5.5, the demo model set in `.env`).
 
 **Final Q&A run** (all 16 questions plus identity and injection, `--all`, with the demo model
 `claude-sonnet-5-5`, effort low, `between_tools` thinking, prompt `2026-10-28.2`): 16 of 18
@@ -223,7 +246,8 @@ false-premise questions. Median latency 4.3 s. 18 calls cost about $0.22.
 **Real-world precision on PyGoat** (an intentionally vulnerable Django app, commit `46fef96`):
 a random sample of 20 findings per tool (seed 20261028), each labelled real ("a reviewer should
 act on it") or false alarm ("correctly matched, but no action needed: by design, test-only,
-documentation"), labels confirmed before scoring.
+documentation"). The labels were proposed by the AI assistant and confirmed unchanged by the
+project owner before scoring.
 
 | Tool | Precision | 95% interval |
 |---|---|---|
@@ -244,6 +268,9 @@ are from the run before the fix.
   a fixed-string `shell=True`, SQL with a constant table name).
 - **Secrets passed inline are missed.** The secret check needs a named assignment
   (`password = "..."`) or a known token format; `jwt.sign(payload, "literal")` is not found.
+- **Redaction is pattern-based.** Unquoted values (`password: hunter2`) are caught only in
+  YAML, INI/CFG, TOML and shell files; in code, Markdown and text only quoted values and known
+  token formats are.
 - **Server-side XSS through response writes is missed.** The JS HTML rule only checks
   assignments to `innerHTML` / `outerHTML`, not `res.send("<h1>" + input)`.
 - **Call edges are name-based guesses.** Dynamic calls and star imports are not resolved; calls
@@ -258,3 +285,6 @@ are from the run before the fix.
   fixed model, effort, thinking setting and prompt version, which every eval run records.
 - Public GitHub repos only, up to 2,000 files; files over 1 MB, `.env*`, key files, vendored
   and build directories are skipped.
+- **A pinned `commit` is not checked against the repo** before an analysis starts. GitHub
+  serves commits from a repo's forks by SHA too, so a pinned commit from a fork would be shown
+  under the parent repo's name. The Home page examples are pinned to commits of those repos.
