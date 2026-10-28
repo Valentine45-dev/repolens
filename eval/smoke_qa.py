@@ -21,7 +21,16 @@ Pass criteria (CLAUDE.md, judged by criteria, not wording):
 - unanswerable: "could not find" answer with zero citations.
 - answerable: an expected file appears among the validated citations.
 
-MAX_CALLS caps real API calls (retries included); the run stops before going over.
+Also reported (fixed before the first --all run, 28 Oct; informational, not pass criteria):
+- faithful: the answer had no dropped citation (every citation the model wrote was inside a
+  snippet it was sent). Faithfulness rate = faithful answers / all answers, and the same over
+  answers that wrote at least one citation.
+- expected range cited (answerable only): a validated citation overlaps a labelled line range.
+- latency per question (seconds, retrieval + LLM).
+
+By default the run is the 8-question smoke set; --all asks every question in questions.yaml.
+--max-calls (default MAX_CALLS) caps real API calls, retries included; the run stops before
+going over.
 """
 
 import argparse
@@ -163,7 +172,7 @@ def judge(case: dict, reply: dict) -> list[str]:
     return why
 
 
-def cases(questions_file) -> list[dict]:
+def cases(questions_file, every: bool = False) -> list[dict]:
     fixture = fixture_snapshot()
     out = [
         {"id": "identity", "type": "identity", "snapshot": fixture, "repo": "fixture",
@@ -175,7 +184,7 @@ def cases(questions_file) -> list[dict]:
     for repo in data["repos"]:
         snap = None
         for q in repo["questions"]:
-            if q["id"] not in ANSWERABLE + UNANSWERABLE:
+            if not every and q["id"] not in ANSWERABLE + UNANSWERABLE:
                 continue
             snap = snap or repo_snapshot(repo["url"], repo["commit"])
             case = {"id": q["id"], "snapshot": snap, "repo": repo["name"],
@@ -185,6 +194,7 @@ def cases(questions_file) -> list[dict]:
             else:
                 case["type"] = "answerable"
                 case["expected_paths"] = {e["path"] for e in q["expected"]}
+                case["expected"] = q["expected"]
             out.append(case)
     return out
 
@@ -196,21 +206,24 @@ def main() -> None:
     parser.add_argument("--price-out", type=float, help="USD per million output tokens")
     parser.add_argument("--only", nargs="+", metavar="ID",
                         help="run only these question ids (e.g. identity 16) to save calls")
+    parser.add_argument("--all", action="store_true", help="every question in questions.yaml")
+    parser.add_argument("--max-calls", type=int, default=MAX_CALLS)
+    parser.add_argument("--name", default="smoke_qa", help="results file name prefix")
     args = parser.parse_args()
 
     inner = llm.get_provider()
     if inner is None:
         raise SystemExit("LLM not configured (LLM_MODEL / LLM_API_KEY); nothing to test")
-    provider = CountingProvider(inner, MAX_CALLS)
+    provider = CountingProvider(inner, args.max_calls)
     llm.get_provider = lambda: provider  # ai_answer looks it up on each call
 
     db.open_pool()
-    todo = cases(Path(args.questions))
+    todo = cases(Path(args.questions), every=args.all)
     if args.only:
         todo = [c for c in todo if str(c["id"]) in args.only]
     info = run_info(provider, llm_used=True)
     print(header(info))
-    print(f"embedder {config.EMBEDDER}, {len(todo)} questions, call limit {MAX_CALLS}\n")
+    print(f"embedder {config.EMBEDDER}, {len(todo)} questions, call limit {args.max_calls}\n")
 
     rows = []
     for case in todo:
@@ -232,8 +245,15 @@ def main() -> None:
             "tokens_in": sum(c.get("tokens_in", 0) for c in calls),
             "tokens_out": sum(c.get("tokens_out", 0) for c in calls),
         }
+        row["faithful"] = reply["dropped"] == 0
         if case["type"] == "answerable":
             row["expected_paths"] = sorted(case["expected_paths"])
+            row["expected_file_cited"] = bool(
+                {c["path"] for c in reply["citations"]} & case["expected_paths"])
+            row["expected_range_cited"] = any(
+                c["path"] == e["path"] and c["start_line"] <= e["end"]
+                and e["start"] <= c["end_line"]
+                for c in reply["citations"] for e in case["expected"])
         rows.append(row)
         mark = "PASS" if row["pass"] else "FAIL"
         print(f"{mark} {str(case['id']):<10}{case['repo']:<13}{row['status']:<11}"
@@ -245,13 +265,26 @@ def main() -> None:
     t_out = sum(r["tokens_out"] for r in rows)
     totals = {"questions": len(rows), "passed": sum(r["pass"] for r in rows),
               "calls": provider.calls, "tokens_in": t_in, "tokens_out": t_out}
+    wrote = [r for r in rows if r["citations"] or r["dropped"]]
+    secs = sorted(r["seconds"] for r in rows)
+    totals.update(
+        faithful=sum(r["faithful"] for r in rows),
+        faithfulness_rate=round(sum(r["faithful"] for r in rows) / len(rows), 3),
+        faithfulness_rate_citing=(round(sum(r["faithful"] for r in wrote) / len(wrote), 3)
+                                  if wrote else None),
+        dropped_total=sum(r["dropped"] for r in rows),
+        seconds_median=secs[len(secs) // 2], seconds_max=secs[-1],
+    )
     if args.price_in is not None and args.price_out is not None:
         totals["prices_usd_per_mtok"] = {"in": args.price_in, "out": args.price_out}
         totals["cost_usd"] = round((t_in * args.price_in + t_out * args.price_out) / 1e6, 6)
     print(f"\n{totals['passed']}/{totals['questions']} passed | {provider.calls} calls |"
           f" tokens {t_in} in + {t_out} out"
           + (f" | ~${totals['cost_usd']:.4f}" if "cost_usd" in totals else ""))
-    print("saved", save_results("smoke_qa", info, {"totals": totals, "questions": rows}))
+    print(f"faithful {totals['faithful']}/{len(rows)} | dropped citations"
+          f" {totals['dropped_total']} | latency median {totals['seconds_median']}s"
+          f" max {totals['seconds_max']}s")
+    print("saved", save_results(args.name, info, {"totals": totals, "questions": rows}))
 
 
 if __name__ == "__main__":
