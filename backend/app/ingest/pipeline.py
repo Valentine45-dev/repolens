@@ -5,6 +5,7 @@ duplicates anything. Progress goes to the job row. The clone is always deleted a
 """
 
 import logging
+import threading
 import time
 from collections import Counter
 from dataclasses import dataclass
@@ -34,6 +35,12 @@ from app.qa.embed import get_embedder
 log = logging.getLogger("repolens.ingest")
 
 PARSER_KINDS = ("module", "class", "function", "method")
+
+
+# One analysis or search retry at a time: each holds file contents, parse results and embedding
+# batches in memory, and the demo laptop has little to spare. A waiting job stays 'queued'; its
+# time limit starts when it gets its turn.
+_JOB_LOCK = threading.Lock()
 
 
 class JobError(RuntimeError):
@@ -508,6 +515,11 @@ def claim_search_retry(snapshot_id: int) -> int | None:
 def run_search_retry(job_id: int, snapshot_id: int) -> None:
     """"Retry preparing search": re-embed from the stored files with a fresh time budget (this
     run does no clone, parse-to-database or detection, so it gets the whole budget)."""
+    with _JOB_LOCK:
+        _run_search_retry(job_id, snapshot_id)
+
+
+def _run_search_retry(job_id: int, snapshot_id: int) -> None:
     deadline = time.monotonic() + config.MAX_ANALYSIS_S
     try:
         parsed = parse_stored(snapshot_id)
@@ -522,6 +534,11 @@ def run_search_retry(job_id: int, snapshot_id: int) -> None:
 
 
 def run_job(job_id: int, snapshot_id: int, url: str, sha: str) -> None:
+    with _JOB_LOCK:
+        _run_job(job_id, snapshot_id, url, sha)
+
+
+def _run_job(job_id: int, snapshot_id: int, url: str, sha: str) -> None:
     workdir = Path(config.WORKSPACE_DIR) / f"job-{job_id}"
     deadline = time.monotonic() + config.MAX_ANALYSIS_S
     stage = "fetch"

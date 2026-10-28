@@ -226,3 +226,26 @@ def test_fetch_is_not_retried_without_time_left(client, monkeypatch):
     body = client.post("/repos", json={"url": "https://github.com/example/late"}).json()
     status = client.get(f"/snapshots/{body['snapshot_id']}/status").json()
     assert (status["status"], len(calls)) == ("failed", 1)
+
+
+def test_analyses_run_one_at_a_time(client):
+    """A job waits (still 'queued') while another analysis holds the lock, then runs."""
+    import threading
+    import time
+
+    from app.ingest import pipeline
+
+    body = client.post("/repos", json={"url": "https://github.com/example/first"}).json()
+    job_id = query("INSERT INTO jobs (snapshot_id) VALUES (%s) RETURNING id",
+                   body["snapshot_id"])[0]["id"]
+    with pipeline._JOB_LOCK:
+        worker = threading.Thread(target=pipeline.run_job, args=(
+            job_id, body["snapshot_id"], "https://github.com/example/first", SHA))
+        worker.start()
+        time.sleep(0.5)
+        (row,) = query("SELECT status FROM jobs WHERE id = %s", job_id)
+        assert row["status"] == "queued"
+    worker.join(timeout=60)
+    assert not worker.is_alive()
+    (row,) = query("SELECT status FROM jobs WHERE id = %s", job_id)
+    assert row["status"] == "done"
