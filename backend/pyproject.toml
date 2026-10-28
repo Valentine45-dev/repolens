@@ -40,6 +40,11 @@ extend-exclude = ["tests/fixtures"]
 [tool.ruff.lint]
 select = ["E", "F", "W", "I", "B", "UP"]
 
+# Pyright / Pylance: the fixture files are deliberately broken or vulnerable test inputs
+# (tests/fixtures/README.md); keep checking them but show no diagnostics for them.
+[tool.pyright]
+ignore = ["tests/fixtures"]
+
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 pythonpath = ["."]

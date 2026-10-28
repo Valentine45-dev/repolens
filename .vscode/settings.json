@@ -1,0 +1,15 @@
+{
+  // backend/tests/fixtures holds deliberately broken or vulnerable test inputs (see its
+  // README.md). They must not be fixed, so the editor should not flag them.
+
+  // Pylance: keep analysing the fixtures but show no errors or warnings for them.
+  "python.analysis.ignore": ["backend/tests/fixtures"],
+
+  // TypeScript: the fixture repo's own tsconfig.json (itself a fixture) governs its .ts/.tsx
+  // files, so they open as plain text instead. The detector fixtures are covered by
+  // backend/tests/fixtures/tsconfig.json (noCheck) and keep their highlighting.
+  "files.associations": {
+    "**/backend/tests/fixtures/sample_repo/**/*.ts": "plaintext",
+    "**/backend/tests/fixtures/sample_repo/**/*.tsx": "plaintext"
+  }
+}
