@@ -1,5 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Fragment, useEffect, useId, useMemo, useRef, useState, type FormEvent } from "react";
+import { useEffect, useId, useMemo, useRef, useState, type FormEvent } from "react";
 import { Link, useSearchParams } from "react-router-dom";
 
 import {
@@ -16,6 +16,7 @@ import { degrees } from "../graphModel";
 import { exploreHref, useSetParams } from "../links";
 import { Icon } from "./Icon";
 import { Markdown } from "./Markdown";
+import { PathText } from "./PathText";
 
 const MAX_CHARS = 1000; // the API's limit
 const SHOWN_RESULTS = 5; // graph results before "Show all N"
@@ -88,7 +89,7 @@ export function AskDrawer({
   const [draft, setDraft] = useState("");
   const [wide, setWide] = useState(loadWide);
   const inputRef = useRef<HTMLTextAreaElement>(null);
-  const endRef = useRef<HTMLDivElement>(null);
+  const lastTurnRef = useRef<HTMLLIElement>(null);
   const { features } = status;
   const name = repoName(status.url);
 
@@ -97,8 +98,10 @@ export function AskDrawer({
   useEffect(() => {
     saveTurns(snapshotId, turns);
   }, [snapshotId, turns]);
+  // Show the newest turn from its question down, so its "AI answer" / "From the graph" label is
+  // read first; scrolling to the end would land a long answer mid-way.
   useEffect(() => {
-    endRef.current?.scrollIntoView({ block: "end" });
+    lastTurnRef.current?.scrollIntoView({ block: "start" });
   }, [turns]);
 
   // "Ask about this" (node panel) arrives as ?askq=...: prefill once, then drop it from the URL.
@@ -201,8 +204,8 @@ export function AskDrawer({
           <Suggestions snapshotId={snapshotId} aiReady={features.ai && features.ask} onPick={send} />
         ) : (
           <ol className="conversation" aria-label="Conversation">
-            {turns.map((turn) => (
-              <li key={turn.id} className="turn">
+            {turns.map((turn, i) => (
+              <li key={turn.id} className="turn" ref={i === turns.length - 1 ? lastTurnRef : undefined}>
                 <p className="turn-question">
                   <span className="visually-hidden">You asked: </span>
                   {turn.question}
@@ -231,7 +234,6 @@ export function AskDrawer({
             ))}
           </ol>
         )}
-        <div ref={endRef} />
       </div>
 
       <form className="ask-form" onSubmit={submit}>
@@ -262,7 +264,6 @@ export function AskDrawer({
             type="submit"
             className="button button-small"
             disabled={!draft.trim() || ask.isPending}
-            aria-label="Send question"
           >
             {ask.isPending ? <Icon name="spinner" size={14} /> : <Icon name="send" size={14} />}
             Ask
@@ -354,31 +355,26 @@ function resultHref(snapshotId: number, r: GraphResult): string | null {
   return exploreHref(snapshotId, { fileId: r.file_id, lines, tests: r.in_test, ask: true });
 }
 
+/** Python's dotted module for a file, as the parser builds it (backend parse.module_name). */
+function pythonModule(path: string): string {
+  const parts = path.replace(/\.pyi?$/, "").split("/");
+  if (parts[parts.length - 1] === "__init__" && parts.length > 1) parts.pop();
+  return parts.join(".");
+}
+
+/** A symbol's name without its module: the file path is shown under it. JS names are
+ * `module:Name.method`; Python names are `pkg.mod.Name.method`. */
 function shortName(r: GraphResult): string {
   if (r.kind === "module") return r.path ?? r.qualified_name;
   if (r.kind === "external") return r.qualified_name;
-  return r.qualified_name.split(":").pop() ?? r.name;
+  if (r.qualified_name.includes(":")) return r.qualified_name.split(":").pop() ?? r.name;
+  const mod = r.path ? pythonModule(r.path) : "";
+  return mod && r.qualified_name.startsWith(`${mod}.`)
+    ? r.qualified_name.slice(mod.length + 1)
+    : r.qualified_name;
 }
 
 const lineCount = new Intl.NumberFormat("en-US");
-
-/** A path that wraps only after a "/" (DESIGN.md), never inside a file or folder name. */
-function PathText({ path }: { path: string }) {
-  return (
-    <>
-      {path.split("/").map((part, i) => (
-        <Fragment key={i}>
-          {i ? (
-            <>
-              /<wbr />
-            </>
-          ) : null}
-          {part}
-        </Fragment>
-      ))}
-    </>
-  );
-}
 
 /** One line for a failed AI question; the reason that applies to all of them is the banner. */
 function failedLine(answer: Answer): string {
@@ -425,7 +421,7 @@ function ResultRow({
       <Icon name={kindIcon(r)} size={14} />
       <span className="result-name">
         <span className="mono result-primary">
-          <PathText path={shortName(r)} />
+          <PathText path={shortName(r)} sep={r.kind === "module" ? "/" : "."} />
         </span>
         {r.kind !== "module" && r.path ? (
           <span className="mono result-path">
@@ -535,7 +531,8 @@ function AnswerView({
           </ul>
           {hidden > 0 ? (
             <button type="button" className="link-button" onClick={() => setShowAll(true)}>
-              Show all {answer.results.length}
+              {/* "more", not "all": a capped answer lists only the first 50 (its text says so) */}
+              Show {hidden} more
             </button>
           ) : null}
         </>

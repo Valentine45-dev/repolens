@@ -1,7 +1,8 @@
-import { Fragment, useMemo } from "react";
+import { useMemo } from "react";
 
 import type { GraphNode } from "../api";
 import { type Degrees, languageLabel } from "../graphModel";
+import { PathText } from "./PathText";
 
 // The accessible alternative to the graph (spec §5.4): every file, never capped, as a table.
 export function FileList({
@@ -43,7 +44,7 @@ export function FileList({
               <tr key={n.id} aria-selected={n.id === selectedId}>
                 <td>
                   <button type="button" className="row-button mono" onClick={() => onSelect(n.id)}>
-                    <BreakablePath path={n.path} />
+                    <PathText path={n.path} />
                   </button>
                 </td>
                 <td className="col-optional">{languageLabel(n.language)}</td>
@@ -57,24 +58,5 @@ export function FileList({
         </tbody>
       </table>
     </div>
-  );
-}
-
-/** A path that may wrap only after a "/", never inside a name. */
-export function BreakablePath({ path }: { path: string }) {
-  const parts = path.split("/");
-  return (
-    <>
-      {parts.map((part, i) => (
-        <Fragment key={i}>
-          {part}
-          {i < parts.length - 1 ? (
-            <>
-              /<wbr />
-            </>
-          ) : null}
-        </Fragment>
-      ))}
-    </>
   );
 }

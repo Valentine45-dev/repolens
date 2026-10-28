@@ -2,7 +2,7 @@ import { useMutation, useQueries } from "@tanstack/react-query";
 import { type FormEvent, useEffect, useId, useRef, useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 
-import { getStatus, isFinished, repoName, submitRepo, type SnapshotStatus } from "../api";
+import { ApiError, getStatus, isFinished, repoName, submitRepo, type SnapshotStatus } from "../api";
 import { Icon } from "../components/Icon";
 import { age, loadRecent, rememberAnalysis } from "../recent";
 
@@ -154,8 +154,10 @@ function RecentAnalyses() {
     queries: recent.map((r) => ({
       queryKey: ["status", r.snapshotId],
       queryFn: () => getStatus(r.snapshotId),
-      refetchInterval: (query: { state: { data?: SnapshotStatus } }) =>
-        isFinished(query.state.data?.status) ? false : 3000,
+      // Poll only while an analysis is running; one that failed to load (e.g. removed from the
+      // server) is not polled again.
+      refetchInterval: (query: { state: { data?: SnapshotStatus; status: string } }) =>
+        query.state.status === "error" || isFinished(query.state.data?.status) ? false : 3000,
     })),
   });
 
@@ -174,7 +176,11 @@ function RecentAnalyses() {
               <Link to={`/a/${r.snapshotId}`} className="list-link">
                 <span className="list-name mono">{repoName(r.url)}</span>
                 <span className="list-meta">
-                  <StatusLabel status={data?.status} missing={Boolean(error)} />
+                  <StatusLabel
+                    status={data?.status}
+                    missing={Boolean(error)}
+                    removed={error instanceof ApiError && error.status === 404}
+                  />
                   <span aria-hidden="true">·</span>
                   <span className="mono num">{r.commitSha.slice(0, 7)}</span>
                   <span aria-hidden="true">·</span>
@@ -189,7 +195,16 @@ function RecentAnalyses() {
   );
 }
 
-function StatusLabel({ status, missing }: { status?: SnapshotStatus["status"]; missing: boolean }) {
+function StatusLabel({
+  status,
+  missing,
+  removed,
+}: {
+  status?: SnapshotStatus["status"];
+  missing: boolean;
+  removed: boolean;
+}) {
+  if (removed) return <span className="status">Removed</span>;
   if (missing) return <span className="status">Unavailable</span>;
   if (!status) return <span className="skeleton" style={{ width: 56 }} aria-label="Loading status" />;
   if (status === "done") {

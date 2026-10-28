@@ -1,6 +1,6 @@
 import { keepPreviousData, useQuery } from "@tanstack/react-query";
 import { ReactFlowProvider, useReactFlow } from "@xyflow/react";
-import { useCallback, useMemo } from "react";
+import { useCallback, useMemo, useState } from "react";
 import { useOutletContext, useSearchParams } from "react-router-dom";
 
 import { getGraph } from "../api";
@@ -8,7 +8,7 @@ import type { AnalysisContext } from "../components/AnalysisShell";
 import { ConnectionNotice, isReconnecting } from "../components/ConnectionNotice";
 import { FileList } from "../components/FileList";
 import { GraphSkeleton } from "../components/GraphSkeleton";
-import { FIT_OPTIONS, GraphView } from "../components/GraphView";
+import { FIT_OPTIONS, firstViewHub, GraphView } from "../components/GraphView";
 import { NodePanel } from "../components/NodePanel";
 import { applyCap, degrees, layoutGraph, RENDER_CAP } from "../graphModel";
 import { parseLines, useSetParams, type LineRange } from "../links";
@@ -32,6 +32,11 @@ function ExploreInner() {
   // Spec §10: under 768px the graph is not readable, so phones get the list only.
   const phone = useMediaQuery("(max-width: 767px)");
   const listView = phone || params.get("view") === "list";
+  // Matches the CSS: the node panel overlays the canvas below 900px, and below 1600px while the
+  // Ask drawer is open (three docked columns leave the canvas too narrow).
+  const narrow = useMediaQuery("(max-width: 900px)");
+  const askSqueeze = useMediaQuery("(max-width: 1599px)") && params.get("ask") === "1";
+  const panelOverlay = narrow || askSqueeze;
   const selectedId = params.get("node") ? Number(params.get("node")) : null;
   const linesParam = params.get("lines");
   const highlight = useMemo(() => parseLines(linesParam), [linesParam]);
@@ -68,14 +73,24 @@ function ExploreInner() {
 
   const deg = useMemo(() => (graph.data ? degrees(graph.data) : new Map()), [graph.data]);
   const capped = useMemo(() => (graph.data ? applyCap(graph.data, deg) : null), [graph.data, deg]);
+  // The layout is the slow part (dagre, main thread) and only the graph needs it.
   const positions = useMemo(
-    () => (capped ? layoutGraph(capped.nodes, capped.edges) : new Map()),
-    [capped],
+    () => (capped && !listView ? layoutGraph(capped.nodes, capped.edges) : new Map()),
+    [capped, listView],
   );
   const shownIds = useMemo(() => new Set(capped?.nodes.map((n) => n.id) ?? []), [capped]);
   const allIds = useMemo(() => new Set(graph.data?.nodes.map((n) => n.id) ?? []), [graph.data]);
   const selected = graph.data?.nodes.find((n) => n.id === selectedId) ?? null;
   const isInGraph = useCallback((fileId: number) => allIds.has(fileId), [allIds]);
+  // A big graph opens on its most connected file; say which one until the user picks a file
+  // or presses Fit. A new picture (a toggle) opens fresh, so the note comes back with it.
+  const hubId = useMemo(
+    () => (capped ? firstViewHub(positions, capped.edges) : null),
+    [capped, positions],
+  );
+  const hub = hubId === null ? null : (graph.data?.nodes.find((n) => n.id === hubId) ?? null);
+  const [fittedAt, setFittedAt] = useState<number | null>(null);
+  const showHubNote = hub !== null && selectedId === null && fittedAt !== graph.dataUpdatedAt;
 
   const reconnecting = isReconnecting(graph);
   const hardError = graph.error;
@@ -116,7 +131,10 @@ function ExploreInner() {
           <button
             type="button"
             className="button button-secondary button-small"
-            onClick={() => fitView({ ...FIT_OPTIONS, duration: 200 })}
+            onClick={() => {
+              setFittedAt(graph.dataUpdatedAt);
+              void fitView({ ...FIT_OPTIONS, duration: 200 });
+            }}
           >
             Fit
           </button>
@@ -140,7 +158,13 @@ function ExploreInner() {
               </button>
             </div>
           ) : !graph.data || !capped ? (
-            <GraphSkeleton />
+            listView ? (
+              <div className="canvas-message" aria-busy="true">
+                <p className="caption">Loading files…</p>
+              </div>
+            ) : (
+              <GraphSkeleton />
+            )
           ) : graph.data.nodes.length === 0 ? (
             <div className="canvas-message">
               <p>No Python or JavaScript/TypeScript files to show.</p>
@@ -161,11 +185,17 @@ function ExploreInner() {
                 edges={capped.edges}
                 positions={positions}
                 selectedId={selectedId}
+                panelOverlay={panelOverlay}
                 onSelect={select}
               />
               {selectedId !== null && selected && !shownIds.has(selectedId) ? (
                 <p className="canvas-hint caption">
                   {selected.path} is outside the {RENDER_CAP} files drawn. It is in List view.
+                </p>
+              ) : showHubNote ? (
+                <p className="canvas-hint caption">
+                  Opened on <span className="mono">{hub.path}</span>, the most connected file, and
+                  its neighbours. Fit shows all files.
                 </p>
               ) : null}
             </>

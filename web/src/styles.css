@@ -226,6 +226,7 @@ a {
   color: var(--primary-text);
   font: inherit;
   font-weight: 500;
+  text-decoration: none; /* a Link styled as a button ("Open in Explorer") */
   white-space: nowrap;
   cursor: pointer;
   transition: background-color 150ms var(--ease-out), border-color 150ms var(--ease-out);
@@ -1090,14 +1091,12 @@ a {
   overflow-wrap: anywhere;
 }
 
-.panel-title:focus {
-  outline: none; /* focus is moved here programmatically; the panel itself is the cue */
-}
-
+/* Focus is moved here programmatically (tabindex -1, not in the tab order) so a screen reader
+   starts at the title; the panel opening is the visible cue. A ring here only looked like a
+   stray box, e.g. on a deep link to a finding. */
+.panel-title:focus,
 .panel-title:focus-visible {
-  outline: 2px solid var(--focus-ring);
-  outline-offset: 0; /* hugs the title; never crosses the caption below */
-  border-radius: 2px;
+  outline: none;
 }
 
 .panel-facts {
@@ -1321,7 +1320,7 @@ a {
 
 .location-col {
   font-size: 0.8125rem;
-  overflow-wrap: anywhere;
+  overflow-wrap: break-word; /* paths wrap after "/" (PathText); never mid-name unless one is too long */
 }
 
 .finding-tag {
@@ -1730,6 +1729,8 @@ a {
   width: 100%;
   height: auto;
   min-height: 60px;
+  font-family: var(--font-sans); /* a question is prose, not a fact (Facts Are Mono rule) */
+  font-size: var(--text-sm);
   padding: var(--space-2) var(--space-3);
   resize: vertical;
 }
@@ -1809,6 +1810,18 @@ a {
   }
 }
 
+/* Ask open beside a file or finding panel: three docked columns leave the list or canvas too
+   narrow below 1600px, so the panel overlays the main column from the right instead (the same
+   overlay as under 900px). Explore passes the same condition to the graph for centring. */
+@media (max-width: 1599px) {
+  .analysis-body[data-ask] .panel {
+    position: absolute;
+    inset: 0 0 0 auto;
+    z-index: 10;
+    width: min(100%, 480px);
+  }
+}
+
 @media (max-width: 560px) {
   .topbar {
     padding: 0 var(--space-4);
@@ -1843,6 +1856,13 @@ a {
   /* Phones: the list keeps file, uses and used by; the panel has the rest. */
   .table .col-optional {
     display: none;
+  }
+
+  /* A single name longer than the screen (Django migrations run past 60 characters) may break
+     inside; otherwise it would widen the table and push Uses / Used by off-screen. Paths still
+     break after "/" first. */
+  .file-list .row-button {
+    overflow-wrap: anywhere;
   }
 
   .list-link {

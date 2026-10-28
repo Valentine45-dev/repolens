@@ -92,11 +92,14 @@ export const FIT_OPTIONS: FitViewOptions = {
   maxZoom: 1.1,
 };
 
-// First view: never so far out that file names are unreadable (12px names at 0.8 stay ~10px).
-// A big graph opens on its most connected file and that file's neighbours instead.
+// Zoom used when centring a selected file: 12px names at 0.8 stay ~10px.
 const READABLE_ZOOM = 0.8;
+// First view: the whole graph when it fits at this zoom or closer (names still readable, ~7px
+// at worst); a small repo like itsdangerous (~0.67) then opens whole instead of cropped. A
+// bigger graph opens on its most connected file and that file's neighbours instead.
+const WHOLE_GRAPH_ZOOM = 0.6;
 
-function hubNeighbourhood(edges: GraphEdge[]): { id: string }[] | undefined {
+function hubOf(edges: GraphEdge[]): number | null {
   const degree = new Map<number, number>();
   for (const e of edges) {
     degree.set(e.source, (degree.get(e.source) ?? 0) + 1);
@@ -104,13 +107,29 @@ function hubNeighbourhood(edges: GraphEdge[]): { id: string }[] | undefined {
   }
   let hub: number | null = null;
   for (const [id, d] of degree) if (hub === null || d > degree.get(hub)!) hub = id;
-  if (hub === null) return undefined;
+  return hub;
+}
+
+function hubNeighbourhood(hub: number, edges: GraphEdge[]): { id: string }[] {
   const ids = new Set([hub]);
   for (const e of edges) {
     if (e.source === hub) ids.add(e.target);
     if (e.target === hub) ids.add(e.source);
   }
   return [...ids].map((id) => ({ id: String(id) }));
+}
+
+/** The file the first view opens on, or null when the whole graph is shown. Explore uses it to
+ * say which file the view is centred on. */
+export function firstViewHub(positions: Map<number, Positioned>, edges: GraphEdge[]): number | null {
+  if (positions.size === 0) return null;
+  const xs = [...positions.values()].map((p) => p.x);
+  const ys = [...positions.values()].map((p) => p.y);
+  const width = Math.max(...xs) - Math.min(...xs) + NODE_WIDTH + 48;
+  const height = Math.max(...ys) - Math.min(...ys) + NODE_HEIGHT + 136;
+  // The canvas fills the viewport below the header and toolbar (~150px).
+  const wholeZoom = Math.min(window.innerWidth / width, (window.innerHeight - 150) / height);
+  return wholeZoom >= WHOLE_GRAPH_ZOOM ? null : hubOf(edges);
 }
 
 const nodeTypes = { file: FileNode };
@@ -131,29 +150,26 @@ export function GraphView({
   edges,
   positions,
   selectedId,
+  panelOverlay,
   onSelect,
 }: {
   nodes: GraphNode[];
   edges: GraphEdge[];
   positions: Map<number, Positioned>;
   selectedId: number | null;
+  panelOverlay: boolean; // the node panel covers the canvas instead of docking beside it
   onSelect: (fileId: number | null) => void;
 }) {
   const { getViewport, setCenter } = useReactFlow();
   const initialFit = useMemo<FitViewOptions>(() => {
     // Fit the whole graph when that keeps names readable; otherwise open on the hub.
-    const xs = [...positions.values()].map((p) => p.x);
-    const ys = [...positions.values()].map((p) => p.y);
-    const width = Math.max(...xs) - Math.min(...xs) + NODE_WIDTH + 48;
-    const height = Math.max(...ys) - Math.min(...ys) + NODE_HEIGHT + 136;
-    // The canvas fills the viewport below the header and toolbar (~150px).
-    const wholeZoom = Math.min(window.innerWidth / width, (window.innerHeight - 150) / height);
-    if (wholeZoom >= READABLE_ZOOM) return FIT_OPTIONS;
-    return { ...FIT_OPTIONS, minZoom: READABLE_ZOOM, nodes: hubNeighbourhood(edges) };
+    const hub = firstViewHub(positions, edges);
+    if (hub === null) return FIT_OPTIONS;
+    return { ...FIT_OPTIONS, minZoom: READABLE_ZOOM, nodes: hubNeighbourhood(hub, edges) };
   }, [positions, edges]);
 
   // Keep the selected file in view: centre it in the part of the canvas the panel leaves free
-  // (below 900px the panel overlays the canvas from the right).
+  // (below 900px, or beside the Ask drawer below 1600px, the panel overlays the canvas).
   // Opened with ?node= in the URL: skip React Flow's first fit (it would run after, and undo,
   // the centring below) and open on the selected file instead.
   const [fitOnMount] = useState(selectedId === null);
@@ -178,8 +194,7 @@ export function GraphView({
     if (!p || !canvas) return;
     const frame = requestAnimationFrame(() => {
       const zoom = Math.max(getViewport().zoom, READABLE_ZOOM);
-      const overlay = window.matchMedia("(max-width: 900px)").matches;
-      const covered = overlay ? Math.min(480, canvas.clientWidth) : 0;
+      const covered = panelOverlay ? Math.min(480, canvas.clientWidth) : 0;
       const visibleWidth = canvas.clientWidth - covered;
       const shift = covered > 0 && visibleWidth > NODE_WIDTH * zoom ? covered / 2 / zoom : 0;
       const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
@@ -189,7 +204,7 @@ export function GraphView({
       });
     });
     return () => cancelAnimationFrame(frame);
-  }, [selectedId, positions, ready, canvasSize, getViewport, setCenter]);
+  }, [selectedId, positions, ready, canvasSize, panelOverlay, getViewport, setCenter]);
 
   // Focus mode: with a file selected, everything outside its 1-hop neighbourhood is dimmed.
   const neighbourhood = useMemo(() => {
@@ -242,7 +257,19 @@ export function GraphView({
   );
 
   return (
-    <div ref={canvasRef} className="canvas-flow">
+    // Nodes are focusable but not selectable (selection is the URL's ?node=), so React Flow does
+    // not act on Enter or Space: open the focused file here, like a click.
+    <div
+      ref={canvasRef}
+      className="canvas-flow"
+      onKeyDown={(e) => {
+        if (e.key !== "Enter" && e.key !== " ") return;
+        const node = (e.target as HTMLElement).closest<HTMLElement>(".react-flow__node");
+        if (!node?.dataset.id) return;
+        e.preventDefault();
+        onSelect(Number(node.dataset.id));
+      }}
+    >
       <ReactFlow<FileFlowNode, DepFlowEdge>
         nodes={flowNodes}
         edges={flowEdges}

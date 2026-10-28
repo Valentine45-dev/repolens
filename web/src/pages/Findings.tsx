@@ -12,6 +12,7 @@ import {
 } from "../api";
 import type { AnalysisContext } from "../components/AnalysisShell";
 import { Icon } from "../components/Icon";
+import { PathText } from "../components/PathText";
 import { SeverityBadge } from "../components/Severity";
 import { languageLabel } from "../graphModel";
 import { exploreHref, useSetParams } from "../links";
@@ -273,7 +274,7 @@ function FindingsList({
                 {f.in_test ? <span className="tag finding-tag">test or example</span> : null}
               </td>
               <td className="mono location-col">
-                {f.path}
+                <PathText path={f.path} />
                 <span className="nowrap">:{f.line}</span>
                 {f.rule_id === SECRET_RULE ? (
                   <span className="caption nowrap"> (value hidden)</span>
@@ -310,7 +311,8 @@ function FindingPanel({
   }, [finding.id]);
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
-      if (e.key === "Escape") onClose();
+      // Esc inside the Ask drawer closes only the drawer (it has its own handler).
+      if (e.key === "Escape" && !document.activeElement?.closest("#ask-drawer")) onClose();
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
