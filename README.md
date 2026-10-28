@@ -121,7 +121,7 @@ Copy `.env.example`. Only the backend reads these; the key never reaches the bro
 | Variable | Default | Meaning |
 |---|---|---|
 | `POSTGRES_PASSWORD` | `repolens` | Password for the `db` service |
-| `DATABASE_URL` | – | Used in dev mode (`localhost:5433`); compose sets its own |
+| `DATABASE_URL` | – | Used in dev mode (`127.0.0.1:5433`, not `localhost`: the db listens on IPv4 only, and `localhost` tries IPv6 first, which costs ~10 s per connection on Windows); compose sets its own |
 | `TEST_DATABASE_URL` | – | pytest only; the database name must end in `_test` |
 | `MAX_FILES` | `2000` | Files kept per repo |
 | `MAX_FILE_BYTES` | `1000000` | Larger files are skipped |
