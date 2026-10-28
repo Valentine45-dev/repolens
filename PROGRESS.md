@@ -499,6 +499,36 @@
   - Run info "dirty" now means uncommitted changes to tracked files only (an untracked result
     file had marked a clean run dirty); the two earlier identical runs were removed.
 
+- **Retrieval eval, measurement fixed and two fixes (28 Oct).** The first run's recall@1-8
+  could not show expansion by construction (expansion chunks come after the top 8; it stays as
+  the historical baseline). New measure: recall over the full context sent to the LLM, three
+  configs on the same frozen questions.yaml: A = search top 8, B = search top 16, C = top 8 +
+  expansion (up to 16). Expansion helps only if C beats B.
+  - Fix 1, chunker (`app/qa/chunks.py`): a leading JSDoc/block comment or run of `//`/`#`
+    lines (one blank line allowed) starts the unit it documents. A second commit fixed the
+    block search stopping at `text/*` inside a JSDoc (express `req.accepts`).
+  - Fix 2, expansion (`app/qa/retrieve.py`): function/method -> callers and callees (as before);
+    class -> its methods via new `defines` edges (class -> method, added in the edges stage,
+    filtered out of dependents/dependencies); top-level chunk -> the definition starting within
+    3 lines below it; file imports no longer used. express has no classes (0 `defines`),
+    itsdangerous 91.
+  - express and itsdangerous re-run (jobs 48, 49); 1358 chunks, ranges = text, 0 mismatches.
+
+    | set | A base | A fixed | B base | B fixed | C base | C fixed |
+    |---|---|---|---|---|---|---|
+    | all (14) | 0.64 | 0.71 | 0.79 | 0.86 | 0.64 | **0.93** |
+    | express (7) | 0.57 | 0.71 | 0.71 | 0.86 | 0.57 | 0.86 |
+    | itsdangerous (7) | 0.71 | 0.71 | 0.86 | 0.86 | 0.71 | **1.00** |
+
+    MRR (search order to 16): 0.36 -> 0.43. C beats B by one question (Q11, itsdangerous: only a
+    graph-added chunk reaches `Serializer.loads`); on express C = B. Q5 still misses everywhere:
+    `res.format` is doc + code over 256 tokens, and its first window (516-541, doc only) is the
+    top hit, which does not overlap the labelled code (574-599). Small sample: 14 questions,
+    one question is the whole C-over-B margin.
+  - Results: `eval/results/retrieval_context-baseline-...-cc526fb.json`,
+    `...-fixed-...-1f0729b.json` (before the `text/*` fix, same numbers),
+    `...-fixed-...-6f96059.json`.
+
 ## Planned vs delivered
 - **Temperature 0 (CLAUDE.md) is not possible on current models.** `temperature`, `top_p` and
   `top_k` return 400 (Sonnet 5.5 and Haiku 5.5 migration guides; the installed SDK's
