@@ -262,6 +262,11 @@ not measured. The eval also found a redaction bug (an f-string placeholder like 
 was treated as a secret and stored redacted); it was fixed afterwards, and the numbers above
 are from the run before the fix.
 
+## Accessibility notes
+
+- Touch targets: the smallest controls (example chips, icon buttons) are 28–30 px, above the
+  24 px minimum of WCAG 2.2 (2.5.8).
+
 ## Known limitations
 
 - **Syntactic rules, no taint tracking.** Constant arguments are flagged too (`eval("1 + 1")`,

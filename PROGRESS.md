@@ -937,6 +937,33 @@
     pre-set zero-citation rule. Identity and injection passed; Q2, Q7, Q10, Q14 cited the
     expected file. 8 calls, 28,402 in + 2,780 out tokens, ~$0.085 at $2 / $10 per MTok; 1
     dropped citation; median 4.6 s. Marked `dirty` because this PROGRESS edit was uncommitted.
+- **ky re-ingested (28 Oct, by the owner):** snapshot 21 now has search ready and Ask on, so
+  the "ky has no chunks" known issue is gone.
+- **Frontend review fixes, `fix/frontend-review` (28 Oct evening).** An independent UX review
+  of `web/` on `main` (Playwright at 1280 and 375) found 2 blockers, 8 should-fix and 8
+  nice-to-have items. Fixed, each checked in Playwright at 1280 and 1440 (S7 at 375), on the
+  production build served by `vite preview` on 5173:
+  - B1: the first view fits the whole graph when that needs zoom 0.6 or closer (was 0.8), so
+    itsdangerous (9 files, ~0.67) opens whole instead of cropped at both edges.
+  - B2: with Ask open below 1600px, the file or finding panel overlays the main column (as under
+    900px) instead of a third docked column; the findings table had shrunk to ~300px with paths
+    broken mid-name. Graph centring uses the same condition. Finding locations wrap after "/".
+  - S1: Esc in the Ask drawer closes only the drawer (the node and finding panels ignore it),
+    and focus goes back to the header Ask button.
+  - S2: Enter or Space on a focused graph node opens it (React Flow ignored keys on
+    non-selectable nodes).
+  - S3: a new turn scrolls to its question, so the "AI answer" / "From the graph" label is seen
+    first. S4: graph results show symbol names without the module (path is shown under them)
+    and wrap after "."; N2 "Show 45 more" instead of "Show all 50".
+  - S6: Recent no longer polls an analysis that failed to load (removed ones polled every 3 s
+    forever); a 404 is labelled "Removed".
+  - S7: phone list wraps long names so Uses / Used by stay on screen; list view skips the
+    graph layout.
+  - S8 `Open in Explorer` no longer underlined; N1 a big graph says which file it opened on
+    ("Fit shows all files", gone after Fit or a selection); N3 the Ask input is set in Inter;
+    N6 the send button's name is its visible "Ask"; N7 no focus box on a panel title after a
+    deep link; N8 `--highlight` documented in DESIGN.md. Shared `PathText` replaces two copies.
+  - Not changed: S5 (secret findings fill PyGoat's first screen): the demo uses the Rule filter.
 
 ## Demo plan (8 GB laptop)
 The full compose stack works (tested 28 Oct) but left ~0.66 GB free and crashed the machine
@@ -1395,5 +1422,6 @@ are deliberately not changed after seeing eval results; these stay as documented
   Re-check before ever lifting it.
 - `httpx` with Starlette TestClient emits a deprecation warning (suggests `httpx2`); harmless for now.
 - Git for Windows `autocrlf` converts working copies to CRLF; repo stores LF. `.sh` files forced LF.
-- ky (snapshot 21) has no chunks (analysed before the embed stage, 27 Oct), so Ask is off
-  for that example chip; old snapshots with no chunks and no `search_error` offer no retry.
+- Old snapshots analysed before the embed stage (no chunks, no `search_error`) offer no
+  "Retry preparing search"; re-ingest them instead. (ky, snapshot 21, was re-ingested on 28 Oct
+  and has Ask now.)

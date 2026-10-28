@@ -1,4 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
+import { useRef } from "react";
 import { Navigate, NavLink, Outlet, useParams, useSearchParams } from "react-router-dom";
 
 import { ApiError, getFindings, getStatus, repoName, type SnapshotStatus } from "../api";
@@ -20,6 +21,7 @@ export function AnalysisShell() {
   const [params] = useSearchParams();
   const askOpen = params.get("ask") === "1";
   const setParams = useSetParams();
+  const askButtonRef = useRef<HTMLButtonElement>(null);
 
   const status = useQuery({
     queryKey: ["status", snapshotId],
@@ -71,6 +73,7 @@ export function AnalysisShell() {
           </NavLink>
         </nav>
         <button
+          ref={askButtonRef}
           type="button"
           className="button button-secondary button-small analysis-ask"
           aria-pressed={askOpen}
@@ -80,7 +83,9 @@ export function AnalysisShell() {
           Ask
         </button>
       </header>
-      <div className="analysis-body">
+      {/* data-ask lets a file or finding panel overlay the main column while Ask is open on
+          screens too narrow for three docked columns (styles.css). */}
+      <div className="analysis-body" data-ask={askOpen || undefined}>
         <div className="analysis-main">
           {status.data ? (
             <Outlet context={{ snapshotId, status: status.data } satisfies AnalysisContext} />
@@ -101,7 +106,10 @@ export function AnalysisShell() {
           <AskDrawer
             snapshotId={snapshotId}
             status={status.data}
-            onClose={() => setParams({ ask: null, askq: null })}
+            onClose={() => {
+              setParams({ ask: null, askq: null });
+              askButtonRef.current?.focus(); // focus goes back to what opened the drawer
+            }}
           />
         ) : null}
       </div>

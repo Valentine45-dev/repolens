@@ -19,6 +19,7 @@ colors:
   node-other: "#52525b"
   node-external: "#71717a"
   edge: "#8a8a93"
+  highlight: "#fdf3d3"
 typography:
   headline:
     fontFamily: "Inter Variable, Inter, ui-sans-serif, system-ui, sans-serif"
@@ -175,6 +176,8 @@ A monochrome zinc palette where black does the work of an accent and three seman
 - **External Grey** (`node-external`): the dashed outline of the "external" tag in the node panel. Corrected from #a1a1aa (2.6:1 on Paper) to #71717a (4.8:1) when the Explorer shipped.
 - **Edge Grey** (`edge`): every graph edge at rest and the legend lines (3.4:1 on Paper, above the 3:1 floor for graphics). Edges touching the selected file turn Ink; a best-guess edge is dashed, never a different colour.
 
+- **Highlight** (`highlight`): the band behind cited or flagged code lines in the code view (a citation chip or "Open in Explorer" from a finding). Ink text on it stays above 15:1. It marks a location, not a state, so it is not Slow Amber.
+
 `--info` is declared in the stylesheet but no shipped surface uses it yet.
 
 ### Named Rules
@@ -211,6 +214,7 @@ A single centred column, `max-width: 688px` (640px content plus 24px gutters), l
 Spacing runs on a 4px grid using the seven steps in the frontmatter: 8px between a control and its neighbour, 12px from headline to lede and inside list rows, 24px before example chips and after the ledger, 32px from lede to the URL row and from status line to ledger, 48px between page sections.
 
 Three breakpoints:
+- **1600px (Ask open):** while the Ask drawer is open below it, the node panel and the finding panel overlay the main column from the right (`min(100%, 480px)`) instead of docking as a third column, so the canvas or findings table keeps its width.
 - **900px (Explorer):** below it the node panel stops docking beside the canvas and overlays it from the right as a drawer (`min(100%, 480px)`); the selected file is re-centred in the part of the canvas the panel leaves free.
 - **767px (Explorer, spec §10):** phones get the list view only. The Graph/List control is replaced by the caption "The graph view needs a larger screen."; the URL keeps its `view` value.
 - **560px (all screens):** gutters drop to 16px, the URL field and Analyze button stack with the button full width, recent-analysis rows collapse from name-plus-meta to a single column, the node panel's four facts become two columns, and the file list hides its Language, External and Unresolved columns (the panel still shows those counts). File paths wrap only after a "/".
@@ -269,7 +273,7 @@ A ruled vertical list: a 20px icon column, the stage label, and a right-aligned 
 - **File node:** 200×44 Paper rectangle, 1px Strong Hairline, 4px radius. A 22px language mark (`py`/`js`/`ts`, mono 10px on its graph colour) then the file name (mono 12/500) over its folder (mono 10, Ash, truncated from the left so the end of the path stays visible). Selected: Ink border plus 2px Ink outline. Focus mode dims everything outside the selected file's neighbours to 28%.
 - **Edges:** Edge Grey, 1.25px, closed arrowhead pointing at the file being used; Ink at 1.75px when touching the selection; dashed (5 4) when the link is only a best guess (confidence under 0.9). Native tooltip says what the edge is.
 - **Legend:** a Bench Grey strip between the toolbar and the canvas (graph view only), Hairline bottom border, 12px text: solid line, then dashed line with the spec's microcopy. It never floats over the canvas, so it can never hide a node.
-- **First view:** fits the whole graph only when names stay readable (zoom 0.8 or more); otherwise it opens on the most connected file and its neighbours. Fit always shows everything. A selected file is centred in the canvas area the panel leaves free.
+- **First view:** fits the whole graph when that needs zoom 0.6 or closer; otherwise it opens on the most connected file and its neighbours at zoom 0.8, and a caption over the canvas names that file ("Fit shows all files") until the user picks a file or presses Fit. Fit always shows everything. A selected file is centred in the canvas area the panel leaves free. Enter or Space on a focused file node opens it, like a click.
 - **Toolbar:** segmented Graph/List control (Bench Grey track, Paper pressed segment), native checkboxes with Ink accent for "Show test files" and "Show guessed calls", a small secondary Fit button, and a right-aligned caption carrying the file count, the render-cap note and hidden-test count.
 - **Node panel:** docked right, `min(480px, 42vw)`, Hairline left border (an overlay under 900px). Path in mono, a four-fact row (Used by, Uses, External imports, Unresolved imports), underline tabs (Code, Used by, Uses), and a code view with a sticky Bench Grey line-number gutter. Neighbours are grouped by file; external and unresolved entries carry a small tag (dashed External Grey for external).
 - **List view:** a full-width table with a sticky Bench Grey header, 36px rows, mono numbers right-aligned; the selected row takes Sunk Grey.

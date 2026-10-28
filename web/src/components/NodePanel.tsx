@@ -55,7 +55,8 @@ export function NodePanel({
 
   useEffect(() => {
     function onKey(e: KeyboardEvent) {
-      if (e.key === "Escape") onClose();
+      // Esc inside the Ask drawer closes only the drawer (it has its own handler).
+      if (e.key === "Escape" && !document.activeElement?.closest("#ask-drawer")) onClose();
     }
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
