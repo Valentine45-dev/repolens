@@ -155,6 +155,21 @@ def test_dropped_bracketed_citation_leaves_no_stray_space(text, expected):
     assert v.text == expected
 
 
+@pytest.mark.parametrize("text", [
+    "It connects to db.internal:5432 by default.",
+    "The server listens on 127.0.0.1:8000.",
+    "Requests go to api.example.com:443.",
+])
+def test_host_and_port_is_not_a_citation(text):
+    v = validate(text, SENT)
+    assert (v.text, v.citations, v.dropped) == (text, [], 0)
+
+
+def test_unknown_file_with_a_code_extension_is_still_dropped():
+    v = validate("Set in config/settings.yaml:3 and utils.py:7.", SENT)
+    assert v.dropped == 2 and v.citations == []
+
+
 def test_duplicate_citations_listed_once_in_first_use_order():
     v = validate("web/a.ts:1 then src/app.py:10-12 then web/a.ts:1 again.", SENT)
     assert [c.path for c in v.citations] == ["web/a.ts", "src/app.py"]
