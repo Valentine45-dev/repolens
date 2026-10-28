@@ -100,7 +100,12 @@ def ai_answer(snapshot_id: int, question: str, include_tests: bool = False) -> d
     if not search_ready(snapshot_id):
         return _reply("no_context", NO_SEARCH)
 
-    found = retrieve(snapshot_id, question, include_tests=include_tests)
+    try:
+        found = retrieve(snapshot_id, question, include_tests=include_tests)
+    except Exception as e:  # e.g. the embedding model failed to load: no search, no 500
+        log.error("ask snapshot=%s %s: retrieval failed: %s", snapshot_id, q_log,
+                  type(e).__name__)
+        return _reply("unavailable", UNAVAILABLE)
     if not found.snippets:
         return _reply("no_context", NO_CODE, found)
 

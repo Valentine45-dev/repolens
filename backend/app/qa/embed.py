@@ -77,9 +77,24 @@ class StubEmbedder:
         return out
 
 
+class EmbedderUnavailable(RuntimeError):
+    """The model could not be loaded in this process; restart the API to try again."""
+
+
+_load_error: str | None = None
+
+
 @lru_cache(maxsize=1)
 def get_embedder() -> Embedder:
-    """One embedder per process (the model loads once)."""
+    """One embedder per process (the model loads once). A failed load is remembered, so later
+    calls fail at once instead of loading the model again (~1 min, ~800 MB) on every question."""
+    global _load_error
+    if _load_error is not None:
+        raise EmbedderUnavailable(f"embedder failed to load earlier ({_load_error})")
     if config.EMBEDDER == "stub":
         return StubEmbedder()
-    return SentenceTransformerEmbedder(config.EMBED_MODEL, config.EMBED_MODEL_REVISION)
+    try:
+        return SentenceTransformerEmbedder(config.EMBED_MODEL, config.EMBED_MODEL_REVISION)
+    except Exception as e:
+        _load_error = type(e).__name__
+        raise

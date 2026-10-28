@@ -484,3 +484,19 @@ def test_retry_preparing_search_after_a_failed_search(client, monkeypatch, fake)
 
 def test_retry_is_refused_while_the_analysis_runs_or_search_is_fine(client, snapshot):
     assert client.post(f"/snapshots/{snapshot}/search").status_code == 409
+
+
+# --- the embedding model is not available ----------------------------------------------------
+
+def test_retrieval_failure_is_unavailable_not_a_500(client, snapshot, fake, monkeypatch):
+    from app.qa import retrieve as retrieve_module
+    from app.qa.embed import EmbedderUnavailable
+
+    def broken():
+        raise EmbedderUnavailable("embedder failed to load earlier (OSError)")
+
+    monkeypatch.setattr(retrieve_module, "get_embedder", broken)
+    a = ask(client, snapshot, "How is a user created?")
+    assert (a["kind"], a["status"], fake.calls) == ("ai", "unavailable", [])
+    g = ask(client, snapshot, "Which files import sample_app/service.py?")
+    assert (g["kind"], g["status"]) == ("graph", "answered")  # graph questions still work
