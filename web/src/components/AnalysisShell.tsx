@@ -26,6 +26,9 @@ export function AnalysisShell() {
     queryFn: ({ signal }) => getStatus(snapshotId, signal),
     enabled: valid,
     staleTime: 30_000,
+    // While search for questions is prepared after the analysis, keep its state current.
+    refetchInterval: (query) =>
+      ["embedding", "tests"].includes(query.state.data?.features.search ?? "") ? 2000 : false,
   });
   const done = status.data?.status === "done";
   const counts = useQuery({

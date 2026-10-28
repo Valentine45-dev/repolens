@@ -69,12 +69,22 @@ def _adjust(snapshot_id: int, delta: int) -> None:
         )
 
 
-def search_error(snapshot_id: int) -> str | None:
+def search_ready(snapshot_id: int) -> bool:
+    """Code search can answer: no search run is replacing the non-test chunks, and a failed
+    search left some chunks behind. Test code may still be on its way (state 'tests'). A repo
+    with no code at all is ready too; retrieval then finds nothing."""
     with pool().connection() as conn:
         row = conn.execute(
-            "SELECT search_error FROM snapshot_status WHERE snapshot_id = %s", (snapshot_id,)
+            "SELECT st.search_state, st.search_error,"
+            " EXISTS (SELECT 1 FROM chunks c WHERE c.snapshot_id = st.snapshot_id) AS has_chunks"
+            " FROM snapshot_status st WHERE st.snapshot_id = %s",
+            (snapshot_id,),
         ).fetchone()
-    return row["search_error"] if row else None
+    if not row or row["search_state"] == "embedding":
+        return False
+    failed = row["search_state"] == "failed" or (
+        row["search_state"] is None and row["search_error"] is not None)
+    return row["has_chunks"] or not failed
 
 
 def ai_answer(snapshot_id: int, question: str, include_tests: bool = False) -> dict:
@@ -82,7 +92,7 @@ def ai_answer(snapshot_id: int, question: str, include_tests: bool = False) -> d
     provider = llm.get_provider()
     if provider is None:
         return _reply("unavailable", UNAVAILABLE)
-    if search_error(snapshot_id):
+    if not search_ready(snapshot_id):
         return _reply("no_context", NO_SEARCH)
 
     found = retrieve(snapshot_id, question, include_tests=include_tests)

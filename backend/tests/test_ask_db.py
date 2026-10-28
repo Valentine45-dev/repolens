@@ -235,7 +235,9 @@ def test_no_key_is_unavailable(client, snapshot, monkeypatch):
     assert (a["kind"], a["status"]) == ("ai", "unavailable")
     assert a["answer"] == "AI answers are unavailable right now. Graph questions still work."
     status = client.get(f"/snapshots/{snapshot}/status").json()
-    assert status["features"] == {"ask": True, "ask_reason": None, "ai": False}
+    f = status["features"]
+    assert (f["ask"], f["ask_reason"], f["ai"], f["search"], f["retry_search"]) == (
+        True, None, False, "ready", False)
 
 
 def test_timeout_then_retry_succeeds(client, snapshot, fake):
@@ -359,13 +361,14 @@ def test_embed_failure_leaves_the_job_done(client, monkeypatch, fake):
     def boom(*args, **kwargs):
         raise RuntimeError("model missing")
 
-    monkeypatch.setattr(pipeline, "store_chunks", boom)
+    monkeypatch.setattr(pipeline, "embed_group", boom)
     body = client.post("/repos", json={"url": "https://github.com/example/sample"}).json()
     status = client.get(f"/snapshots/{body['snapshot_id']}/status").json()
     assert status["status"] == "done" and status["error"] is None
     assert status["features"]["ask"] is False
     assert status["features"]["ask_reason"] == (
         "Search for questions could not be prepared (internal error).")
+    assert (status["features"]["search"], status["features"]["retry_search"]) == ("failed", True)
     assert "model missing" not in str(status)
     graph = client.get(f"/snapshots/{body['snapshot_id']}/graph")
     assert graph.status_code == 200  # graph and findings still work
@@ -373,3 +376,104 @@ def test_embed_failure_leaves_the_job_done(client, monkeypatch, fake):
     assert a["status"] == "no_context" and fake.calls == []
     g = ask(client, body["snapshot_id"], "Which files import sample_app/service.py?")
     assert g["kind"] == "graph" and g["status"] == "answered"
+
+
+# --- search in two parts, and "Retry preparing search" ---------------------------------------
+
+def _chunk_groups(snapshot_id):
+    rows = query("SELECT in_test, count(*) AS n FROM chunks WHERE snapshot_id = %s"
+                 " GROUP BY in_test", snapshot_id)
+    return {r["in_test"]: r["n"] for r in rows}
+
+
+def test_search_embeds_non_test_code_then_test_code(client, snapshot):
+    # The fixture has a test file, so both groups exist once the background part has run.
+    groups = _chunk_groups(snapshot)
+    assert groups.get(False, 0) > 0 and groups.get(True, 0) > 0
+    f = client.get(f"/snapshots/{snapshot}/status").json()["features"]
+    assert (f["ask"], f["search"], f["search_progress"], f["retry_search"]) == (
+        True, "ready", None, False)
+
+
+def test_ask_unlocks_before_test_code_is_embedded(client, monkeypatch, fake):
+    """Status seen while the test-code part runs: Ask is on, the search state says 'tests'."""
+    from app.ingest import pipeline
+
+    seen = {}
+    real = pipeline.search_tests
+
+    def watch(job_id, snapshot_id, test):
+        seen["status"] = client.get(f"/snapshots/{snapshot_id}/status").json()
+        seen["groups"] = _chunk_groups(snapshot_id)
+        real(job_id, snapshot_id, test)
+
+    monkeypatch.setattr(pipeline, "search_tests", watch)
+    body = client.post("/repos", json={"url": "https://github.com/example/sample"}).json()
+    st = seen["status"]
+    assert st["status"] == "done"
+    assert (st["features"]["ask"], st["features"]["search"]) == (True, "tests")
+    assert seen["groups"].get(False, 0) > 0 and seen["groups"].get(True, 0) == 0
+    after = client.get(f"/snapshots/{body['snapshot_id']}/status").json()["features"]
+    assert after["search"] == "ready"
+
+
+def test_test_code_failure_keeps_ask_and_offers_retry(client, monkeypatch, fake):
+    from app.ingest import pipeline
+
+    real = pipeline.embed_group
+
+    def fail_tests(snapshot_id, job_id, chunks, in_test, deadline, percent=None):
+        if in_test:
+            raise RuntimeError("boom")
+        return real(snapshot_id, job_id, chunks, in_test, deadline, percent)
+
+    monkeypatch.setattr(pipeline, "embed_group", fail_tests)
+    body = client.post("/repos", json={"url": "https://github.com/example/sample"}).json()
+    f = client.get(f"/snapshots/{body['snapshot_id']}/status").json()["features"]
+    assert (f["ask"], f["search"], f["retry_search"]) == (True, "failed", True)
+    assert f["search_error"] == "Test code could not be prepared for search (internal error)."
+    assert _chunk_groups(body["snapshot_id"]).get(True, 0) == 0
+
+
+def test_retry_preparing_search_after_a_failed_search(client, monkeypatch, fake):
+    from app.ingest import pipeline
+
+    real = pipeline.embed_group
+    calls = {"n": 0}
+
+    def fail_first(*args, **kwargs):
+        calls["n"] += 1
+        if calls["n"] == 1:
+            raise pipeline.JobError("Analysis took longer than 600s and was stopped.")
+        return real(*args, **kwargs)
+
+    monkeypatch.setattr(pipeline, "embed_group", fail_first)
+    body = client.post("/repos", json={"url": "https://github.com/example/sample"}).json()
+    sid = body["snapshot_id"]
+    f = client.get(f"/snapshots/{sid}/status").json()["features"]
+    assert (f["ask"], f["retry_search"]) == (False, True)
+    assert "600s" in f["ask_reason"]
+    assert ask(client, sid, "How is a user created?")["status"] == "no_context"
+
+    # Resubmitting the same commit reuses the finished job and does not embed again.
+    again = client.post("/repos", json={"url": "https://github.com/example/sample"}).json()
+    assert again["job_id"] == body["job_id"] and calls["n"] == 1
+
+    r = client.post(f"/snapshots/{sid}/search")
+    assert r.status_code == 202 and r.json()["job_id"] == body["job_id"]
+    st = client.get(f"/snapshots/{sid}/status").json()
+    assert st["status"] == "done" and st["job_id"] == body["job_id"]  # same job, still done
+    assert (st["features"]["ask"], st["features"]["search"], st["features"]["retry_search"]) == (
+        True, "ready", False)
+    groups = _chunk_groups(sid)
+    assert groups.get(False, 0) > 0 and groups.get(True, 0) > 0
+    fake.script = ["I could not find this in the provided code."]
+    assert ask(client, sid, "How is a user created?")["status"] == "answered"
+
+    # Nothing to retry now; unknown snapshot is 404.
+    assert client.post(f"/snapshots/{sid}/search").status_code == 409
+    assert client.post("/snapshots/999999/search").status_code == 404
+
+
+def test_retry_is_refused_while_the_analysis_runs_or_search_is_fine(client, snapshot):
+    assert client.post(f"/snapshots/{snapshot}/search").status_code == 409

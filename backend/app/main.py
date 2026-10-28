@@ -28,6 +28,12 @@ async def lifespan(_app: FastAPI):
                 "UPDATE jobs SET status = 'failed', error = 'Interrupted by server restart.'"
                 " WHERE status IN ('queued', 'running')"
             )
+            # A search run (or test code in the background) stopped too: offer the retry.
+            conn.execute(
+                "UPDATE jobs SET search_state = 'failed',"
+                " search_error = 'Search for questions was interrupted by a server restart.'"
+                " WHERE search_state IN ('embedding', 'tests')"
+            )
     yield
     db.close_pool()
 

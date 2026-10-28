@@ -1,0 +1,47 @@
+{
+  "run": {
+    "commit_sha": "7193ab3fdd6adba74cf3449df25cb5055c3dfdf3",
+    "dirty": false,
+    "run_at": "2026-10-28T12:58:51+00:00",
+    "embedder": "sentence-transformers",
+    "embed_model": "sentence-transformers/all-MiniLM-L6-v2",
+    "embed_revision": "1110a243fdf4706b3f48f1d95db1a4f5529b4d41",
+    "llm_used": false,
+    "llm": {
+      "provider": "anthropic",
+      "model": "claude-haiku-5-5",
+      "effort": "low",
+      "thinking": "adaptive",
+      "max_tokens": 4000,
+      "prompt_version": "2026-10-28.2"
+    },
+    "retrieval": {
+      "top_k": 8,
+      "graph_expansion": true,
+      "expand_max": 8,
+      "context_tokens": 6000
+    }
+  },
+  "snapshot": 83,
+  "repo": "https://github.com/Valentine45-dev/jarvis-ai-assistant",
+  "commit": "7ac974331c60eaed3c6e6a9ee0b5b16f7c0fbe47",
+  "files": 249,
+  "test_files": 79,
+  "model_load_s": 36.4,
+  "parse_and_chunk_s": 9.9,
+  "groups": {
+    "non_test": {
+      "chunks": 3599,
+      "tokens": 671302,
+      "embed_s": 299.8,
+      "chunks_per_s": 12.0
+    },
+    "test": {
+      "chunks": 1269,
+      "tokens": 188092,
+      "embed_s": 75.2,
+      "chunks_per_s": 16.9
+    }
+  },
+  "total_embed_s": 375.0
+}

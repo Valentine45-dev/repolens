@@ -304,11 +304,9 @@ def store_findings(snapshot_id: int, parsed: dict[str, Parsed]) -> int:
     return len(rows)
 
 
-def store_chunks(snapshot_id: int, job_id: int, parsed: dict[str, Parsed],
-                 deadline: float) -> dict:
-    """Embed stage: chunks (functions, methods, classes, top-level code) from the redacted
-    content, embedded with the configured model. Returns stats for the log and PROGRESS."""
-    embedder = get_embedder()
+def build_all_chunks(parsed: dict[str, Parsed], embedder) -> tuple[list[Chunk], int]:
+    """Chunks (functions, methods, classes, top-level code) from the redacted content, and how
+    many units had to be split into windows."""
     chunks: list[Chunk] = []
     split_units: set[tuple[str, str, int]] = set()
     for path, p in parsed.items():
@@ -317,22 +315,41 @@ def store_chunks(snapshot_id: int, job_id: int, parsed: dict[str, Parsed],
             chunks.append(c)
             if c.window:
                 split_units.add((c.path, c.qualified_name, c.unit_start))
-    _check_deadline(deadline)
+    return chunks, len(split_units)
 
+
+def _set_progress(job_id: int, done: int, total: int, percent: int | None = None) -> None:
+    """Counts only (the stage and status stay): also used after the job is done, while test
+    code is embedded in the background."""
+    with pool().connection() as conn:
+        conn.execute(
+            "UPDATE jobs SET progress_done = %s, progress_total = %s,"
+            " percent = coalesce(%s, percent) WHERE id = %s",
+            (done, total, percent, job_id),
+        )
+
+
+def embed_group(snapshot_id: int, job_id: int, chunks: list[Chunk], in_test: bool,
+                deadline: float, percent: tuple[int, int] | None = None) -> dict:
+    """Embed one group (non-test or test chunks) and replace that group's rows in one
+    transaction. `percent` maps progress onto the job's percent while the job is running."""
+    embedder = get_embedder()
     started = time.monotonic()
     vectors: list[list[float]] = []
     step = 256
-    _set_job(job_id, "embed", 92, done=0, total=len(chunks))
+    _set_progress(job_id, 0, len(chunks))
     for i in range(0, len(chunks), step):
         vectors += embedder.embed([c.embed_text for c in chunks[i:i + step]])
         _check_deadline(deadline)
         done = min(i + step, len(chunks))
-        _set_job(job_id, "embed", 92 + int(7 * done / max(len(chunks), 1)),
-                 done=done, total=len(chunks))
+        pct = (percent[0] + int((percent[1] - percent[0]) * done / len(chunks))
+               if percent else None)
+        _set_progress(job_id, done, len(chunks), pct)
     embed_seconds = time.monotonic() - started
 
     with pool().connection() as conn, conn.transaction():
-        conn.execute("DELETE FROM chunks WHERE snapshot_id = %s", (snapshot_id,))
+        conn.execute("DELETE FROM chunks WHERE snapshot_id = %s AND in_test = %s",
+                     (snapshot_id, in_test))
         symbol_ids: dict[tuple[str, str], int] = {}
         for r in conn.execute(
             "SELECT f.path, s.qualified_name, s.id FROM symbols s JOIN files f ON f.id = s.file_id"
@@ -342,7 +359,7 @@ def store_chunks(snapshot_id: int, job_id: int, parsed: dict[str, Parsed],
             symbol_ids[(r["path"], r["qualified_name"])] = r["id"]  # lowest id wins
         rows = [
             (snapshot_id, symbol_ids[(c.path, c.qualified_name)], c.start_line, c.end_line,
-             c.token_count, is_test_path(c.path), c.text, search_words(c),
+             c.token_count, in_test, c.text, search_words(c),
              "[" + ",".join(f"{x:.6f}" for x in v) + "]")
             for c, v in zip(chunks, vectors, strict=True)
             if (c.path, c.qualified_name) in symbol_ids
@@ -355,9 +372,9 @@ def store_chunks(snapshot_id: int, job_id: int, parsed: dict[str, Parsed],
                 rows,
             )
     return {
+        "group": "test" if in_test else "non_test",
         "chunks": len(rows),
         "windows": sum(1 for c in chunks if c.window),
-        "split_units": len(split_units),
         "max_tokens": max((c.token_count for c in chunks), default=0),
         "model_max_tokens": embedder.max_tokens,
         "embed_seconds": round(embed_seconds, 1),
@@ -378,25 +395,108 @@ def _fetch_with_retry(job_id: int, url: str, sha: str, workdir: Path, deadline: 
         clone.fetch_commit(url, sha, workdir, timeout=config.CLONE_TIMEOUT_S)
 
 
-def _embed(job_id: int, snapshot_id: int, parsed: dict[str, Parsed], deadline: float) -> str | None:
-    """The embed stage, which is not fatal: graph and findings are already stored, so a failure
-    here leaves the job done and only AI questions unavailable. Returns the reason, or None."""
+def _set_search(job_id: int, state: str, error: str | None = None) -> None:
+    with pool().connection() as conn:
+        conn.execute("UPDATE jobs SET search_state = %s, search_error = %s WHERE id = %s",
+                     (state, error, job_id))
+
+
+def search_first(job_id: int, snapshot_id: int, parsed: dict[str, Parsed], deadline: float,
+                 percent: tuple[int, int] | None = None) -> list[Chunk] | None:
+    """Search, part 1 (spec 5.2): embed the non-test chunks, which is what Ask uses by default.
+    Not fatal: graph and findings are stored already, so a failure leaves only AI questions
+    unavailable (search_state 'failed', retryable). Returns the test chunks still to embed
+    (empty when there are none), or None on failure."""
+    _set_search(job_id, "embedding")
     try:
-        stats = store_chunks(snapshot_id, job_id, parsed, deadline)
+        chunks, split_units = build_all_chunks(parsed, get_embedder())
+        _check_deadline(deadline)
+        test = [c for c in chunks if is_test_path(c.path)]
+        stats = embed_group(snapshot_id, job_id, [c for c in chunks if not is_test_path(c.path)],
+                            False, deadline, percent)
     except JobError as e:
-        log.warning("job %s: embed stopped: %s", job_id, e)
-        return f"Search for questions was not prepared: {e}"
+        log.warning("job %s: search stopped: %s", job_id, e)
+        _set_search(job_id, "failed", f"Search for questions was not prepared: {e}")
+        return None
     except Exception as e:
-        log.error("job %s: embed failed: %s", job_id, type(e).__name__)
-        return "Search for questions could not be prepared (internal error)."
+        log.error("job %s: search failed: %s", job_id, type(e).__name__)
+        _set_search(job_id, "failed",
+                    "Search for questions could not be prepared (internal error).")
+        return None
+    log.info("job %s: embed %s split_units=%d", job_id, stats, split_units)
+    _set_search(job_id, "tests" if test else "ready")
+    return test
+
+
+def search_tests(job_id: int, snapshot_id: int, test: list[Chunk]) -> None:
+    """Search, part 2, after Ask is already on: test code, with its own time budget. On
+    failure Ask keeps working on non-test code; the state is 'failed' so it can be retried."""
+    deadline = time.monotonic() + config.MAX_ANALYSIS_S
+    try:
+        stats = embed_group(snapshot_id, job_id, test, True, deadline)
+    except JobError as e:
+        log.warning("job %s: test-code search stopped: %s", job_id, e)
+        _set_search(job_id, "failed", f"Test code was not prepared for search: {e}")
+        return
+    except Exception as e:
+        log.error("job %s: test-code search failed: %s", job_id, type(e).__name__)
+        _set_search(job_id, "failed",
+                    "Test code could not be prepared for search (internal error).")
+        return
     log.info("job %s: embed %s", job_id, stats)
-    return None
+    _set_search(job_id, "ready")
+
+
+def parse_stored(snapshot_id: int) -> dict[str, Parsed]:
+    """Parse results from the stored (redacted) files, for a search retry: no clone needed."""
+    with pool().connection() as conn:
+        files = conn.execute(
+            "SELECT path, language, content FROM files WHERE snapshot_id = %s"
+            " AND language IN ('python', 'javascript', 'typescript') ORDER BY path",
+            (snapshot_id,),
+        ).fetchall()
+    return {f["path"]: Parsed(f["language"], parse_file(f["path"], f["language"], f["content"]),
+                              f["content"])
+            for f in files}
+
+
+def claim_search_retry(snapshot_id: int) -> int | None:
+    """Mark a finished analysis whose search failed as being prepared again; returns its job id,
+    or None when there is nothing to retry (atomic, so two clicks start one retry)."""
+    with pool().connection() as conn:
+        row = conn.execute(
+            "UPDATE jobs SET search_state = 'embedding', search_error = NULL,"
+            " progress_done = NULL, progress_total = NULL"
+            " WHERE id = (SELECT job_id FROM snapshot_status WHERE snapshot_id = %s)"
+            " AND status = 'done'"
+            " AND (search_state = 'failed' OR (search_state IS NULL AND search_error IS NOT NULL))"
+            " RETURNING id",
+            (snapshot_id,),
+        ).fetchone()
+    return row["id"] if row else None
+
+
+def run_search_retry(job_id: int, snapshot_id: int) -> None:
+    """"Retry preparing search": re-embed from the stored files with a fresh time budget (this
+    run does no clone, parse-to-database or detection, so it gets the whole budget)."""
+    deadline = time.monotonic() + config.MAX_ANALYSIS_S
+    try:
+        parsed = parse_stored(snapshot_id)
+    except Exception as e:
+        log.error("job %s: search retry failed while parsing: %s", job_id, type(e).__name__)
+        _set_search(job_id, "failed",
+                    "Search for questions could not be prepared (internal error).")
+        return
+    test = search_first(job_id, snapshot_id, parsed, deadline)
+    if test:
+        search_tests(job_id, snapshot_id, test)
 
 
 def run_job(job_id: int, snapshot_id: int, url: str, sha: str) -> None:
     workdir = Path(config.WORKSPACE_DIR) / f"job-{job_id}"
     deadline = time.monotonic() + config.MAX_ANALYSIS_S
     stage = "fetch"
+    test_chunks = None
     try:
         _set_job(job_id, stage, 5)
         clone.remove_workspace(workdir)  # leftover from an earlier crash
@@ -431,15 +531,13 @@ def run_job(job_id: int, snapshot_id: int, url: str, sha: str) -> None:
         log.info("job %s: %d findings from detectors", job_id, n_findings)
         _check_deadline(deadline)
 
+        # Search: non-test code first (Ask unlocks with it), then the job is done and test
+        # code is embedded in the background after the workspace is gone (spec 5.2).
         stage = "embed"
         _set_job(job_id, stage, 92)
-        search_error = _embed(job_id, snapshot_id, parsed, deadline)
+        test_chunks = search_first(job_id, snapshot_id, parsed, deadline, percent=(92, 99))
 
         _set_job(job_id, "done", 100, status="done")
-        if search_error:
-            with pool().connection() as conn:
-                conn.execute("UPDATE jobs SET search_error = %s WHERE id = %s",
-                             (search_error, job_id))
     except (clone.CloneError, JobError) as e:
         log.warning("job %s failed in %s: %s", job_id, stage, e)
         _set_job(job_id, stage, 100, status="failed", error=str(e))
@@ -449,3 +547,5 @@ def run_job(job_id: int, snapshot_id: int, url: str, sha: str) -> None:
         _set_job(job_id, stage, 100, status="failed", error=f"Internal error during {stage}.")
     finally:
         clone.remove_workspace(workdir)
+    if test_chunks:
+        search_tests(job_id, snapshot_id, test_chunks)

@@ -813,6 +813,50 @@
   - Tests: graph count phrases, case-insensitive repo matching and kept display, status
     counts; web: stage count formatting and repo name. 258 backend passed, 3 skipped; 17 web.
 
+- **`feat/polish` merged into `main` (28 Oct, `3dd10ae`).**
+- **Dev DB migrated and the API restarted on `main` (28 Oct).** Order: the owner's API (old code)
+  stopped, 0 other connections checked, `backend/migrations/2026-10-28-repo-case-and-progress.sql`
+  run (`repos_url_key` -> `repos_url_ci`, the two job columns, the view), then the API started on
+  the merged code in the owner's Terminal tab. Checked through the dev server: the itsdangerous
+  chip opened snapshot 25's graph; a new submission (`pypa/sampleproject`, typed as
+  `PyPA/SampleProject`) ran to its Explorer in ~3 s. A database built from `schema.sql` alone has
+  the same columns, constraints, indexes and view as the migrated one (`pg_dump -s` diff: column
+  order only, from `ADD COLUMN` appending), so a fresh volume needs no migration.
+- **Repo names corrected once with `gh api repos/<owner>/<repo> --jq .full_name` (28 Oct):** only
+  three differed and were updated (guarded on the old value):
+  `Valentine45-dev/jarvis-ai-assistant`, `Valentine45-dev/modern-checker-game`, and
+  `pypa/sampleproject` (typed wrong in the check above). All other analysed repos are lower case
+  on GitHub too.
+- **JARVIS search, `feat/embed-retry` (28 Oct).** The first analysis hit the 600 s limit in the
+  embed stage while Playwright tests ran (`ask_reason`: "Analysis took longer than 600s").
+  - Measured with nothing else running (owner's API stopped, `eval/embed_timing.py`,
+    `eval/results/embed_timing-20261028T125851Z-7193ab3.json`): 249 files (79 test), **3,599
+    non-test chunks in 299.8 s and 1,269 test chunks in 75.2 s** (12.0 and 16.9 chunks/s, 671k
+    and 188k tokens), plus 36 s model load and 10 s parse + chunking. Too slow to make Ask wait
+    for everything, so:
+  - **Staged search (spec 5.2):** the embed stage embeds non-test chunks, then the job is `done`
+    (Explorer, Findings and Ask unlock); test chunks are embedded afterwards in the background
+    with their own time budget. Each group deletes and re-inserts only its own rows
+    (`chunks.in_test`) in one transaction. `jobs.search_state`: `embedding | tests | ready |
+    failed` (NULL on old rows: `failed` if `search_error`, else `ready`); status `features` gained
+    `search`, `search_progress` (chunks), `search_error`, `retry_search`. Ask works in `tests`
+    and when only the test part failed. The 600 s job limit is unchanged.
+  - **"Retry preparing search":** `POST /snapshots/{id}/search` (202; 409 when there is nothing to
+    retry or a run is going; 404 unknown) re-embeds a finished analysis from its stored redacted
+    files (no clone), on the same job, which stays `done`, with a fresh time budget; an atomic
+    claim stops double starts. Resubmitting the same commit still reuses the finished job, as
+    before. The Ask drawer shows the progress and the retry button; the status refreshes every
+    2 s while search runs. On startup, interrupted searches become `failed` (retryable).
+  - Migration for existing volumes: `backend/migrations/2026-10-28-search-state.sql` (additive,
+    already applied to the dev DB).
+  - Tests: staged order, Ask on while test code runs, test-part failure keeps Ask and offers the
+    retry, retry after a failed search (same job, 409 after, 404 unknown), the embed-failure
+    test. 263 passed, 3 skipped.
+  - **JARVIS re-run** (branch API on 8001, owner's API stopped, no other load): first the retry
+    path on the failed analysis: non-test 3,599/3,599 at 366 s, Ask on at 373 s, test code ready
+    at 436 s. Then a full analysis (job 54 marked `Re-run: ...`, job 57): clone to detect 17 s,
+    **job done with Ask at 277 s**, test code ready at 335 s; 3,599 non-test + 1,269 test chunks.
+
 ## Demo plan (8 GB laptop)
 The full compose stack works (tested 28 Oct) but left ~0.66 GB free and crashed the machine
 once. Primary demo is native mode; compose is shown as tested, not run live.
