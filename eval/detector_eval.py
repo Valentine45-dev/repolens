@@ -5,6 +5,8 @@
 Fixtures: eval/detector_fixtures/{python,js}. Labels are trailing comments on the fixture
 lines, written before any tool was run: "vuln: <category>" is an issue, "safe: <category>"
 looks similar but is fine (documentation; any finding there is a false positive anyway).
+js/routes.js (fixture 2) was added after run 1, because fixture 1 had no request input for
+Semgrep's taint rules; scores are also reported per fixture file.
 
 Scoring (fixed before the first run):
 - Each tool's findings are mapped to the shared categories by rule id (tables below). Findings
@@ -254,6 +256,19 @@ def main() -> None:
                                          {cat for _, cat in SEMGREP_KEYWORDS}),
     }
 
+    # Per fixture file too: JS fixture 2 (routes.js) was added after run 1, so its numbers are
+    # reported apart from fixture 1's.
+    semgrep_cats = {cat for _, cat in SEMGREP_KEYWORDS}
+    per_file = {}
+    for path in sorted({lab["file"] for lab in labels}):
+        file_labels = [lab for lab in labels if lab["file"] == path]
+        tools = [("RepoLens", rl_found, rl_cats)]
+        tools.append(("Bandit", bandit_found, set(BANDIT_MAP.values())) if path.startswith(
+            "python/") else ("Semgrep", semgrep_found, semgrep_cats))
+        for tool, found, cats in tools:
+            per_file[(path, tool)] = score([f for f in found if f["file"] == path],
+                                           file_labels, cats)
+
     n_py = sum(lab["kind"] == "vuln" for lab in py)
     n_js = sum(lab["kind"] == "vuln" for lab in js)
     print(f"labels: python {n_py} vuln / {len(py) - n_py} safe;"
@@ -262,6 +277,11 @@ def main() -> None:
     print(f"{'language':<11}{'tool':<10}{'TP':>4}{'FP':>4}{'FN':>4}  precision  recall")
     for (lang, tool), s in runs.items():
         print(f"{lang:<11}{tool:<10}{s['tp']:>4}{s['fp']:>4}{s['fn']:>4}"
+              f"     {fmt(s['precision'])}    {fmt(s['recall'])}")
+
+    print(f"\n{'fixture':<22}{'tool':<10}{'TP':>4}{'FP':>4}{'FN':>4}  precision  recall")
+    for (path, tool), s in per_file.items():
+        print(f"{path:<22}{tool:<10}{s['tp']:>4}{s['fp']:>4}{s['fn']:>4}"
               f"     {fmt(s['precision'])}    {fmt(s['recall'])}")
 
     for lang in ("python", "javascript"):
@@ -298,6 +318,7 @@ def main() -> None:
                   "semgrep_configs": SEMGREP_CONFIGS},
         "labels": labels,
         "scores": {f"{lang}/{tool}": s for (lang, tool), s in runs.items()},
+        "scores_per_fixture": {f"{path}/{tool}": s for (path, tool), s in per_file.items()},
         "out_of_scope": others,
     }
     print("\nsaved", save_results("detectors", info, results))
