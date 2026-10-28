@@ -100,9 +100,11 @@ def _expand(conn, snapshot_id: int, q: str, hits: list[dict], include_tests: boo
 
 
 def retrieve(snapshot_id: int, question: str, *, k: int | None = None,
-             expand: bool | None = None, include_tests: bool = False) -> Retrieval:
+             expand: bool | None = None, include_tests: bool = False,
+             expand_max: int | None = None) -> Retrieval:
     k = config.QA_TOP_K if k is None else k
     expand = config.QA_GRAPH_EXPANSION if expand is None else expand
+    expand_max = config.QA_EXPAND_MAX if expand_max is None else expand_max
     q = _vector(get_embedder().embed([question])[0])
     with pool().connection() as conn:
         tests = include_tests
@@ -110,7 +112,7 @@ def retrieve(snapshot_id: int, question: str, *, k: int | None = None,
         if not hits and not tests:
             tests = True  # only test or example code here: use it, and say so
             hits = _search(conn, snapshot_id, q, k, tests)
-        extra = _expand(conn, snapshot_id, q, hits, tests, config.QA_EXPAND_MAX) \
+        extra = _expand(conn, snapshot_id, q, hits, tests, expand_max) \
             if expand and hits else []
 
     budget = config.QA_CONTEXT_TOKENS * CHARS_PER_TOKEN

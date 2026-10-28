@@ -44,15 +44,23 @@ def test_first_hit_rank():
 
 def test_unanswerable_questions_are_not_scored():
     rr = load()
+    hit = {"hit": True}
+    miss = {"hit": False}
     rows = [
         {"repo": "a", "unanswerable": False, "first_hit_rank": 2,
-         "hits": {1: {"plain": False, "expanded": True}}},
+         "configs": {"A": miss, "B": hit, "C": hit}},
         {"repo": "a", "unanswerable": True, "top_paths": ["x.py:1-2"]},  # no hits: never scored
     ]
-    summary = rr.summarise(rows, [1])
+    summary = rr.summarise(rows)
     assert summary["all"]["questions"] == 1 and summary["a"]["questions"] == 1
-    assert summary["all"]["recall"]["1"] == {"plain": 0.0, "expanded": 1.0}
-    assert summary["all"]["mrr_plain"] == 0.5
+    assert summary["all"]["recall"] == {"A": 0.0, "B": 1.0, "C": 1.0}
+    assert summary["all"]["mrr_search_16"] == 0.5
+
+
+def test_configs_compare_c_with_b_at_equal_size():
+    configs = load().CONFIGS
+    assert configs["A"] == {"k": 8, "expand": False, "expand_max": 0}
+    assert configs["B"]["k"] == configs["C"]["k"] + configs["C"]["expand_max"] == 16
 
 
 def test_questions_file_is_well_formed():
