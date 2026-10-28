@@ -171,7 +171,9 @@ def read_tsconfig(source: str | None) -> tuple[str | None, list[Alias]]:
         return None, []
     try:
         options = json.loads(strip_jsonc(source)).get("compilerOptions") or {}
-    except (ValueError, AttributeError):
+    except (ValueError, AttributeError, RecursionError):
+        return None, []
+    if not isinstance(options, dict):  # e.g. "compilerOptions": [] would fail the edges stage
         return None, []
     base_url = options.get("baseUrl")
     base = posixpath.normpath(base_url) if isinstance(base_url, str) else None

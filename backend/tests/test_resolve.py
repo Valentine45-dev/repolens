@@ -198,3 +198,7 @@ def test_bad_tsconfig_is_ignored():
     assert read_tsconfig("{ not json") == (None, [])
     assert read_tsconfig(None) == (None, [])
     assert read_tsconfig('{"compilerOptions": {"baseUrl": "."}}') == ("", [])
+    # Wrong shapes used to raise outside the try and fail the edges stage.
+    for source in ('{"compilerOptions": [1]}', '{"compilerOptions": "x"}', "[]", '"x"',
+                   "[" * 5000 + "]" * 5000):
+        assert read_tsconfig(source) == (None, []), source[:30]
