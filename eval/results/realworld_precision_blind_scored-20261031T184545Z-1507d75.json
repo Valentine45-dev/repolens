@@ -1,0 +1,740 @@
+{
+  "run": {
+    "commit_sha": "1507d751783a82534ce53d1aaebe4dac6c766dbf",
+    "dirty": false,
+    "run_at": "2026-10-31T18:45:45+00:00",
+    "machine": "LAPTOP-4C2E555R",
+    "cpu": "Intel(R) Pentium(R) Silver N5030 CPU @ 1.10GHz",
+    "cpu_threads": 4,
+    "ram_gb": 7.8,
+    "os": "Windows 11 (10.0.22631)",
+    "python": "3.12.16",
+    "packages": {
+      "torch": "2.14.1+cpu",
+      "sentence-transformers": "6.2.0",
+      "transformers": "5.21.0",
+      "tree-sitter": "0.25.2",
+      "anthropic": "2.3.0"
+    },
+    "max_analysis_s": 600,
+    "tool_pins": {
+      "bandit": "bandit==1.9.4",
+      "semgrep": "semgrep==1.182.1"
+    },
+    "notes": "",
+    "embedder": "sentence-transformers",
+    "embed_model": "sentence-transformers/all-MiniLM-L6-v2",
+    "embed_revision": "1110a243fdf4706b3f48f1d95db1a4f5529b4d41",
+    "llm_used": false,
+    "llm": {
+      "provider": "anthropic",
+      "model": null,
+      "effort": "low",
+      "thinking": "between_tools",
+      "max_tokens": 4000,
+      "prompt_version": "2026-10-28.2"
+    },
+    "retrieval": {
+      "top_k": 8,
+      "graph_expansion": true,
+      "expand_max": 8,
+      "context_tokens": 6000
+    }
+  },
+  "labelled_sheet_sha256": "894b2d0775c661739474123f698c836e75cc719e7d3efe4fc5ed013dab310cc0",
+  "rows": 38,
+  "rows_real": 30,
+  "rows_not_real": 8,
+  "rows_unsure_in_notes": 8,
+  "unsure_ids": [
+    "03b6",
+    "1bbe",
+    "238d",
+    "8cdb",
+    "b244",
+    "d555",
+    "dbdb",
+    "e461"
+  ],
+  "unsure_matcher": "unsure|not sure|uncertain|unclear|\\?|maybe|judg(e)?ment",
+  "tools": {
+    "RepoLens": {
+      "overall": {
+        "real": 19,
+        "n": 20,
+        "precision": 0.95,
+        "wilson95": [
+          0.76,
+          0.99
+        ]
+      },
+      "unsure_findings": 4,
+      "range_if_unsure_all_real": {
+        "real": 20,
+        "n": 20,
+        "precision": 1.0,
+        "wilson95": [
+          0.84,
+          1.0
+        ]
+      },
+      "range_if_unsure_all_not_real": {
+        "real": 16,
+        "n": 20,
+        "precision": 0.8,
+        "wilson95": [
+          0.58,
+          0.92
+        ]
+      },
+      "per_rule": {
+        "hardcoded-secret": {
+          "real": 15,
+          "n": 16,
+          "precision": 0.94,
+          "wilson95": [
+            0.72,
+            0.99
+          ]
+        },
+        "py-bare-except": {
+          "real": 4,
+          "n": 4,
+          "precision": 1.0,
+          "wilson95": [
+            0.51,
+            1.0
+          ]
+        }
+      },
+      "findings": [
+        {
+          "tool": "RepoLens",
+          "rule": "hardcoded-secret",
+          "message": "Possible hardcoded secret (secret-assignment).",
+          "severity": "high",
+          "id": "238d",
+          "path": "challenge/labs/bopla_lab/app.py",
+          "line": 50,
+          "category": "hardcoded secret or password",
+          "label": "real",
+          "unsure": true,
+          "merged_row": false
+        },
+        {
+          "tool": "RepoLens",
+          "rule": "hardcoded-secret",
+          "message": "Possible hardcoded secret (secret-assignment).",
+          "severity": "high",
+          "id": "ce17",
+          "path": "dockerized_labs/broken_auth_lab/app.py",
+          "line": 16,
+          "category": "hardcoded secret or password",
+          "label": "real",
+          "unsure": false,
+          "merged_row": false
+        },
+        {
+          "tool": "RepoLens",
+          "rule": "py-bare-except",
+          "message": "Bare except",
+          "severity": "low",
+          "id": "ce04",
+          "path": "dockerized_labs/ssrf_lab/app.py",
+          "line": 26,
+          "category": "broad or silenced exception handling",
+          "label": "real",
+          "unsure": false,
+          "merged_row": false
+        },
+        {
+          "tool": "RepoLens",
+          "rule": "hardcoded-secret",
+          "message": "Possible hardcoded secret (stripe-key).",
+          "severity": "high",
+          "id": "8588",
+          "path": "dockerized_labs/sec_misconfig/app.py",
+          "line": 60,
+          "category": "hardcoded secret or password",
+          "label": "real",
+          "unsure": false,
+          "merged_row": false
+        },
+        {
+          "tool": "RepoLens",
+          "rule": "hardcoded-secret",
+          "message": "Possible hardcoded secret (secret-assignment).",
+          "severity": "high",
+          "id": "61ba",
+          "path": "dockerized_labs/sec_misconfig/app.py",
+          "line": 55,
+          "category": "hardcoded secret or password",
+          "label": "real",
+          "unsure": false,
+          "merged_row": false
+        },
+        {
+          "tool": "RepoLens",
+          "rule": "hardcoded-secret",
+          "message": "Possible hardcoded secret (secret-assignment).",
+          "severity": "high",
+          "id": "9690",
+          "path": "dockerized_labs/sensitive_data_exposure/sensitive_data_lab/settings.py",
+          "line": 8,
+          "category": "hardcoded secret or password",
+          "label": "real",
+          "unsure": false,
+          "merged_row": false
+        },
+        {
+          "tool": "RepoLens",
+          "rule": "hardcoded-secret",
+          "message": "Possible hardcoded secret (secret-assignment).",
+          "severity": "high",
+          "id": "1bbe",
+          "path": "challenge/labs/bopla_lab/app.py",
+          "line": 48,
+          "category": "hardcoded secret or password",
+          "label": "real",
+          "unsure": true,
+          "merged_row": true
+        },
+        {
+          "tool": "RepoLens",
+          "rule": "hardcoded-secret",
+          "message": "Possible hardcoded secret (url-password).",
+          "severity": "high",
+          "id": "f663",
+          "path": "dockerized_labs/sde/app.py",
+          "line": 9,
+          "category": "hardcoded secret or password",
+          "label": "real",
+          "unsure": false,
+          "merged_row": false
+        },
+        {
+          "tool": "RepoLens",
+          "rule": "hardcoded-secret",
+          "message": "Possible hardcoded secret (secret-assignment).",
+          "severity": "high",
+          "id": "d555",
+          "path": "dockerized_labs/auth_failure_lab/app.py",
+          "line": 53,
+          "category": "hardcoded secret or password",
+          "label": "real",
+          "unsure": true,
+          "merged_row": true
+        },
+        {
+          "tool": "RepoLens",
+          "rule": "hardcoded-secret",
+          "message": "Possible hardcoded secret (secret-assignment).",
+          "severity": "high",
+          "id": "4576",
+          "path": "dockerized_labs/ssrf_lab/app.py",
+          "line": 6,
+          "category": "hardcoded secret or password",
+          "label": "real",
+          "unsure": false,
+          "merged_row": false
+        },
+        {
+          "tool": "RepoLens",
+          "rule": "hardcoded-secret",
+          "message": "Possible hardcoded secret (secret-assignment).",
+          "severity": "high",
+          "id": "f4bf",
+          "path": "dockerized_labs/sec_misconfig/app.py",
+          "line": 14,
+          "category": "hardcoded secret or password",
+          "label": "real",
+          "unsure": false,
+          "merged_row": false
+        },
+        {
+          "tool": "RepoLens",
+          "rule": "hardcoded-secret",
+          "message": "Possible hardcoded secret (secret-assignment).",
+          "severity": "high",
+          "id": "ba75",
+          "path": "dockerized_labs/package_injection_lab/app.py",
+          "line": 13,
+          "category": "hardcoded secret or password",
+          "label": "real",
+          "unsure": false,
+          "merged_row": false
+        },
+        {
+          "tool": "RepoLens",
+          "rule": "py-bare-except",
+          "message": "Bare except",
+          "severity": "low",
+          "id": "3878",
+          "path": "dockerized_labs/auth_failure_lab/app.py",
+          "line": 157,
+          "category": "broad or silenced exception handling",
+          "label": "real",
+          "unsure": false,
+          "merged_row": false
+        },
+        {
+          "tool": "RepoLens",
+          "rule": "py-bare-except",
+          "message": "Bare except",
+          "severity": "low",
+          "id": "a581",
+          "path": "dockerized_labs/ssrf_lab/app.py",
+          "line": 40,
+          "category": "broad or silenced exception handling",
+          "label": "real",
+          "unsure": false,
+          "merged_row": false
+        },
+        {
+          "tool": "RepoLens",
+          "rule": "hardcoded-secret",
+          "message": "Possible hardcoded secret (secret-assignment).",
+          "severity": "high",
+          "id": "6338",
+          "path": "dockerized_labs/sec_misconfig/app.py",
+          "line": 13,
+          "category": "hardcoded secret or password",
+          "label": "real",
+          "unsure": false,
+          "merged_row": false
+        },
+        {
+          "tool": "RepoLens",
+          "rule": "hardcoded-secret",
+          "message": "Possible hardcoded secret (secret-assignment).",
+          "severity": "high",
+          "id": "6e53",
+          "path": "dockerized_labs/sec_misconfig/app.py",
+          "line": 98,
+          "category": "hardcoded secret or password",
+          "label": "real",
+          "unsure": false,
+          "merged_row": false
+        },
+        {
+          "tool": "RepoLens",
+          "rule": "hardcoded-secret",
+          "message": "Possible hardcoded secret (secret-assignment).",
+          "severity": "high",
+          "id": "e67c",
+          "path": "dockerized_labs/sec_misconfig/app.py",
+          "line": 59,
+          "category": "hardcoded secret or password",
+          "label": "real",
+          "unsure": false,
+          "merged_row": false
+        },
+        {
+          "tool": "RepoLens",
+          "rule": "hardcoded-secret",
+          "message": "Possible hardcoded secret (secret-assignment).",
+          "severity": "high",
+          "id": "dbdb",
+          "path": "dockerized_labs/insufficient_logging_lab/README.md",
+          "line": 20,
+          "category": "hardcoded secret or password",
+          "label": "not real",
+          "unsure": true,
+          "merged_row": false
+        },
+        {
+          "tool": "RepoLens",
+          "rule": "py-bare-except",
+          "message": "Bare except",
+          "severity": "low",
+          "id": "e1a9",
+          "path": "dockerized_labs/auth_failure_lab/app.py",
+          "line": 198,
+          "category": "broad or silenced exception handling",
+          "label": "real",
+          "unsure": false,
+          "merged_row": false
+        },
+        {
+          "tool": "RepoLens",
+          "rule": "hardcoded-secret",
+          "message": "Possible hardcoded secret (secret-assignment).",
+          "severity": "high",
+          "id": "4e16",
+          "path": "dockerized_labs/insufficient_logging_lab/app.py",
+          "line": 15,
+          "category": "hardcoded secret or password",
+          "label": "real",
+          "unsure": false,
+          "merged_row": false
+        }
+      ]
+    },
+    "Bandit": {
+      "overall": {
+        "real": 13,
+        "n": 20,
+        "precision": 0.65,
+        "wilson95": [
+          0.43,
+          0.82
+        ]
+      },
+      "unsure_findings": 6,
+      "range_if_unsure_all_real": {
+        "real": 14,
+        "n": 20,
+        "precision": 0.7,
+        "wilson95": [
+          0.48,
+          0.85
+        ]
+      },
+      "range_if_unsure_all_not_real": {
+        "real": 8,
+        "n": 20,
+        "precision": 0.4,
+        "wilson95": [
+          0.22,
+          0.61
+        ]
+      },
+      "per_rule": {
+        "B104 hardcoded_bind_all_interfaces": {
+          "real": 0,
+          "n": 4,
+          "precision": 0.0,
+          "wilson95": [
+            0.0,
+            0.49
+          ]
+        },
+        "B105 hardcoded_password_string": {
+          "real": 10,
+          "n": 10,
+          "precision": 1.0,
+          "wilson95": [
+            0.72,
+            1.0
+          ]
+        },
+        "B106 hardcoded_password_funcarg": {
+          "real": 0,
+          "n": 2,
+          "precision": 0.0,
+          "wilson95": [
+            0.0,
+            0.66
+          ]
+        },
+        "B113 request_without_timeout": {
+          "real": 1,
+          "n": 1,
+          "precision": 1.0,
+          "wilson95": [
+            0.21,
+            1.0
+          ]
+        },
+        "B201 flask_debug_true": {
+          "real": 1,
+          "n": 1,
+          "precision": 1.0,
+          "wilson95": [
+            0.21,
+            1.0
+          ]
+        },
+        "B324 hashlib": {
+          "real": 1,
+          "n": 1,
+          "precision": 1.0,
+          "wilson95": [
+            0.21,
+            1.0
+          ]
+        },
+        "B603 subprocess_without_shell_equals_true": {
+          "real": 0,
+          "n": 1,
+          "precision": 0.0,
+          "wilson95": [
+            0.0,
+            0.79
+          ]
+        }
+      },
+      "findings": [
+        {
+          "tool": "Bandit",
+          "rule": "B324 hashlib",
+          "message": "Use of weak MD5 hash for security. Consider usedforsecurity=False",
+          "severity": "high",
+          "id": "fee4",
+          "path": "dockerized_labs/broken_auth_lab/app.py",
+          "line": 103,
+          "category": "weak hash",
+          "label": "real",
+          "unsure": false,
+          "merged_row": false
+        },
+        {
+          "tool": "Bandit",
+          "rule": "B105 hardcoded_password_string",
+          "message": "Possible hardcoded password: 'token_abc123'",
+          "severity": "low",
+          "id": "03b6",
+          "path": "dockerized_labs/dependency_attack_lab/app.py",
+          "line": 13,
+          "category": "hardcoded secret or password",
+          "label": "real",
+          "unsure": true,
+          "merged_row": false
+        },
+        {
+          "tool": "Bandit",
+          "rule": "B603 subprocess_without_shell_equals_true",
+          "message": "subprocess call - check for execution of untrusted input.",
+          "severity": "low",
+          "id": "dbb3",
+          "path": "uninstaller.py",
+          "line": 46,
+          "category": "subprocess use",
+          "label": "not real",
+          "unsure": false,
+          "merged_row": false
+        },
+        {
+          "tool": "Bandit",
+          "rule": "B105 hardcoded_password_string",
+          "message": "Possible hardcoded password: 'security_headers_secret_key_2024'",
+          "severity": "low",
+          "id": "1daa",
+          "path": "challenge/labs/security_headers_lab/app.py",
+          "line": 15,
+          "category": "hardcoded secret or password",
+          "label": "real",
+          "unsure": false,
+          "merged_row": false
+        },
+        {
+          "tool": "Bandit",
+          "rule": "B105 hardcoded_password_string",
+          "message": "Possible hardcoded password: 'password123'",
+          "severity": "low",
+          "id": "e461",
+          "path": "challenge/labs/security_headers_lab/app.py",
+          "line": 20,
+          "category": "hardcoded secret or password",
+          "label": "real",
+          "unsure": true,
+          "merged_row": false
+        },
+        {
+          "tool": "Bandit",
+          "rule": "B105 hardcoded_password_string",
+          "message": "Possible hardcoded password: 'password123'",
+          "severity": "low",
+          "id": "1bbe",
+          "path": "challenge/labs/bopla_lab/app.py",
+          "line": 48,
+          "category": "hardcoded secret or password",
+          "label": "real",
+          "unsure": true,
+          "merged_row": true
+        },
+        {
+          "tool": "Bandit",
+          "rule": "B105 hardcoded_password_string",
+          "message": "Possible hardcoded password: 'SuperSecret123!'",
+          "severity": "low",
+          "id": "3318",
+          "path": "dockerized_labs/dependency_attack_lab/app.py",
+          "line": 12,
+          "category": "hardcoded secret or password",
+          "label": "real",
+          "unsure": false,
+          "merged_row": false
+        },
+        {
+          "tool": "Bandit",
+          "rule": "B106 hardcoded_password_funcarg",
+          "message": "Possible hardcoded password: 'pw'",
+          "severity": "low",
+          "id": "f340",
+          "path": "introduction/tests.py",
+          "line": 14,
+          "category": "hardcoded secret or password",
+          "label": "not real",
+          "unsure": false,
+          "merged_row": false
+        },
+        {
+          "tool": "Bandit",
+          "rule": "B104 hardcoded_bind_all_interfaces",
+          "message": "Possible binding to all interfaces.",
+          "severity": "medium",
+          "id": "0b11",
+          "path": "dockerized_labs/dependency_attack_lab/app.py",
+          "line": 198,
+          "category": "server binds to all interfaces",
+          "label": "not real",
+          "unsure": false,
+          "merged_row": false
+        },
+        {
+          "tool": "Bandit",
+          "rule": "B104 hardcoded_bind_all_interfaces",
+          "message": "Possible binding to all interfaces.",
+          "severity": "medium",
+          "id": "8cdb",
+          "path": "challenge/labs/security_headers_lab/app.py",
+          "line": 233,
+          "category": "server binds to all interfaces",
+          "label": "not real",
+          "unsure": true,
+          "merged_row": false
+        },
+        {
+          "tool": "Bandit",
+          "rule": "B105 hardcoded_password_string",
+          "message": "Possible hardcoded password: '2022_in_pygoat@pygoat.com'",
+          "severity": "low",
+          "id": "6f5c",
+          "path": "dockerized_labs/auth_failure_lab/app.py",
+          "line": 44,
+          "category": "hardcoded secret or password",
+          "label": "real",
+          "unsure": false,
+          "merged_row": false
+        },
+        {
+          "tool": "Bandit",
+          "rule": "B105 hardcoded_password_string",
+          "message": "Possible hardcoded password: '0b14d501a594442a01c6859541bcb3e8164d183d32937b851835442f69d5c94e'",
+          "severity": "low",
+          "id": "d555",
+          "path": "dockerized_labs/auth_failure_lab/app.py",
+          "line": 53,
+          "category": "hardcoded secret or password",
+          "label": "real",
+          "unsure": true,
+          "merged_row": true
+        },
+        {
+          "tool": "Bandit",
+          "rule": "B105 hardcoded_password_string",
+          "message": "Possible hardcoded password: 'your-secret-key-here'",
+          "severity": "low",
+          "id": "0275",
+          "path": "dockerized_labs/open_source_library_attack_lab/app.py",
+          "line": 5,
+          "category": "hardcoded secret or password",
+          "label": "real",
+          "unsure": false,
+          "merged_row": false
+        },
+        {
+          "tool": "Bandit",
+          "rule": "B104 hardcoded_bind_all_interfaces",
+          "message": "Possible binding to all interfaces.",
+          "severity": "medium",
+          "id": "2d98",
+          "path": "dockerized_labs/crypto_failure_lab/app.py",
+          "line": 115,
+          "category": "server binds to all interfaces",
+          "label": "not real",
+          "unsure": false,
+          "merged_row": false
+        },
+        {
+          "tool": "Bandit",
+          "rule": "B104 hardcoded_bind_all_interfaces",
+          "message": "Possible binding to all interfaces.",
+          "severity": "medium",
+          "id": "50da",
+          "path": "dockerized_labs/sec_misconfig/app.py",
+          "line": 135,
+          "category": "server binds to all interfaces",
+          "label": "not real",
+          "unsure": false,
+          "merged_row": false
+        },
+        {
+          "tool": "Bandit",
+          "rule": "B106 hardcoded_password_funcarg",
+          "message": "Possible hardcoded password: 'pw'",
+          "severity": "low",
+          "id": "65ac",
+          "path": "introduction/tests.py",
+          "line": 15,
+          "category": "hardcoded secret or password",
+          "label": "not real",
+          "unsure": false,
+          "merged_row": false
+        },
+        {
+          "tool": "Bandit",
+          "rule": "B105 hardcoded_password_string",
+          "message": "Possible hardcoded password: 'pass456'",
+          "severity": "low",
+          "id": "b244",
+          "path": "challenge/labs/bopla_lab/app.py",
+          "line": 49,
+          "category": "hardcoded secret or password",
+          "label": "real",
+          "unsure": true,
+          "merged_row": false
+        },
+        {
+          "tool": "Bandit",
+          "rule": "B105 hardcoded_password_string",
+          "message": "Possible hardcoded password: 'your-secret-key-here'",
+          "severity": "low",
+          "id": "d6a7",
+          "path": "dockerized_labs/insecure_design_lab/app.py",
+          "line": 8,
+          "category": "hardcoded secret or password",
+          "label": "real",
+          "unsure": false,
+          "merged_row": false
+        },
+        {
+          "tool": "Bandit",
+          "rule": "B201 flask_debug_true",
+          "message": "A Flask app appears to be run with debug=True, which exposes the Werkzeug debugger and allows the execution of arbitrary code.",
+          "severity": "high",
+          "id": "f15a",
+          "path": "dockerized_labs/dependency_attack_lab/app.py",
+          "line": 198,
+          "category": "Flask debug mode on",
+          "label": "real",
+          "unsure": false,
+          "merged_row": false
+        },
+        {
+          "tool": "Bandit",
+          "rule": "B113 request_without_timeout",
+          "message": "Call to requests without timeout",
+          "severity": "medium",
+          "id": "79fc",
+          "path": "dockerized_labs/ssrf_lab/app.py",
+          "line": 37,
+          "category": "request without timeout",
+          "label": "real",
+          "unsure": false,
+          "merged_row": false
+        }
+      ],
+      "overall_b104_as_real": {
+        "real": 17,
+        "n": 20,
+        "precision": 0.85,
+        "wilson95": [
+          0.64,
+          0.95
+        ]
+      }
+    }
+  }
+}
