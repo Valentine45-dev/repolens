@@ -1,0 +1,252 @@
+﻿id,path,line,category,snippet,label (real / not real),note
+238d,challenge/labs/bopla_lab/app.py,50,hardcoded secret or password,"    47  users = {
+    48      ""user1"": {""password"": ""[REDACTED]"", ""role"": ""developer""},
+    49      ""user2"": {""password"": ""[REDACTED]"", ""role"": ""manager""},
+>   50      ""admin"": {""password"": ""[REDACTED]"", ""role"": ""admin""},
+    51  }
+    52  
+    53  current_user = None",real,"unsure: these appear to be lab/demo accounts, but passwords embedded in application code would be unsafe if the app or credentials were used beyond an isolated exercise."
+fee4,dockerized_labs/broken_auth_lab/app.py,103,weak hash,"   100      for username, user_data in users.items():
+   101          if user_data[""email""] == email:
+   102              # Vulnerable: Predictable token generation
+>  103              token = hashlib.md5(f""{email}:{datetime.now()}"".encode()).hexdigest()
+   104              password_reset_tokens[token] = username
+   105  
+   106              # In a real application, this would send an email",real,
+03b6,dockerized_labs/dependency_attack_lab/app.py,13,hardcoded secret or password,"    10  SENSITIVE_DATA = {
+    11      ""api_key"": ""[REDACTED]"",
+    12      ""db_password"": ""[REDACTED]"",
+>   13      ""user_token"": ""[REDACTED]"",
+    14  }
+    15  
+    16  ",real,"unsure: comment says this is simulated bait data for the lab, but it's the same dict as 3318/ba75, so labelled the same way for consistency"
+ce17,dockerized_labs/broken_auth_lab/app.py,16,hardcoded secret or password,"    13  import base64
+    14  
+    15  app = Flask(__name__)
+>   16  app.secret_key = ""[REDACTED]""  # Vulnerable: Hardcoded secret key
+    17  
+    18  # Vulnerable: Storing user data in memory
+    19  users = {",real,
+ce04,dockerized_labs/ssrf_lab/app.py,26,broad or silenced exception handling,"    23                  blog_content = f.read()
+    24              flash(""Success! Keep exploring..."", ""success"")
+    25              return render_template(""lab1.html"", blog=blog_content)
+>   26          except:
+    27              return render_template(""lab1.html"", blog=""No blog found"")
+    28      return render_template(""lab1.html"", blog=""Read Blog About SSRF"")
+    29  ",real,
+dbb3,uninstaller.py,46,subprocess use,"    43          # It is important to upgrade pip first to avoid environment errors
+    44          if platform.system != ""Windows"":
+    45              pip_v = ""pip3"" if (which(""pip3"") is not None) else ""pip""
+>   46              subprocess.run(
+    47                  [pip_v, ""install"", ""--upgrade"", ""pip""],
+    48                  stdout=subprocess.DEVNULL,
+    49                  stderr=subprocess.DEVNULL,",not real,
+8588,dockerized_labs/sec_misconfig/app.py,60,hardcoded secret or password,"    57          ""REDIS_PASSWORD"": ""[REDACTED]"",
+    58          ""AWS_ACCESS_KEY"": ""[REDACTED]"",
+    59          ""AWS_SECRET_KEY"": ""[REDACTED]"",
+>   60          ""STRIPE_API_KEY"": ""[REDACTED]"",
+    61          ""ADMIN_CREDENTIALS"": {
+    62              ""username"": ""admin"",
+    63              ""password"": ""[REDACTED]"",",real,
+1daa,challenge/labs/security_headers_lab/app.py,15,hardcoded secret or password,"    12  from datetime import datetime
+    13  
+    14  app = Flask(__name__)
+>   15  app.secret_key = ""[REDACTED]""
+    16  
+    17  USERS = {
+    18      ""john_doe"": {",real,
+61ba,dockerized_labs/sec_misconfig/app.py,55,hardcoded secret or password,"    52      # def trigger_error():
+    53      # Sensitive configuration and credentials that would be exposed in debug mode
+    54      app_config = {
+>   55          ""SECRET_KEY"": ""[REDACTED]"",
+    56          ""DATABASE_URI"": ""postgresql://admin:[REDACTED]@production-db.internal:5432/users"",
+    57          ""REDIS_PASSWORD"": ""[REDACTED]"",
+    58          ""AWS_ACCESS_KEY"": ""[REDACTED]"",",real,
+e461,challenge/labs/security_headers_lab/app.py,20,hardcoded secret or password,"    17  USERS = {
+    18      ""john_doe"": {
+    19          ""username"": ""john_doe"",
+>   20          ""password"": ""[REDACTED]"",
+    21          ""full_name"": ""John Doe"",
+    22          ""account_number"": ""****1234"",
+    23          ""balance"": 25000.00,",real,unsure: this looks like a sample account in a deliberately vulnerable lab; hardcoded passwords are still unsafe outside a disposable test fixture.
+9690,dockerized_labs/sensitive_data_exposure/sensitive_data_lab/settings.py,8,hardcoded secret or password,"     5  BASE_DIR = Path(__file__).resolve().parent.parent
+     6  
+     7  # SECURITY WARNING: keep the secret key used in production secret!
+>    8  SECRET_KEY = ""[REDACTED]""
+     9  
+    10  # SECURITY WARNING: don't run with debug turned on in production!
+    11  DEBUG = True",real,
+1bbe,challenge/labs/bopla_lab/app.py,48,hardcoded secret or password,"    45  }
+    46  
+    47  users = {
+>   48      ""user1"": {""password"": ""[REDACTED]"", ""role"": ""developer""},
+    49      ""user2"": {""password"": ""[REDACTED]"", ""role"": ""manager""},
+    50      ""admin"": {""password"": ""[REDACTED]"", ""role"": ""admin""},
+    51  }",real,unsure: same lab demo accounts as 238d
+3318,dockerized_labs/dependency_attack_lab/app.py,12,hardcoded secret or password,"     9  # Simulated sensitive data inside application
+    10  SENSITIVE_DATA = {
+    11      ""api_key"": ""[REDACTED]"",
+>   12      ""db_password"": ""[REDACTED]"",
+    13      ""user_token"": ""[REDACTED]"",
+    14  }
+    15  ",real,
+f340,introduction/tests.py,14,hardcoded secret or password,"    11      def setUp(self):
+    12          Lab.objects.create(name=""xss_lab"", build_location=""x"", port=5000, is_custom=False)
+    13          Lab.objects.create(name=""sql_injection_lab"", build_location=""x"", port=5001, is_custom=False)
+>   14          self.alice = User.objects.create_user(""alice"", password=""[REDACTED]"")
+    15          self.alice_bob = User.objects.create_user(""alice-bob"", password=""[REDACTED]"")
+    16  
+    17      def verify(self, host, user=None):",not real,
+f663,dockerized_labs/sde/app.py,9,hardcoded secret or password,"     6  app.config[""SECRET_KEY""] = ""[REDACTED]""
+     7  app.config[""DEBUG""] = True
+     8  app.config[""DATABASE_URI""] = (
+>    9      ""postgresql://admin:[REDACTED]@localhost:5432/sensitive_db""
+    10  )
+    11  app.config[""API_KEY""] = ""[REDACTED]""
+    12  app.config[""PRIVATE_KEY""] = ""[REDACTED]""",real,
+0b11,dockerized_labs/dependency_attack_lab/app.py,198,server binds to all interfaces,"   195  
+   196  
+   197  if __name__ == ""__main__"":
+>  198      app.run(host=""0.0.0.0"", port=5020, debug=True)",not real,
+8cdb,challenge/labs/security_headers_lab/app.py,233,server binds to all interfaces,"   230      return ""OK"", 200
+   231  
+   232  if __name__ == '__main__':
+>  233      app.run(host='0.0.0.0', port=5011, debug=True)",not real,"unsure: assuming the challenge labs also run inside Docker like dockerized_labs; if this runs directly on a host, 0.0.0.0 + debug=True would be real"
+6f5c,dockerized_labs/auth_failure_lab/app.py,44,hardcoded secret or password,"    41  
+    42  # Lab 2: Default admin credentials - same as in the original lab
+    43  ADMIN_USERNAME = ""admin_pygoat@pygoat.com""
+>   44  ADMIN_PASSWORD = ""[REDACTED]""  # This will be hashed with Argon2
+    45  
+    46  # Lab 3: Predefined users with SHA256 hashed passwords
+    47  # Passwords are: ""password1"", ""password2"", ""password3"", ""password4""",real,
+d555,dockerized_labs/auth_failure_lab/app.py,53,hardcoded secret or password,"    50          ""userid"": ""1"",
+    51          ""username"": ""User1"",
+    52          ""role"": ""user"",
+>   53          ""password"": ""[REDACTED]"",
+    54      },
+    55      ""User2"": {
+    56          ""userid"": ""2"",",real,"unsure: the value may be a SHA256 hash rather than plaintext (see comment line 46-47), but a hash of 'password1' is effectively still a hardcoded credential"
+4576,dockerized_labs/ssrf_lab/app.py,6,hardcoded secret or password,"     3  import requests
+     4  
+     5  app = Flask(__name__)
+>    6  app.secret_key = ""[REDACTED]""  # Required for flash messages
+     7  
+     8  
+     9  @app.route(""/"")",real,
+f4bf,dockerized_labs/sec_misconfig/app.py,14,hardcoded secret or password,"    11  SENSITIVE_DATA = {
+    12      ""database_url"": ""postgresql://admin:[REDACTED]@localhost:5432/production"",
+    13      ""api_key"": ""[REDACTED]"",
+>   14      ""secret_key"": ""[REDACTED]"",
+    15  }
+    16  
+    17  ",real,
+ba75,dockerized_labs/package_injection_lab/app.py,13,hardcoded secret or password,"    10  SENSITIVE_DATA = {
+    11      ""api_key"": ""[REDACTED]"",
+    12      ""db_password"": ""[REDACTED]"",
+>   13      ""user_token"": ""[REDACTED]"",
+    14      ""encryption_key"": ""[REDACTED]"",
+    15  }
+    16  ",real,
+0275,dockerized_labs/open_source_library_attack_lab/app.py,5,hardcoded secret or password,"     2  from datetime import datetime
+     3  
+     4  app = Flask(__name__)
+>    5  app.config[""SECRET_KEY""] = ""[REDACTED]""
+     6  
+     7  # Simulated package timeline and compromise story
+     8  COMPROMISE_TIMELINE = {",real,
+2d98,dockerized_labs/crypto_failure_lab/app.py,115,server binds to all interfaces,"   112      return ""OK"", 200
+   113  
+   114  if __name__ == '__main__':
+>  115      app.run(host='0.0.0.0', port=5000)",not real,
+3878,dockerized_labs/auth_failure_lab/app.py,157,broad or silenced exception handling,"   154                      user.fail_attempts = 0
+   155                      db.session.commit()
+   156                  return render_template(""lab2.html"", user=user, success=True)
+>  157              except:
+   158                  fail_attempts = user.fail_attempts + 1
+   159                  if fail_attempts == 5:
+   160                      user.is_active = False",real,
+a581,dockerized_labs/ssrf_lab/app.py,40,broad or silenced exception handling,"    37              response = requests.get(url)
+    38              flash(""Successfully fetched URL!"", ""success"")
+    39              return render_template(""lab2.html"", response=response.text)
+>   40          except:
+    41              return render_template(""lab2.html"", error=""Invalid URL"")
+    42      return render_template(""lab2.html"")
+    43  ",real,
+50da,dockerized_labs/sec_misconfig/app.py,135,server binds to all interfaces,"   132      return ""OK"", 200
+   133  
+   134  if __name__ == '__main__':
+>  135      app.run(debug=True, host='0.0.0.0', port=5009)",not real,
+65ac,introduction/tests.py,15,hardcoded secret or password,"    12          Lab.objects.create(name=""xss_lab"", build_location=""x"", port=5000, is_custom=False)
+    13          Lab.objects.create(name=""sql_injection_lab"", build_location=""x"", port=5001, is_custom=False)
+    14          self.alice = User.objects.create_user(""alice"", password=""[REDACTED]"")
+>   15          self.alice_bob = User.objects.create_user(""alice-bob"", password=""[REDACTED]"")
+    16  
+    17      def verify(self, host, user=None):
+    18          if user:",not real,
+6338,dockerized_labs/sec_misconfig/app.py,13,hardcoded secret or password,"    10  # Sensitive data for Lab 2
+    11  SENSITIVE_DATA = {
+    12      ""database_url"": ""postgresql://admin:[REDACTED]@localhost:5432/production"",
+>   13      ""api_key"": ""[REDACTED]"",
+    14      ""secret_key"": ""[REDACTED]"",
+    15  }
+    16  ",real,
+6e53,dockerized_labs/sec_misconfig/app.py,98,hardcoded secret or password,"    95      role = data.get(""role"", ""user"")
+    96  
+    97      # Using a weak secret key (misconfiguration)
+>   98      secret = ""[REDACTED]""
+    99  
+   100      token = jwt.encode(
+   101          {",real,
+b244,challenge/labs/bopla_lab/app.py,49,hardcoded secret or password,"    46  
+    47  users = {
+    48      ""user1"": {""password"": ""[REDACTED]"", ""role"": ""developer""},
+>   49      ""user2"": {""password"": ""[REDACTED]"", ""role"": ""manager""},
+    50      ""admin"": {""password"": ""[REDACTED]"", ""role"": ""admin""},
+    51  }
+    52  ",real,unsure: same lab demo accounts as 238d
+e67c,dockerized_labs/sec_misconfig/app.py,59,hardcoded secret or password,"    56          ""DATABASE_URI"": ""postgresql://admin:[REDACTED]@production-db.internal:5432/users"",
+    57          ""REDIS_PASSWORD"": ""[REDACTED]"",
+    58          ""AWS_ACCESS_KEY"": ""[REDACTED]"",
+>   59          ""AWS_SECRET_KEY"": ""[REDACTED]"",
+    60          ""STRIPE_API_KEY"": ""[REDACTED]"",
+    61          ""ADMIN_CREDENTIALS"": {
+    62              ""username"": ""admin"",",real,
+d6a7,dockerized_labs/insecure_design_lab/app.py,8,hardcoded secret or password,"     5  import random
+     6  
+     7  app = Flask(__name__)
+>    8  app.secret_key = ""[REDACTED]""  # Change in production
+     9  
+    10  # Database config
+    11  app.config[""SQLALCHEMY_DATABASE_URI""] = ""sqlite:///tickets.db""",real,
+dbdb,dockerized_labs/insufficient_logging_lab/README.md,20,hardcoded secret or password,"    17  - Demonstrates poor logging of authentication attempts
+    18  - Allows brute force attacks without detection
+    19  - No rate limiting or account lockout
+>   20  - Credentials for testing: username=""admin"", password=""[REDACTED]""
+    21  
+    22  ### Lab 2: Missing Critical Event Logging
+    23  - Demonstrates lack of logging for critical security events",not real,"unsure: README just documents the lab's test login for learners; the actual hardcoded password is in app.py (4e16), which is labelled real"
+f15a,dockerized_labs/dependency_attack_lab/app.py,198,Flask debug mode on,"   195  
+   196  
+   197  if __name__ == ""__main__"":
+>  198      app.run(host=""0.0.0.0"", port=5020, debug=True)",real,
+79fc,dockerized_labs/ssrf_lab/app.py,37,request without timeout,"    34      if request.method == ""POST"":
+    35          url = request.form.get(""url"")
+    36          try:
+>   37              response = requests.get(url)
+    38              flash(""Successfully fetched URL!"", ""success"")
+    39              return render_template(""lab2.html"", response=response.text)
+    40          except:",real,
+e1a9,dockerized_labs/auth_failure_lab/app.py,198,broad or silenced exception handling,"   195                          return render_template(
+   196                              ""lab3.html"", username=session_info[""username""], success=True
+   197                          )
+>  198                  except:
+   199                      pass
+   200              return render_template(""lab3.html"")
+   201          except:",real,
+4e16,dockerized_labs/insufficient_logging_lab/app.py,15,hardcoded secret or password,"    12  )
+    13  
+    14  # User database (in memory for demonstration)
+>   15  users = {""admin"": {""password"": ""[REDACTED]"", ""role"": ""admin"", ""failed_attempts"": 0}}
+    16  
+    17  
+    18  def log_to_file(message):",real,

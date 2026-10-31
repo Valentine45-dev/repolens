@@ -1,0 +1,13 @@
+{
+  "recorded_at": "2026-10-31T18:44:58+00:00",
+  "sheet_sha256_labelled": "894b2d0775c661739474123f698c836e75cc719e7d3efe4fc5ed013dab310cc0",
+  "sheet_blank_sha256_at_setup": "3bbc5a61f747eb53ff8e4c4163b76988ae5117d553ebd579571c6dd8a0323ac9",
+  "key_sha256_now": "707e4ac8b62e57f2b8d5b69c6cd351aa1e1ab0c29f1ae9d81826d5d420bfb1f4",
+  "key_unchanged_since_setup": true,
+  "sheet_mtime_local": "2026-11-01T00:10:13",
+  "key_mtime_local": "2026-10-31T22:36:53",
+  "setup_file": "eval/results\\realworld_blind_setup-20261031T170653Z-3bb10e9.json",
+  "labelling": "Labels by the project owner, blind, without opening the key (owner's statement). The owner's message also held a bracketed template line for the case that an AI helped; the owner did not say an AI helped, so no AI-labelling deviation is recorded.",
+  "rule": "real = a reviewer should act on it; otherwise not real",
+  "state": "recorded and committed before the key was opened or any score computed"
+}
