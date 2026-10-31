@@ -22,7 +22,9 @@ with the p/javascript and p/secrets rulesets, natively, or in the semgrep/semgre
 when the native run fails. Versions are saved with the results.
 """
 
+import hashlib
 import json
+import os
 import re
 import shutil
 import subprocess
@@ -42,6 +44,12 @@ BANDIT = "bandit==1.9.4"
 SEMGREP = "semgrep==1.182.1"
 SEMGREP_IMAGE = "semgrep/semgrep:1.182.1"
 SEMGREP_CONFIGS = ["p/javascript", "p/secrets"]
+# Re-baseline (31 Oct): the two rule packs run from a local copy fetched once (see
+# eval/semgrep_rules.json: fetch date, version and SHA-256 of each file). The files live outside
+# git; SEMGREP_RULES_DIR overrides the default location.
+RULES_MANIFEST = ROOT / "eval" / "semgrep_rules.json"
+RULES_DIR = Path(os.environ.get("SEMGREP_RULES_DIR",
+                                r"C:\projects\repolens-eval-assets\semgrep-rules"))
 
 MARK = re.compile(r"(?:#|//)\s*(vuln|safe):\s*([a-z-]+)")
 LANG_DIRS = {"python": "python", "js": "javascript"}
@@ -131,22 +139,45 @@ def run_bandit() -> tuple[list[dict], list[dict], str]:
     return mapped, other, BANDIT
 
 
+def verified_rules() -> dict[str, str]:
+    """Rule files whose SHA-256 matches the committed manifest; refuses to run otherwise."""
+    manifest = json.loads(RULES_MANIFEST.read_text(encoding="utf-8"))
+    hashes = {}
+    for name, meta in manifest["files"].items():
+        digest = hashlib.sha256((RULES_DIR / name).read_bytes()).hexdigest()
+        if digest != meta["sha256"]:
+            raise SystemExit(f"{RULES_DIR / name}: SHA-256 {digest} != manifest {meta['sha256']}")
+        hashes[name] = digest
+    return hashes
+
+
 def _semgrep_json(native: bool) -> tuple[dict, str]:
+    names = list(verified_rules())
     args = ["scan", "--json", "--metrics=off", "--disable-version-check", "--quiet"]
-    for c in SEMGREP_CONFIGS:
-        args += ["--config", c]
     if native:
+        for n in names:
+            args += ["--config", str(RULES_DIR / n)]
         cmd = ["uvx", "--from", SEMGREP, "semgrep", *args, str(FIXTURES / "js")]
-        how = f"{SEMGREP} (native)"
+        how = f"{SEMGREP} (native, local rules)"
     else:
-        cmd = ["docker", "run", "--rm", "-v", f"{FIXTURES / 'js'}:/src", SEMGREP_IMAGE,
-               "semgrep", *args, "/src"]
-        how = f"{SEMGREP_IMAGE} (docker)"
+        for n in names:
+            args += ["--config", f"/rules/{n}"]
+        cmd = ["docker", "run", "--rm", "-v", f"{FIXTURES / 'js'}:/src:ro",
+               "-v", f"{RULES_DIR}:/rules:ro", SEMGREP_IMAGE, "semgrep", *args, "/src"]
+        how = f"{SEMGREP_IMAGE} (docker, local rules, read-only mounts)"
     out = subprocess.run(cmd, capture_output=True, text=True, encoding="utf-8", cwd=ROOT)
     data = json.loads(out.stdout) if out.stdout.strip().startswith("{") else None
     if data is None or (out.returncode not in (0, 1) and not data.get("results")):
         raise RuntimeError(f"semgrep failed ({how}): exit {out.returncode}: {out.stderr[-500:]}")
     return data, how
+
+
+def rule_name(check_id: str) -> str:
+    """Semgrep prefixes a rule id with the dotted path of the rule file it was loaded from
+    (native: C.projects...semgrep-rules.; Docker: rules.). Strip it so ids read as the registry
+    ids did in v1 and the keyword mapping below never sees the local directory name (which
+    contains 'eval')."""
+    return re.sub(r"^(?:.*semgrep-rules|rules)\.", "", check_id)
 
 
 def run_semgrep() -> tuple[list[dict], list[dict], str]:
@@ -160,7 +191,7 @@ def run_semgrep() -> tuple[list[dict], list[dict], str]:
     found = []
     for r in data["results"]:
         name = Path(r["path"]).name  # native: absolute path, docker: /src/...
-        found.append({"file": f"js/{name}", "line": r["start"]["line"], "rule": r["check_id"]})
+        found.append({"file": f"js/{name}", "line": r["start"]["line"], "rule": rule_name(r["check_id"])})
 
     def category(rule: str) -> str | None:
         low = rule.lower()
@@ -315,7 +346,8 @@ def main() -> None:
 
     results = {
         "tools": {"bandit": bandit_version, "semgrep": semgrep_version,
-                  "semgrep_configs": SEMGREP_CONFIGS},
+                  "semgrep_configs": SEMGREP_CONFIGS,
+                  "semgrep_rules_sha256": verified_rules()},
         "labels": labels,
         "scores": {f"{lang}/{tool}": s for (lang, tool), s in runs.items()},
         "scores_per_fixture": {f"{path}/{tool}": s for (path, tool), s in per_file.items()},
