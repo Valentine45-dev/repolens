@@ -2,10 +2,10 @@
 
     uv run --project backend python eval/label_agreement.py
 
-This is same-person consistency, not independent agreement: the owner confirmed v1's labels on
-28 Oct (proposed by Claude), and gave the new ones (drafted by an AI session from the sheet and the
-rule, reviewed and finalised by the owner). The owner had seen the shared findings before, so the
-blinding hid the tool, not the findings. Findings are matched on (tool, path, line, rule).
+This is agreement between two AI-assisted labellings (v1: Claude-proposed labels confirmed by the owner; now: AI-drafted labels reviewed and finalised by the owner), not same-person consistency and not independent agreement. An independent human second judge is still needed (planned for v2 phase 3).
+v1's labels were proposed by Claude and confirmed by the owner on 28 Oct; the new ones were drafted
+by an AI session from the sheet and the rule and reviewed by the owner. The owner had seen the
+shared findings before, so the blinding hid the tool, not the findings. Findings are matched on (tool, path, line, rule).
 """
 
 import glob
@@ -50,7 +50,7 @@ def main() -> None:
         print("only in v1 sample:", o)
     out = {"shared": shared, "agree": agree, "disagreements": disagree,
            "only_in_v1_sample": only_old,
-           "reading": "same-person consistency, not independent agreement"}
+           "reading": "agreement between two AI-assisted labellings, not same-person consistency and not independent agreement; an independent human second judge is still needed (planned for v2 phase 3)"}
     print("saved", save_results("realworld_label_agreement", run_info(llm_used=False), out))
 
 

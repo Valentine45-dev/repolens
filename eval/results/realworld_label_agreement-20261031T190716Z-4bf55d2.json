@@ -54,5 +54,5 @@
       "v1_label": "not real"
     }
   ],
-  "reading": "same-person consistency, not independent agreement"
+  "reading": "agreement between two AI-assisted labellings, not same-person consistency and not independent agreement; an independent human second judge is still needed (planned for v2 phase 3). Wording corrected on 2026-11-01; the numbers are unchanged."
 }
