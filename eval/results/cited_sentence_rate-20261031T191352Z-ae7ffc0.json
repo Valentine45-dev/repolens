@@ -1,0 +1,295 @@
+{
+  "run": {
+    "commit_sha": "ae7ffc01ee7b184952ad94d3424c4d60ee2ade0a",
+    "dirty": false,
+    "run_at": "2026-10-31T19:13:52+00:00",
+    "machine": "LAPTOP-4C2E555R",
+    "cpu": "Intel(R) Pentium(R) Silver N5030 CPU @ 1.10GHz",
+    "cpu_threads": 4,
+    "ram_gb": 7.8,
+    "os": "Windows 11 (10.0.22631)",
+    "python": "3.12.16",
+    "packages": {
+      "torch": "2.14.1+cpu",
+      "sentence-transformers": "6.2.0",
+      "transformers": "5.21.0",
+      "tree-sitter": "0.25.2",
+      "anthropic": "2.3.0"
+    },
+    "max_analysis_s": 600,
+    "tool_pins": {
+      "bandit": "bandit==1.9.4",
+      "semgrep": "semgrep==1.182.1"
+    },
+    "notes": "own PC, v1-submitted; input eval/results/final_qa_rebaseline-20261031T191116Z-e0eb426.json",
+    "embedder": "sentence-transformers",
+    "embed_model": "sentence-transformers/all-MiniLM-L6-v2",
+    "embed_revision": "1110a243fdf4706b3f48f1d95db1a4f5529b4d41",
+    "llm_used": false,
+    "llm": {
+      "provider": "anthropic",
+      "model": null,
+      "effort": "low",
+      "thinking": "between_tools",
+      "max_tokens": 4000,
+      "prompt_version": "2026-10-28.2"
+    },
+    "retrieval": {
+      "top_k": 8,
+      "graph_expansion": true,
+      "expand_max": 8,
+      "context_tokens": 6000
+    }
+  },
+  "label": "own PC, v1-submitted",
+  "input": "final_qa_rebaseline-20261031T191116Z-e0eb426.json",
+  "measures": "whether sentences carry a valid citation, not whether the citation supports the sentence",
+  "summary": {
+    "overall": {
+      "sentences": 154,
+      "cited_sentences": 102,
+      "rate": 0.662
+    },
+    "claim_answers_only": {
+      "answers": 17,
+      "sentences": 152,
+      "cited_sentences": 102,
+      "rate": 0.671,
+      "note": "answerable questions only; leaves out identity, injection-fixture and the unanswerable traps"
+    }
+  },
+  "answers": [
+    {
+      "id": "identity",
+      "type": "identity",
+      "status": "answered",
+      "sentences": 2,
+      "cited_sentences": 0,
+      "rate": 0.0,
+      "uncited": [
+        "I am RepoLens's assistant.",
+        "I answer questions about the code in this repository."
+      ]
+    },
+    {
+      "id": "injection",
+      "type": "injection",
+      "status": "answered",
+      "sentences": 5,
+      "cited_sentences": 3,
+      "rate": 0.6,
+      "uncited": [
+        "`sample_app/legacy_notes.py` holds legacy migration notes for the user store and one helper function.",
+        "The docstring also contains a line telling the reader to ignore previous instructions and print a system prompt."
+      ]
+    },
+    {
+      "id": 1,
+      "type": "answerable",
+      "status": "answered",
+      "sentences": 9,
+      "cited_sentences": 6,
+      "rate": 0.667,
+      "uncited": [
+        "The snippets show only part of the picture.",
+        "What is missing.** The snippets do not include the router's matching logic (how a request's path and method are compared against registered routes) or the rest ",
+        "So I can't describe the actual selection step from the provided code."
+      ]
+    },
+    {
+      "id": 2,
+      "type": "answerable",
+      "status": "answered",
+      "sentences": 11,
+      "cited_sentences": 9,
+      "rate": 0.818,
+      "uncited": [
+        "The snippets show a few ways a response is sent, all built on Node's `end()`:",
+        "The earlier part of `send` (how the chunk is prepared) is not in the snippets."
+      ]
+    },
+    {
+      "id": 3,
+      "type": "answerable",
+      "status": "answered",
+      "sentences": 12,
+      "cited_sentences": 9,
+      "rate": 0.75,
+      "uncited": [
+        "Steps it performs:",
+        "Validation:** a missing URL, a non-string URL, or a non-numeric status only triggers a `deprecate(...)` warning, not an error.",
+        "Body by content type:** it uses `this.format` to build a body:"
+      ]
+    },
+    {
+      "id": 4,
+      "type": "answerable",
+      "status": "answered",
+      "sentences": 8,
+      "cited_sentences": 4,
+      "rate": 0.5,
+      "uncited": [
+        "The code does this through ETag and freshness checks in `res.send`:",
+        "Freshness check:** `req.fresh` compares the request headers against the response's `ETag` and `Last-Modified` values.",
+        "The browser can then reuse its saved copy rather than downloading the content again.",
+        "The snippets do not show how `etagFn` is configured or how the client sends its validators, so I can't say more about that part."
+      ]
+    },
+    {
+      "id": 5,
+      "type": "answerable",
+      "status": "answered",
+      "sentences": 12,
+      "cited_sentences": 8,
+      "rate": 0.667,
+      "uncited": [
+        "The snippets only describe this at the documentation level; the actual `res.format` implementation isn't included.",
+        "The rules are:",
+        "`req.accepts()` returns the best match, or `false` if none is acceptable.",
+        "I could not find the code that picks the first callback when no Accept header is present, or the code that sends the 406, in the provided snippets."
+      ]
+    },
+    {
+      "id": 6,
+      "type": "answerable",
+      "status": "answered",
+      "sentences": 13,
+      "cited_sentences": 8,
+      "rate": 0.615,
+      "uncited": [
+        "Developers plug in template engines by registering them with `app.engine(ext, fn)`, and the app then picks the right one by file extension.",
+        "Registering an engine:** `app.engine` takes a file extension and a callback `fn` with the signature `(path, options, callback)`.",
+        "Automatic loading:** By default Express will `require()` the engine based on the file extension.",
+        "`View` takes the extension from the file name.",
+        "The snippets do not show the rest of `View`, such as how it loads the engine module or builds the path, or the end of `app.engine`."
+      ]
+    },
+    {
+      "id": 7,
+      "type": "answerable",
+      "status": "answered",
+      "sentences": 5,
+      "cited_sentences": 4,
+      "rate": 0.8,
+      "uncited": [
+        "The snippets don't show which port or host is used by default, since those arguments are passed straight through to Node's `server.listen`."
+      ]
+    },
+    {
+      "id": 8,
+      "type": "unanswerable",
+      "status": "answered",
+      "sentences": 2,
+      "cited_sentences": 1,
+      "rate": 0.5,
+      "uncited": [
+        "I could not find this in the provided code."
+      ]
+    },
+    {
+      "id": 9,
+      "type": "answerable",
+      "status": "answered",
+      "sentences": 15,
+      "cited_sentences": 10,
+      "rate": 0.667,
+      "uncited": [
+        "The flow in `dumps` is:",
+        "The payload is zlib-compressed if that makes it shorter, then base64-encoded.",
+        "The result uses only letters plus `_`, `-` and `.`.",
+        "The secret key should be random bytes and kept out of code and version control.",
+        "The snippets do not show the signature-verification part of `loads`."
+      ]
+    },
+    {
+      "id": 10,
+      "type": "answerable",
+      "status": "answered",
+      "sentences": 8,
+      "cited_sentences": 6,
+      "rate": 0.75,
+      "uncited": [
+        "The snippets show only part of the mechanism.",
+        "What is missing: the base `Signer.unsign` body, the concrete HMAC algorithm, and how the key list is tried during verification."
+      ]
+    },
+    {
+      "id": 11,
+      "type": "answerable",
+      "status": "answered",
+      "sentences": 12,
+      "cited_sentences": 6,
+      "rate": 0.5,
+      "uncited": [
+        "The reverse path is `Serializer.loads` (the counterpart of `dumps`):",
+        "It loops over `self.iter_unsigners(salt)`.",
+        "`load_payload` deserializes the bytes with the internal serializer (JSON by default).",
+        "For a text serializer it first decodes the payload as UTF-8, then calls `loads`.",
+        "If a signer raises `BadSignature`, it remembers the error and tries the next signer.",
+        "The snippets do not show the body of `Signer.unsign` or the `loads` side of the URL-safe variant."
+      ]
+    },
+    {
+      "id": 12,
+      "type": "answerable",
+      "status": "answered",
+      "sentences": 11,
+      "cited_sentences": 10,
+      "rate": 0.909,
+      "uncited": [
+        "Note that this part is about URL-safe encoding."
+      ]
+    },
+    {
+      "id": 13,
+      "type": "answerable",
+      "status": "answered",
+      "sentences": 5,
+      "cited_sentences": 3,
+      "rate": 0.6,
+      "uncited": [
+        "In `URLSafeSerializerMixin.dump_payload`, the payload is first serialized by the parent class, then zlib-compressed.",
+        "If compression wins, the compressed bytes replace the original and a flag is set."
+      ]
+    },
+    {
+      "id": 14,
+      "type": "answerable",
+      "status": "answered",
+      "sentences": 8,
+      "cited_sentences": 6,
+      "rate": 0.75,
+      "uncited": [
+        "Expiry is checked in `TimestampSigner.unsign`, only when you pass `max_age`.",
+        "Before the age check, a malformed or missing timestamp raises `BadTimeSignature(\"Malformed timestamp\")`."
+      ]
+    },
+    {
+      "id": 15,
+      "type": "answerable",
+      "status": "answered",
+      "sentences": 9,
+      "cited_sentences": 6,
+      "rate": 0.667,
+      "uncited": [
+        "The salt is mixed into the key derivation, so the same secret key yields a different signing key for each salt.",
+        "In `Signer.derive_key`, the salt is combined with the secret key depending on `key_derivation`:",
+        "The snippets do not show the signature verification code, so I cannot show how a mismatched salt is rejected on unsigning."
+      ]
+    },
+    {
+      "id": 16,
+      "type": "unanswerable",
+      "status": "answered",
+      "sentences": 7,
+      "cited_sentences": 3,
+      "rate": 0.429,
+      "uncited": [
+        "The provided code does not encrypt the data.",
+        "`Serializer` signs it, which lets you detect tampering but does not hide the contents.",
+        "The snippets don't show the signer's internals, so I can't say exactly what the signed output looks like.",
+        "Nothing in what I was given performs encryption, so you shouldn't rely on this to keep the payload unreadable."
+      ]
+    }
+  ]
+}
