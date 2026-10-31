@@ -481,7 +481,7 @@
         {
           "tool": "Bandit",
           "rule": "B105 hardcoded_password_string",
-          "message": "Possible hardcoded password: 'token_abc123'",
+          "message": "Possible hardcoded password: '[REDACTED]'",
           "severity": "low",
           "id": "03b6",
           "path": "dockerized_labs/dependency_attack_lab/app.py",
@@ -507,7 +507,7 @@
         {
           "tool": "Bandit",
           "rule": "B105 hardcoded_password_string",
-          "message": "Possible hardcoded password: 'security_headers_secret_key_2024'",
+          "message": "Possible hardcoded password: '[REDACTED]'",
           "severity": "low",
           "id": "1daa",
           "path": "challenge/labs/security_headers_lab/app.py",
@@ -520,7 +520,7 @@
         {
           "tool": "Bandit",
           "rule": "B105 hardcoded_password_string",
-          "message": "Possible hardcoded password: 'password123'",
+          "message": "Possible hardcoded password: '[REDACTED]'",
           "severity": "low",
           "id": "e461",
           "path": "challenge/labs/security_headers_lab/app.py",
@@ -533,7 +533,7 @@
         {
           "tool": "Bandit",
           "rule": "B105 hardcoded_password_string",
-          "message": "Possible hardcoded password: 'password123'",
+          "message": "Possible hardcoded password: '[REDACTED]'",
           "severity": "low",
           "id": "1bbe",
           "path": "challenge/labs/bopla_lab/app.py",
@@ -546,7 +546,7 @@
         {
           "tool": "Bandit",
           "rule": "B105 hardcoded_password_string",
-          "message": "Possible hardcoded password: 'SuperSecret123!'",
+          "message": "Possible hardcoded password: '[REDACTED]'",
           "severity": "low",
           "id": "3318",
           "path": "dockerized_labs/dependency_attack_lab/app.py",
@@ -559,7 +559,7 @@
         {
           "tool": "Bandit",
           "rule": "B106 hardcoded_password_funcarg",
-          "message": "Possible hardcoded password: 'pw'",
+          "message": "Possible hardcoded password: '[REDACTED]'",
           "severity": "low",
           "id": "f340",
           "path": "introduction/tests.py",
@@ -598,7 +598,7 @@
         {
           "tool": "Bandit",
           "rule": "B105 hardcoded_password_string",
-          "message": "Possible hardcoded password: '2022_in_pygoat@pygoat.com'",
+          "message": "Possible hardcoded password: '[REDACTED]'",
           "severity": "low",
           "id": "6f5c",
           "path": "dockerized_labs/auth_failure_lab/app.py",
@@ -611,7 +611,7 @@
         {
           "tool": "Bandit",
           "rule": "B105 hardcoded_password_string",
-          "message": "Possible hardcoded password: '0b14d501a594442a01c6859541bcb3e8164d183d32937b851835442f69d5c94e'",
+          "message": "Possible hardcoded password: '[REDACTED]'",
           "severity": "low",
           "id": "d555",
           "path": "dockerized_labs/auth_failure_lab/app.py",
@@ -624,7 +624,7 @@
         {
           "tool": "Bandit",
           "rule": "B105 hardcoded_password_string",
-          "message": "Possible hardcoded password: 'your-secret-key-here'",
+          "message": "Possible hardcoded password: '[REDACTED]'",
           "severity": "low",
           "id": "0275",
           "path": "dockerized_labs/open_source_library_attack_lab/app.py",
@@ -663,7 +663,7 @@
         {
           "tool": "Bandit",
           "rule": "B106 hardcoded_password_funcarg",
-          "message": "Possible hardcoded password: 'pw'",
+          "message": "Possible hardcoded password: '[REDACTED]'",
           "severity": "low",
           "id": "65ac",
           "path": "introduction/tests.py",
@@ -676,7 +676,7 @@
         {
           "tool": "Bandit",
           "rule": "B105 hardcoded_password_string",
-          "message": "Possible hardcoded password: 'pass456'",
+          "message": "Possible hardcoded password: '[REDACTED]'",
           "severity": "low",
           "id": "b244",
           "path": "challenge/labs/bopla_lab/app.py",
@@ -689,7 +689,7 @@
         {
           "tool": "Bandit",
           "rule": "B105 hardcoded_password_string",
-          "message": "Possible hardcoded password: 'your-secret-key-here'",
+          "message": "Possible hardcoded password: '[REDACTED]'",
           "severity": "low",
           "id": "d6a7",
           "path": "dockerized_labs/insecure_design_lab/app.py",

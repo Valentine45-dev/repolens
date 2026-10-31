@@ -23,6 +23,10 @@ from runinfo import ROOT, RESULTS, run_info, save_results
 from score_realworld import wilson
 
 ASSETS = Path("C:/projects/repolens-eval-assets/pygoat-blind")
+# Bandit's B105/B106 messages quote the literal value ("Possible hardcoded password: 'x'"); the
+# saved results keep the message but not the value.
+LIT = re.compile(r"(: )'[^']*'")
+
 UNSURE = re.compile(r"unsure|not sure|uncertain|unclear|\?|maybe|judg(e)?ment", re.I)
 
 
@@ -60,7 +64,7 @@ def main() -> None:
     findings = {"RepoLens": [], "Bandit": []}
     for g in key["rows"]:
         for f in g["findings"]:
-            findings[f["tool"]].append({**f, "id": g["id"], "path": g["path"], "line": g["line"],
+            findings[f["tool"]].append({**f, "message": LIT.sub(r"\1'[REDACTED]'", f["message"]), "id": g["id"], "path": g["path"], "line": g["line"],
                                         "category": g["category"], "label": labels[g["id"]],
                                         "unsure": g["id"] in unsure_ids,
                                         "merged_row": len({x["tool"] for x in g["findings"]}) > 1})
