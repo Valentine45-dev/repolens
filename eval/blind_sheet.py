@@ -78,7 +78,7 @@ CATEGORIES = {
 # One masking rule for every snippet: RepoLens's redactor (patterns for known key formats, URL
 # passwords, secret-like assignments) plus any quoted value assigned to a secret-looking name.
 SECRET_NAME = re.compile(
-    r"""(?ix)((?:pass(?:word|wd)?|pwd|secret|token|api[_-]?key|private[_-]?key|key)\w*["']?\s*[:=]\s*)
+    r"""(?ix)((?:pass(?:word|wd)?|pwd|secret|token|api[_-]?key|private[_-]?key|key)\w*["']?\]?\s*[:=]\s*)
         (["'])(.+?)\2""")
 
 
