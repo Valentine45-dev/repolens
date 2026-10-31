@@ -2,7 +2,7 @@
   "note": "Semgrep rule packs fetched once from the registry and run from a local copy kept outside git (licence not checked). Deviation from v1, which fetched p/javascript and p/secrets at run time on 28 Oct 2026.",
   "fetched": "2026-10-31",
   "semgrep_version": "1.182.1",
-  "local_dir_default": "C:\projects\repolens-eval-assets\semgrep-rules",
+  "local_dir_default": "C:/projects/repolens-eval-assets/semgrep-rules",
   "files": {
     "javascript.yaml": {"source": "https://semgrep.dev/c/p/javascript", "rules": 74, "sha256": "1bcb61b57b5c9ee521d5e1db2d80062fe90b64fc788650564dc1f1c5243419c2"},
     "secrets.yaml": {"source": "https://semgrep.dev/c/p/secrets", "rules": 52, "sha256": "d1afb323ed493cf9d3ee5044447b989debf033b2b7cc8208662a81b8c162c66a"}
