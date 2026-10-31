@@ -8,7 +8,11 @@ Run eval scripts from the repo root with the backend's environment, e.g.
 """
 
 import datetime
+import importlib.metadata
 import json
+import os
+import platform
+import socket
 import subprocess
 import sys
 from pathlib import Path
@@ -21,10 +25,47 @@ from app.qa.prompt import system_prompt  # noqa: E402
 
 RESULTS = ROOT / "eval" / "results"
 
+# Pinned in the eval scripts (detector_eval.py, realworld_precision.py); recorded here so every
+# result file says which versions were meant.
+BANDIT_PIN = "bandit==1.9.4"
+SEMGREP_PIN = "semgrep==1.182.1"
+
 
 def _git(*args: str) -> str:
     return subprocess.run(["git", *args], cwd=ROOT, capture_output=True, text=True,
                           check=True).stdout.strip()
+
+
+def _powershell(expr: str) -> str:
+    try:
+        return subprocess.run(["powershell", "-NoProfile", "-Command", expr],
+                              capture_output=True, text=True, timeout=30).stdout.strip()
+    except (OSError, subprocess.SubprocessError):
+        return ""
+
+
+def machine_info() -> dict:
+    ram = _powershell("[math]::Round((Get-CimInstance Win32_ComputerSystem)"
+                      ".TotalPhysicalMemory/1GB,1)")
+    return {
+        "machine": socket.gethostname(),
+        "cpu": _powershell("(Get-CimInstance Win32_Processor | select -First 1).Name")
+        or platform.processor(),
+        "cpu_threads": os.cpu_count(),
+        "ram_gb": float(ram) if ram else None,
+        "os": f"{platform.system()} {platform.release()} ({platform.version()})",
+        "python": platform.python_version(),
+    }
+
+
+def package_versions() -> dict:
+    out = {}
+    for name in ("torch", "sentence-transformers", "transformers", "tree-sitter", "anthropic"):
+        try:
+            out[name] = importlib.metadata.version(name)
+        except importlib.metadata.PackageNotFoundError:
+            out[name] = None
+    return out
 
 
 def run_info(provider=None, *, llm_used: bool) -> dict:
@@ -44,6 +85,12 @@ def run_info(provider=None, *, llm_used: bool) -> dict:
         # Uncommitted changes to tracked files (new result files do not count).
         "dirty": bool(_git("status", "--porcelain", "--untracked-files=no")),
         "run_at": datetime.datetime.now(datetime.UTC).isoformat(timespec="seconds"),
+        **machine_info(),
+        "packages": package_versions(),
+        "max_analysis_s": config.MAX_ANALYSIS_S,
+        "tool_pins": {"bandit": BANDIT_PIN, "semgrep": SEMGREP_PIN},
+        # Free text for conditions of the run (e.g. which apps were open); set by the caller.
+        "notes": "",
         "embedder": config.EMBEDDER,
         "embed_model": config.EMBED_MODEL,
         "embed_revision": config.EMBED_MODEL_REVISION,
