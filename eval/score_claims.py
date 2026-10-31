@@ -143,7 +143,7 @@ def main() -> None:
     print(f"overall {o['cited_sentences']}/{o['sentences']} = {o['rate']}")
     print(f"answerable questions only {c['cited_sentences']}/{c['sentences']} = {c['rate']}")
     info = run_info(llm_used=False)
-    info["notes"] = f"{args.label}; input {args.results.relative_to(ROOT).as_posix()}"
+    info["notes"] = f"{args.label}; input {args.results.resolve().relative_to(ROOT).as_posix()}"
     results = {"label": args.label, "input": args.results.name,
                "measures": "whether sentences carry a valid citation, not whether the citation "
                            "supports the sentence",
