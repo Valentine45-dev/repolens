@@ -172,6 +172,14 @@ def _semgrep_json(native: bool) -> tuple[dict, str]:
     return data, how
 
 
+def rule_name(check_id: str) -> str:
+    """Semgrep prefixes a rule id with the dotted path of the rule file it was loaded from
+    (native: C.projects...semgrep-rules.; Docker: rules.). Strip it so ids read as the registry
+    ids did in v1 and the keyword mapping below never sees the local directory name (which
+    contains 'eval')."""
+    return re.sub(r"^(?:.*semgrep-rules|rules)\.", "", check_id)
+
+
 def run_semgrep() -> tuple[list[dict], list[dict], str]:
     try:
         data, how = _semgrep_json(native=True)
@@ -183,7 +191,7 @@ def run_semgrep() -> tuple[list[dict], list[dict], str]:
     found = []
     for r in data["results"]:
         name = Path(r["path"]).name  # native: absolute path, docker: /src/...
-        found.append({"file": f"js/{name}", "line": r["start"]["line"], "rule": r["check_id"]})
+        found.append({"file": f"js/{name}", "line": r["start"]["line"], "rule": rule_name(r["check_id"])})
 
     def category(rule: str) -> str | None:
         low = rule.lower()
