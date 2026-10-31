@@ -212,6 +212,7 @@ def main() -> None:
     parser.add_argument("--all", action="store_true", help="every question in questions.yaml")
     parser.add_argument("--max-calls", type=int, default=MAX_CALLS)
     parser.add_argument("--name", default="smoke_qa", help="results file name prefix")
+    parser.add_argument("--notes", default="", help="conditions of the run, saved in run info")
     args = parser.parse_args()
 
     inner = llm.get_provider()
@@ -225,6 +226,7 @@ def main() -> None:
     if args.only:
         todo = [c for c in todo if str(c["id"]) in args.only]
     info = run_info(provider, llm_used=True)
+    info["notes"] = args.notes
     print(header(info))
     print(f"embedder {config.EMBEDDER}, {len(todo)} questions, call limit {args.max_calls}\n")
 
