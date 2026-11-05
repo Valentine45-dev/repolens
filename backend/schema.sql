@@ -37,6 +37,12 @@ CREATE TABLE jobs (
   -- Counts within the current stage (parse: files, embed: chunks); NULL in other stages.
   progress_done  INT,
   progress_total INT,
+  -- What the discover stage kept and left out. NULL when it did not run, and on old rows. Not in
+  -- snapshot_status: the older migrations rebuild that view with its current columns.
+  files_kept         INT,
+  files_skipped      INT,
+  files_beyond_limit INT,   -- past MAX_FILES; counted with discover's skip rules, not read
+  hit_file_limit     BOOLEAN,
   created_at    TIMESTAMPTZ DEFAULT now()
 );
 CREATE INDEX jobs_snapshot ON jobs (snapshot_id);

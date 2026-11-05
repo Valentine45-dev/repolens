@@ -18,6 +18,7 @@ _COLUMNS = (
     " f.id AS file_id, f.path, c.embedding <=> %s::vector AS distance"
 )
 NEXT_TO = 3  # a top-level chunk ending this close above a definition belongs with it
+SCOPE_SHARE = 2 / 3  # of the context budget for a picked file, so other code still fits
 _FROM = " FROM chunks c JOIN symbols s ON s.id = c.symbol_id JOIN files f ON f.id = s.file_id"
 
 
@@ -33,7 +34,7 @@ class Snippet:
     text: str
     in_test: bool
     distance: float
-    via: str  # "search" or "graph"
+    via: str  # "search", "graph" or "scope"
 
 
 @dataclass
@@ -43,9 +44,10 @@ class Retrieval:
     expand: bool = False
     include_tests: bool = False
     used_test_code: bool = False
+    scope_file_id: int | None = None
 
     def summary(self) -> dict:
-        return {
+        out = {
             "k": self.k,
             "expand": self.expand,
             "include_tests": self.include_tests,
@@ -53,6 +55,10 @@ class Retrieval:
             "sent": len(self.snippets),
             "from_graph": sum(1 for s in self.snippets if s.via == "graph"),
         }
+        if self.scope_file_id is not None:
+            out["scope"] = {"file_id": self.scope_file_id,
+                            "sent": sum(1 for s in self.snippets if s.via == "scope")}
+        return out
 
 
 def _vector(values: list[float]) -> str:
@@ -135,9 +141,21 @@ def _expand(conn, snapshot_id: int, q: str, hits: list[dict], include_tests: boo
     return rows[:limit]
 
 
+def _scoped(conn, snapshot_id: int, q: str, file_id: int) -> list[dict]:
+    """All chunks of the file the user picked, closest to the question first. Test code too:
+    it was asked for by name."""
+    return conn.execute(
+        f"SELECT {_COLUMNS}{_FROM} WHERE c.snapshot_id = %s AND f.id = %s"
+        " ORDER BY distance, c.id",
+        (q, snapshot_id, file_id),
+    ).fetchall()
+
+
 def retrieve(snapshot_id: int, question: str, *, k: int | None = None,
              expand: bool | None = None, include_tests: bool = False,
-             expand_max: int | None = None) -> Retrieval:
+             expand_max: int | None = None, scope_file_id: int | None = None) -> Retrieval:
+    """`scope_file_id` ("Ask about this") puts that file's chunks first, within SCOPE_SHARE of the
+    context budget, ahead of the usual search and expansion. Without it, nothing here changes."""
     k = config.QA_TOP_K if k is None else k
     expand = config.QA_GRAPH_EXPANSION if expand is None else expand
     expand_max = config.QA_EXPAND_MAX if expand_max is None else expand_max
@@ -148,15 +166,29 @@ def retrieve(snapshot_id: int, question: str, *, k: int | None = None,
         if not hits and not tests:
             tests = True  # only test or example code here: use it, and say so
             hits = _search(conn, snapshot_id, q, k, tests)
-        extra = _expand(conn, snapshot_id, q, hits, tests, expand_max) \
-            if expand and hits else []
+        scoped = [] if scope_file_id is None else _scoped(conn, snapshot_id, q, scope_file_id)
+        if scoped:
+            own = {r["id"] for r in scoped}
+            hits = [h for h in hits if h["id"] not in own]
+        seeds = scoped + hits
+        extra = _expand(conn, snapshot_id, q, seeds, tests, expand_max) \
+            if expand and seeds else []
 
     budget = config.QA_CONTEXT_TOKENS * CHARS_PER_TOKEN
     snippets: list[Snippet] = []
+    scope_budget = budget * SCOPE_SHARE
+    for row in scoped:
+        if snippets and len(row["text"]) > scope_budget:
+            break
+        scope_budget -= len(row["text"])
+        budget -= len(row["text"])
+        snippets.append(_snippet(row, "scope"))
     for row, via in [(h, "search") for h in hits] + [(e, "graph") for e in extra]:
         if snippets and len(row["text"]) > budget:
             break
         budget -= len(row["text"])
         snippets.append(_snippet(row, via))
     return Retrieval(snippets, k, expand, include_tests,
-                     used_test_code=any(s.in_test for s in snippets))
+                     # A file the user picked is not "test code because nothing else matched".
+                     used_test_code=any(s.in_test and s.via != "scope" for s in snippets),
+                     scope_file_id=scope_file_id)

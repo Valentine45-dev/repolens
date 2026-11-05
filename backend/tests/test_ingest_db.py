@@ -6,6 +6,38 @@ from conftest import SHA, query
 pytestmark = pytest.mark.db
 
 
+def test_receipt_when_the_file_limit_is_hit(client, monkeypatch):
+    from app import config
+
+    monkeypatch.setattr(config, "MAX_FILES", 3)
+    body = client.post("/repos", json={"url": "https://github.com/example/big"}).json()
+    status = client.get(f"/snapshots/{body['snapshot_id']}/status").json()
+    assert status["status"] == "done", status
+    assert query("SELECT count(*) AS n FROM files")[0]["n"] == 3
+    receipt = status["receipt"]
+    assert receipt["hit_file_limit"] is True
+    assert receipt["files_kept"] == 3
+    assert receipt["files_beyond_limit"] == 13  # the fixture repo keeps 16 files without a limit
+    assert "files_kept" not in status  # only inside the receipt
+
+
+def test_receipt_under_the_file_limit_and_on_old_jobs(client):
+    from app.db import pool
+
+    body = client.post("/repos", json={"url": "https://github.com/example/small"}).json()
+    sid = body["snapshot_id"]
+    receipt = client.get(f"/snapshots/{sid}/status").json()["receipt"]
+    assert receipt["hit_file_limit"] is False
+    assert (receipt["files_kept"], receipt["files_beyond_limit"]) == (16, 0)
+    assert receipt["files_skipped"] >= 0
+
+    # A job from before these columns has no counts, and none are made up.
+    with pool().connection() as conn:
+        conn.execute("UPDATE jobs SET files_kept = NULL, files_skipped = NULL,"
+                     " files_beyond_limit = NULL, hit_file_limit = NULL")
+    assert client.get(f"/snapshots/{sid}/status").json()["receipt"] is None
+
+
 def test_ingest_fixture_repo(client, tmp_path):
     r = client.post("/repos", json={"url": "https://github.com/Example/Sample.git"})
     assert r.status_code == 202, r.text

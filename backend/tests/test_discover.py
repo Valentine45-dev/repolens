@@ -53,6 +53,47 @@ def test_stops_at_file_limit(tmp_path):
     result = discover(tmp_path, max_files=3, max_file_bytes=1000)
     assert len(result.files) == 3
     assert result.hit_file_limit
+    assert result.beyond_limit == 2
+
+
+def test_exactly_at_the_limit_is_not_hitting_it(tmp_path):
+    for i in range(3):
+        write(tmp_path, f"m{i}.py", "x = 1\n")
+    result = discover(tmp_path, max_files=3, max_file_bytes=1000)
+    assert not result.hit_file_limit and result.beyond_limit == 0
+
+
+def test_total_past_the_limit_uses_the_same_skip_rules(tmp_path):
+    for i in range(5):
+        write(tmp_path, f"m{i}.py", "x = 1\n")
+    write(tmp_path, "zlast/pkg/mod.py", "x = 1\n")  # the walk goes on into later folders
+    # None of these would be analysed, so none may count towards the total.
+    write(tmp_path, "zlast/.env", "X=1\n")
+    write(tmp_path, "zlast/id_rsa", "x\n")
+    write(tmp_path, "zlast/server.pem", "x\n")
+    write(tmp_path, "zlast/image.png", "not really\n")
+    write(tmp_path, "zlast/huge.py", "x" * 2000)
+    write(tmp_path, "zlast/lib.min.js", "x\n")
+    write(tmp_path, "zlast/node_modules/a/index.py", "x\n")
+    write(tmp_path, "zlast/.venv/lib/x.py", "x\n")
+    write(tmp_path, "zlast/build/out.py", "x\n")
+    write(tmp_path, "zlast/dist/out.js", "x\n")
+    write(tmp_path, "zlast/pkg/__pycache__/m.py", "x\n")
+    write(tmp_path, "zlast/myenv/pyvenv.cfg", "home = /usr\n")
+    write(tmp_path, "zlast/myenv/lib/y.py", "x\n")
+    result = discover(tmp_path, max_files=3, max_file_bytes=1000)
+    assert paths(result) == ["m0.py", "m1.py", "m2.py"]
+    assert result.hit_file_limit
+    assert result.beyond_limit == 3  # m3.py, m4.py, zlast/pkg/mod.py
+
+
+def test_nothing_past_the_limit_is_read(tmp_path, monkeypatch):
+    for i in range(5):
+        write(tmp_path, f"m{i}.py", "x = 1\n")
+    real, read = Path.read_bytes, []
+    monkeypatch.setattr(Path, "read_bytes", lambda p: read.append(p.name) or real(p))
+    discover(tmp_path, max_files=3, max_file_bytes=1000)
+    assert read == ["m0.py", "m1.py", "m2.py"]
 
 
 def test_content_is_redacted_and_secrets_reported(tmp_path):

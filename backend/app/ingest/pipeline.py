@@ -17,7 +17,7 @@ from app.detect import detect
 from app.detect.rules import DETECTOR_RULES, RULES, SECRET_RULE
 from app.ingest import clone
 from app.ingest.calls import resolve_calls
-from app.ingest.discover import DiscoveredFile, discover
+from app.ingest.discover import DiscoveredFile, DiscoverResult, discover
 from app.ingest.parse import (
     ParsedFile,
     ParsedImport,
@@ -56,6 +56,17 @@ def _set_job(job_id: int, stage: str, percent: int, status: str = "running", err
             "UPDATE jobs SET stage = %s, percent = %s, status = %s, error = %s,"
             " progress_done = %s, progress_total = %s WHERE id = %s",
             (stage, percent, status, error, done, total, job_id),
+        )
+
+
+def _set_receipt(job_id: int, result: DiscoverResult) -> None:
+    """What discover kept and left out, for the status API (the UI's file-limit notice)."""
+    with pool().connection() as conn:
+        conn.execute(
+            "UPDATE jobs SET files_kept = %s, files_skipped = %s, files_beyond_limit = %s,"
+            " hit_file_limit = %s WHERE id = %s",
+            (len(result.files), result.skipped, result.beyond_limit, result.hit_file_limit,
+             job_id),
         )
 
 
@@ -467,12 +478,13 @@ def search_first(job_id: int, snapshot_id: int, parsed: dict[str, Parsed], deadl
 def search_tests(job_id: int, snapshot_id: int, test: list[Chunk]) -> None:
     """Search, part 2, after Ask is already on: test code, with its own time budget. On
     failure Ask keeps working on non-test code; the state is 'failed' so it can be retried."""
-    deadline = time.monotonic() + config.MAX_ANALYSIS_S
+    deadline = time.monotonic() + config.MAX_TEST_EMBED_S
     try:
         stats = embed_group(snapshot_id, job_id, test, True, deadline)
-    except JobError as e:
-        log.warning("job %s: test-code search stopped: %s", job_id, e)
-        _set_search(job_id, "failed", f"Test code was not prepared for search: {e}")
+    except JobError:  # the only one embed_group raises: its deadline
+        log.warning("job %s: test-code search stopped at its time limit", job_id)
+        _set_search(job_id, "failed",
+                    f"Test-code search setup timed out after {config.MAX_TEST_EMBED_S}s.")
         return
     except Exception as e:
         log.error("job %s: test-code search failed: %s", job_id, type(e).__name__)
@@ -553,9 +565,10 @@ def _run_job(job_id: int, snapshot_id: int, url: str, sha: str) -> None:
         _set_job(job_id, stage, 20)
         result = discover(workdir, config.MAX_FILES, config.MAX_FILE_BYTES)
         store_files(snapshot_id, result.files)
+        _set_receipt(job_id, result)
         log.info(
-            "job %s: %d files kept, %d skipped, file limit hit: %s",
-            job_id, len(result.files), result.skipped, result.hit_file_limit,
+            "job %s: %d files kept, %d skipped, file limit hit: %s (%d files past it)",
+            job_id, len(result.files), result.skipped, result.hit_file_limit, result.beyond_limit,
         )
         _check_deadline(deadline)
 

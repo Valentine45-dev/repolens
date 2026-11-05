@@ -38,16 +38,26 @@ def _features(row: dict, has_chunks: bool) -> dict:
             "retry_search": row["status"] == "done" and state == "failed"}
 
 
+def _receipt(row: dict) -> dict | None:
+    """What the analysis kept and left out, taken out of `row`. None if discover has not run or
+    the job is older than these columns: the counts are never guessed."""
+    keys = ("files_kept", "files_skipped", "files_beyond_limit", "hit_file_limit")
+    receipt = {k: row.pop(k) for k in keys}
+    return None if receipt["files_kept"] is None else receipt
+
+
 @router.get("/snapshots/{snapshot_id}/status")
 def snapshot_status(snapshot_id: int) -> dict:
     with pool().connection() as conn:
         row = conn.execute(
             "SELECT s.id AS snapshot_id, r.url, s.commit_sha, st.job_id, st.status, st.stage,"
             " st.percent, st.error, st.search_error, st.progress_done, st.progress_total,"
-            " st.search_state,"
+            " st.search_state, j.files_kept, j.files_skipped, j.files_beyond_limit,"
+            " j.hit_file_limit,"
             " EXISTS (SELECT 1 FROM chunks c WHERE c.snapshot_id = s.id) AS has_chunks"
             " FROM snapshots s JOIN repos r ON r.id = s.repo_id"
             " JOIN snapshot_status st ON st.snapshot_id = s.id"
+            " JOIN jobs j ON j.id = st.job_id"
             " WHERE s.id = %s",
             (snapshot_id,),
         ).fetchone()
@@ -60,7 +70,8 @@ def snapshot_status(snapshot_id: int) -> dict:
     # Counts within the current stage (parse: files, embed: chunks) while the job runs.
     progress = ({"done": done, "total": total}
                 if total is not None and row["status"] == "running" else None)
-    return {**row, "progress": progress, "features": features}
+    receipt = _receipt(row)  # takes its columns out of row
+    return {**row, "progress": progress, "receipt": receipt, "features": features}
 
 
 @router.post("/snapshots/{snapshot_id}/search", status_code=202)

@@ -8,7 +8,7 @@ from app import config
 from app.qa import llm
 from app.qa.llm import FakeProvider, LLMError
 from app.qa.prompt import IDENTITY_ANSWER, system_prompt
-from app.qa.retrieve import retrieve
+from app.qa.retrieve import CHARS_PER_TOKEN, SCOPE_SHARE, retrieve
 from app.qa.router import resolve_target
 
 pytestmark = pytest.mark.db
@@ -458,6 +458,37 @@ def test_test_code_failure_keeps_ask_and_offers_retry(client, monkeypatch, fake)
     assert _chunk_groups(body["snapshot_id"]).get(True, 0) == 0
 
 
+def test_test_code_timeout_says_so_and_does_not_blame_the_analysis(client, monkeypatch, fake):
+    from app import config
+
+    monkeypatch.setattr(config, "MAX_TEST_EMBED_S", -1)  # already past when the first batch ends
+    body = client.post("/repos", json={"url": "https://github.com/example/sample"}).json()
+    st = client.get(f"/snapshots/{body['snapshot_id']}/status").json()
+    assert st["status"] == "done" and st["error"] is None
+    f = st["features"]
+    assert (f["ask"], f["search"], f["retry_search"]) == (True, "failed", True)
+    assert f["search_error"].startswith("Test-code search setup timed out after")
+    assert "Analysis" not in f["search_error"]
+    assert _chunk_groups(body["snapshot_id"]).get(True, 0) == 0
+
+
+def test_test_code_embedding_does_not_share_the_analysis_limit(client, monkeypatch, fake):
+    from app import config
+    from app.ingest import pipeline
+
+    real = pipeline.search_tests
+
+    def analysis_limit_used_up(job_id, snapshot_id, test):
+        monkeypatch.setattr(config, "MAX_ANALYSIS_S", -1)
+        real(job_id, snapshot_id, test)
+
+    monkeypatch.setattr(pipeline, "search_tests", analysis_limit_used_up)
+    body = client.post("/repos", json={"url": "https://github.com/example/sample"}).json()
+    f = client.get(f"/snapshots/{body['snapshot_id']}/status").json()["features"]
+    assert (f["search"], f["search_error"]) == ("ready", None)
+    assert _chunk_groups(body["snapshot_id"]).get(True, 0) > 0
+
+
 def test_retry_preparing_search_after_a_failed_search(client, monkeypatch, fake):
     from app.ingest import pipeline
 
@@ -503,6 +534,159 @@ def test_retry_is_refused_while_the_analysis_runs_or_search_is_fine(client, snap
 
 
 # --- the embedding model is not available ----------------------------------------------------
+
+# --- code locations when the LLM cannot answer -------------------------------------------------
+
+def _location(s):
+    return {"path": s.path, "start_line": s.start_line, "end_line": s.end_line,
+            "file_id": s.file_id, "symbol_id": s.symbol_id, "in_test": s.in_test}
+
+
+def test_no_provider_still_returns_ranked_code_locations(client, snapshot, monkeypatch):
+    monkeypatch.setattr(llm, "get_provider", lambda: None)
+    q = "How is a user created?"
+    a = ask(client, snapshot, q)
+    assert (a["kind"], a["status"]) == ("ai", "unavailable")
+    assert a["answer"] == "AI answers are unavailable right now. Graph questions still work."
+    assert a["citations"] == [] and a["dropped"] == 0
+    found = retrieve(snapshot, q, expand=False)
+    assert found.snippets
+    assert a["locations"] == [_location(s) for s in found.snippets]  # search order
+    assert not any(loc["in_test"] for loc in a["locations"])
+
+
+def test_no_provider_with_a_scope_lists_that_file_first(client, snapshot, monkeypatch):
+    monkeypatch.setattr(llm, "get_provider", lambda: None)
+    path = "sample_app/legacy_notes.py"
+    a = ask(client, snapshot, "How is a user created?", file_id=_file_id(snapshot, path))
+    assert a["status"] == "unavailable" and a["locations"][0]["path"] == path
+
+
+@pytest.mark.parametrize("script", [LLMError("timeout", retryable=False), ""])
+def test_llm_failure_or_empty_answer_returns_search_hits_only(client, snapshot, fake, script):
+    fake.script = [script]
+    q = "How is a user created?"
+    a = ask(client, snapshot, q)
+    assert a["status"] == "unavailable" and a["citations"] == []
+    found = retrieve(snapshot, q)
+    assert any(s.via == "graph" for s in found.snippets)  # expansion ran, and stays out
+    assert a["locations"] == [_location(s) for s in found.snippets if s.via == "search"]
+
+
+def test_no_locations_when_search_is_down_or_on_a_real_answer(client, snapshot, fake, monkeypatch):
+    from app.qa import retrieve as retrieve_module
+    from app.qa.embed import EmbedderUnavailable
+
+    fake.script = [NOT_FOUND]
+    assert ask(client, snapshot, "How is a user created?")["locations"] == []
+
+    def broken():
+        raise EmbedderUnavailable("embedder failed to load earlier (OSError)")
+
+    monkeypatch.setattr(retrieve_module, "get_embedder", broken)
+    monkeypatch.setattr(llm, "get_provider", lambda: None)
+    a = ask(client, snapshot, "How is a user created?")
+    assert (a["status"], a["locations"]) == ("unavailable", [])
+
+
+# --- "Ask about this": a question scoped to one file ------------------------------------------
+
+def _file_id(snapshot, path):
+    rows = query("SELECT id FROM files WHERE snapshot_id = %s AND path = %s", snapshot, path)
+    return rows[0]["id"]
+
+
+def _chunks_of(snapshot, path):
+    return query("SELECT count(*) AS n FROM chunks c JOIN symbols s ON s.id = c.symbol_id"
+                 " JOIN files f ON f.id = s.file_id WHERE c.snapshot_id = %s AND f.path = %s",
+                 snapshot, path)[0]["n"]
+
+
+def test_scoped_context_contains_the_file_search_alone_would_miss(client, snapshot, fake):
+    path = "sample_app/legacy_notes.py"
+    q = "How is a user created?"
+    alone = retrieve(snapshot, q, k=1, expand=False)
+    assert path not in {s.path for s in alone.snippets}
+
+    fid = _file_id(snapshot, path)
+    scoped = retrieve(snapshot, q, k=1, expand=False, scope_file_id=fid)
+    n = _chunks_of(snapshot, path)
+    assert n > 0
+    assert [s.path for s in scoped.snippets[:n]] == [path] * n  # all of it, and first
+    assert {s.via for s in scoped.snippets[:n]} == {"scope"}
+    assert [s.chunk_id for s in scoped.snippets[n:]] == [s.chunk_id for s in alone.snippets]
+
+    fake.script = [NOT_FOUND]
+    a = ask(client, snapshot, q, file_id=fid)
+    assert f'source="{path}:' in fake.calls[0]["prompt"]
+    assert a["retrieval"]["scope"] == {"file_id": fid, "sent": n}
+
+
+def test_unscoped_questions_are_unchanged(client, snapshot, fake):
+    q = "How is a user created?"
+    default = retrieve(snapshot, q)
+    none = retrieve(snapshot, q, scope_file_id=None)
+    assert default.snippets == none.snippets
+    assert {s.via for s in default.snippets} <= {"search", "graph"}
+    assert set(default.summary()) == {"k", "expand", "include_tests", "used_test_code", "sent",
+                                      "from_graph"}
+    fake.script = [NOT_FOUND, NOT_FOUND]
+    without = ask(client, snapshot, q)
+    with_null = ask(client, snapshot, q, file_id=None)
+    assert fake.calls[0]["prompt"] == fake.calls[1]["prompt"]
+    assert "scope" not in without["retrieval"]
+    assert without == with_null
+
+
+def test_scope_includes_a_test_file_and_does_not_call_it_a_fallback(snapshot):
+    path = "tests/check_service.py"
+    assert path not in {s.path for s in retrieve(snapshot, "How is a user created?").snippets}
+    found = retrieve(snapshot, "How is a user created?", scope_file_id=_file_id(snapshot, path))
+    assert path in {s.path for s in found.snippets}
+    assert found.used_test_code is False  # the user picked it; nothing fell back to test code
+
+
+def test_scope_stays_within_its_share_of_the_context_budget(snapshot, monkeypatch):
+    path = "sample_app/service.py"
+    fid = _file_id(snapshot, path)
+    whole = [s for s in retrieve(snapshot, "How is a user created?", scope_file_id=fid).snippets
+             if s.via == "scope"]
+    assert len(whole) > 1
+    chars = sum(len(s.text) for s in whole)
+    monkeypatch.setattr(config, "QA_CONTEXT_TOKENS", int(chars * 0.75 / CHARS_PER_TOKEN))
+    found = retrieve(snapshot, "How is a user created?", scope_file_id=fid)
+    sent = [s for s in found.snippets if s.via == "scope"]
+    assert 0 < len(sent) < len(whole)
+    assert sum(len(s.text) for s in sent) <= chars * 0.75 * SCOPE_SHARE + 1
+
+
+def test_scope_with_no_chunks_still_answers_from_other_code(client, snapshot, fake):
+    fid = _file_id(snapshot, "tsconfig.json")  # stored, but only code files have chunks
+    fake.script = [NOT_FOUND]
+    a = ask(client, snapshot, "How is a user created?", file_id=fid)
+    assert a["status"] == "answered"
+    assert a["retrieval"]["scope"] == {"file_id": fid, "sent": 0}
+    assert a["retrieval"]["sent"] > 0
+
+
+def test_scope_must_be_a_file_of_this_snapshot(client, snapshot, fake):
+    other = client.post("/repos", json={"url": "https://github.com/example/other"}).json()
+    foreign = _file_id(other["snapshot_id"], "sample_app/service.py")
+    body = {"question": "How is a user created?", "file_id": foreign}
+    r = client.post(f"/snapshots/{snapshot}/ask", json=body)
+    assert r.status_code == 404 and r.json()["detail"] == "File not found in this analysis."
+    for bad in (0, -1, 2**63):
+        r = client.post(f"/snapshots/{snapshot}/ask", json={**body, "file_id": bad})
+        assert r.status_code == 422
+    assert fake.calls == []
+
+
+def test_scope_does_not_change_graph_questions(client, snapshot, fake):
+    fid = _file_id(snapshot, "sample_app/legacy_notes.py")
+    a = ask(client, snapshot, "Which files import sample_app/service.py?", file_id=fid)
+    assert (a["kind"], a["status"]) == ("graph", "answered")
+    assert fake.calls == []
+
 
 def test_retrieval_failure_is_unavailable_not_a_500(client, snapshot, fake, monkeypatch):
     from app.qa import retrieve as retrieve_module

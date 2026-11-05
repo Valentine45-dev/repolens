@@ -80,7 +80,8 @@ def client(test_db, monkeypatch, tmp_path):
     monkeypatch.setattr(clone, "fetch_commit", fake_fetch)
     monkeypatch.setattr(config, "WORKSPACE_DIR", tmp_path / "work")
 
-    with TestClient(app) as c:
+    # A host the API trusts: "testserver" must not be in the production list.
+    with TestClient(app, base_url="http://127.0.0.1") as c:
         from app.db import pool
 
         with pool().connection() as conn:

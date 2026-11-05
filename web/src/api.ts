@@ -13,7 +13,29 @@ export interface SnapshotStatus {
   error: string | null;
   /** Counts within the current stage (parse: files, embed: chunks); null in other stages. */
   progress: { done: number; total: number } | null;
+  /** What the analysis kept and left out; null when discover has not run, and on old analyses. */
+  receipt: Receipt | null;
   features: Features;
+}
+
+export interface Receipt {
+  files_kept: number;
+  files_skipped: number;
+  files_beyond_limit: number; // past the file limit, counted with the same skip rules, not read
+  hit_file_limit: boolean;
+}
+
+const fileCount = new Intl.NumberFormat("en-US");
+
+/** The notice when the file limit cut an analysis short; null otherwise. The total is "about":
+ * files past the limit are counted, not read. */
+export function fileLimitNotice(receipt: Receipt | null | undefined): string | null {
+  if (!receipt?.hit_file_limit) return null;
+  const total = receipt.files_kept + receipt.files_beyond_limit;
+  return (
+    `Analysed ${fileCount.format(receipt.files_kept)} of about ${fileCount.format(total)} files; ` +
+    "the file limit was reached. The remaining files were not analysed."
+  );
 }
 
 /** What the Ask drawer can do (graph questions work whenever the analysis is done). */
@@ -111,9 +133,16 @@ export interface Answer {
   answer: string;
   citations: Citation[];
   dropped: number;
+  /** Search hits when the LLM could not answer (never from model text). Older turns lack it. */
+  locations?: Citation[];
   results: GraphResult[];
   prompt_version: string | null;
-  retrieval: { sent: number; used_test_code: boolean; from_graph: number } | null;
+  retrieval: {
+    sent: number;
+    used_test_code: boolean;
+    from_graph: number;
+    scope?: { file_id: number; sent: number }; // "Ask about this" questions only
+  } | null;
   // graph answers only
   query?: string;
   target?: GraphResult | null;
@@ -299,10 +328,11 @@ export function getRules(signal?: AbortSignal): Promise<Rule[]> {
   return request("/rules", { signal });
 }
 
-export function askQuestion(snapshotId: number, question: string): Promise<Answer> {
+/** `fileId` is "Ask about this": that file's code always goes into the context. */
+export function askQuestion(snapshotId: number, question: string, fileId?: number): Promise<Answer> {
   return request(`/snapshots/${snapshotId}/ask`, {
     method: "POST",
-    body: JSON.stringify({ question }),
+    body: JSON.stringify(fileId === undefined ? { question } : { question, file_id: fileId }),
   });
 }
 

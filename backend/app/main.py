@@ -2,6 +2,7 @@ import logging
 from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
+from starlette.middleware.trustedhost import TrustedHostMiddleware
 
 from app import config, db
 from app.api import ask, findings, graph, repos, snapshots
@@ -39,6 +40,7 @@ async def lifespan(_app: FastAPI):
 
 
 app = FastAPI(title="RepoLens", lifespan=lifespan)
+app.add_middleware(TrustedHostMiddleware, allowed_hosts=list(config.TRUSTED_HOSTS))
 app.include_router(repos.router)
 app.include_router(snapshots.router)
 app.include_router(graph.router)

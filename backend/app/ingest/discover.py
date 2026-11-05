@@ -45,6 +45,7 @@ class DiscoverResult:
     files: list[DiscoveredFile]
     skipped: int = 0
     hit_file_limit: bool = False
+    beyond_limit: int = 0  # files past the limit that the skip rules would have kept
 
 
 def _skip_dir(path: Path) -> bool:
@@ -64,6 +65,18 @@ def _wanted(path: Path) -> bool:
     return path.suffix in LANGUAGES or path.suffix.lower() in TEXT_SUFFIXES
 
 
+def _candidate(path: Path, root: Path, max_file_bytes: int) -> bool:
+    """The skip rules that need no file contents. Files past the file limit are counted with
+    these same rules (skipped folders never reach here), so the total is close to what would
+    have been analysed; only binaries and minified files, which need a read, can still be in it."""
+    if path.is_symlink() or not _wanted(path) or not path.resolve().is_relative_to(root):
+        return False
+    try:
+        return path.stat().st_size <= max_file_bytes
+    except OSError:  # e.g. a path over 260 characters on Windows without long paths
+        return False
+
+
 def _looks_minified(text: str) -> bool:
     lines = text.split("\n")
     longest = max(len(line) for line in lines)
@@ -78,16 +91,15 @@ def discover(root: Path, max_files: int, max_file_bytes: int) -> DiscoverResult:
         dirnames[:] = sorted(d for d in dirnames if not _skip_dir(current / d))
         for name in sorted(filenames):
             path = current / name
-            if path.is_symlink() or not _wanted(path):
+            if not _candidate(path, root, max_file_bytes):
                 result.skipped += 1
                 continue
-            if not path.resolve().is_relative_to(root):
-                result.skipped += 1
+            if len(result.files) >= max_files:
+                # Keep walking, without reading: the notice says how much was left out.
+                result.hit_file_limit = True
+                result.beyond_limit += 1
                 continue
             try:
-                if path.stat().st_size > max_file_bytes:
-                    result.skipped += 1
-                    continue
                 raw = path.read_bytes()
             except OSError:  # e.g. a path over 260 characters on Windows without long paths
                 result.skipped += 1
@@ -95,9 +107,6 @@ def discover(root: Path, max_files: int, max_file_bytes: int) -> DiscoverResult:
             if b"\0" in raw[:8192]:
                 result.skipped += 1
                 continue
-            if len(result.files) >= max_files:
-                result.hit_file_limit = True
-                return result
 
             text = raw.decode("utf-8", errors="replace").replace("\r\n", "\n")
             language = LANGUAGES.get(path.suffix)

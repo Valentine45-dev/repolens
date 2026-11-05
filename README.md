@@ -37,7 +37,8 @@ pattern checks, not a security verdict; they can miss issues and can flag safe c
   to the `jobs` row and polled by the UI.
 - Secrets are redacted (line numbers kept) before any file text, snippet or chunk is stored.
 - If the LLM is unavailable (no key, timeout, token cap), the graph, findings and graph
-  questions still work.
+  questions still work. Without a key or on an LLM failure, other questions list the matching
+  code locations from search, with no generated text.
 - Schema: [`backend/schema.sql`](backend/schema.sql). Design notes: [`docs/`](docs/).
 
 ## Running it
@@ -96,9 +97,9 @@ npx vite preview --port 5173 --strictPort
 (Not `npm run preview -- --port 5173`: Windows PowerShell 5.1 drops the bare `--`, so Vite
 gets `5173` as a folder name and stops with "dist does not exist".)
 
-A database volume created before 28 Oct needs the two migrations in
+An older database volume needs the migrations in
 [`backend/migrations/`](backend/migrations/), run after stopping any API on older code (a
-fresh volume needs neither). Both are idempotent and can run in either order:
+fresh volume needs none). All are idempotent and can run in any order:
 
 ```bash
 docker compose exec -T db psql -U repolens -d repolens < backend/migrations/2026-10-28-repo-case-and-progress.sql
@@ -106,6 +107,10 @@ docker compose exec -T db psql -U repolens -d repolens < backend/migrations/2026
 
 ```bash
 docker compose exec -T db psql -U repolens -d repolens < backend/migrations/2026-10-28-search-state.sql
+```
+
+```bash
+docker compose exec -T db psql -U repolens -d repolens < backend/migrations/2026-11-05-analysis-receipt.sql
 ```
 
 (In PowerShell, pipe the file instead: `Get-Content backend/migrations/<file> | docker compose
@@ -126,7 +131,8 @@ Copy `.env.example`. Only the backend reads these; the key never reaches the bro
 | `MAX_FILES` | `2000` | Files kept per repo |
 | `MAX_FILE_BYTES` | `1000000` | Larger files are skipped |
 | `CLONE_TIMEOUT_S` | `120` | Clone time limit |
-| `MAX_ANALYSIS_S` | `600` | Whole-pipeline time limit |
+| `MAX_ANALYSIS_S` | `600` | Time limit for the analysis, up to search for non-test code |
+| `MAX_TEST_EMBED_S` | `1800` | Time limit for embedding test code, which runs after Ask is on |
 | `LLM_PROVIDER` | `anthropic` | Only Anthropic is implemented |
 | `LLM_MODEL` | – | Model id; empty means AI answers are off. The demo uses `claude-sonnet-5-5` |
 | `LLM_API_KEY` | – | Empty means AI answers are off |
@@ -238,8 +244,10 @@ It makes about 8 real API calls (hard limit 12); the prices are only for the cos
 **Final Q&A run** (all 16 questions plus identity and injection, `--all`, with the demo model
 `claude-sonnet-5-5`, effort low, `between_tools` thinking, prompt `2026-10-28.2`): 16 of 18
 passed under the pre-set rules. Every answerable question cited the expected file (14/14), and
-13/14 also cited the labelled lines. 15 of 18 answers had no dropped citation (the server
-removed 4 invalid ones in total). Both failures are the unanswerable traps answered correctly
+13/14 also cited the labelled lines. Citation validity was 15/18: those answers had no dropped
+citation, meaning every citation lay inside a snippet that was sent (the server removed 4 invalid
+ones in total). This does not show that a citation supports its claim, and it is not a measure of
+faithfulness. Both failures are the unanswerable traps answered correctly
 but with citations: on manual review the answers are correct; the rule was too narrow for
 false-premise questions. Median latency 4.3 s. 18 calls cost about $0.22.
 

@@ -37,13 +37,19 @@ REFUSED = (
 )
 
 
-def _reply(status: str, answer: str, retrieval=None, citations=(), dropped: int = 0) -> dict:
+def _reply(status: str, answer: str, retrieval=None, citations=(), dropped: int = 0,
+           locations=()) -> dict:
     return {
         "kind": "ai",
         "status": status,
         "answer": answer,
         "citations": [c.__dict__ for c in citations],
         "dropped": dropped,
+        "locations": [
+            {"path": s.path, "start_line": s.start_line, "end_line": s.end_line,
+             "file_id": s.file_id, "symbol_id": s.symbol_id, "in_test": s.in_test}
+            for s in locations
+        ],
         "results": [],
         "prompt_version": system_prompt().version,
         "retrieval": retrieval.summary() if retrieval else None,
@@ -93,16 +99,40 @@ def search_ready(snapshot_id: int) -> bool:
     return row["has_chunks"] or not failed
 
 
-def ai_answer(snapshot_id: int, question: str, include_tests: bool = False) -> dict:
+def _ranked(found) -> list:
+    """Code locations for an answer the LLM could not give, in search order. These come from the
+    server's own search, never from model text, and graph neighbours are left out: they are not
+    ranked against the question."""
+    return [s for s in found.snippets if s.via != "graph"]
+
+
+def _without_llm(snapshot_id: int, question: str, include_tests: bool, file_id: int | None,
+                 q_log: str) -> dict:
+    """No provider: still search, so the answer can point at the code. No generated text."""
+    if not search_ready(snapshot_id):
+        return _reply("unavailable", UNAVAILABLE)
+    try:
+        found = retrieve(snapshot_id, question, include_tests=include_tests, expand=False,
+                         scope_file_id=file_id)
+    except Exception as e:  # e.g. the embedding model failed to load: no search, no 500
+        log.error("ask snapshot=%s %s: retrieval failed: %s", snapshot_id, q_log,
+                  type(e).__name__)
+        return _reply("unavailable", UNAVAILABLE)
+    return _reply("unavailable", UNAVAILABLE, found, locations=_ranked(found))
+
+
+def ai_answer(snapshot_id: int, question: str, include_tests: bool = False,
+              file_id: int | None = None) -> dict:
     q_log = f"len={len(question)} hash={hashlib.sha256(question.encode()).hexdigest()[:10]}"
     provider = llm.get_provider()
     if provider is None:
-        return _reply("unavailable", UNAVAILABLE)
+        return _without_llm(snapshot_id, question, include_tests, file_id, q_log)
     if not search_ready(snapshot_id):
         return _reply("no_context", NO_SEARCH)
 
     try:
-        found = retrieve(snapshot_id, question, include_tests=include_tests)
+        found = retrieve(snapshot_id, question, include_tests=include_tests,
+                         scope_file_id=file_id)
     except Exception as e:  # e.g. the embedding model failed to load: no search, no 500
         log.error("ask snapshot=%s %s: retrieval failed: %s", snapshot_id, q_log,
                   type(e).__name__)
@@ -129,7 +159,7 @@ def ai_answer(snapshot_id: int, question: str, include_tests: bool = False) -> d
         if charge:
             _adjust(snapshot_id, -estimate)
         log.warning("ask snapshot=%s %s: LLM %s", snapshot_id, q_log, e)
-        return _reply("unavailable", UNAVAILABLE, found)
+        return _reply("unavailable", UNAVAILABLE, found, locations=_ranked(found))
     if charge:
         _adjust(snapshot_id, completion.tokens_in + completion.tokens_out - estimate)
     if completion.refused:
@@ -140,7 +170,7 @@ def ai_answer(snapshot_id: int, question: str, include_tests: bool = False) -> d
     if not completion.text.strip():
         log.warning("ask snapshot=%s %s: empty answer (stop_reason=%s)", snapshot_id, q_log,
                     completion.stop_reason)
-        return _reply("unavailable", UNAVAILABLE, found)
+        return _reply("unavailable", UNAVAILABLE, found, locations=_ranked(found))
 
     checked = validate(completion.text.strip(), found.snippets)
     # Only the bare "could not find" sentence and the exact identity reply are exempt from
