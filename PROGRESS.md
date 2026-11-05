@@ -1055,6 +1055,37 @@
     this PC low memory can push a mid-size repo to the limit. Docker Desktop also hung on `starting` for 17
     minutes on 5 Nov until `docker desktop restart`.
 
+- **v2 step 4, folder-first map: Part A in progress (5 Nov, `feat/folder-graph`).** Step 0 report approved with
+  these decisions: `level=file` is recursive; cycles computed per request, not stored; import scope covers JS/TS
+  too; edges-only backfill instead of re-analysis; a single-file folder shows as a file node with its folder in the
+  label; flask and black analysed as real-repo checks. API documented in `docs/repolens-system-design.md` section 10.
+
+### Notes for the Part B (UI) session
+Decided in Step 0 of the folder map. Not started; `feat/folder-map-ui` branches off `main` after Part A is merged.
+- **Keep the flat query for the node panel and List view.** `selected` comes from the graph response
+  (`web/src/pages/Explore.tsx`, `graph.data?.nodes.find`), and so do `isInGraph` and the List view. In a folder view
+  a file outside that view would have no node, so citation chips, "Open in Explorer" and Ask's graph results would
+  open nothing. The flat `GET /graph` (no `level`) stays the index of all files; the new query only feeds the canvas.
+- **A link with `node=` and no `root` opens the file's parent folder**, so the selected file is on the canvas. The
+  parent can be merged or hold one file; the API returns the canonical `root`, so use what it returns.
+- **Default view:** `level=folder` at the repo root, but **start in `level=file` when 30 or fewer files are visible**
+  (`total_files`). itsdangerous's root is otherwise 2 nodes and 0 edges, express's 2 and 1.
+- **Cycle caption only when cycles exist:** "Circular imports (top-level imports only)." With no cycles, say nothing:
+  "no cycles" would read as a verdict (CLAUDE.md UI rules). `cycles_available: false` means not known yet (the
+  snapshot needs the backfill), so never show it as none; `in_cycle` and `cycle_edges` are `null` then.
+- **Highlight only from `cycle_edges` and `in_cycle`.** Two folders with edges both ways is not a cycle (PyGoat's
+  `challenge` ↔ `scoring`), so never infer one from the picture. A folder can have `in_cycle: true` with no highlighted
+  edge when the whole cycle is inside it: it needs the marker and the user opens it to see the cycle. The `cycles` list
+  names the files.
+- **Edges:** node ids are strings (`dir:`, `file:`, `sym:`, `more:`), so `layoutGraph` and `GraphView` (numeric file
+  ids) need generalising or a sibling; the old flat view keeps working and stays reachable. Dashed only when
+  `guess` is true (every underlying edge is a guess). Show `guess_calls` in the tooltip: express `test → lib` at 0.5 is
+  161 edges, 152 of them guesses, and draws solid. Counts range from 1 to hundreds, so use a log scale for thickness.
+- **Overflow:** the `more` node opens List view filtered to `path`; `FileList` has no folder filter yet.
+  Findings already has `path_prefix`.
+- **`other_findings`** is findings under the root on no node (a README beside the code); say it in a caption if above
+  0, so the numbers add up to the Findings tab.
+
 ## Demo plan (8 GB laptop)
 The full compose stack works (tested 28 Oct) but left ~0.66 GB free and crashed the machine
 once. Primary demo is native mode; compose is shown as tested, not run live.
