@@ -32,6 +32,15 @@ _SAFE_CONFIG = [
 ]
 
 
+# The environment git gets: finding programs and temp folders on Windows and Linux, and a proxy
+# if this network needs one. Everything else in the API's environment stays out.
+_GIT_ENV_ALLOWLIST = (
+    "PATH", "SYSTEMROOT", "TEMP", "TMP", "TMPDIR", "HOME", "USERPROFILE", "HOMEDRIVE", "HOMEPATH",
+    "HTTP_PROXY", "HTTPS_PROXY", "ALL_PROXY", "NO_PROXY",
+    "http_proxy", "https_proxy", "all_proxy", "no_proxy",
+)
+
+
 class InvalidRepoUrl(ValueError):
     pass
 
@@ -66,15 +75,15 @@ def normalize_repo_url(url: str) -> str:
 
 
 def _git_env() -> dict[str, str]:
-    env = dict(os.environ)
+    """Only what git needs: never the API's own settings (LLM_API_KEY, DATABASE_URL, ...) and no
+    inherited GIT_* settings (GIT_SSH_COMMAND, GIT_ASKPASS, GIT_DIR, ...)."""
+    env = {name: os.environ[name] for name in _GIT_ENV_ALLOWLIST if name in os.environ}
     env.update(
         GIT_TERMINAL_PROMPT="0",
         GIT_LFS_SKIP_SMUDGE="1",
         GIT_CONFIG_NOSYSTEM="1",
         GIT_CONFIG_GLOBAL=os.devnull,  # ignore the host user's git config and credentials
     )
-    env.pop("GIT_ASKPASS", None)
-    env.pop("SSH_ASKPASS", None)
     return env
 
 

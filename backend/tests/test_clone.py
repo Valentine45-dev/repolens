@@ -126,3 +126,33 @@ def test_every_git_command_gets_the_safe_config(monkeypatch):
     assert {"core.symlinks=false", "core.fsmonitor=false", "core.longpaths=true",
             "submodule.recurse=false", "protocol.allow=never"} <= pairs
     assert args[-1] == "status"
+
+
+def test_git_gets_an_allowlisted_environment_only(monkeypatch):
+    from app.ingest import clone
+
+    for name, value in {
+        "LLM_API_KEY": "sk-not-real", "DATABASE_URL": "postgresql://secret",
+        "POSTGRES_PASSWORD": "x",
+        "GIT_SSH_COMMAND": "evil", "GIT_ASKPASS": "evil", "GIT_DIR": "/elsewhere",
+        "PATH": "/some/bin", "HTTPS_PROXY": "http://proxy:1",
+    }.items():
+        monkeypatch.setenv(name, value)
+    seen = []
+    monkeypatch.setattr(clone.subprocess, "run",
+                        lambda args, **k: seen.append(k["env"]) or _Proc(0, ""))
+    clone._git(["status"], timeout=5)
+    env = seen[0]
+    for name in ("LLM_API_KEY", "DATABASE_URL", "POSTGRES_PASSWORD", "GIT_SSH_COMMAND",
+                 "GIT_ASKPASS", "GIT_DIR"):
+        assert name not in env
+    assert env["PATH"] == "/some/bin" and env["HTTPS_PROXY"] == "http://proxy:1"
+    assert env["GIT_TERMINAL_PROMPT"] == "0" and env["GIT_LFS_SKIP_SMUDGE"] == "1"
+    assert env["GIT_CONFIG_NOSYSTEM"] == "1" and env["GIT_CONFIG_GLOBAL"] == os.devnull
+
+
+def test_real_git_runs_with_the_allowlisted_environment(tmp_path):
+    from app.ingest import clone
+
+    clone._git(["init", "--quiet", "--template=", str(tmp_path / "repo")], timeout=30)
+    assert (tmp_path / "repo" / ".git").is_dir()
