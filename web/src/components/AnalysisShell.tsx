@@ -2,7 +2,14 @@ import { useQuery } from "@tanstack/react-query";
 import { useRef } from "react";
 import { Navigate, NavLink, Outlet, useParams, useSearchParams } from "react-router-dom";
 
-import { ApiError, getFindings, getStatus, repoName, type SnapshotStatus } from "../api";
+import {
+  ApiError,
+  fileLimitNotice,
+  getFindings,
+  getStatus,
+  repoName,
+  type SnapshotStatus,
+} from "../api";
 import { useSetParams } from "../links";
 import { AskDrawer } from "./AskDrawer";
 import { ConnectionNotice, isReconnecting } from "./ConnectionNotice";
@@ -47,6 +54,7 @@ export function AnalysisShell() {
 
   const keep = askOpen ? "?ask=1" : "";
   const total = counts.data?.counts.total;
+  const limitNotice = fileLimitNotice(status.data?.receipt);
   return (
     <div className="analysis">
       <header className="analysis-header">
@@ -83,6 +91,7 @@ export function AnalysisShell() {
           Ask
         </button>
       </header>
+      {limitNotice ? <p className="analysis-notice caption">{limitNotice}</p> : null}
       {/* data-ask lets a file or finding panel overlay the main column while Ask is open on
           screens too narrow for three docked columns (styles.css). */}
       <div className="analysis-body" data-ask={askOpen || undefined}>

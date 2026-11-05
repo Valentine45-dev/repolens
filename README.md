@@ -96,9 +96,9 @@ npx vite preview --port 5173 --strictPort
 (Not `npm run preview -- --port 5173`: Windows PowerShell 5.1 drops the bare `--`, so Vite
 gets `5173` as a folder name and stops with "dist does not exist".)
 
-A database volume created before 28 Oct needs the two migrations in
+An older database volume needs the migrations in
 [`backend/migrations/`](backend/migrations/), run after stopping any API on older code (a
-fresh volume needs neither). Both are idempotent and can run in either order:
+fresh volume needs none). All are idempotent and can run in any order:
 
 ```bash
 docker compose exec -T db psql -U repolens -d repolens < backend/migrations/2026-10-28-repo-case-and-progress.sql
@@ -106,6 +106,10 @@ docker compose exec -T db psql -U repolens -d repolens < backend/migrations/2026
 
 ```bash
 docker compose exec -T db psql -U repolens -d repolens < backend/migrations/2026-10-28-search-state.sql
+```
+
+```bash
+docker compose exec -T db psql -U repolens -d repolens < backend/migrations/2026-11-05-analysis-receipt.sql
 ```
 
 (In PowerShell, pipe the file instead: `Get-Content backend/migrations/<file> | docker compose

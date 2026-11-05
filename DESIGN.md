@@ -266,6 +266,8 @@ Quiet and solid; one black button per screen.
 ### Navigation
 - **Top bar:** wordmark left, links right of it at 24px gap. Links are Label weight in Graphite; hover goes Ink; the current page goes Ink with a 1px Ink underline (border-bottom). Only links to pages that exist.
 
+- **File-limit notice:** one 12px Graphite line under the analysis header, Hairline bottom border, on every analysis tab, shown only when the file limit cut the analysis short. It says how many files were analysed and that the rest were not. Neutral: it reports coverage, not a state or a verdict.
+
 ### Stage Ledger (signature)
 A ruled vertical list: a 20px icon column, the stage label, and a right-aligned Data Mono value column. Rows are at least 48px with a Hairline under each. Pending rows are Ash with a hollow circle; the active row is Ink at 500 with a spinner and the only number on the ledger (when the backend reports one); done rows return to Ink at 400 with a Done Green check; a failed row is Failed Red with an x. Colour changes ease over 200ms. Below it: a Graphite note saying the visitor can leave, and an amber note only after a stage has stalled for a minute.
 

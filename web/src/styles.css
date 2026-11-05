@@ -678,6 +678,14 @@ a {
   padding-bottom: var(--space-3);
 }
 
+/* Neutral on purpose: it reports coverage, not a state or a verdict (DESIGN.md: no amber). */
+.analysis-notice {
+  margin: 0;
+  padding: var(--space-2) var(--space-6);
+  border-bottom: 1px solid var(--border);
+  color: var(--text-muted);
+}
+
 .analysis-heading .connection-notice {
   margin-top: 0;
 }
@@ -1844,6 +1852,7 @@ a {
   }
 
   .analysis-header,
+  .analysis-notice,
   .findings-head,
   .pager,
   .toolbar,
