@@ -19,6 +19,7 @@ from app.ingest import clone
 from app.ingest.calls import resolve_calls
 from app.ingest.discover import DiscoveredFile, DiscoverResult, discover
 from app.ingest.parse import (
+    IMPORT_SCOPES,
     ParsedFile,
     ParsedImport,
     ParsedSymbol,
@@ -208,12 +209,13 @@ def store_edges(snapshot_id: int, parsed: dict[str, Parsed]) -> Counter:
             return resolve_python(path, imp, py_modules)
         return resolve_js(path, imp, js_modules)
 
-    wanted: dict[tuple[str, Target], None] = {}  # ordered set
+    wanted: dict[tuple[str, Target], str] = {}  # one edge per (file, target), first seen first
     for path, p in parsed.items():
         for imp in p.result.imports:
             for target in resolve_import(path, imp):
                 if not (target.kind == "internal" and target.key == path):
-                    wanted[(path, target)] = None
+                    seen = wanted.get((path, target), imp.scope)
+                    wanted[(path, target)] = min(seen, imp.scope, key=IMPORT_SCOPES.index)
     calls = resolve_calls({path: p.result for path, p in parsed.items()}, resolve_import)
 
     counts: Counter = Counter()
@@ -243,15 +245,15 @@ def store_edges(snapshot_id: int, parsed: dict[str, Parsed]) -> Counter:
             ).fetchone()["id"]
 
         rows = []
-        for path, target in wanted:
+        for (path, target), scope in wanted.items():
             dst = module_ids.get(target.key) if target.kind == "internal" else node_ids[target]
             if dst is not None:
-                rows.append((snapshot_id, module_ids[path], dst))
+                rows.append((snapshot_id, module_ids[path], dst, scope))
                 counts[target.kind] += 1
         with conn.cursor() as cur:
             cur.executemany(
-                "INSERT INTO edges (snapshot_id, src_id, dst_id, type, confidence)"
-                " VALUES (%s, %s, %s, 'imports', 1.0)",
+                "INSERT INTO edges (snapshot_id, src_id, dst_id, type, confidence, import_scope)"
+                " VALUES (%s, %s, %s, 'imports', 1.0, %s)",
                 rows,
             )
 

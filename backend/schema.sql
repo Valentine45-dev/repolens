@@ -92,7 +92,10 @@ CREATE TABLE edges (
   src_id       BIGINT NOT NULL REFERENCES symbols(id) ON DELETE CASCADE,
   dst_id       BIGINT NOT NULL REFERENCES symbols(id) ON DELETE CASCADE,
   type         TEXT NOT NULL,                     -- imports|calls|inherits|defines
-  confidence   REAL NOT NULL DEFAULT 1.0
+  confidence   REAL NOT NULL DEFAULT 1.0,
+  -- imports only: when the import runs (app/ingest/parse.py). Cycle detection uses top_level.
+  -- NULL on an import edge = analysed before this column existed: cycles are not known yet.
+  import_scope TEXT CHECK (import_scope IN ('top_level', 'nested', 'type_checking'))
 );
 CREATE INDEX edges_src ON edges (snapshot_id, src_id);
 CREATE INDEX edges_dst ON edges (snapshot_id, dst_id);

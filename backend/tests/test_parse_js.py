@@ -50,6 +50,52 @@ def test_ts_imports_including_dynamic_and_side_effect():
     ]
 
 
+def _scopes(source: str, path: str = "x.ts") -> dict[str, str]:
+    return {i.specifier: i.scope for i in parse_js(path, source).imports}
+
+
+def test_import_scope_type_only_forms():
+    assert _scopes(
+        "import type { A } from './a';\n"
+        "import type B from './b';\n"
+        "import { type C, type D } from './c';\n"
+        "import { type E, f } from './e';\n"
+        "import g, { type H } from './g';\n"
+        "import * as i from './i';\n"
+        "import './j';\n"
+        "export type { K } from './k';\n"
+        "export { type L } from './l';\n"
+        "export { m, type N } from './m';\n"
+        "export * from './o';\n"
+    ) == {"./a": "type_checking", "./b": "type_checking", "./c": "type_checking",
+          "./e": "top_level", "./g": "top_level", "./i": "top_level", "./j": "top_level",
+          "./k": "type_checking", "./l": "type_checking", "./m": "top_level", "./o": "top_level"}
+
+
+def test_import_scope_require_and_dynamic_import():
+    assert _scopes(
+        "const a = require('./a');\n"
+        "require('./b');\n"
+        "if (x) { require('./c'); }\n"
+        "function f() { const d = require('./d'); }\n"
+        "const g = () => { require('./e'); };\n"
+        "run(function () { require('./h'); });\n"
+        "class K { m() { return require('./i'); } }\n"
+        "module.exports = { n() { require('./j'); } };\n"
+        "exports.o = function () { require('./k'); };\n"
+        "const p = import('./l');\n"
+        "async function q() { await import('./m'); }\n",
+        "x.js",
+    ) == {"./a": "top_level", "./b": "top_level", "./c": "top_level",
+          "./d": "nested", "./e": "nested", "./h": "nested", "./i": "nested", "./j": "nested",
+          "./k": "nested", "./l": "nested", "./m": "nested"}
+
+
+def test_import_scope_declaration_file_is_type_only():
+    assert _scopes("import { a } from './a';\nexport { b } from './b';\n", "x.d.ts") == {
+        "./a": "type_checking", "./b": "type_checking"}
+
+
 def test_ts_calls_with_caller_and_receiver():
     c = calls(parse_fixture("web/src/app.ts"))
     assert ("web/src/app.ts:App.render", "fmt", None) in c

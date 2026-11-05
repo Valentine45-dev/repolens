@@ -10,6 +10,9 @@ import tree_sitter_typescript
 from tree_sitter import Language, Node, Parser
 
 from app.ingest.parse import (
+    NESTED,
+    TOP_LEVEL,
+    TYPE_ONLY,
     ParsedCall,
     ParsedFile,
     ParsedImport,
@@ -25,6 +28,34 @@ _TSX = Language(tree_sitter_typescript.language_tsx())
 CLASS_TYPES = {"class_declaration", "abstract_class_declaration"}
 FUNCTION_TYPES = {"function_declaration", "generator_function_declaration"}
 FUNCTION_VALUES = {"arrow_function", "function_expression", "function", "generator_function"}
+_RUNS_LATER = FUNCTION_TYPES | FUNCTION_VALUES | {"method_definition"}
+_DECLARATION_FILES = (".d.ts", ".d.mts", ".d.cts")  # never run, like Python stubs
+
+
+def _inside_function(node: Node) -> bool:
+    """Named or anonymous. An IIFE counts too, so a cycle through one is missed: the parser
+    cannot tell it apart from a callback without guessing."""
+    parent = node.parent
+    while parent is not None:
+        if parent.type in _RUNS_LATER:
+            return True
+        parent = parent.parent
+    return False
+
+
+def _is_type_only(statement: Node, clause: Node | None, specifier: str) -> bool:
+    """`import type ...` / `export type ...`, or a `{ }` list where every name is `type x`."""
+    if any(c.type == "type" for c in statement.children):
+        return True
+    if clause is None:
+        return False
+    items = clause.named_children
+    if clause.type == "import_clause":
+        if len(items) != 1 or items[0].type != "named_imports":
+            return False  # a default or namespace import is a value
+        items = items[0].named_children
+    specs = [c for c in items if c.type == specifier]
+    return bool(specs) and all(any(c.type == "type" for c in s.children) for s in specs)
 
 
 def grammar_for(path: str) -> Language:
@@ -171,8 +202,14 @@ def parse_js(path: str, source: str) -> ParsedFile:
                 continue
             visit_node(prop, scope)
 
-    def add_import(specifier: str, names, node: Node) -> None:
-        out.imports.append(ParsedImport(specifier, tuple(names), node.start_point.row + 1))
+    declaration_file = path.endswith(_DECLARATION_FILES)
+
+    def add_import(specifier: str, names, node: Node, scope: str | None = None) -> None:
+        if declaration_file:
+            scope = TYPE_ONLY
+        elif scope is None:
+            scope = NESTED if _inside_function(node) else TOP_LEVEL
+        out.imports.append(ParsedImport(specifier, tuple(names), node.start_point.row + 1, scope))
 
     def visit(node: Node, scope: str) -> None:
         for child in node.named_children:
@@ -184,12 +221,17 @@ def parse_js(path: str, source: str) -> ParsedFile:
             spec = _string(node.child_by_field_name("source"))
             if spec is not None:
                 clause = next((c for c in node.named_children if c.type == "import_clause"), None)
-                add_import(spec, _import_clause_names(clause) if clause else [], node)
+                type_only = _is_type_only(node, clause, "import_specifier")
+                add_import(spec, _import_clause_names(clause) if clause else [], node,
+                           TYPE_ONLY if type_only else None)
             return
         if t == "export_statement":
             spec = _string(node.child_by_field_name("source"))
             if spec is not None:
-                add_import(spec, _export_from_names(node), node)
+                clause = next((c for c in node.named_children if c.type == "export_clause"), None)
+                type_only = _is_type_only(node, clause, "export_specifier")
+                add_import(spec, _export_from_names(node), node,
+                           TYPE_ONLY if type_only else None)
                 return
             visit(node, scope)
             return
@@ -273,9 +315,11 @@ def parse_js(path: str, source: str) -> ParsedFile:
         if t == "call_expression":
             fn = node.child_by_field_name("function")
             spec = _single_string_arg(node)
-            is_import = fn is not None and (fn.type == "import" or text(fn) == "require")
+            is_dynamic = fn is not None and fn.type == "import"
+            is_import = is_dynamic or (fn is not None and text(fn) == "require")
             if is_import and spec is not None:
-                add_import(spec, [], node)
+                # import() is asynchronous wherever it is written, so it cannot deadlock a cycle.
+                add_import(spec, [], node, NESTED if is_dynamic else None)
                 return
             record_call(fn, scope, node)
             visit(node, scope)
