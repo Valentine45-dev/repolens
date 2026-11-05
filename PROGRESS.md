@@ -982,6 +982,39 @@
   - Known: clicking the same chip twice does nothing the second time (the range did not change),
     even if the user scrolled the code away in between.
 
+- **v1 submitted and re-baselined (31 Oct).** `v1-submitted` = `75be6fb`; `main` = `b8f03d6` after
+  `eval/rebaseline-v1` (eval only). **`eval/results/BASELINE-v1.md` holds the current numbers; the
+  older figures in this file predate it.**
+- **v2 scope set (5 Nov, `docs/claude-md-v2`).** v2 is a master's project. CLAUDE.md no longer
+  describes the 4-day build: new v2 scope in order, hard rules 10-15, an "Eval rules" section
+  (one eval machine, first result counts, locked runs twice, budget caps), `docs/` and `eval/`
+  branches, migrations required with schema changes, no sampling parameters. All 9 earlier hard rules
+  unchanged. `docs/handoff-2026-11-05-design-review.md` committed as background; CLAUDE.md wins over it.
+- **Part B decisions (`fix/v2-fixes`, not started; approved 5 Nov).**
+  - Git env: allowlist including proxy variables.
+  - Host check: fixed list `127.0.0.1`, `localhost`, `api` (the compose proxy sends `Host: api:8000`);
+    tests use `base_url="http://127.0.0.1"`. Vite's own host check on 5173 is checked by hand.
+  - `MAX_TEST_EMBED_S` default **1800**, not 1200: the baseline's rate puts express's 1,048 test chunks
+    at about 1,230 s on this PC.
+  - File-limit notice: "Analysed 2,000 of about 2,741 files; the file limit was reached. The remaining
+    files were not analysed." The total must apply discovery's skip rules (junk dirs, build output,
+    secret files, size cap), so it counts only files that would have been analysed without the limit.
+    Receipt columns on `jobs`, not in the `snapshot_status` view (old migrations rebuild the view
+    with fewer columns).
+  - Scoped Ask: file only for now; symbol scope comes with the function-level map.
+  - Code locations: on all three `unavailable` paths that follow a search, search hits only, in a
+    separate `locations` field (`citations` stays "validated from the model").
+  - Smoke eval: not needed for opt-in-only changes when a test and the free retrieval eval show the
+    default path is unchanged.
+  - Dev DB: `pg_dump` to `C:\projects\repolens-eval-assets\db-backup-2026-11-05.sql` **before any
+    migration**, migrate with the API stopped, then re-analyse PyGoat for real before/after counts.
+  - **Compose stack not tested live for Part B** (owner's decision, RAM); the unit test with
+    `Host: api:8000` covers the middleware.
+- **Known, left for later:** `eval/smoke_qa.py` still writes `faithful` / `faithfulness_rate`, which rule
+  15 replaces (needs an eval branch); `docs/repolens-system-design.md:521` and `docs/PRD.md:244` still say
+  "faithfulness" (CLAUDE.md wins). Test embedding holds `_JOB_LOCK`, so the longer limit also lengthens
+  how long the next analysis can wait.
+
 ## Demo plan (8 GB laptop)
 The full compose stack works (tested 28 Oct) but left ~0.66 GB free and crashed the machine
 once. Primary demo is native mode; compose is shown as tested, not run live.
