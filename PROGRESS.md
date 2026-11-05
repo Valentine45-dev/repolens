@@ -669,7 +669,7 @@
   `eval/results/final_qa-20261028T100701Z-36556cf.json`).** Demo model `claude-sonnet-5-5`,
   thinking `between_tools`, effort `low`, prompt `2026-10-28.2`, set by env override for this run
   only (`.env` still says Haiku). All 16 questions + identity + injection, same frozen
-  questions.yaml and pass rules; `smoke_qa.py --all` and the extra metrics (faithfulness, expected
+  questions.yaml and pass rules; `smoke_qa.py --all` and the extra metrics (citation validity, expected
   range, latency) were committed before the run. Native mode, db only in Docker.
   - **16/18 passed.** FAIL 8: exact "I could not find this in the provided code." plus one valid
     citation (`lib/express.js:36-56`) describing what the snippets do cover; the pre-set rule needs
@@ -678,7 +678,9 @@
     narrow for false-premise questions. They stay FAILs.
   - Expected file cited: 14/14 answerable. Expected line range overlapped: 13/14 (Q5 cited
     `lib/response.js` but not the labelled `res.format` lines).
-  - Faithfulness (no dropped citation): 15/18 = 0.83 (14/17 = 0.82 over answers that cited).
+  - Citation validity (no dropped citation: every citation lies inside a snippet that was sent, which
+    does not show that it supports the claim; the run's output calls this "faithfulness"):
+    15/18 = 0.83 (14/17 = 0.82 over answers that cited).
     4 dropped citations: Q2 1, Q3 2, Q14 1.
   - Latency: median 4.3 s, max 28.5 s (identity, the first question: includes loading the
     embedding model); the rest 2.1–7.6 s.

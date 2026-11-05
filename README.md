@@ -244,8 +244,10 @@ It makes about 8 real API calls (hard limit 12); the prices are only for the cos
 **Final Q&A run** (all 16 questions plus identity and injection, `--all`, with the demo model
 `claude-sonnet-5-5`, effort low, `between_tools` thinking, prompt `2026-10-28.2`): 16 of 18
 passed under the pre-set rules. Every answerable question cited the expected file (14/14), and
-13/14 also cited the labelled lines. 15 of 18 answers had no dropped citation (the server
-removed 4 invalid ones in total). Both failures are the unanswerable traps answered correctly
+13/14 also cited the labelled lines. Citation validity was 15/18: those answers had no dropped
+citation, meaning every citation lay inside a snippet that was sent (the server removed 4 invalid
+ones in total). This does not show that a citation supports its claim, and it is not a measure of
+faithfulness. Both failures are the unanswerable traps answered correctly
 but with citations: on manual review the answers are correct; the rule was too narrow for
 false-premise questions. Median latency 4.3 s. 18 calls cost about $0.22.
 
