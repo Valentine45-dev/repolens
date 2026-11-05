@@ -1104,6 +1104,11 @@
     `MAX_TEST_EMBED_S=60`, Chrome closed partway: 4,803 non-test chunks in 2,258.9 s, which is why the raise was needed.
     My watcher exited when the job was done, and I stopped the API during the 60 s test embedding, so black has 0 test
     chunks (the same as the limit would have left) and its state says `tests` until the next API start marks it failed.
+    The two limits were set only in that API process's environment: `.env` still has `MAX_ANALYSIS_S=600` and no
+    `MAX_TEST_EMBED_S`, so the default of 1800 from `config.py` applies.
+  - **Flask (snapshot 6) has no search chunks: retry search when needed.** The map, findings and graph questions work;
+    AI questions on it need "Retry preparing search" first. Left as is by the owner's decision (6 Nov).
+  - **Merged into `main` (6 Nov), owner's go.** Next: Part B on `feat/folder-map-ui`, see the notes below.
   - **Known limits:** a cycle through an implicit parent-package import is missed (no edge exists), and a JS IIFE counts as
     a function. The node limit does not limit edges: flask `src/flask` is 20 nodes and 82 edges (91 with everything);
     a symbol view reaches 61 nodes and 202 edges. Part B has to make those readable.
