@@ -9,6 +9,10 @@ MAX_FILE_BYTES = int(os.environ.get("MAX_FILE_BYTES", "1000000"))
 CLONE_TIMEOUT_S = int(os.environ.get("CLONE_TIMEOUT_S", "120"))
 MAX_ANALYSIS_S = int(os.environ.get("MAX_ANALYSIS_S", "600"))
 
+# Host headers the API answers to (anything else gets 400, which stops DNS rebinding). `api` is
+# what the web container's proxy sends under docker compose (changeOrigin; API_URL=http://api:8000).
+TRUSTED_HOSTS = ("127.0.0.1", "localhost", "api")
+
 # Clones live here only while a job runs; each job deletes its own folder.
 WORKSPACE_DIR = Path(os.environ.get("WORKSPACE_DIR", Path(tempfile.gettempdir()) / "repolens"))
 
