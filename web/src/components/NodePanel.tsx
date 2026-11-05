@@ -30,7 +30,7 @@ export function NodePanel({
   isInGraph: (fileId: number) => boolean;
   onSelectFile: (fileId: number) => void;
   onShowLines: (lines: LineRange) => void;
-  onAsk: (path: string) => void;
+  onAsk: (fileId: number, path: string) => void;
   onClose: () => void;
 }) {
   const [tab, setTab] = useState<Tab>("code");
@@ -93,7 +93,7 @@ export function NodePanel({
         <button
           type="button"
           className="button button-secondary button-small"
-          onClick={() => onAsk(node.path)}
+          onClick={() => onAsk(node.id, node.path)}
         >
           Ask about this
         </button>

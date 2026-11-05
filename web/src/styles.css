@@ -1736,6 +1736,24 @@ a {
   border-top: 1px solid var(--border);
 }
 
+.ask-scope {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  margin: 0 0 var(--space-2);
+  color: var(--text-muted);
+  font-size: var(--text-xs);
+}
+
+.ask-scope > svg {
+  flex: none;
+}
+
+.ask-scope-text {
+  flex: 1;
+  min-width: 0;
+}
+
 .ask-input {
   width: 100%;
   height: auto;

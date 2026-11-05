@@ -116,7 +116,7 @@ export function AnalysisShell() {
             snapshotId={snapshotId}
             status={status.data}
             onClose={() => {
-              setParams({ ask: null, askq: null });
+              setParams({ ask: null, askq: null, askfile: null, askpath: null });
               askButtonRef.current?.focus(); // focus goes back to what opened the drawer
             }}
           />

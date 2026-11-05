@@ -60,7 +60,8 @@ function ExploreInner() {
     [setParams],
   );
   const askAbout = useCallback(
-    (path: string) => setParams({ ask: "1", askq: `About ${path}: ` }),
+    (fileId: number, path: string) =>
+      setParams({ ask: "1", askq: `About ${path}: `, askfile: String(fileId), askpath: path }),
     [setParams],
   );
 

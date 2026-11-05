@@ -286,6 +286,7 @@ A ruled vertical list: a 20px icon column, the stage label, and a right-aligned 
 - **Turns:** the question in its own Bench Grey box with a Hairline border (6px); the answer under a 600-weight header with its icon, "AI answer" (spark) or "From the graph" (graph); 24px and a Hairline between turns. A failed AI question is one muted line with an x.
 - **Graph results:** one ruled 10px container, a 40px row per result: kind icon (file / package / symbol) in Ash, the name in mono (paths wrap only after "/"), the file path under a symbol in Ash, and right-aligned real metadata only: `imports` / `calls`, `external` / `unresolved` / `test` tags, the line count where the result has lines. Five rows, then "Show all N". On phones the metadata moves under the name.
 - **Sources:** "Relevant source files", chips with a file icon and mono `path:start-end`, linking to the cited lines.
+- **Scope line:** above the input after "Ask about this": a file icon, "This question includes" in Ash, the path in mono, and an x to remove it. It applies to the next question only.
 
 ### Loading
 Skeleton bars in Sunk Grey at 4px radius, sized to the text they replace. Spinners rotate at 900ms linear; under reduced motion they slow to 2.4s and transitions collapse.

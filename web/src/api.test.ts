@@ -1,6 +1,35 @@
-import { describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 
-import { fileLimitNotice } from "./api";
+import { askQuestion, fileLimitNotice } from "./api";
+
+describe("askQuestion", () => {
+  afterEach(() => vi.unstubAllGlobals());
+
+  function stubFetch() {
+    const fetchMock = vi.fn(
+      async (_url: string, _init: RequestInit) => new Response("{}", { status: 200 }),
+    );
+    vi.stubGlobal("fetch", fetchMock);
+    return fetchMock;
+  }
+
+  it("sends the file for a scoped question", async () => {
+    const fetchMock = stubFetch();
+    await askQuestion(7, "About a.py: what is this?", 42);
+    expect(JSON.parse(fetchMock.mock.calls[0][1].body as string)).toEqual({
+      question: "About a.py: what is this?",
+      file_id: 42,
+    });
+  });
+
+  it("sends only the question when there is no scope", async () => {
+    const fetchMock = stubFetch();
+    await askQuestion(7, "What is this?");
+    expect(JSON.parse(fetchMock.mock.calls[0][1].body as string)).toEqual({
+      question: "What is this?",
+    });
+  });
+});
 
 describe("file-limit notice", () => {
   it("says what was analysed and what was not, with an approximate total", () => {

@@ -93,7 +93,8 @@ def search_ready(snapshot_id: int) -> bool:
     return row["has_chunks"] or not failed
 
 
-def ai_answer(snapshot_id: int, question: str, include_tests: bool = False) -> dict:
+def ai_answer(snapshot_id: int, question: str, include_tests: bool = False,
+              file_id: int | None = None) -> dict:
     q_log = f"len={len(question)} hash={hashlib.sha256(question.encode()).hexdigest()[:10]}"
     provider = llm.get_provider()
     if provider is None:
@@ -102,7 +103,8 @@ def ai_answer(snapshot_id: int, question: str, include_tests: bool = False) -> d
         return _reply("no_context", NO_SEARCH)
 
     try:
-        found = retrieve(snapshot_id, question, include_tests=include_tests)
+        found = retrieve(snapshot_id, question, include_tests=include_tests,
+                         scope_file_id=file_id)
     except Exception as e:  # e.g. the embedding model failed to load: no search, no 500
         log.error("ask snapshot=%s %s: retrieval failed: %s", snapshot_id, q_log,
                   type(e).__name__)

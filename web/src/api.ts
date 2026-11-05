@@ -135,7 +135,12 @@ export interface Answer {
   dropped: number;
   results: GraphResult[];
   prompt_version: string | null;
-  retrieval: { sent: number; used_test_code: boolean; from_graph: number } | null;
+  retrieval: {
+    sent: number;
+    used_test_code: boolean;
+    from_graph: number;
+    scope?: { file_id: number; sent: number }; // "Ask about this" questions only
+  } | null;
   // graph answers only
   query?: string;
   target?: GraphResult | null;
@@ -321,10 +326,11 @@ export function getRules(signal?: AbortSignal): Promise<Rule[]> {
   return request("/rules", { signal });
 }
 
-export function askQuestion(snapshotId: number, question: string): Promise<Answer> {
+/** `fileId` is "Ask about this": that file's code always goes into the context. */
+export function askQuestion(snapshotId: number, question: string, fileId?: number): Promise<Answer> {
   return request(`/snapshots/${snapshotId}/ask`, {
     method: "POST",
-    body: JSON.stringify({ question }),
+    body: JSON.stringify(fileId === undefined ? { question } : { question, file_id: fileId }),
   });
 }
 

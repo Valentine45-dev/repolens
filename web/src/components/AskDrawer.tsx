@@ -88,6 +88,7 @@ export function AskDrawer({
   const setParams = useSetParams();
   const [turns, setTurns] = useState<Turn[]>(() => loadTurns(snapshotId));
   const [draft, setDraft] = useState("");
+  const [scope, setScope] = useState<{ fileId: number; path: string } | null>(null);
   const [wide, setWide] = useState(loadWide);
   const inputRef = useRef<HTMLTextAreaElement>(null);
   const lastTurnRef = useRef<HTMLLIElement>(null);
@@ -108,12 +109,19 @@ export function AskDrawer({
     if (list && turn) scrollToStart(list, turn);
   }, [turns]);
 
-  // "Ask about this" (node panel) arrives as ?askq=...: prefill once, then drop it from the URL.
+  // "Ask about this" (node panel) arrives as ?askq=...&askfile=...&askpath=...: prefill once, keep
+  // the file as this question's scope (shown as a chip), then drop them from the URL.
   const prefill = params.get("askq");
+  const prefillFile = params.get("askfile");
+  const prefillPath = params.get("askpath");
   useEffect(() => {
     if (prefill === null) return;
     setDraft(prefill);
-    setParams({ askq: null });
+    const fileId = Number(prefillFile);
+    setScope(
+      prefillPath && Number.isInteger(fileId) && fileId > 0 ? { fileId, path: prefillPath } : null,
+    );
+    setParams({ askq: null, askfile: null, askpath: null });
     requestAnimationFrame(() => {
       const el = inputRef.current;
       if (el) {
@@ -121,7 +129,7 @@ export function AskDrawer({
         el.setSelectionRange(el.value.length, el.value.length);
       }
     });
-  }, [prefill, setParams]);
+  }, [prefill, prefillFile, prefillPath, setParams]);
   // Focus the input when the drawer opens (the prefill effect focuses it in that case).
   useEffect(() => {
     if (prefill === null) inputRef.current?.focus();
@@ -136,25 +144,29 @@ export function AskDrawer({
   }, [onClose]);
 
   const ask = useMutation({
-    mutationFn: ({ question }: { id: string; question: string }) => askQuestion(snapshotId, question),
+    mutationFn: ({ question, fileId }: { id: string; question: string; fileId?: number }) =>
+      askQuestion(snapshotId, question, fileId),
     onSuccess: (answer, { id }) =>
       setTurns((all) => all.map((t) => (t.id === id ? { ...t, answer } : t))),
     onError: (error, { id }) =>
       setTurns((all) => all.map((t) => (t.id === id ? { ...t, error: error.message } : t))),
   });
 
-  function send(question: string) {
+  // A scope belongs to the one question typed with its chip showing, not to suggestions or
+  // re-asks, which call send without a file.
+  function send(question: string, fileId?: number) {
     const text = question.trim();
     if (!text || ask.isPending) return;
     const id = `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
     setTurns((all) => [...all, { id, question: text }]);
     setDraft("");
-    ask.mutate({ id, question: text });
+    setScope(null);
+    ask.mutate({ id, question: text, fileId });
   }
 
   function submit(e: FormEvent) {
     e.preventDefault();
-    send(draft);
+    send(draft, scope?.fileId);
   }
 
   function toggleWide() {
@@ -241,6 +253,26 @@ export function AskDrawer({
       </div>
 
       <form className="ask-form" onSubmit={submit}>
+        {scope ? (
+          <p className="ask-scope">
+            <Icon name="file" size={14} />
+            <span className="ask-scope-text">
+              <span className="caption">This question includes</span>{" "}
+              <span className="mono">
+                <PathText path={scope.path} />
+              </span>
+            </span>
+            <button
+              type="button"
+              className="icon-button"
+              onClick={() => setScope(null)}
+              aria-label={`Stop including ${scope.path}`}
+              title="Stop including this file"
+            >
+              <Icon name="x" size={14} />
+            </button>
+          </p>
+        ) : null}
         <label htmlFor={inputId} className="visually-hidden">
           Question
         </label>
@@ -256,7 +288,7 @@ export function AskDrawer({
           onKeyDown={(e) => {
             if (e.key === "Enter" && !e.shiftKey && !e.nativeEvent.isComposing) {
               e.preventDefault();
-              send(draft);
+              send(draft, scope?.fileId);
             }
           }}
         />
@@ -578,6 +610,11 @@ function AnswerView({
       ) : null}
       {answer.retrieval?.used_test_code ? (
         <p className="caption">Based on test or example code: no other code matched.</p>
+      ) : null}
+      {answer.retrieval?.scope?.sent === 0 ? (
+        <p className="caption">
+          The file you asked about is not searchable yet, so this answer uses other code.
+        </p>
       ) : null}
     </div>
   );
