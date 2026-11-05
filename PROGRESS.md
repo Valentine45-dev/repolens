@@ -992,7 +992,7 @@
   (one eval machine, first result counts, locked runs twice, budget caps), `docs/` and `eval/`
   branches, migrations required with schema changes, no sampling parameters. All 9 earlier hard rules
   unchanged. `docs/handoff-2026-11-05-design-review.md` committed as background; CLAUDE.md wins over it.
-- **Part B decisions (`fix/v2-fixes`, not started; approved 5 Nov).**
+- **Part B decisions (`fix/v2-fixes`; approved 5 Nov).**
   - Git env: allowlist including proxy variables.
   - Host check: fixed list `127.0.0.1`, `localhost`, `api` (the compose proxy sends `Host: api:8000`);
     tests use `base_url="http://127.0.0.1"`. Vite's own host check on 5173 is checked by hand.
@@ -1016,6 +1016,45 @@
   15 replaces (needs an eval branch); `docs/repolens-system-design.md:521` and `docs/PRD.md:244` still say
   "faithfulness" (CLAUDE.md wins). Test embedding holds `_JOB_LOCK`, so the longer limit also lengthens
   how long the next analysis can wait.
+
+- **Part B done on `fix/v2-fixes` (5 Nov, not merged).** One commit per fix, FakeProvider only, **$0 API
+  spend**: no real LLM call, and the screenshot and PyGoat APIs ran without `LLM_API_KEY` in their
+  environment.
+  1. Git env allowlist (`clone.py`). Network tests pass on Windows.
+  2. `TrustedHostMiddleware`: `127.0.0.1`, `localhost`, `api`. By hand: API `evil.example` 400; `127.0.0.1`,
+     `localhost`, `api:8000` 200. Vite's own check returns 403 for `evil.example` on the dev server and
+     on `vite preview`, `/api` included, so rebinding through the web port is closed too. **Compose stack
+     not tested live** (owner's decision, RAM); `Host: api:8000` is covered by a unit test only.
+  3. `tests.py` and `conftest.py` are test code.
+  4. `MAX_TEST_EMBED_S` (1800) and its own message.
+  5. Receipt on `jobs`, `receipt` in the status API, one-line notice. Past the limit `discover` counts
+     without reading, using the same rules (junk and build dirs, secret files, wanted types, size cap);
+     binaries and minified files need a read, so they can still be in the "about" total, and one such file
+     alone past the limit would raise the notice.
+  6. `file_id` on `/ask`: the file's chunks first, up to 2/3 of the context budget.
+  7. `locations` on the three `unavailable` paths that follow a search: search hits (and a picked file's
+     chunks), never graph neighbours. `citations` is unchanged.
+  8. "faithfulness" renamed in PROGRESS and README.
+  - **Dev DB:** backed up first to `C:\projects\repolens-eval-assets\db-backup-2026-11-05.sql` (6.9 MB; restored
+    into a throwaway database, row counts equal, dropped), then migrated with the API stopped. Screenshots
+    used another throwaway copy (dropped), with `MAX_FILES=20` and `pallets/markupsafe` for the notice.
+  - **PyGoat re-analysed in place** (snapshot 2, job 5; job 2 marked `Re-run: ...`). Before / after: non-test
+    chunks 834 / 755; test chunks 0 / 79; findings 60 / 60, high 51 / 49, low 9 / 11, in test code 0 / 2 (both
+    `introduction/tests.py:63`, now low); code files hidden by default 0 / 3 (114 of 117 shown). Files, symbols,
+    edges and rule counts unchanged. Receipt: 222 kept, 240 skipped, limit not hit. Precision not re-run.
+  - **Free evals at `0daca9e`:** `retrieval_context-v2-fixes-20261105T134914Z-0daca9e.json` and
+    `detectors-20261105T135144Z-0daca9e.json` are identical to `BASELINE-v1.md`'s result files in every field
+    except run info. Express and itsdangerous have no chunk affected by fix 3.
+  - **Tests:** local 317 passed, 1 skipped (network on, model test off); CI at `0daca9e` 315 passed, 3 skipped;
+    web 21 passed. Web tests are not in CI. No Q&A run: fix 6 is opt-in and the retrieval eval shows the
+    default path unchanged.
+  - **CI pin to `ubuntu-24.04`:** committed last and **not pushed**. GitHub refuses workflow-file changes from
+    this login without the `workflow` scope, which is the owner's to grant:
+    `gh auth refresh -h github.com -s workflow`, then push. So the pin has not run in CI yet.
+  - **Known:** PyGoat's non-test embedding took 494.6 s this time (287.8 s in the baseline, with more chunks) with
+    about 0.7 GB of RAM free, which is close to the 600 s `MAX_ANALYSIS_S`. Timings are not comparable, but on
+    this PC low memory can push a mid-size repo to the limit. Docker Desktop also hung on `starting` for 17
+    minutes on 5 Nov until `docker desktop restart`.
 
 ## Demo plan (8 GB laptop)
 The full compose stack works (tested 28 Oct) but left ~0.66 GB free and crashed the machine
