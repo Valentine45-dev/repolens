@@ -1055,10 +1055,58 @@
     this PC low memory can push a mid-size repo to the limit. Docker Desktop also hung on `starting` for 17
     minutes on 5 Nov until `docker desktop restart`.
 
-- **v2 step 4, folder-first map: Part A in progress (5 Nov, `feat/folder-graph`).** Step 0 report approved with
-  these decisions: `level=file` is recursive; cycles computed per request, not stored; import scope covers JS/TS
+- **v2 step 4, folder-first map: Part A built, not merged (5-6 Nov, `feat/folder-graph`).** Step 0 report approved
+  with these decisions: `level=file` is recursive; cycles computed per request, not stored; import scope covers JS/TS
   too; edges-only backfill instead of re-analysis; a single-file folder shows as a file node with its folder in the
   label; flask and black analysed as real-repo checks. API documented in `docs/repolens-system-design.md` section 10.
+  **$0 API spend**: no LLM call; APIs ran without `LLM_API_KEY`.
+  - **Built:** `edges.import_scope` (`top_level` / `nested` / `type_checking`, parsers for both languages; `.pyi` and
+    `.d.ts` are type-only, `import()` is nested); `app/graph_map.py` (pure) and `level` / `root` on the graph API;
+    `app/ingest/backfill.py`; `eval/graph_readability.py`.
+  - **Added beyond the brief:** `guess_calls` (express `test → lib` at 0.5 is 161 edges, 152 guesses, drawn solid),
+    `internal_count` (so every edge is counted once), `other_findings`, `cycle_edges`, `cycles_available`, and
+    subfolders ranking first in the overflow. A single-file folder stays a folder if another file in it has a finding,
+    so that finding stays on the map.
+  - **Dev DB:** `pg_dump` to `C:\projects\repolens-eval-assets\db-backup-2026-11-05-before-import-scope.sql` (6.9 MB;
+    restored into a throwaway database, row counts equal, dropped), API stopped, migration applied twice (idempotent),
+    backfill took 22 s: **0 edges changed** on all 4 snapshots.
+  - **Byte-identical:** 16 no-level `/graph` responses (4 snapshots x tests and guesses on and off), saved from `main`
+    (`5b68582`) to `C:\projects\repolens-eval-assets\flat-graph-5b68582\` before any change, and from this branch after
+    the migration and backfill: **16 of 16 identical**.
+  - **Free evals at `b5f8eef`:** `retrieval_context-folder-graph-...-b5f8eef.json` and `detectors-...-b5f8eef.json` are
+    identical to `BASELINE-v1.md`'s result files in every field except run info (A 0.71, B 0.86, C 0.93).
+  - **Tests:** local 365 passed, 3 skipped (network and model off); CI green at `845379a`, same counts.
+  - **Real repos (`eval/results/graph_readability-part-a-*`; every folder in the `.md`):** PyGoat default 114 → **9
+    nodes, 4 edges** at the root; black 55 → 5 and 1, with tests shown 426 → 6 and 5. No view over 61 nodes. Overflow
+    happens only with tests shown: express `test/` (13 hidden) and black `tests/data/cases` (244 hidden). 50 of 50
+    aggregated edges match separate SQL; conservation holds in every view.
+  - **Cycles:**
+
+    | Repo (non-test code unless said) | Every import counted | Top-level only |
+    |---|---|---|
+    | itsdangerous, PyGoat, express | none | none |
+    | flask `49943b5` | 1 cycle of 20 files, all of `src/flask`'s core | **none** |
+    | black `b4f1fca` | 3 cycles (2, 2, 4 files) | **none** |
+    | flask with examples | adds the one below | **1:** `examples/javascript/js_example/__init__.py` ↔ `views.py` |
+
+    The flask claim from Step 0 holds: 19 `src/flask` modules have `if t.TYPE_CHECKING:` (read from stored text), for
+    example `ctx.py:21` `from .app import Flask`, while `app.py:32` imports `.ctx` at the top. Both scopes matter: flask
+    gives 17 files with only `type_checking` added and 11 with only `nested`; black's 3 false cycles need the
+    function-local imports (`__init__.py:813`, `strings.py:379`). The one left is real: `__init__.py:5` imports `views`
+    at the bottom, `views.py:5` imports back. Two-way folder or file edges with no cycle are common (flask default: 15
+    pairs), so they must never be labelled circular.
+  - **Timing (median of 7, direct calls, Chrome closed, on this PC):** view assembly 0.3-2.3 ms; cycles 0.1-2.1 ms
+    (largest: black, 426 files); the root request 80-615 ms, against 85-192 ms for the flat graph. The time is the database
+    read, not the aggregation, and this machine is noisy, so no cache for now.
+  - **Runs:** flask and black at HEAD on 5 Nov, one at a time. **flask** ran with Chrome and a Remotion headless shell
+    open and ~0.3 GB free: non-test embedding stopped at `MAX_ANALYSIS_S=600`, so snapshot 6 has graph and findings but no
+    chunks, `search` failed and can be retried (Ask off there). **black** ran with `MAX_ANALYSIS_S=3600` and
+    `MAX_TEST_EMBED_S=60`, Chrome closed partway: 4,803 non-test chunks in 2,258.9 s, which is why the raise was needed.
+    My watcher exited when the job was done, and I stopped the API during the 60 s test embedding, so black has 0 test
+    chunks (the same as the limit would have left) and its state says `tests` until the next API start marks it failed.
+  - **Known limits:** a cycle through an implicit parent-package import is missed (no edge exists), and a JS IIFE counts as
+    a function. The node limit does not limit edges: flask `src/flask` is 20 nodes and 82 edges (91 with everything);
+    a symbol view reaches 61 nodes and 202 edges. Part B has to make those readable.
 
 ### Notes for the Part B (UI) session
 Decided in Step 0 of the folder map. Not started; `feat/folder-map-ui` branches off `main` after Part A is merged.
