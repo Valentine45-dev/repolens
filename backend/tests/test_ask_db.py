@@ -458,6 +458,37 @@ def test_test_code_failure_keeps_ask_and_offers_retry(client, monkeypatch, fake)
     assert _chunk_groups(body["snapshot_id"]).get(True, 0) == 0
 
 
+def test_test_code_timeout_says_so_and_does_not_blame_the_analysis(client, monkeypatch, fake):
+    from app import config
+
+    monkeypatch.setattr(config, "MAX_TEST_EMBED_S", -1)  # already past when the first batch ends
+    body = client.post("/repos", json={"url": "https://github.com/example/sample"}).json()
+    st = client.get(f"/snapshots/{body['snapshot_id']}/status").json()
+    assert st["status"] == "done" and st["error"] is None
+    f = st["features"]
+    assert (f["ask"], f["search"], f["retry_search"]) == (True, "failed", True)
+    assert f["search_error"].startswith("Test-code search setup timed out after")
+    assert "Analysis" not in f["search_error"]
+    assert _chunk_groups(body["snapshot_id"]).get(True, 0) == 0
+
+
+def test_test_code_embedding_does_not_share_the_analysis_limit(client, monkeypatch, fake):
+    from app import config
+    from app.ingest import pipeline
+
+    real = pipeline.search_tests
+
+    def analysis_limit_used_up(job_id, snapshot_id, test):
+        monkeypatch.setattr(config, "MAX_ANALYSIS_S", -1)
+        real(job_id, snapshot_id, test)
+
+    monkeypatch.setattr(pipeline, "search_tests", analysis_limit_used_up)
+    body = client.post("/repos", json={"url": "https://github.com/example/sample"}).json()
+    f = client.get(f"/snapshots/{body['snapshot_id']}/status").json()["features"]
+    assert (f["search"], f["search_error"]) == ("ready", None)
+    assert _chunk_groups(body["snapshot_id"]).get(True, 0) > 0
+
+
 def test_retry_preparing_search_after_a_failed_search(client, monkeypatch, fake):
     from app.ingest import pipeline
 

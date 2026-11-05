@@ -126,7 +126,8 @@ Copy `.env.example`. Only the backend reads these; the key never reaches the bro
 | `MAX_FILES` | `2000` | Files kept per repo |
 | `MAX_FILE_BYTES` | `1000000` | Larger files are skipped |
 | `CLONE_TIMEOUT_S` | `120` | Clone time limit |
-| `MAX_ANALYSIS_S` | `600` | Whole-pipeline time limit |
+| `MAX_ANALYSIS_S` | `600` | Time limit for the analysis, up to search for non-test code |
+| `MAX_TEST_EMBED_S` | `1800` | Time limit for embedding test code, which runs after Ask is on |
 | `LLM_PROVIDER` | `anthropic` | Only Anthropic is implemented |
 | `LLM_MODEL` | – | Model id; empty means AI answers are off. The demo uses `claude-sonnet-5-5` |
 | `LLM_API_KEY` | – | Empty means AI answers are off |

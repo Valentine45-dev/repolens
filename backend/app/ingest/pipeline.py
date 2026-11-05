@@ -467,12 +467,13 @@ def search_first(job_id: int, snapshot_id: int, parsed: dict[str, Parsed], deadl
 def search_tests(job_id: int, snapshot_id: int, test: list[Chunk]) -> None:
     """Search, part 2, after Ask is already on: test code, with its own time budget. On
     failure Ask keeps working on non-test code; the state is 'failed' so it can be retried."""
-    deadline = time.monotonic() + config.MAX_ANALYSIS_S
+    deadline = time.monotonic() + config.MAX_TEST_EMBED_S
     try:
         stats = embed_group(snapshot_id, job_id, test, True, deadline)
-    except JobError as e:
-        log.warning("job %s: test-code search stopped: %s", job_id, e)
-        _set_search(job_id, "failed", f"Test code was not prepared for search: {e}")
+    except JobError:  # the only one embed_group raises: its deadline
+        log.warning("job %s: test-code search stopped at its time limit", job_id)
+        _set_search(job_id, "failed",
+                    f"Test-code search setup timed out after {config.MAX_TEST_EMBED_S}s.")
         return
     except Exception as e:
         log.error("job %s: test-code search failed: %s", job_id, type(e).__name__)
