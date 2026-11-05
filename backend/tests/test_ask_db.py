@@ -535,6 +535,60 @@ def test_retry_is_refused_while_the_analysis_runs_or_search_is_fine(client, snap
 
 # --- the embedding model is not available ----------------------------------------------------
 
+# --- code locations when the LLM cannot answer -------------------------------------------------
+
+def _location(s):
+    return {"path": s.path, "start_line": s.start_line, "end_line": s.end_line,
+            "file_id": s.file_id, "symbol_id": s.symbol_id, "in_test": s.in_test}
+
+
+def test_no_provider_still_returns_ranked_code_locations(client, snapshot, monkeypatch):
+    monkeypatch.setattr(llm, "get_provider", lambda: None)
+    q = "How is a user created?"
+    a = ask(client, snapshot, q)
+    assert (a["kind"], a["status"]) == ("ai", "unavailable")
+    assert a["answer"] == "AI answers are unavailable right now. Graph questions still work."
+    assert a["citations"] == [] and a["dropped"] == 0
+    found = retrieve(snapshot, q, expand=False)
+    assert found.snippets
+    assert a["locations"] == [_location(s) for s in found.snippets]  # search order
+    assert not any(loc["in_test"] for loc in a["locations"])
+
+
+def test_no_provider_with_a_scope_lists_that_file_first(client, snapshot, monkeypatch):
+    monkeypatch.setattr(llm, "get_provider", lambda: None)
+    path = "sample_app/legacy_notes.py"
+    a = ask(client, snapshot, "How is a user created?", file_id=_file_id(snapshot, path))
+    assert a["status"] == "unavailable" and a["locations"][0]["path"] == path
+
+
+@pytest.mark.parametrize("script", [LLMError("timeout", retryable=False), ""])
+def test_llm_failure_or_empty_answer_returns_search_hits_only(client, snapshot, fake, script):
+    fake.script = [script]
+    q = "How is a user created?"
+    a = ask(client, snapshot, q)
+    assert a["status"] == "unavailable" and a["citations"] == []
+    found = retrieve(snapshot, q)
+    assert any(s.via == "graph" for s in found.snippets)  # expansion ran, and stays out
+    assert a["locations"] == [_location(s) for s in found.snippets if s.via == "search"]
+
+
+def test_no_locations_when_search_is_down_or_on_a_real_answer(client, snapshot, fake, monkeypatch):
+    from app.qa import retrieve as retrieve_module
+    from app.qa.embed import EmbedderUnavailable
+
+    fake.script = [NOT_FOUND]
+    assert ask(client, snapshot, "How is a user created?")["locations"] == []
+
+    def broken():
+        raise EmbedderUnavailable("embedder failed to load earlier (OSError)")
+
+    monkeypatch.setattr(retrieve_module, "get_embedder", broken)
+    monkeypatch.setattr(llm, "get_provider", lambda: None)
+    a = ask(client, snapshot, "How is a user created?")
+    assert (a["status"], a["locations"]) == ("unavailable", [])
+
+
 # --- "Ask about this": a question scoped to one file ------------------------------------------
 
 def _file_id(snapshot, path):

@@ -9,6 +9,7 @@ import {
   repoName,
   retrySearch,
   type Answer,
+  type Citation,
   type GraphResult,
   type SnapshotStatus,
 } from "../api";
@@ -502,6 +503,34 @@ function ResultRow({
   );
 }
 
+/** Chips that open the lines in the Explorer. Only server-made ranges come here: validated
+ * citations, or the server's own search hits. */
+function SourceChips({ snapshotId, sources }: { snapshotId: number; sources: Citation[] }) {
+  return (
+    <ul className="citation-list">
+      {sources.map((c) => (
+        <li key={`${c.path}:${c.start_line}-${c.end_line}`}>
+          <Link
+            className="citation"
+            to={exploreHref(snapshotId, {
+              fileId: c.file_id,
+              lines: { start: c.start_line, end: c.end_line },
+              tests: c.in_test,
+              ask: true,
+            })}
+          >
+            <Icon name="file" size={14} />
+            <span>
+              <PathText path={c.path} />:{c.start_line}
+              {c.end_line !== c.start_line ? `-${c.end_line}` : ""}
+            </span>
+          </Link>
+        </li>
+      ))}
+    </ul>
+  );
+}
+
 function AnswerView({
   snapshotId,
   question,
@@ -521,10 +550,20 @@ function AnswerView({
   // A failed AI question gets one line; the reason that applies to every question (no model,
   // search not ready) is the banner at the top of the drawer.
   if (["unavailable", "cap_reached", "no_context", "refused"].includes(answer.status)) {
+    const locations = answer.locations ?? [];
     return (
-      <p className="turn-note" data-status={answer.status}>
-        <Icon name="x" size={14} /> {failedLine(answer)}
-      </p>
+      <div className="answer" data-status={answer.status}>
+        <p className="turn-note">
+          <Icon name="x" size={14} /> {failedLine(answer)}
+        </p>
+        {locations.length ? (
+          <div className="sources">
+            <h3 className="drawer-section-title">Code that matches this question</h3>
+            <SourceChips snapshotId={snapshotId} sources={locations} />
+            <p className="caption">Ranked by search, not read by AI.</p>
+          </div>
+        ) : null}
+      </div>
     );
   }
 
@@ -577,27 +616,7 @@ function AnswerView({
       {answer.citations.length ? (
         <div className="sources">
           <h4 className="drawer-section-title">Relevant source files</h4>
-          <ul className="citation-list">
-            {answer.citations.map((c) => (
-              <li key={`${c.path}:${c.start_line}-${c.end_line}`}>
-                <Link
-                  className="citation"
-                  to={exploreHref(snapshotId, {
-                    fileId: c.file_id,
-                    lines: { start: c.start_line, end: c.end_line },
-                    tests: c.in_test,
-                    ask: true,
-                  })}
-                >
-                  <Icon name="file" size={14} />
-                  <span>
-                    <PathText path={c.path} />:{c.start_line}
-                    {c.end_line !== c.start_line ? `-${c.end_line}` : ""}
-                  </span>
-                </Link>
-              </li>
-            ))}
-          </ul>
+          <SourceChips snapshotId={snapshotId} sources={answer.citations} />
         </div>
       ) : null}
 
@@ -638,7 +657,9 @@ function DrawerBanner({ snapshotId, status }: { snapshotId: number; status: Snap
   let busy = false;
   if (!features.ai) {
     title = "AI answers are unavailable right now.";
-    body = "Graph questions still work: ask which files import, call or depend on something.";
+    body =
+      "Graph questions still work: ask which files import, call or depend on something." +
+      (features.ask ? " Other questions list the code that matches them." : "");
   } else if (features.search === "embedding") {
     const p = features.search_progress;
     title = "Preparing search for questions…";

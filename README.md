@@ -37,7 +37,8 @@ pattern checks, not a security verdict; they can miss issues and can flag safe c
   to the `jobs` row and polled by the UI.
 - Secrets are redacted (line numbers kept) before any file text, snippet or chunk is stored.
 - If the LLM is unavailable (no key, timeout, token cap), the graph, findings and graph
-  questions still work.
+  questions still work. Without a key or on an LLM failure, other questions list the matching
+  code locations from search, with no generated text.
 - Schema: [`backend/schema.sql`](backend/schema.sql). Design notes: [`docs/`](docs/).
 
 ## Running it

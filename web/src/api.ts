@@ -133,6 +133,8 @@ export interface Answer {
   answer: string;
   citations: Citation[];
   dropped: number;
+  /** Search hits when the LLM could not answer (never from model text). Older turns lack it. */
+  locations?: Citation[];
   results: GraphResult[];
   prompt_version: string | null;
   retrieval: {
