@@ -1,0 +1,3 @@
+services:
+  db:
+    password: "fixture-not-a-real-password"

@@ -12,6 +12,7 @@ never runs the code it analyses.
 |---|---|---|
 | `sample_repo/` | A small fake repository (Python + JS/TS) that the ingestion tests analyse in place of a real clone. | `sample_app/broken.py` imports modules that do not exist (unresolved imports must be reported, not crash the parser); `web/src/app.ts` imports `./missing`; `settings.py` holds a fake password (`fixture-not-a-real-password`) for the secret redaction tests; `models.py` has a nested class method whose first parameter is `cls`, not `self`; `tests/check_service.py` and `math.spec.ts` are test-like files for the "exclude tests" filters. |
 | `detectors/` | Positive and negative samples for each detector rule. | `*_positive.*` files contain `eval`, `exec`, shell commands, SQL built from strings, `innerHTML` and bare `except` on lines marked `expect: <rule>`; `*_negative.*` files contain safe look-alikes that must not be reported. |
+| `folder_repo/` | A small fake repository for the folder-first map (`test_graph_levels_db.py`, which also writes a `big/` folder of over 60 files at fetch time). | Planted import cycles (`alpha` ↔ `beta`, `src/mapped`, `web/c1` ↔ `c2`, one through a test file); false cycles that must be excluded (function-local in `lazy/`, `TYPE_CHECKING` in `typed/`, `import type`, lazy `require` and `import()` in `web/`); `challenge` ↔ `scoring`, two folders using each other with no cycle; fake passwords in `README.md`, `deploy/compose.yml` and `scoring/tests.py`; a bare `except` in `scoring/services.py`. |
 
 ## Editor warnings
 
