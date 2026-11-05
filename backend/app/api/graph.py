@@ -1,8 +1,19 @@
 """Graph, file and symbol endpoints. Read-only; everything comes from the ingested snapshot."""
 
+from typing import Literal
+
 from fastapi import APIRouter, HTTPException, Query
 
 from app.db import pool
+from app.graph_map import (
+    GUESS_BELOW,
+    CodeFile,
+    FileLink,
+    MapSymbol,
+    RepoMap,
+    SymbolEdge,
+    symbol_view,
+)
 from app.paths import is_test_path
 
 router = APIRouter()
@@ -22,11 +33,141 @@ def _require_done(conn, snapshot_id: int) -> None:
 
 
 @router.get("/snapshots/{snapshot_id}/graph")
-def file_graph(
+def graph(
     snapshot_id: int,
     min_confidence: float = Query(0.9, ge=0.0, le=1.0),
     exclude_tests: bool = True,
+    level: Literal["folder", "file", "symbol"] | None = None,
+    root: str | None = None,
 ) -> dict:
+    """No `level`: the flat file graph. With `level`: one view of the folder-first map, see
+    app/graph_map.py. `root` is a folder (level folder or file; default the repo root) or a file
+    (level symbol)."""
+    if level is None:
+        if root is not None:
+            raise HTTPException(status_code=422, detail="root needs a level.")
+        return file_graph(snapshot_id, min_confidence, exclude_tests)
+    if level == "symbol" and not root:
+        raise HTTPException(status_code=422, detail="level=symbol needs a file as root.")
+    return map_view(snapshot_id, level, (root or "").strip("/"), min_confidence, exclude_tests)
+
+
+def load_repo_map(conn, snapshot_id: int, min_confidence: float, exclude_tests: bool) -> RepoMap:
+    """Everything the folder and file views add up, read once per request."""
+    code = conn.execute(
+        "SELECT f.id, f.path, f.language, f.loc, s.id AS symbol_id FROM files f"
+        " JOIN symbols s ON s.file_id = f.id AND s.kind = 'module'"
+        " WHERE f.snapshot_id = %s ORDER BY f.path",
+        (snapshot_id,),
+    ).fetchall()
+    outside = conn.execute(
+        "SELECT s.file_id, d.kind, count(*) AS n FROM edges e"
+        " JOIN symbols s ON s.id = e.src_id JOIN symbols d ON d.id = e.dst_id"
+        " WHERE e.snapshot_id = %s AND e.type = 'imports'"
+        " AND d.kind IN ('external', 'unresolved') GROUP BY 1, 2",
+        (snapshot_id,),
+    ).fetchall()
+    findings = conn.execute(
+        "SELECT f.id, f.path, count(*) AS n FROM findings fi JOIN files f ON f.id = fi.file_id"
+        " WHERE fi.snapshot_id = %s GROUP BY 1, 2",
+        (snapshot_id,),
+    ).fetchall()
+    rows = conn.execute(
+        f"SELECT sf.path AS source, df.path AS target, e.type, e.import_scope,"
+        f" {CONFIDENCE} AS confidence, count(*) AS n FROM edges e"
+        " JOIN symbols s ON s.id = e.src_id JOIN symbols d ON d.id = e.dst_id"
+        " JOIN files sf ON sf.id = s.file_id JOIN files df ON df.id = d.file_id"
+        " WHERE e.snapshot_id = %s AND e.type IN ('imports', 'calls')"
+        f" AND s.file_id <> d.file_id AND {CONFIDENCE} >= %s GROUP BY 1, 2, 3, 4, 5",
+        (snapshot_id, min_confidence),
+    ).fetchall()
+    # An import edge without a scope was analysed before scopes existed.
+    unknown_scope = conn.execute(
+        "SELECT EXISTS (SELECT 1 FROM edges WHERE snapshot_id = %s AND type = 'imports'"
+        " AND import_scope IS NULL) AS unknown",
+        (snapshot_id,),
+    ).fetchone()["unknown"]
+
+    counts = {(r["file_id"], r["kind"]): r["n"] for r in outside}
+    finding_counts = {r["id"]: r["n"] for r in findings}
+    files = [
+        CodeFile(f["id"], f["symbol_id"], f["path"], f["language"], f["loc"],
+                 counts.get((f["id"], "external"), 0), counts.get((f["id"], "unresolved"), 0),
+                 finding_counts.get(f["id"], 0))
+        for f in code
+    ]
+    code_ids = {f["id"] for f in code}
+    other = {r["path"]: r["n"] for r in findings if r["id"] not in code_ids}
+
+    links: dict[tuple[str, str], FileLink] = {}
+    for r in rows:
+        link = links.setdefault((r["source"], r["target"]), FileLink(r["source"], r["target"]))
+        confidence = float(r["confidence"])
+        link.confidence = max(link.confidence, confidence)
+        if r["type"] == "imports":
+            link.imports = 1
+            link.top_level_import = r["import_scope"] == "top_level"
+        else:
+            link.calls += r["n"]
+            if confidence < GUESS_BELOW:
+                link.guess_calls += r["n"]
+    return RepoMap(files, list(links.values()), other, exclude_tests=exclude_tests,
+                   cycles_available=not unknown_scope)
+
+
+def _load_symbols(conn, snapshot_id: int, file: CodeFile,
+                  min_confidence: float) -> tuple[list[MapSymbol], list[SymbolEdge]]:
+    own = conn.execute(
+        "SELECT id FROM symbols WHERE file_id = %s AND kind IN"
+        " ('module', 'class', 'function', 'method')",
+        (file.id,),
+    ).fetchall()
+    own_ids = [r["id"] for r in own]
+    rows = conn.execute(
+        f"SELECT e.src_id, e.dst_id, e.type, {CONFIDENCE} AS confidence FROM edges e"
+        " JOIN symbols s ON s.id = e.src_id JOIN symbols d ON d.id = e.dst_id"
+        " WHERE e.snapshot_id = %s AND e.type IN ('calls', 'defines')"
+        " AND s.file_id IS NOT NULL AND d.file_id IS NOT NULL"
+        f" AND (e.src_id = ANY(%s) OR e.dst_id = ANY(%s)) AND {CONFIDENCE} >= %s",
+        (snapshot_id, own_ids, own_ids, min_confidence),
+    ).fetchall()
+    ids = set(own_ids) | {r["src_id"] for r in rows} | {r["dst_id"] for r in rows}
+    symbols = conn.execute(
+        "SELECT s.id, s.kind, s.name, s.qualified_name, s.start_line, s.end_line, s.file_id,"
+        " f.path, (SELECT count(*) FROM findings fi WHERE fi.symbol_id = s.id) AS findings"
+        " FROM symbols s JOIN files f ON f.id = s.file_id WHERE s.id = ANY(%s)",
+        (list(ids),),
+    ).fetchall()
+    return (
+        [MapSymbol(s["id"], s["kind"], s["name"], s["qualified_name"], s["path"], s["file_id"],
+                   s["start_line"], s["end_line"], s["findings"]) for s in symbols],
+        [SymbolEdge(r["src_id"], r["dst_id"], r["type"], float(r["confidence"])) for r in rows],
+    )
+
+
+def map_view(snapshot_id: int, level: str, root: str, min_confidence: float,
+             exclude_tests: bool) -> dict:
+    """404 for a path that is not a folder (or file, at symbol level) with code in this snapshot.
+    A real folder whose files are all hidden is an empty view, which says how many are hidden."""
+    with pool().connection() as conn:
+        _require_done(conn, snapshot_id)
+        repo = load_repo_map(conn, snapshot_id, min_confidence, exclude_tests)
+        if level == "symbol":
+            file = repo.all_by_path.get(root)
+            if file is None:
+                raise HTTPException(status_code=404, detail="File not found in this analysis.")
+            symbols, edges = _load_symbols(conn, snapshot_id, file, min_confidence)
+    if level == "symbol":
+        view = symbol_view(repo, file, symbols, edges)
+    else:
+        if not repo.is_folder(root):
+            raise HTTPException(status_code=404, detail="Folder not found in this analysis.")
+        view = repo.folder_view(root) if level == "folder" else repo.file_view(root)
+    return {"snapshot_id": snapshot_id, "min_confidence": min_confidence,
+            "exclude_tests": exclude_tests, **view}
+
+
+def file_graph(snapshot_id: int, min_confidence: float, exclude_tests: bool) -> dict:
     """File-level graph. External and unresolved imports are not nodes; each file carries
     counts of them instead. Call edges below `min_confidence` are left out."""
     with pool().connection() as conn:

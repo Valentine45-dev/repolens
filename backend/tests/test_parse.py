@@ -79,6 +79,50 @@ def test_python_imports():
     ]
 
 
+def _scopes(source: str, path: str = "p/q.py") -> dict[str, str]:
+    return {i.specifier: i.scope for i in parse_python(path, source).imports}
+
+
+def test_import_scope_is_top_level_for_anything_that_runs_at_import_time():
+    assert set(_scopes(
+        "import a\n"
+        "if FLAG:\n    import b\n"
+        "try:\n    import c\nexcept ImportError:\n    import d\n"
+        "with ctx:\n    import e\n"
+        "for x in y:\n    import f\n"
+        "class K:\n    import g\n"
+    ).values()) == {"top_level"}
+
+
+def test_import_scope_is_nested_inside_functions():
+    assert _scopes(
+        "def f():\n    import a\n    if x:\n        import b\n"
+        "class K:\n    def m(self):\n        import c\n"
+        "@deco\ndef g():\n    from . import d\n"
+        "async def h():\n    import e\n"
+    ) == {"a": "nested", "b": "nested", "c": "nested", ".": "nested", "e": "nested"}
+
+
+def test_import_scope_type_checking_forms():
+    assert _scopes(
+        "if TYPE_CHECKING:\n    import a\n"
+        "if typing.TYPE_CHECKING:\n    from b import B\n"
+        "if t.TYPE_CHECKING:\n    import c\n"
+        "else:\n    import d\n"
+        "if not TYPE_CHECKING:\n    import e\n"
+        "if TYPE_CHECKING and x:\n    import f\n"
+        "def fn():\n    if TYPE_CHECKING:\n        import g\n"
+    ) == {"a": "type_checking", "b": "type_checking", "c": "type_checking",
+          "d": "top_level",  # the else branch runs
+          "e": "top_level", "f": "top_level",  # conditions too complex to read: assume it runs
+          "g": "type_checking"}
+
+
+def test_import_scope_stub_file_is_type_only():
+    assert _scopes("import a\ndef f():\n    import b\n", "p/q.pyi") == {
+        "a": "type_checking", "b": "type_checking"}
+
+
 def test_python_calls_have_caller_and_receiver():
     source = (FIXTURE / "sample_app/service.py").read_text(encoding="utf-8")
     calls = {(c.caller, c.name, c.receiver) for c in parse_python("sample_app/service.py",

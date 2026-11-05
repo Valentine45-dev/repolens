@@ -12,6 +12,15 @@ from tree_sitter import Language, Node, Parser
 PYTHON_LANGUAGE = Language(tree_sitter_python.language())
 _LANGUAGE = PYTHON_LANGUAGE
 
+# When an import runs. Only top-level imports can form a real import cycle, so only they count
+# for cycle detection; every other use of an import (edges, call resolution, detectors) ignores
+# the scope.
+TOP_LEVEL = "top_level"  # at import time: module body, including if/try/with and class bodies
+NESTED = "nested"  # later: inside a function; JS `import()` always
+TYPE_ONLY = "type_checking"  # never: `if TYPE_CHECKING:`, TS `import type`, .pyi and .d.ts files
+# One edge per (file, target): when a file imports a target twice, the first of these wins.
+IMPORT_SCOPES = (TOP_LEVEL, NESTED, TYPE_ONLY)
+
 
 @dataclass(frozen=True)
 class ParsedSymbol:
@@ -30,6 +39,7 @@ class ParsedImport:
     # (import a.b as c, import * as ns, const x = require(...)); local '*' is a star import.
     names: tuple[tuple[str, str], ...]
     line: int
+    scope: str = TOP_LEVEL
 
 
 @dataclass(frozen=True)
@@ -84,7 +94,17 @@ def _receiver(node: Node) -> str:
     return ""
 
 
-def _from_import(node: Node) -> ParsedImport:
+def _is_type_checking(condition: Node | None) -> bool:
+    """`TYPE_CHECKING` or `<anything>.TYPE_CHECKING` (`typing.`, `t.`), nothing more complex."""
+    if condition is None:
+        return False
+    if condition.type == "identifier":
+        return text(condition) == "TYPE_CHECKING"
+    return (condition.type == "attribute"
+            and text(condition.child_by_field_name("attribute")) == "TYPE_CHECKING")
+
+
+def _from_import(node: Node, scope: str) -> ParsedImport:
     """`from .m import a, b as c` -> ParsedImport('.m', (('a', 'a'), ('b', 'c')))."""
     module_node = node.child_by_field_name("module_name")
     names = []
@@ -98,10 +118,10 @@ def _from_import(node: Node) -> ParsedImport:
                           text(child.child_by_field_name("alias"))))
         elif child.type == "dotted_name":
             names.append((text(child), text(child)))
-    return ParsedImport(text(module_node), tuple(names), node.start_point.row + 1)
+    return ParsedImport(text(module_node), tuple(names), node.start_point.row + 1, scope)
 
 
-def _plain_imports(node: Node) -> list[ParsedImport]:
+def _plain_imports(node: Node, scope: str) -> list[ParsedImport]:
     """`import a.b, c as d` -> one ParsedImport per module."""
     line = node.start_point.row + 1
     result = []
@@ -109,9 +129,9 @@ def _plain_imports(node: Node) -> list[ParsedImport]:
         if child.type == "aliased_import":
             module = text(child.child_by_field_name("name"))
             result.append(ParsedImport(module, (("*", text(child.child_by_field_name("alias"))),),
-                                       line))
+                                       line, scope))
         elif child.type == "dotted_name":
-            result.append(ParsedImport(text(child), (("*", text(child)),), line))
+            result.append(ParsedImport(text(child), (("*", text(child)),), line, scope))
     return result
 
 
@@ -123,21 +143,28 @@ def parse_python(path: str, source: str) -> ParsedFile:
         ParsedSymbol("module", module.rsplit(".", 1)[-1], module, 1, line_count(source))
     )
 
-    def visit(node: Node, scope: str, in_class: bool) -> None:
+    def visit(node: Node, scope: str, in_class: bool, runs: str) -> None:
+        """`runs`: the import scope of code at this point."""
         for child in node.named_children:
             if child.type == "decorated_definition":
                 definition = child.child_by_field_name("definition")
                 for dec in child.named_children:
                     if dec != definition:
-                        visit(dec, scope, in_class)
+                        visit(dec, scope, in_class, runs)
                 if definition is not None:
-                    visit_definition(definition, scope, in_class, span=child)
+                    visit_definition(definition, scope, in_class, child, runs)
             elif child.type in ("class_definition", "function_definition"):
-                visit_definition(child, scope, in_class, span=child)
+                visit_definition(child, scope, in_class, child, runs)
             elif child.type == "import_statement":
-                out.imports.extend(_plain_imports(child))
+                out.imports.extend(_plain_imports(child, runs))
             elif child.type == "import_from_statement":
-                out.imports.append(_from_import(child))
+                out.imports.append(_from_import(child, runs))
+            elif (child.type == "if_statement"
+                  and _is_type_checking(child.child_by_field_name("condition"))):
+                # The `if` body never runs; an `else` does.
+                body = child.child_by_field_name("consequence")
+                for part in child.named_children:
+                    visit(part, scope, in_class, TYPE_ONLY if part == body else runs)
             elif child.type == "call":
                 fn = child.child_by_field_name("function")
                 if fn is not None and fn.type == "identifier":
@@ -147,11 +174,11 @@ def parse_python(path: str, source: str) -> ParsedFile:
                         scope, text(fn.child_by_field_name("attribute")),
                         _receiver(fn.child_by_field_name("object")), child.start_point.row + 1,
                     ))
-                visit(child, scope, in_class)
+                visit(child, scope, in_class, runs)
             else:
-                visit(child, scope, in_class)
+                visit(child, scope, in_class, runs)
 
-    def visit_definition(node: Node, scope: str, in_class: bool, span: Node) -> None:
+    def visit_definition(node: Node, scope: str, in_class: bool, span: Node, runs: str) -> None:
         name = text(node.child_by_field_name("name"))
         if not name:
             return
@@ -172,7 +199,11 @@ def parse_python(path: str, source: str) -> ParsedFile:
         )
         body = node.child_by_field_name("body")
         if body is not None:
-            visit(body, qualified, in_class=node.type == "class_definition")
+            # A class body runs when the module does; a function body runs when it is called.
+            is_class = node.type == "class_definition"
+            inner = runs if is_class or runs == TYPE_ONLY else NESTED
+            visit(body, qualified, is_class, inner)
 
-    visit(tree.root_node, module, in_class=False)
+    # A stub file is only ever read by type checkers.
+    visit(tree.root_node, module, False, TYPE_ONLY if path.endswith(".pyi") else TOP_LEVEL)
     return out

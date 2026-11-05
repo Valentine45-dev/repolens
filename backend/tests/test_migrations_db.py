@@ -12,7 +12,7 @@ pytestmark = pytest.mark.db
 
 MIGRATIONS = Path(__file__).resolve().parent.parent / "migrations"
 FILES = ["2026-10-28-repo-case-and-progress.sql", "2026-10-28-search-state.sql",
-         "2026-11-05-analysis-receipt.sql"]
+         "2026-11-05-analysis-receipt.sql", "2026-11-05-import-scope.sql"]
 
 
 def _view_columns(conn) -> list[str]:

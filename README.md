@@ -113,8 +113,21 @@ docker compose exec -T db psql -U repolens -d repolens < backend/migrations/2026
 docker compose exec -T db psql -U repolens -d repolens < backend/migrations/2026-11-05-analysis-receipt.sql
 ```
 
+```bash
+docker compose exec -T db psql -U repolens -d repolens < backend/migrations/2026-11-05-import-scope.sql
+```
+
 (In PowerShell, pipe the file instead: `Get-Content backend/migrations/<file> | docker compose
 exec -T db psql -U repolens -d repolens`.)
+
+After the import-scope migration, fill the new column for analyses that already exist. It rebuilds
+their edges from the stored files, with no clone or embedding. Until then the map says cycles are
+not known for them. Run it with the API stopped:
+
+```bash
+cd backend
+uv run --env-file ../.env python -m app.ingest.backfill
+```
 
 Run only one API against a database at a time: on startup the API marks every running
 analysis and search in that database as interrupted, including another API's.

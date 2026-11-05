@@ -356,6 +356,22 @@ One small implementation per provider. The model name comes from config, so swit
 
 **Graph readability:** a 5,000-node graph is an unreadable hairball. The graph endpoint serves **level of detail**: folders first, then files, then symbols when a node is expanded.
 
+As built (v2, `app/graph_map.py`). No `level` returns the flat file graph, unchanged. Common query parameters: `exclude_tests`, `min_confidence`.
+
+| `level` | `root` | Nodes |
+|---|---|---|
+| `folder` | a folder, default the repo root | Direct children of the folder |
+| `file` | a folder, default the repo root | Every file under the folder, at any depth |
+| `symbol` | a file (required) | That file's classes and functions, plus their direct `calls` / `defines` neighbours in other files |
+
+- **Response:** `level`, `root` (canonical), `breadcrumbs`, `view_limit`, `total_files`, `hidden_files`, `hidden_count`, `cycle_scope`, `cycles_available`, `cycles`, `nodes`, `edges`. Folder and file levels add `hidden_files_under_root` and `other_findings` (findings under the root that no node carries, such as a README beside the code). The symbol level adds `file` and `hidden_symbols`.
+- **Merging:** a folder with no files and one subfolder merges with it (`src/itsdangerous`), and a `root` inside such a chain opens at its end. A folder holding one code file, no subfolder and no finding on another file is shown as that file, with the folder in its `label` (`scoring/admin.py`).
+- **Folder and file nodes:** `id` (`dir:<path>`, `file:<path>`), `kind`, `path`, `label`, `file_count`, `test_file_count`, `finding_count` (a folder's includes its non-code files), `in_cycle`, `cycle_files`, `cycle_ids`, `internal_count`, `outside_in`, `outside_out`. File nodes add `file_id`, `symbol_id`, `language`, `loc`, `external_imports`, `unresolved_imports`.
+- **Aggregated edges:** `source`, `target`, `count` = `imports` + `calls`, `guess_calls` (calls below 0.9), `confidence` (the highest), `guess` (true only if all of them are guesses), `cycle_edges`. Imports count file pairs; calls count symbol pairs. Each edge between visible files touching the root is counted exactly once: on an edge, in `internal_count`, or in `outside_in` / `outside_out`.
+- **View limit:** more than 60 nodes returns the top 60 plus one `kind: "more"` node (`hidden_count`, edges of what it hides). Subfolders rank first, then the most connected, then by path. At the symbol level the file's own symbols rank first.
+- **Cycles:** strongly connected components of `top_level` imports between visible files, computed per request. Function-local imports, `TYPE_CHECKING`, TS `import type`, `.pyi` / `.d.ts` files and `import()` are excluded (`edges.import_scope`). Two folders using each other is **not** a cycle: only `cycle_edges` says an edge is part of one. `cycles_available: false` means the snapshot predates scopes (not "no cycles"), and `in_cycle` and `cycle_edges` are then `null`. Known misses: an implicit parent-package import is not an edge, and a JS IIFE counts as a function.
+- **Errors:** 404 for a path with no code in the snapshot; 422 for `root` without `level`, or `level=symbol` without `root`. A real folder whose files are all hidden is an empty view with `hidden_files_under_root`.
+
 ---
 
 ## 11. Backend folder structure

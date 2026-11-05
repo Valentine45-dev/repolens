@@ -1,0 +1,2263 @@
+{
+  "run": {
+    "commit_sha": "845379a1e0ee84d03c4904196bee64c834f08bc7",
+    "dirty": false,
+    "run_at": "2026-11-05T19:12:25+00:00",
+    "machine": "LAPTOP-4C2E555R",
+    "cpu": "Intel(R) Pentium(R) Silver N5030 CPU @ 1.10GHz",
+    "cpu_threads": 4,
+    "ram_gb": 7.8,
+    "os": "Windows 11 (10.0.22631)",
+    "python": "3.12.16",
+    "packages": {
+      "torch": "2.14.1+cpu",
+      "sentence-transformers": "6.2.0",
+      "transformers": "5.21.0",
+      "tree-sitter": "0.25.2",
+      "anthropic": "2.3.0"
+    },
+    "max_analysis_s": 600,
+    "tool_pins": {
+      "bandit": "bandit==1.9.4",
+      "semgrep": "semgrep==1.182.1"
+    },
+    "notes": "API stopped, Chrome closed, Claude desktop app open, Docker db only. flask analysed with Chrome and a Remotion headless shell open (low RAM); non-test embedding stopped at MAX_ANALYSIS_S=600, graph unaffected. black analysed with MAX_ANALYSIS_S=3600 and MAX_TEST_EMBED_S=60, Chrome closed partway through.",
+    "embedder": "sentence-transformers",
+    "embed_model": "sentence-transformers/all-MiniLM-L6-v2",
+    "embed_revision": "1110a243fdf4706b3f48f1d95db1a4f5529b4d41",
+    "llm_used": false,
+    "llm": {
+      "provider": "anthropic",
+      "model": "claude-sonnet-5-5",
+      "effort": "low",
+      "thinking": "between_tools",
+      "max_tokens": 4000,
+      "prompt_version": "2026-10-28.2"
+    },
+    "retrieval": {
+      "top_k": 8,
+      "graph_expansion": true,
+      "expand_max": 8,
+      "context_tokens": 6000
+    }
+  },
+  "repos": {
+    "itsdangerous": {
+      "snapshot_id": 1,
+      "commit": "672971d66a2ef9f85151e53283113f33d642dabd",
+      "import_scopes": {
+        "external top_level": 38,
+        "external type_checking": 1,
+        "internal top_level": 36
+      },
+      "default": {
+        "flat_nodes": 9,
+        "flat_edges": 21,
+        "root": "",
+        "root_nodes": 2,
+        "root_edges": 0,
+        "folder_views": 2,
+        "max_nodes": 8,
+        "median_nodes": 5.0,
+        "max_edges": 21,
+        "median_edges": 10.5,
+        "views_by_nodes": {
+          "1-5": 1,
+          "6-15": 1,
+          "16-30": 0,
+          "31-60": 0,
+          "61-61": 0
+        },
+        "views_with_overflow": [],
+        "conservation_ok": true,
+        "cycles_top_level": [],
+        "cycles_if_every_import_counted": [],
+        "two_way_folder_pairs_without_cycle": [],
+        "spot_checks": [
+          {
+            "view": "src/itsdangerous",
+            "source": "src/itsdangerous/signer.py",
+            "target": "src/itsdangerous/encoding.py",
+            "api": [
+              10,
+              1,
+              9
+            ],
+            "sql": [
+              10,
+              1,
+              9
+            ],
+            "match": true
+          },
+          {
+            "view": "src/itsdangerous",
+            "source": "src/itsdangerous/timed.py",
+            "target": "src/itsdangerous/encoding.py",
+            "api": [
+              8,
+              1,
+              7
+            ],
+            "sql": [
+              8,
+              1,
+              7
+            ],
+            "match": true
+          },
+          {
+            "view": "src/itsdangerous",
+            "source": "src/itsdangerous/serializer.py",
+            "target": "src/itsdangerous/encoding.py",
+            "api": [
+              5,
+              1,
+              4
+            ],
+            "sql": [
+              5,
+              1,
+              4
+            ],
+            "match": true
+          },
+          {
+            "view": "src/itsdangerous",
+            "source": "src/itsdangerous/timed.py",
+            "target": "src/itsdangerous/exc.py",
+            "api": [
+              3,
+              1,
+              2
+            ],
+            "sql": [
+              3,
+              1,
+              2
+            ],
+            "match": true
+          },
+          {
+            "view": "src/itsdangerous",
+            "source": "src/itsdangerous/url_safe.py",
+            "target": "src/itsdangerous/encoding.py",
+            "api": [
+              3,
+              1,
+              2
+            ],
+            "sql": [
+              3,
+              1,
+              2
+            ],
+            "match": true
+          }
+        ],
+        "symbol_views": {
+          "views": 9,
+          "max_nodes": 26,
+          "median_nodes": 17,
+          "max_edges": 34,
+          "with_overflow": 0
+        },
+        "timing": {
+          "flat_graph_ms": 97.6,
+          "load_and_cycles_ms": 76.3,
+          "cycles_only_ms": 0.1,
+          "root_view_only_ms": 0.3,
+          "full_root_request_ms": 217.0,
+          "files": 9,
+          "links": 21
+        },
+        "per_folder": [
+          {
+            "root": "/",
+            "nodes": 2,
+            "edges": 0,
+            "hidden": 0
+          },
+          {
+            "root": "src/itsdangerous",
+            "nodes": 8,
+            "edges": 21,
+            "hidden": 0
+          }
+        ]
+      },
+      "everything": {
+        "flat_nodes": 15,
+        "flat_edges": 37,
+        "root": "",
+        "root_nodes": 3,
+        "root_edges": 2,
+        "folder_views": 3,
+        "max_nodes": 8,
+        "median_nodes": 6,
+        "max_edges": 21,
+        "median_edges": 4,
+        "views_by_nodes": {
+          "1-5": 1,
+          "6-15": 2,
+          "16-30": 0,
+          "31-60": 0,
+          "61-61": 0
+        },
+        "views_with_overflow": [],
+        "conservation_ok": true,
+        "cycles_top_level": [],
+        "cycles_if_every_import_counted": [],
+        "two_way_folder_pairs_without_cycle": [
+          "/: dir:src/itsdangerous <-> dir:tests/test_itsdangerous (1, 30)"
+        ],
+        "spot_checks": [
+          {
+            "view": "",
+            "source": "tests/test_itsdangerous",
+            "target": "src/itsdangerous",
+            "api": [
+              30,
+              11,
+              19
+            ],
+            "sql": [
+              30,
+              11,
+              19
+            ],
+            "match": true
+          },
+          {
+            "view": "src/itsdangerous",
+            "source": "src/itsdangerous/signer.py",
+            "target": "src/itsdangerous/encoding.py",
+            "api": [
+              10,
+              1,
+              9
+            ],
+            "sql": [
+              10,
+              1,
+              9
+            ],
+            "match": true
+          },
+          {
+            "view": "src/itsdangerous",
+            "source": "src/itsdangerous/timed.py",
+            "target": "src/itsdangerous/encoding.py",
+            "api": [
+              8,
+              1,
+              7
+            ],
+            "sql": [
+              8,
+              1,
+              7
+            ],
+            "match": true
+          },
+          {
+            "view": "src/itsdangerous",
+            "source": "src/itsdangerous/serializer.py",
+            "target": "src/itsdangerous/encoding.py",
+            "api": [
+              5,
+              1,
+              4
+            ],
+            "sql": [
+              5,
+              1,
+              4
+            ],
+            "match": true
+          },
+          {
+            "view": "src/itsdangerous",
+            "source": "src/itsdangerous/timed.py",
+            "target": "src/itsdangerous/exc.py",
+            "api": [
+              3,
+              1,
+              2
+            ],
+            "sql": [
+              3,
+              1,
+              2
+            ],
+            "match": true
+          }
+        ],
+        "symbol_views": {
+          "views": 15,
+          "max_nodes": 31,
+          "median_nodes": 17,
+          "max_edges": 41,
+          "with_overflow": 0
+        },
+        "timing": {
+          "flat_graph_ms": 86.6,
+          "load_and_cycles_ms": 130.2,
+          "cycles_only_ms": 0.2,
+          "root_view_only_ms": 0.5,
+          "full_root_request_ms": 80.4,
+          "files": 15,
+          "links": 37
+        },
+        "per_folder": [
+          {
+            "root": "/",
+            "nodes": 3,
+            "edges": 2,
+            "hidden": 0
+          },
+          {
+            "root": "src/itsdangerous",
+            "nodes": 8,
+            "edges": 21,
+            "hidden": 0
+          },
+          {
+            "root": "tests/test_itsdangerous",
+            "nodes": 6,
+            "edges": 4,
+            "hidden": 0
+          }
+        ]
+      }
+    },
+    "pygoat": {
+      "snapshot_id": 2,
+      "commit": "46fef968f3f44d1191363baf936aaa3335dc5c6d",
+      "import_scopes": {
+        "external nested": 2,
+        "internal nested": 8,
+        "internal top_level": 30,
+        "external top_level": 214
+      },
+      "default": {
+        "flat_nodes": 114,
+        "flat_edges": 31,
+        "root": "",
+        "root_nodes": 9,
+        "root_edges": 4,
+        "folder_views": 20,
+        "max_nodes": 26,
+        "median_nodes": 3.5,
+        "max_edges": 10,
+        "median_edges": 0.0,
+        "views_by_nodes": {
+          "1-5": 12,
+          "6-15": 6,
+          "16-30": 2,
+          "31-60": 0,
+          "61-61": 0
+        },
+        "views_with_overflow": [],
+        "conservation_ok": true,
+        "cycles_top_level": [],
+        "cycles_if_every_import_counted": [],
+        "two_way_folder_pairs_without_cycle": [
+          "/: dir:challenge <-> dir:scoring (10, 2)"
+        ],
+        "spot_checks": [
+          {
+            "view": "",
+            "source": "challenge",
+            "target": "scoring",
+            "api": [
+              10,
+              4,
+              6
+            ],
+            "sql": [
+              10,
+              4,
+              6
+            ],
+            "match": true
+          },
+          {
+            "view": "",
+            "source": "introduction",
+            "target": "challenge",
+            "api": [
+              4,
+              2,
+              2
+            ],
+            "sql": [
+              4,
+              2,
+              2
+            ],
+            "match": true
+          },
+          {
+            "view": "challenge",
+            "source": "challenge/management/commands",
+            "target": "challenge/models.py",
+            "api": [
+              3,
+              3,
+              0
+            ],
+            "sql": [
+              3,
+              3,
+              0
+            ],
+            "match": true
+          },
+          {
+            "view": "dockerized_labs/sensitive_data_exposure/dataexposure",
+            "source": "dockerized_labs/sensitive_data_exposure/dataexposure/views.py",
+            "target": "dockerized_labs/sensitive_data_exposure/dataexposure/forms.py",
+            "api": [
+              3,
+              1,
+              2
+            ],
+            "sql": [
+              3,
+              1,
+              2
+            ],
+            "match": true
+          },
+          {
+            "view": "scoring",
+            "source": "scoring/signals.py",
+            "target": "scoring/models.py",
+            "api": [
+              3,
+              1,
+              2
+            ],
+            "sql": [
+              3,
+              1,
+              2
+            ],
+            "match": true
+          }
+        ],
+        "symbol_views": {
+          "views": 114,
+          "max_nodes": 32,
+          "median_nodes": 1.0,
+          "max_edges": 40,
+          "with_overflow": 0
+        },
+        "timing": {
+          "flat_graph_ms": 84.6,
+          "load_and_cycles_ms": 116.9,
+          "cycles_only_ms": 0.6,
+          "root_view_only_ms": 1.0,
+          "full_root_request_ms": 127.2,
+          "files": 114,
+          "links": 31
+        },
+        "per_folder": [
+          {
+            "root": "/",
+            "nodes": 9,
+            "edges": 4,
+            "hidden": 0
+          },
+          {
+            "root": "challenge",
+            "nodes": 11,
+            "edges": 5,
+            "hidden": 0
+          },
+          {
+            "root": "challenge/labs",
+            "nodes": 3,
+            "edges": 0,
+            "hidden": 0
+          },
+          {
+            "root": "challenge/management/commands",
+            "nodes": 3,
+            "edges": 0,
+            "hidden": 0
+          },
+          {
+            "root": "challenge/migrations",
+            "nodes": 8,
+            "edges": 0,
+            "hidden": 0
+          },
+          {
+            "root": "dockerized_labs",
+            "nodes": 21,
+            "edges": 0,
+            "hidden": 0
+          },
+          {
+            "root": "dockerized_labs/insufficient_logging_lab",
+            "nodes": 1,
+            "edges": 0,
+            "hidden": 0
+          },
+          {
+            "root": "dockerized_labs/sec_misconfig",
+            "nodes": 1,
+            "edges": 0,
+            "hidden": 0
+          },
+          {
+            "root": "dockerized_labs/sensitive_data_exposure",
+            "nodes": 3,
+            "edges": 0,
+            "hidden": 0
+          },
+          {
+            "root": "dockerized_labs/sensitive_data_exposure/dataexposure",
+            "nodes": 6,
+            "edges": 3,
+            "hidden": 0
+          },
+          {
+            "root": "dockerized_labs/sensitive_data_exposure/dataexposure/migrations",
+            "nodes": 2,
+            "edges": 0,
+            "hidden": 0
+          },
+          {
+            "root": "dockerized_labs/sensitive_data_exposure/sensitive_data_lab",
+            "nodes": 4,
+            "edges": 0,
+            "hidden": 0
+          },
+          {
+            "root": "introduction",
+            "nodes": 9,
+            "edges": 2,
+            "hidden": 0
+          },
+          {
+            "root": "introduction/migrations",
+            "nodes": 26,
+            "edges": 0,
+            "hidden": 0
+          },
+          {
+            "root": "introduction/static/js",
+            "nodes": 2,
+            "edges": 0,
+            "hidden": 0
+          },
+          {
+            "root": "pygoat",
+            "nodes": 5,
+            "edges": 0,
+            "hidden": 0
+          },
+          {
+            "root": "scoring",
+            "nodes": 12,
+            "edges": 10,
+            "hidden": 0
+          },
+          {
+            "root": "scoring/management",
+            "nodes": 2,
+            "edges": 0,
+            "hidden": 0
+          },
+          {
+            "root": "scoring/management/commands",
+            "nodes": 2,
+            "edges": 0,
+            "hidden": 0
+          },
+          {
+            "root": "scoring/migrations",
+            "nodes": 3,
+            "edges": 0,
+            "hidden": 0
+          }
+        ]
+      },
+      "everything": {
+        "flat_nodes": 117,
+        "flat_edges": 69,
+        "root": "",
+        "root_nodes": 9,
+        "root_edges": 7,
+        "folder_views": 20,
+        "max_nodes": 26,
+        "median_nodes": 3.5,
+        "max_edges": 13,
+        "median_edges": 0.0,
+        "views_by_nodes": {
+          "1-5": 12,
+          "6-15": 6,
+          "16-30": 2,
+          "31-60": 0,
+          "61-61": 0
+        },
+        "views_with_overflow": [],
+        "conservation_ok": true,
+        "cycles_top_level": [],
+        "cycles_if_every_import_counted": [],
+        "two_way_folder_pairs_without_cycle": [
+          "/: dir:challenge <-> dir:scoring (10, 12)"
+        ],
+        "spot_checks": [
+          {
+            "view": "",
+            "source": "dockerized_labs",
+            "target": "challenge",
+            "api": [
+              52,
+              0,
+              52
+            ],
+            "sql": [
+              52,
+              0,
+              52
+            ],
+            "match": true
+          },
+          {
+            "view": "challenge",
+            "source": "challenge/tests.py",
+            "target": "challenge/views.py",
+            "api": [
+              21,
+              1,
+              20
+            ],
+            "sql": [
+              21,
+              1,
+              20
+            ],
+            "match": true
+          },
+          {
+            "view": "",
+            "source": "scoring",
+            "target": "challenge",
+            "api": [
+              12,
+              3,
+              9
+            ],
+            "sql": [
+              12,
+              3,
+              9
+            ],
+            "match": true
+          },
+          {
+            "view": "",
+            "source": "introduction",
+            "target": "challenge",
+            "api": [
+              11,
+              3,
+              8
+            ],
+            "sql": [
+              11,
+              3,
+              8
+            ],
+            "match": true
+          },
+          {
+            "view": "",
+            "source": "challenge",
+            "target": "scoring",
+            "api": [
+              10,
+              4,
+              6
+            ],
+            "sql": [
+              10,
+              4,
+              6
+            ],
+            "match": true
+          }
+        ],
+        "symbol_views": {
+          "views": 117,
+          "max_nodes": 61,
+          "median_nodes": 1,
+          "max_edges": 85,
+          "with_overflow": 1
+        },
+        "timing": {
+          "flat_graph_ms": 185.4,
+          "load_and_cycles_ms": 167.4,
+          "cycles_only_ms": 0.5,
+          "root_view_only_ms": 1.4,
+          "full_root_request_ms": 614.9,
+          "files": 117,
+          "links": 69
+        },
+        "per_folder": [
+          {
+            "root": "/",
+            "nodes": 9,
+            "edges": 7,
+            "hidden": 0
+          },
+          {
+            "root": "challenge",
+            "nodes": 12,
+            "edges": 9,
+            "hidden": 0
+          },
+          {
+            "root": "challenge/labs",
+            "nodes": 3,
+            "edges": 0,
+            "hidden": 0
+          },
+          {
+            "root": "challenge/management/commands",
+            "nodes": 3,
+            "edges": 0,
+            "hidden": 0
+          },
+          {
+            "root": "challenge/migrations",
+            "nodes": 8,
+            "edges": 0,
+            "hidden": 0
+          },
+          {
+            "root": "dockerized_labs",
+            "nodes": 21,
+            "edges": 0,
+            "hidden": 0
+          },
+          {
+            "root": "dockerized_labs/insufficient_logging_lab",
+            "nodes": 1,
+            "edges": 0,
+            "hidden": 0
+          },
+          {
+            "root": "dockerized_labs/sec_misconfig",
+            "nodes": 1,
+            "edges": 0,
+            "hidden": 0
+          },
+          {
+            "root": "dockerized_labs/sensitive_data_exposure",
+            "nodes": 3,
+            "edges": 0,
+            "hidden": 0
+          },
+          {
+            "root": "dockerized_labs/sensitive_data_exposure/dataexposure",
+            "nodes": 6,
+            "edges": 3,
+            "hidden": 0
+          },
+          {
+            "root": "dockerized_labs/sensitive_data_exposure/dataexposure/migrations",
+            "nodes": 2,
+            "edges": 0,
+            "hidden": 0
+          },
+          {
+            "root": "dockerized_labs/sensitive_data_exposure/sensitive_data_lab",
+            "nodes": 4,
+            "edges": 0,
+            "hidden": 0
+          },
+          {
+            "root": "introduction",
+            "nodes": 10,
+            "edges": 2,
+            "hidden": 0
+          },
+          {
+            "root": "introduction/migrations",
+            "nodes": 26,
+            "edges": 0,
+            "hidden": 0
+          },
+          {
+            "root": "introduction/static/js",
+            "nodes": 2,
+            "edges": 0,
+            "hidden": 0
+          },
+          {
+            "root": "pygoat",
+            "nodes": 5,
+            "edges": 0,
+            "hidden": 0
+          },
+          {
+            "root": "scoring",
+            "nodes": 13,
+            "edges": 13,
+            "hidden": 0
+          },
+          {
+            "root": "scoring/management",
+            "nodes": 2,
+            "edges": 0,
+            "hidden": 0
+          },
+          {
+            "root": "scoring/management/commands",
+            "nodes": 2,
+            "edges": 0,
+            "hidden": 0
+          },
+          {
+            "root": "scoring/migrations",
+            "nodes": 3,
+            "edges": 0,
+            "hidden": 0
+          }
+        ]
+      }
+    },
+    "express": {
+      "snapshot_id": 3,
+      "commit": "1c6f1b0fe4000977b9a7b4f34097e4d527dd9824",
+      "import_scopes": {
+        "external nested": 1,
+        "internal top_level": 154,
+        "external top_level": 243
+      },
+      "default": {
+        "flat_nodes": 7,
+        "flat_edges": 7,
+        "root": "",
+        "root_nodes": 2,
+        "root_edges": 1,
+        "folder_views": 2,
+        "max_nodes": 6,
+        "median_nodes": 4.0,
+        "max_edges": 6,
+        "median_edges": 3.5,
+        "views_by_nodes": {
+          "1-5": 1,
+          "6-15": 1,
+          "16-30": 0,
+          "31-60": 0,
+          "61-61": 0
+        },
+        "views_with_overflow": [],
+        "conservation_ok": true,
+        "cycles_top_level": [],
+        "cycles_if_every_import_counted": [],
+        "two_way_folder_pairs_without_cycle": [],
+        "spot_checks": [
+          {
+            "view": "",
+            "source": "index.js",
+            "target": "lib",
+            "api": [
+              1,
+              1,
+              0
+            ],
+            "sql": [
+              1,
+              1,
+              0
+            ],
+            "match": true
+          },
+          {
+            "view": "lib",
+            "source": "lib/application.js",
+            "target": "lib/utils.js",
+            "api": [
+              1,
+              1,
+              0
+            ],
+            "sql": [
+              1,
+              1,
+              0
+            ],
+            "match": true
+          },
+          {
+            "view": "lib",
+            "source": "lib/application.js",
+            "target": "lib/view.js",
+            "api": [
+              1,
+              1,
+              0
+            ],
+            "sql": [
+              1,
+              1,
+              0
+            ],
+            "match": true
+          },
+          {
+            "view": "lib",
+            "source": "lib/express.js",
+            "target": "lib/application.js",
+            "api": [
+              1,
+              1,
+              0
+            ],
+            "sql": [
+              1,
+              1,
+              0
+            ],
+            "match": true
+          },
+          {
+            "view": "lib",
+            "source": "lib/express.js",
+            "target": "lib/request.js",
+            "api": [
+              1,
+              1,
+              0
+            ],
+            "sql": [
+              1,
+              1,
+              0
+            ],
+            "match": true
+          }
+        ],
+        "symbol_views": {
+          "views": 7,
+          "max_nodes": 29,
+          "median_nodes": 9,
+          "max_edges": 27,
+          "with_overflow": 0
+        },
+        "timing": {
+          "flat_graph_ms": 165.0,
+          "load_and_cycles_ms": 232.3,
+          "cycles_only_ms": 0.1,
+          "root_view_only_ms": 0.4,
+          "full_root_request_ms": 222.3,
+          "files": 7,
+          "links": 7
+        },
+        "per_folder": [
+          {
+            "root": "/",
+            "nodes": 2,
+            "edges": 1,
+            "hidden": 0
+          },
+          {
+            "root": "lib",
+            "nodes": 6,
+            "edges": 6,
+            "hidden": 0
+          }
+        ]
+      },
+      "everything": {
+        "flat_nodes": 142,
+        "flat_edges": 291,
+        "root": "",
+        "root_nodes": 4,
+        "root_edges": 6,
+        "folder_views": 17,
+        "max_nodes": 61,
+        "median_nodes": 3,
+        "max_edges": 12,
+        "median_edges": 1,
+        "views_by_nodes": {
+          "1-5": 13,
+          "6-15": 1,
+          "16-30": 2,
+          "31-60": 0,
+          "61-61": 1
+        },
+        "views_with_overflow": [
+          {
+            "root": "test",
+            "nodes": 61,
+            "hidden": 13
+          }
+        ],
+        "conservation_ok": true,
+        "cycles_top_level": [],
+        "cycles_if_every_import_counted": [],
+        "two_way_folder_pairs_without_cycle": [],
+        "spot_checks": [
+          {
+            "view": "",
+            "source": "test",
+            "target": "lib",
+            "api": [
+              161,
+              6,
+              155
+            ],
+            "sql": [
+              161,
+              6,
+              155
+            ],
+            "match": true
+          },
+          {
+            "view": "",
+            "source": "examples",
+            "target": "lib",
+            "api": [
+              83,
+              2,
+              81
+            ],
+            "sql": [
+              83,
+              2,
+              81
+            ],
+            "match": true
+          },
+          {
+            "view": "",
+            "source": "test",
+            "target": "index.js",
+            "api": [
+              69,
+              69,
+              0
+            ],
+            "sql": [
+              69,
+              69,
+              0
+            ],
+            "match": true
+          },
+          {
+            "view": "",
+            "source": "examples",
+            "target": "index.js",
+            "api": [
+              27,
+              27,
+              0
+            ],
+            "sql": [
+              27,
+              27,
+              0
+            ],
+            "match": true
+          },
+          {
+            "view": "",
+            "source": "test",
+            "target": "examples",
+            "api": [
+              18,
+              18,
+              0
+            ],
+            "sql": [
+              18,
+              18,
+              0
+            ],
+            "match": true
+          }
+        ],
+        "symbol_views": {
+          "views": 142,
+          "max_nodes": 61,
+          "median_nodes": 3.0,
+          "max_edges": 128,
+          "with_overflow": 2
+        },
+        "timing": {
+          "flat_graph_ms": 98.4,
+          "load_and_cycles_ms": 179.1,
+          "cycles_only_ms": 0.8,
+          "root_view_only_ms": 2.3,
+          "full_root_request_ms": 225.5,
+          "files": 142,
+          "links": 291
+        },
+        "per_folder": [
+          {
+            "root": "/",
+            "nodes": 4,
+            "edges": 6,
+            "hidden": 0
+          },
+          {
+            "root": "examples",
+            "nodes": 25,
+            "edges": 0,
+            "hidden": 0
+          },
+          {
+            "root": "examples/content-negotiation",
+            "nodes": 3,
+            "edges": 2,
+            "hidden": 0
+          },
+          {
+            "root": "examples/multi-router",
+            "nodes": 2,
+            "edges": 1,
+            "hidden": 0
+          },
+          {
+            "root": "examples/multi-router/controllers",
+            "nodes": 2,
+            "edges": 0,
+            "hidden": 0
+          },
+          {
+            "root": "examples/mvc",
+            "nodes": 4,
+            "edges": 2,
+            "hidden": 0
+          },
+          {
+            "root": "examples/mvc/controllers",
+            "nodes": 4,
+            "edges": 0,
+            "hidden": 0
+          },
+          {
+            "root": "examples/route-separation",
+            "nodes": 4,
+            "edges": 3,
+            "hidden": 0
+          },
+          {
+            "root": "examples/search",
+            "nodes": 2,
+            "edges": 0,
+            "hidden": 0
+          },
+          {
+            "root": "examples/session",
+            "nodes": 2,
+            "edges": 0,
+            "hidden": 0
+          },
+          {
+            "root": "examples/static-files",
+            "nodes": 2,
+            "edges": 0,
+            "hidden": 0
+          },
+          {
+            "root": "examples/view-constructor",
+            "nodes": 2,
+            "edges": 1,
+            "hidden": 0
+          },
+          {
+            "root": "examples/view-locals",
+            "nodes": 2,
+            "edges": 1,
+            "hidden": 0
+          },
+          {
+            "root": "lib",
+            "nodes": 6,
+            "edges": 8,
+            "hidden": 0
+          },
+          {
+            "root": "test",
+            "nodes": 61,
+            "edges": 12,
+            "hidden": 13
+          },
+          {
+            "root": "test/acceptance",
+            "nodes": 18,
+            "edges": 0,
+            "hidden": 0
+          },
+          {
+            "root": "test/support",
+            "nodes": 3,
+            "edges": 0,
+            "hidden": 0
+          }
+        ]
+      }
+    },
+    "flask": {
+      "snapshot_id": 6,
+      "commit": "49943b5a94413a530761350f04e896f76e8d620e",
+      "import_scopes": {
+        "external nested": 22,
+        "external type_checking": 10,
+        "internal nested": 14,
+        "internal top_level": 152,
+        "internal type_checking": 24,
+        "external top_level": 218
+      },
+      "default": {
+        "flat_nodes": 25,
+        "flat_edges": 95,
+        "root": "",
+        "root_nodes": 2,
+        "root_edges": 0,
+        "folder_views": 5,
+        "max_nodes": 20,
+        "median_nodes": 3,
+        "max_edges": 82,
+        "median_edges": 2,
+        "views_by_nodes": {
+          "1-5": 4,
+          "6-15": 0,
+          "16-30": 1,
+          "31-60": 0,
+          "61-61": 0
+        },
+        "views_with_overflow": [],
+        "conservation_ok": true,
+        "cycles_top_level": [],
+        "cycles_if_every_import_counted": [
+          [
+            "src/flask/__init__.py",
+            "src/flask/app.py",
+            "src/flask/blueprints.py",
+            "src/flask/cli.py",
+            "src/flask/config.py",
+            "src/flask/ctx.py",
+            "src/flask/debughelpers.py",
+            "src/flask/globals.py",
+            "src/flask/helpers.py",
+            "src/flask/json/__init__.py",
+            "src/flask/json/provider.py",
+            "src/flask/json/tag.py",
+            "src/flask/logging.py",
+            "src/flask/sansio/app.py",
+            "src/flask/sansio/blueprints.py",
+            "src/flask/sansio/scaffold.py",
+            "src/flask/sessions.py",
+            "src/flask/templating.py",
+            "src/flask/testing.py",
+            "src/flask/wrappers.py"
+          ]
+        ],
+        "two_way_folder_pairs_without_cycle": [
+          "src/flask: dir:src/flask/json <-> dir:src/flask/sansio (1, 1)",
+          "src/flask: dir:src/flask/json <-> file:src/flask/wrappers.py (1, 1)",
+          "src/flask: dir:src/flask/sansio <-> file:src/flask/config.py (1, 1)",
+          "src/flask: dir:src/flask/sansio <-> file:src/flask/logging.py (2, 1)",
+          "src/flask: dir:src/flask/sansio <-> file:src/flask/templating.py (3, 2)",
+          "src/flask: file:src/flask/app.py <-> file:src/flask/cli.py (4, 1)",
+          "src/flask: file:src/flask/app.py <-> file:src/flask/ctx.py (3, 1)",
+          "src/flask: file:src/flask/app.py <-> file:src/flask/globals.py (1, 1)",
+          "src/flask: file:src/flask/app.py <-> file:src/flask/sessions.py (2, 1)",
+          "src/flask: file:src/flask/app.py <-> file:src/flask/testing.py (4, 1)",
+          "src/flask: file:src/flask/ctx.py <-> file:src/flask/globals.py (1, 1)",
+          "src/flask: file:src/flask/debughelpers.py <-> file:src/flask/wrappers.py (1, 2)",
+          "src/flask: file:src/flask/globals.py <-> file:src/flask/wrappers.py (1, 1)",
+          "src/flask: file:src/flask/helpers.py <-> file:src/flask/wrappers.py (1, 2)",
+          "src/flask/sansio: file:src/flask/sansio/app.py <-> file:src/flask/sansio/blueprints.py (1, 1)"
+        ],
+        "spot_checks": [
+          {
+            "view": "src/flask",
+            "source": "src/flask/app.py",
+            "target": "src/flask/helpers.py",
+            "api": [
+              6,
+              1,
+              5
+            ],
+            "sql": [
+              6,
+              1,
+              5
+            ],
+            "match": true
+          },
+          {
+            "view": "src/flask",
+            "source": "src/flask/sansio",
+            "target": "src/flask/helpers.py",
+            "api": [
+              5,
+              2,
+              3
+            ],
+            "sql": [
+              5,
+              2,
+              3
+            ],
+            "match": true
+          },
+          {
+            "view": "src/flask",
+            "source": "src/flask/app.py",
+            "target": "src/flask/cli.py",
+            "api": [
+              4,
+              1,
+              3
+            ],
+            "sql": [
+              4,
+              1,
+              3
+            ],
+            "match": true
+          },
+          {
+            "view": "src/flask",
+            "source": "src/flask/app.py",
+            "target": "src/flask/testing.py",
+            "api": [
+              4,
+              1,
+              3
+            ],
+            "sql": [
+              4,
+              1,
+              3
+            ],
+            "match": true
+          },
+          {
+            "view": "src/flask",
+            "source": "src/flask/cli.py",
+            "target": "src/flask/helpers.py",
+            "api": [
+              4,
+              1,
+              3
+            ],
+            "sql": [
+              4,
+              1,
+              3
+            ],
+            "match": true
+          }
+        ],
+        "symbol_views": {
+          "views": 25,
+          "max_nodes": 54,
+          "median_nodes": 16,
+          "max_edges": 80,
+          "with_overflow": 0
+        },
+        "timing": {
+          "flat_graph_ms": 110.4,
+          "load_and_cycles_ms": 173.9,
+          "cycles_only_ms": 0.2,
+          "root_view_only_ms": 0.3,
+          "full_root_request_ms": 121.1,
+          "files": 25,
+          "links": 95
+        },
+        "per_folder": [
+          {
+            "root": "/",
+            "nodes": 2,
+            "edges": 0,
+            "hidden": 0
+          },
+          {
+            "root": "docs",
+            "nodes": 1,
+            "edges": 0,
+            "hidden": 0
+          },
+          {
+            "root": "src/flask",
+            "nodes": 20,
+            "edges": 82,
+            "hidden": 0
+          },
+          {
+            "root": "src/flask/json",
+            "nodes": 3,
+            "edges": 2,
+            "hidden": 0
+          },
+          {
+            "root": "src/flask/sansio",
+            "nodes": 3,
+            "edges": 4,
+            "hidden": 0
+          }
+        ]
+      },
+      "everything": {
+        "flat_nodes": 83,
+        "flat_edges": 353,
+        "root": "",
+        "root_nodes": 4,
+        "root_edges": 4,
+        "folder_views": 23,
+        "max_nodes": 25,
+        "median_nodes": 3,
+        "max_edges": 91,
+        "median_edges": 1,
+        "views_by_nodes": {
+          "1-5": 20,
+          "6-15": 1,
+          "16-30": 2,
+          "31-60": 0,
+          "61-61": 0
+        },
+        "views_with_overflow": [],
+        "conservation_ok": true,
+        "cycles_top_level": [
+          [
+            "examples/javascript/js_example/__init__.py",
+            "examples/javascript/js_example/views.py"
+          ]
+        ],
+        "cycles_if_every_import_counted": [
+          [
+            "examples/javascript/js_example/__init__.py",
+            "examples/javascript/js_example/views.py"
+          ],
+          [
+            "src/flask/__init__.py",
+            "src/flask/app.py",
+            "src/flask/blueprints.py",
+            "src/flask/cli.py",
+            "src/flask/config.py",
+            "src/flask/ctx.py",
+            "src/flask/debughelpers.py",
+            "src/flask/globals.py",
+            "src/flask/helpers.py",
+            "src/flask/json/__init__.py",
+            "src/flask/json/provider.py",
+            "src/flask/json/tag.py",
+            "src/flask/logging.py",
+            "src/flask/sansio/app.py",
+            "src/flask/sansio/blueprints.py",
+            "src/flask/sansio/scaffold.py",
+            "src/flask/sessions.py",
+            "src/flask/templating.py",
+            "src/flask/testing.py",
+            "src/flask/wrappers.py"
+          ]
+        ],
+        "two_way_folder_pairs_without_cycle": [
+          "/: dir:src/flask <-> dir:tests (19, 773)",
+          "src/flask: dir:src/flask/json <-> dir:src/flask/sansio (1, 1)",
+          "src/flask: dir:src/flask/json <-> file:src/flask/wrappers.py (1, 1)",
+          "src/flask: dir:src/flask/sansio <-> file:src/flask/config.py (1, 1)",
+          "src/flask: dir:src/flask/sansio <-> file:src/flask/helpers.py (5, 1)",
+          "src/flask: dir:src/flask/sansio <-> file:src/flask/logging.py (2, 1)",
+          "src/flask: dir:src/flask/sansio <-> file:src/flask/templating.py (3, 4)",
+          "src/flask: file:src/flask/app.py <-> file:src/flask/cli.py (4, 4)",
+          "src/flask: file:src/flask/app.py <-> file:src/flask/ctx.py (7, 5)",
+          "src/flask: file:src/flask/app.py <-> file:src/flask/globals.py (2, 1)",
+          "src/flask: file:src/flask/app.py <-> file:src/flask/helpers.py (8, 2)",
+          "src/flask: file:src/flask/app.py <-> file:src/flask/sessions.py (3, 1)",
+          "src/flask: file:src/flask/app.py <-> file:src/flask/templating.py (1, 2)",
+          "src/flask: file:src/flask/app.py <-> file:src/flask/testing.py (4, 2)",
+          "src/flask: file:src/flask/ctx.py <-> file:src/flask/globals.py (1, 1)",
+          "src/flask: file:src/flask/debughelpers.py <-> file:src/flask/wrappers.py (1, 2)",
+          "src/flask: file:src/flask/globals.py <-> file:src/flask/wrappers.py (1, 1)",
+          "src/flask: file:src/flask/helpers.py <-> file:src/flask/wrappers.py (1, 2)",
+          "src/flask/sansio: file:src/flask/sansio/app.py <-> file:src/flask/sansio/blueprints.py (1, 4)"
+        ],
+        "spot_checks": [
+          {
+            "view": "",
+            "source": "tests",
+            "target": "src/flask",
+            "api": [
+              773,
+              62,
+              711
+            ],
+            "sql": [
+              773,
+              62,
+              711
+            ],
+            "match": true
+          },
+          {
+            "view": "",
+            "source": "examples",
+            "target": "src/flask",
+            "api": [
+              64,
+              10,
+              54
+            ],
+            "sql": [
+              64,
+              10,
+              54
+            ],
+            "match": true
+          },
+          {
+            "view": "",
+            "source": "src/flask",
+            "target": "tests",
+            "api": [
+              19,
+              0,
+              19
+            ],
+            "sql": [
+              19,
+              0,
+              19
+            ],
+            "match": true
+          },
+          {
+            "view": "examples/tutorial",
+            "source": "examples/tutorial/tests",
+            "target": "examples/tutorial/flaskr",
+            "api": [
+              16,
+              6,
+              10
+            ],
+            "sql": [
+              16,
+              6,
+              10
+            ],
+            "match": true
+          },
+          {
+            "view": "src/flask",
+            "source": "src/flask/sansio",
+            "target": "src/flask/ctx.py",
+            "api": [
+              12,
+              1,
+              11
+            ],
+            "sql": [
+              12,
+              1,
+              11
+            ],
+            "match": true
+          }
+        ],
+        "symbol_views": {
+          "views": 83,
+          "max_nodes": 61,
+          "median_nodes": 13,
+          "max_edges": 142,
+          "with_overflow": 15
+        },
+        "timing": {
+          "flat_graph_ms": 139.0,
+          "load_and_cycles_ms": 138.0,
+          "cycles_only_ms": 0.6,
+          "root_view_only_ms": 2.0,
+          "full_root_request_ms": 132.3,
+          "files": 83,
+          "links": 353
+        },
+        "per_folder": [
+          {
+            "root": "/",
+            "nodes": 4,
+            "edges": 4,
+            "hidden": 0
+          },
+          {
+            "root": "docs",
+            "nodes": 1,
+            "edges": 0,
+            "hidden": 0
+          },
+          {
+            "root": "examples",
+            "nodes": 3,
+            "edges": 0,
+            "hidden": 0
+          },
+          {
+            "root": "examples/celery",
+            "nodes": 2,
+            "edges": 1,
+            "hidden": 0
+          },
+          {
+            "root": "examples/celery/src/task_app",
+            "nodes": 3,
+            "edges": 2,
+            "hidden": 0
+          },
+          {
+            "root": "examples/javascript",
+            "nodes": 2,
+            "edges": 1,
+            "hidden": 0
+          },
+          {
+            "root": "examples/javascript/js_example",
+            "nodes": 2,
+            "edges": 2,
+            "hidden": 0
+          },
+          {
+            "root": "examples/javascript/tests",
+            "nodes": 2,
+            "edges": 0,
+            "hidden": 0
+          },
+          {
+            "root": "examples/tutorial",
+            "nodes": 2,
+            "edges": 1,
+            "hidden": 0
+          },
+          {
+            "root": "examples/tutorial/flaskr",
+            "nodes": 4,
+            "edges": 6,
+            "hidden": 0
+          },
+          {
+            "root": "examples/tutorial/tests",
+            "nodes": 5,
+            "edges": 2,
+            "hidden": 0
+          },
+          {
+            "root": "src/flask",
+            "nodes": 20,
+            "edges": 91,
+            "hidden": 0
+          },
+          {
+            "root": "src/flask/json",
+            "nodes": 3,
+            "edges": 2,
+            "hidden": 0
+          },
+          {
+            "root": "src/flask/sansio",
+            "nodes": 3,
+            "edges": 4,
+            "hidden": 0
+          },
+          {
+            "root": "tests",
+            "nodes": 25,
+            "edges": 9,
+            "hidden": 0
+          },
+          {
+            "root": "tests/test_apps",
+            "nodes": 4,
+            "edges": 0,
+            "hidden": 0
+          },
+          {
+            "root": "tests/test_apps/blueprintapp",
+            "nodes": 2,
+            "edges": 1,
+            "hidden": 0
+          },
+          {
+            "root": "tests/test_apps/blueprintapp/apps",
+            "nodes": 3,
+            "edges": 0,
+            "hidden": 0
+          },
+          {
+            "root": "tests/test_apps/cliapp",
+            "nodes": 6,
+            "edges": 0,
+            "hidden": 0
+          },
+          {
+            "root": "tests/test_apps/cliapp/inner1",
+            "nodes": 2,
+            "edges": 0,
+            "hidden": 0
+          },
+          {
+            "root": "tests/test_apps/cliapp/inner1/inner2",
+            "nodes": 2,
+            "edges": 0,
+            "hidden": 0
+          },
+          {
+            "root": "tests/test_apps/helloworld",
+            "nodes": 2,
+            "edges": 0,
+            "hidden": 0
+          },
+          {
+            "root": "tests/type_check",
+            "nodes": 3,
+            "edges": 0,
+            "hidden": 0
+          }
+        ]
+      }
+    },
+    "black": {
+      "snapshot_id": 7,
+      "commit": "b4f1fcae48826790b6f93ca9226d20003bce0eaa",
+      "import_scopes": {
+        "external nested": 14,
+        "external type_checking": 1,
+        "internal nested": 4,
+        "internal top_level": 162,
+        "internal type_checking": 1,
+        "external top_level": 410
+      },
+      "default": {
+        "flat_nodes": 55,
+        "flat_edges": 129,
+        "root": "",
+        "root_nodes": 5,
+        "root_edges": 1,
+        "folder_views": 8,
+        "max_nodes": 25,
+        "median_nodes": 5.0,
+        "max_edges": 66,
+        "median_edges": 3.0,
+        "views_by_nodes": {
+          "1-5": 5,
+          "6-15": 2,
+          "16-30": 1,
+          "31-60": 0,
+          "61-61": 0
+        },
+        "views_with_overflow": [],
+        "conservation_ok": true,
+        "cycles_top_level": [],
+        "cycles_if_every_import_counted": [
+          [
+            "src/black/__init__.py",
+            "src/black/concurrency.py"
+          ],
+          [
+            "src/black/nodes.py",
+            "src/black/strings.py"
+          ],
+          [
+            "src/blib2to3/pgen2/driver.py",
+            "src/blib2to3/pgen2/parse.py",
+            "src/blib2to3/pygram.py",
+            "src/blib2to3/pytree.py"
+          ]
+        ],
+        "two_way_folder_pairs_without_cycle": [
+          "src/black: file:src/black/__init__.py <-> file:src/black/concurrency.py (2, 1)",
+          "src/black: file:src/black/nodes.py <-> file:src/black/strings.py (3, 1)",
+          "src/blib2to3: dir:src/blib2to3/pgen2 <-> file:src/blib2to3/pytree.py (5, 2)",
+          "src/blib2to3/pgen2: file:src/blib2to3/pgen2/driver.py <-> file:src/blib2to3/pgen2/parse.py (3, 1)"
+        ],
+        "spot_checks": [
+          {
+            "view": "src/black",
+            "source": "src/black/linegen.py",
+            "target": "src/black/nodes.py",
+            "api": [
+              76,
+              1,
+              75
+            ],
+            "sql": [
+              76,
+              1,
+              75
+            ],
+            "match": true
+          },
+          {
+            "view": "src",
+            "source": "src/black",
+            "target": "src/blib2to3",
+            "api": [
+              58,
+              28,
+              30
+            ],
+            "sql": [
+              58,
+              28,
+              30
+            ],
+            "match": true
+          },
+          {
+            "view": "src/black",
+            "source": "src/black/linegen.py",
+            "target": "src/black/lines.py",
+            "api": [
+              32,
+              1,
+              31
+            ],
+            "sql": [
+              32,
+              1,
+              31
+            ],
+            "match": true
+          },
+          {
+            "view": "src/black",
+            "source": "src/black/trans.py",
+            "target": "src/black/nodes.py",
+            "api": [
+              27,
+              1,
+              26
+            ],
+            "sql": [
+              27,
+              1,
+              26
+            ],
+            "match": true
+          },
+          {
+            "view": "src/black",
+            "source": "src/black/lines.py",
+            "target": "src/black/nodes.py",
+            "api": [
+              25,
+              1,
+              24
+            ],
+            "sql": [
+              25,
+              1,
+              24
+            ],
+            "match": true
+          }
+        ],
+        "symbol_views": {
+          "views": 55,
+          "max_nodes": 61,
+          "median_nodes": 9,
+          "max_edges": 186,
+          "with_overflow": 6
+        },
+        "timing": {
+          "flat_graph_ms": 192.4,
+          "load_and_cycles_ms": 559.9,
+          "cycles_only_ms": 0.4,
+          "root_view_only_ms": 0.9,
+          "full_root_request_ms": 281.3,
+          "files": 55,
+          "links": 129
+        },
+        "per_folder": [
+          {
+            "root": "/",
+            "nodes": 5,
+            "edges": 1,
+            "hidden": 0
+          },
+          {
+            "root": "profiling",
+            "nodes": 5,
+            "edges": 0,
+            "hidden": 0
+          },
+          {
+            "root": "scripts",
+            "nodes": 7,
+            "edges": 0,
+            "hidden": 0
+          },
+          {
+            "root": "src",
+            "nodes": 4,
+            "edges": 4,
+            "hidden": 0
+          },
+          {
+            "root": "src/black",
+            "nodes": 25,
+            "edges": 66,
+            "hidden": 0
+          },
+          {
+            "root": "src/blackd",
+            "nodes": 4,
+            "edges": 2,
+            "hidden": 0
+          },
+          {
+            "root": "src/blib2to3",
+            "nodes": 4,
+            "edges": 4,
+            "hidden": 0
+          },
+          {
+            "root": "src/blib2to3/pgen2",
+            "nodes": 8,
+            "edges": 15,
+            "hidden": 0
+          }
+        ]
+      },
+      "everything": {
+        "flat_nodes": 426,
+        "flat_edges": 225,
+        "root": "",
+        "root_nodes": 6,
+        "root_edges": 5,
+        "folder_views": 29,
+        "max_nodes": 61,
+        "median_nodes": 4,
+        "max_edges": 69,
+        "median_edges": 0,
+        "views_by_nodes": {
+          "1-5": 20,
+          "6-15": 6,
+          "16-30": 2,
+          "31-60": 0,
+          "61-61": 1
+        },
+        "views_with_overflow": [
+          {
+            "root": "tests/data/cases",
+            "nodes": 61,
+            "hidden": 244
+          }
+        ],
+        "conservation_ok": true,
+        "cycles_top_level": [],
+        "cycles_if_every_import_counted": [
+          [
+            "src/black/__init__.py",
+            "src/black/concurrency.py"
+          ],
+          [
+            "src/black/nodes.py",
+            "src/black/strings.py"
+          ],
+          [
+            "src/blib2to3/pgen2/driver.py",
+            "src/blib2to3/pgen2/parse.py",
+            "src/blib2to3/pygram.py",
+            "src/blib2to3/pytree.py"
+          ]
+        ],
+        "two_way_folder_pairs_without_cycle": [
+          "/: dir:src <-> dir:tests (3, 383)",
+          "src/black: file:src/black/__init__.py <-> file:src/black/concurrency.py (2, 1)",
+          "src/black: file:src/black/cache.py <-> file:src/black/output.py (2, 1)",
+          "src/black: file:src/black/nodes.py <-> file:src/black/strings.py (3, 1)",
+          "src/blib2to3: dir:src/blib2to3/pgen2 <-> file:src/blib2to3/pytree.py (6, 7)",
+          "src/blib2to3/pgen2: file:src/blib2to3/pgen2/driver.py <-> file:src/blib2to3/pgen2/parse.py (7, 4)"
+        ],
+        "spot_checks": [
+          {
+            "view": "",
+            "source": "tests",
+            "target": "src",
+            "api": [
+              383,
+              35,
+              348
+            ],
+            "sql": [
+              383,
+              35,
+              348
+            ],
+            "match": true
+          },
+          {
+            "view": "src",
+            "source": "src/black",
+            "target": "src/blib2to3",
+            "api": [
+              114,
+              28,
+              86
+            ],
+            "sql": [
+              114,
+              28,
+              86
+            ],
+            "match": true
+          },
+          {
+            "view": "src/black",
+            "source": "src/black/linegen.py",
+            "target": "src/black/nodes.py",
+            "api": [
+              82,
+              1,
+              81
+            ],
+            "sql": [
+              82,
+              1,
+              81
+            ],
+            "match": true
+          },
+          {
+            "view": "tests",
+            "source": "tests/test_black.py",
+            "target": "tests/util.py",
+            "api": [
+              58,
+              1,
+              57
+            ],
+            "sql": [
+              58,
+              1,
+              57
+            ],
+            "match": true
+          },
+          {
+            "view": "src/black",
+            "source": "src/black/linegen.py",
+            "target": "src/black/lines.py",
+            "api": [
+              54,
+              1,
+              53
+            ],
+            "sql": [
+              54,
+              1,
+              53
+            ],
+            "match": true
+          }
+        ],
+        "symbol_views": {
+          "views": 426,
+          "max_nodes": 61,
+          "median_nodes": 2.0,
+          "max_edges": 202,
+          "with_overflow": 16
+        },
+        "timing": {
+          "flat_graph_ms": 116.0,
+          "load_and_cycles_ms": 249.6,
+          "cycles_only_ms": 2.1,
+          "root_view_only_ms": 1.9,
+          "full_root_request_ms": 191.7,
+          "files": 426,
+          "links": 225
+        },
+        "per_folder": [
+          {
+            "root": "/",
+            "nodes": 6,
+            "edges": 5,
+            "hidden": 0
+          },
+          {
+            "root": "profiling",
+            "nodes": 5,
+            "edges": 0,
+            "hidden": 0
+          },
+          {
+            "root": "scripts",
+            "nodes": 7,
+            "edges": 1,
+            "hidden": 0
+          },
+          {
+            "root": "src",
+            "nodes": 4,
+            "edges": 5,
+            "hidden": 0
+          },
+          {
+            "root": "src/black",
+            "nodes": 25,
+            "edges": 69,
+            "hidden": 0
+          },
+          {
+            "root": "src/blackd",
+            "nodes": 4,
+            "edges": 2,
+            "hidden": 0
+          },
+          {
+            "root": "src/blib2to3",
+            "nodes": 4,
+            "edges": 4,
+            "hidden": 0
+          },
+          {
+            "root": "src/blib2to3/pgen2",
+            "nodes": 8,
+            "edges": 15,
+            "hidden": 0
+          },
+          {
+            "root": "tests",
+            "nodes": 19,
+            "edges": 8,
+            "hidden": 0
+          },
+          {
+            "root": "tests/data",
+            "nodes": 10,
+            "edges": 0,
+            "hidden": 0
+          },
+          {
+            "root": "tests/data/cases",
+            "nodes": 61,
+            "edges": 3,
+            "hidden": 244
+          },
+          {
+            "root": "tests/data/gitignore_used_on_multiple_sources",
+            "nodes": 2,
+            "edges": 0,
+            "hidden": 0
+          },
+          {
+            "root": "tests/data/gitignore_used_on_multiple_sources/dir1",
+            "nodes": 2,
+            "edges": 0,
+            "hidden": 0
+          },
+          {
+            "root": "tests/data/gitignore_used_on_multiple_sources/dir2",
+            "nodes": 2,
+            "edges": 0,
+            "hidden": 0
+          },
+          {
+            "root": "tests/data/ignore_directory_gitignore_tests",
+            "nodes": 3,
+            "edges": 0,
+            "hidden": 0
+          },
+          {
+            "root": "tests/data/ignore_directory_gitignore_tests/large_ignored_dir_two",
+            "nodes": 4,
+            "edges": 0,
+            "hidden": 0
+          },
+          {
+            "root": "tests/data/ignore_subfolders_gitignore_tests",
+            "nodes": 2,
+            "edges": 0,
+            "hidden": 0
+          },
+          {
+            "root": "tests/data/ignore_subfolders_gitignore_tests/subdir",
+            "nodes": 2,
+            "edges": 0,
+            "hidden": 0
+          },
+          {
+            "root": "tests/data/include_exclude_tests/b",
+            "nodes": 3,
+            "edges": 0,
+            "hidden": 0
+          },
+          {
+            "root": "tests/data/include_exclude_tests/b/.definitely_exclude",
+            "nodes": 2,
+            "edges": 0,
+            "hidden": 0
+          },
+          {
+            "root": "tests/data/include_exclude_tests/b/dont_exclude",
+            "nodes": 2,
+            "edges": 0,
+            "hidden": 0
+          },
+          {
+            "root": "tests/data/include_exclude_tests/b/exclude",
+            "nodes": 3,
+            "edges": 0,
+            "hidden": 0
+          },
+          {
+            "root": "tests/data/include_exclude_tests/b/exclude/still_exclude",
+            "nodes": 2,
+            "edges": 0,
+            "hidden": 0
+          },
+          {
+            "root": "tests/data/invalid_nested_gitignore_tests",
+            "nodes": 2,
+            "edges": 0,
+            "hidden": 0
+          },
+          {
+            "root": "tests/data/line_ranges_formatted",
+            "nodes": 6,
+            "edges": 0,
+            "hidden": 0
+          },
+          {
+            "root": "tests/data/miscellaneous",
+            "nodes": 12,
+            "edges": 0,
+            "hidden": 0
+          },
+          {
+            "root": "tests/data/nested_gitignore_tests",
+            "nodes": 2,
+            "edges": 0,
+            "hidden": 0
+          },
+          {
+            "root": "tests/data/nested_gitignore_tests/root",
+            "nodes": 4,
+            "edges": 0,
+            "hidden": 0
+          },
+          {
+            "root": "tests/data/nested_gitignore_tests/root/child",
+            "nodes": 3,
+            "edges": 0,
+            "hidden": 0
+          }
+        ]
+      }
+    }
+  }
+}
