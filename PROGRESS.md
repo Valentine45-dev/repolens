@@ -1017,7 +1017,7 @@
   "faithfulness" (CLAUDE.md wins). Test embedding holds `_JOB_LOCK`, so the longer limit also lengthens
   how long the next analysis can wait.
 
-- **Part B done on `fix/v2-fixes` (5 Nov, not merged).** One commit per fix, FakeProvider only, **$0 API
+- **Part B done, `fix/v2-fixes` merged into `main` (5 Nov, `8706683`).** One commit per fix, FakeProvider only, **$0 API
   spend**: no real LLM call, and the screenshot and PyGoat APIs ran without `LLM_API_KEY` in their
   environment.
   1. Git env allowlist (`clone.py`). Network tests pass on Windows.
@@ -1048,9 +1048,8 @@
   - **Tests:** local 317 passed, 1 skipped (network on, model test off); CI at `0daca9e` 315 passed, 3 skipped;
     web 21 passed. Web tests are not in CI. No Q&A run: fix 6 is opt-in and the retrieval eval shows the
     default path unchanged.
-  - **CI pin to `ubuntu-24.04`:** committed last and **not pushed**. GitHub refuses workflow-file changes from
-    this login without the `workflow` scope, which is the owner's to grant:
-    `gh auth refresh -h github.com -s workflow`, then push. So the pin has not run in CI yet.
+  - **CI pinned to `ubuntu-24.04`** (`a0ce20b`), pushed after the owner granted this login GitHub's `workflow`
+    scope. CI green on that runner at `a0ce20b` and on `main` at `8706683`: 315 passed, 3 skipped.
   - **Known:** PyGoat's non-test embedding took 494.6 s this time (287.8 s in the baseline, with more chunks) with
     about 0.7 GB of RAM free, which is close to the 600 s `MAX_ANALYSIS_S`. Timings are not comparable, but on
     this PC low memory can push a mid-size repo to the limit. Docker Desktop also hung on `starting` for 17
