@@ -7,24 +7,44 @@ import {
   EdgeLabelRenderer,
   getBezierPath,
   Handle,
-  MarkerType,
   type Node,
+  type NodeMouseHandler,
   type NodeProps,
   Position,
   ReactFlow,
   useReactFlow,
 } from "@xyflow/react";
-import { memo, useEffect, useMemo, useRef, useState } from "react";
+import {
+  createContext,
+  memo,
+  useCallback,
+  useContext,
+  useEffect,
+  useLayoutEffect,
+  useMemo,
+  useRef,
+  useState,
+  useSyncExternalStore,
+} from "react";
 import { Link } from "react-router-dom";
 
 import type { MapNode, MapView as MapViewData } from "../api";
 import { languageLabel, splitPath } from "../graphModel";
+import {
+  createFocusStore,
+  EDGE_ACTIVE,
+  EDGE_VISIBLE,
+  type FocusStore,
+  NODE_NEAR,
+  NODE_SELECTED,
+} from "../focusStore";
 import { findingsHref } from "../links";
+import { createHoverIntent } from "../hoverIntent";
 import { MAP_NODE_WIDTH, mapNodeHeight, type MapPosition } from "../mapLayout";
 import {
   boundaryText,
   boundaryTitle,
-  drawnEdges,
+  edgeKey,
   edgeSplit,
   edgeWidth,
   type EdgeSelection,
@@ -33,29 +53,38 @@ import {
   type NodeAction,
   nodeAction,
   plural,
+  restingEdges,
   showEdgeLabel,
 } from "../mapModel";
 import { FIT_OPTIONS } from "./GraphView";
 import { Icon } from "./Icon";
+
+// Hover, keyboard focus and selection live in a store, not in the node and edge objects: React
+// Flow treats a new node object as a new node and hides it until it is measured again, which
+// blanked the whole canvas on every hover. The objects below never change with focus; each node
+// and edge subscribes to a number about itself (so a hover re-renders a handful of them, not the
+// canvas) and the dimming of everything else is one attribute on the container.
+const StoreContext = createContext<FocusStore>(createFocusStore());
 
 type MapNodeData = {
   node: MapNode;
   level: MapViewData["level"];
   snapshotId: number;
   hideTests: boolean;
-  selected: boolean;
-  dimmed: boolean;
 };
 type MapFlowNode = Node<MapNodeData, "map">;
 
 type MapEdgeData = {
+  source: string;
+  target: string;
+  rest: boolean; // drawn when nothing is focused
   dashed: boolean;
   cycle: boolean;
   width: number;
   title: string;
-  label: string | null;
-  active: boolean;
-  dimmed: boolean;
+  restLabel: string | null; // the count, when labels are on at rest
+  activeLabel: string; // shown when one end is focused
+  markerId: string;
   lane: number; // a two-way pair runs as two parallel lines, this far from the centre
 };
 type MapFlowEdge = Edge<MapEdgeData, "dep">;
@@ -116,12 +145,16 @@ function CycleTag({ node }: { node: MapNode }) {
 }
 
 const MapNodeView = memo(function MapNodeView({ data }: NodeProps<MapFlowNode>) {
-  const { node, level, selected, dimmed } = data;
+  const { node, level } = data;
+  const store = useContext(StoreContext);
+  const flags = useSyncExternalStore(store.subscribe, () => store.nodeFlags(node.id));
+  const selected = (flags & NODE_SELECTED) !== 0;
+  const near = (flags & NODE_NEAR) !== 0;
   const boundary = boundaryText(node);
   const common = {
     "data-kind": node.kind,
     "data-selected": selected || undefined,
-    "data-dimmed": dimmed || undefined,
+    "data-near": near || undefined,
     "data-cycle": node.in_cycle === true || undefined,
     style: { width: MAP_NODE_WIDTH, height: mapNodeHeight(level) },
   };
@@ -214,47 +247,80 @@ const MapNodeView = memo(function MapNodeView({ data }: NodeProps<MapFlowNode>) 
   );
 });
 
-function DepEdge(props: EdgeProps<MapFlowEdge>) {
-  const { sourceX, sourceY, targetX, targetY, sourcePosition, targetPosition, markerEnd, data } = props;
-  const lane = data?.lane ?? 0;
+function DepEdge({
+  sourceX,
+  sourceY,
+  targetX,
+  targetY,
+  sourcePosition,
+  targetPosition,
+  data,
+}: EdgeProps<MapFlowEdge>) {
+  const store = useContext(StoreContext);
+  const flags = useSyncExternalStore(store.subscribe, () =>
+    data ? store.edgeFlags(data.source, data.target, data.rest) : 0,
+  );
+  if (!data || (flags & EDGE_VISIBLE) === 0) return null;
+  const active = (flags & EDGE_ACTIVE) !== 0;
   const [path, labelX, labelY] = getBezierPath({
     sourceX,
-    sourceY: sourceY + lane,
+    sourceY: sourceY + data.lane,
     targetX,
-    targetY: targetY + lane,
+    targetY: targetY + data.lane,
     sourcePosition,
     targetPosition,
   });
+  const label = active ? data.activeLabel : data.rest ? data.restLabel : null;
   return (
     <>
       <g
         className="graph-edge"
-        data-active={data?.active || undefined}
-        data-dimmed={data?.dimmed || undefined}
-        data-cycle={data?.cycle || undefined}
+        data-active={active || undefined}
+        data-cycle={data.cycle || undefined}
       >
-        <title>{data?.title}</title>
+        {/* The arrowhead takes the edge's colour (currentColor), so focus never swaps markers. */}
+        <defs>
+          <marker
+            id={data.markerId}
+            viewBox="-10 -10 20 20"
+            markerWidth={14}
+            markerHeight={14}
+            markerUnits="strokeWidth"
+            orient="auto-start-reverse"
+            refX={0}
+            refY={0}
+          >
+            <polyline
+              points="-5,-4 0,0 -5,4 -5,-4"
+              fill="currentColor"
+              stroke="currentColor"
+              strokeWidth={1}
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            />
+          </marker>
+        </defs>
+        <title>{data.title}</title>
         <BaseEdge
           path={path}
-          markerEnd={markerEnd}
+          markerEnd={`url(#${data.markerId})`}
           style={{
-            strokeDasharray: data?.dashed ? "5 4" : undefined,
-            strokeWidth: (data?.width ?? 1.25) + (data?.active ? 0.5 : 0),
+            strokeDasharray: data.dashed ? "5 4" : undefined,
+            strokeWidth: data.width + (active ? 0.5 : 0),
           }}
         />
       </g>
-      {data?.label ? (
+      {label ? (
         <EdgeLabelRenderer>
           <div
             className="edge-label mono num"
-            data-active={data.active || undefined}
-            data-dimmed={data.dimmed || undefined}
+            data-active={active || undefined}
             data-cycle={data.cycle || undefined}
             style={{
-              transform: `translate(-50%, -50%) translate(${labelX}px, ${labelY + lane}px)`,
+              transform: `translate(-50%, -50%) translate(${labelX}px, ${labelY + data.lane}px)`,
             }}
           >
-            {data.label}
+            {label}
           </div>
         </EdgeLabelRenderer>
       ) : null}
@@ -302,25 +368,15 @@ export function MapView({
     [view.nodes, selectedFileId],
   );
 
-  // Hover and keyboard focus show every edge of a node, like a selection does.
-  const [hoverId, setHoverId] = useState<string | null>(null);
-  const [focusedId, setFocusedId] = useState<string | null>(null);
-  const focusId = hoverId ?? focusedId ?? selectedNodeId;
-
-  const drawn = useMemo(
-    () => drawnEdges(view.edges, selection, focusId, showAll),
-    [view.edges, selection, focusId, showAll],
-  );
-  // The picture is dimmed around the focused node using every edge, drawn or not.
-  const neighbourhood = useMemo(() => {
-    if (focusId === null) return null;
-    const ids = new Set([focusId]);
-    for (const e of view.edges) {
-      if (e.source === focusId) ids.add(e.target);
-      if (e.target === focusId) ids.add(e.source);
-    }
-    return ids;
-  }, [view.edges, focusId]);
+  // Hover and keyboard focus show every edge of a node, like a selection does. Hover waits a
+  // moment, so sweeping across the map does not restyle it for every node it crosses.
+  const store = useMemo(createFocusStore, []);
+  useLayoutEffect(() => store.configure(view.edges, selectedNodeId), [store, view.edges, selectedNodeId]);
+  const intent = useMemo(() => createHoverIntent(store.setHover), [store]);
+  useEffect(() => () => intent.cancel(), [intent]);
+  const onNodeMouseEnter = useCallback<NodeMouseHandler>((_, node) => intent.enter(node.id), [intent]);
+  const onNodeMouseLeave = useCallback<NodeMouseHandler>(() => intent.leave(), [intent]);
+  const focusing = useSyncExternalStore(store.subscribe, store.focusing);
 
   // Centre a selected file in the part of the canvas the panel leaves free.
   const [fitOnMount] = useState(selectedNodeId === null);
@@ -355,6 +411,8 @@ export function MapView({
     return () => cancelAnimationFrame(frame);
   }, [selectedNodeId, positions, ready, canvasSize, panelOverlay, height, getViewport, setCenter]);
 
+  // Built from the view only (and the "Show all edges" setting for edges): never from hover,
+  // focus or selection, so React Flow keeps every node it has measured.
   const flowNodes = useMemo<MapFlowNode[]>(
     () =>
       view.nodes.map((n) => {
@@ -363,26 +421,19 @@ export function MapView({
           id: n.id,
           type: "map",
           position: { x: p?.x ?? 0, y: p?.y ?? 0 },
-          data: {
-            node: n,
-            level: view.level,
-            snapshotId,
-            hideTests,
-            selected: n.id === selectedNodeId,
-            dimmed: neighbourhood !== null && !neighbourhood.has(n.id),
-          },
+          data: { node: n, level: view.level, snapshotId, hideTests },
           draggable: false,
           connectable: false,
           ariaLabel: n.kind === "more" ? n.label : n.path || n.label,
         };
       }),
-    [view.nodes, view.level, positions, snapshotId, hideTests, selectedNodeId, neighbourhood],
+    [view.nodes, view.level, positions, snapshotId, hideTests],
   );
 
   const flowEdges = useMemo<MapFlowEdge[]>(() => {
-    const reverse = new Set(drawn.map((e) => `${e.target}>${e.source}`));
-    return drawn.map((e) => {
-      const active = focusId !== null && (e.source === focusId || e.target === focusId);
+    const rest = restingEdges(view.edges, selection, showAll);
+    const reverse = new Set(view.edges.map((e) => `${e.target}>${e.source}`));
+    return view.edges.map((e, i) => {
       const cycle = isCycleEdge(e);
       const dashed = isDashed(e);
       const symbolEdge = e.type !== undefined;
@@ -394,34 +445,30 @@ export function MapView({
           ? "Drawn dashed: mostly best guesses, because dynamic code makes some calls hard to resolve."
           : null,
       ].filter(Boolean);
-      const color = active || cycle ? "var(--text)" : "var(--edge)";
+      const isRest = rest.has(e);
       return {
-        id: `${e.source}>${e.target}${e.type ? `:${e.type}` : ""}`,
+        id: edgeKey(e),
         source: e.source,
         target: e.target,
         type: "dep",
-        markerEnd: { type: MarkerType.ArrowClosed, width: 14, height: 14, color },
         data: {
+          source: e.source,
+          target: e.target,
+          rest: isRest,
           dashed,
           cycle,
           width: symbolEdge ? 1.25 : edgeWidth(e.count),
           title: notes.join("\n"),
-          label: showEdgeLabel(e.count, drawn.length, active)
-            ? symbolEdge
-              ? active
-                ? split
-                : null
-              : String(e.count)
-            : null,
-          active,
-          dimmed: focusId !== null && !active,
+          restLabel: !symbolEdge && showEdgeLabel(e.count, rest.size, false) ? String(e.count) : null,
+          activeLabel: symbolEdge ? split : String(e.count),
+          markerId: `mk-${i}`,
           lane: reverse.has(`${e.source}>${e.target}`) ? (e.source < e.target ? -10 : 10) : 0,
         },
         ...handlesFor(positions.get(e.source), positions.get(e.target)),
         focusable: false,
       };
     });
-  }, [drawn, focusId, nodesById, positions]);
+  }, [view.edges, selection, showAll, nodesById, positions]);
 
   return (
     // Nodes are focusable but not selectable (selection is the URL's ?node=), so React Flow does
@@ -438,12 +485,14 @@ export function MapView({
         e.preventDefault();
         onAction(nodeAction(view.level, node));
       }}
+      data-focus={focusing || undefined}
       onFocus={(e) => {
         const el = (e.target as HTMLElement).closest<HTMLElement>(".react-flow__node");
-        setFocusedId(el?.dataset.id ?? null);
+        store.setFocused(el?.dataset.id ?? null);
       }}
-      onBlur={() => setFocusedId(null)}
+      onBlur={() => store.setFocused(null)}
     >
+      <StoreContext.Provider value={store}>
       <ReactFlow<MapFlowNode, MapFlowEdge>
         nodes={flowNodes}
         edges={flowEdges}
@@ -453,8 +502,8 @@ export function MapView({
           const n = nodesById.get(node.id);
           if (n) onAction(nodeAction(view.level, n));
         }}
-        onNodeMouseEnter={(_, node) => setHoverId(node.id)}
-        onNodeMouseLeave={() => setHoverId(null)}
+        onNodeMouseEnter={onNodeMouseEnter}
+        onNodeMouseLeave={onNodeMouseLeave}
         onPaneClick={onClear}
         fitView={fitOnMount}
         fitViewOptions={FIT_OPTIONS}
@@ -466,6 +515,7 @@ export function MapView({
         elementsSelectable={false}
         onlyRenderVisibleElements
       />
+      </StoreContext.Provider>
     </div>
   );
 }

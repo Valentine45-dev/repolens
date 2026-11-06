@@ -8,11 +8,14 @@ import {
   crumbChanges,
   CYCLE_CAPTION,
   densityCaption,
-  drawnEdges,
+  edgeKey,
+  edgeRole,
   edgeSplit,
   edgeWidth,
   EDGE_BUDGET,
   emptyViewMessage,
+  neighbourhood,
+  restingEdges,
   isDashed,
   isDrawn,
   nodeAction,
@@ -194,15 +197,33 @@ describe("edge density", () => {
     expect(densityCaption(s, true)).toBe("Showing all 70 connections.");
   });
 
-  it("adds every edge of the hovered or selected node, and all edges on request", () => {
+  it("draws every edge of the focused node on top of the resting set, and all edges on request", () => {
     const edges = [...many(10, () => 4), ...many(60, () => 1)];
     const s = selectEdges(edges);
-    const hidden = edges.find((e) => e.count === 1)!;
-    expect(drawnEdges(edges, s, null, false)).toHaveLength(10);
-    const withFocus = drawnEdges(edges, s, hidden.source, false);
-    expect(withFocus).toContain(hidden);
-    expect(withFocus).toHaveLength(11);
-    expect(drawnEdges(edges, s, null, true)).toHaveLength(70);
+    const rest = restingEdges(edges, s, false);
+    expect(rest.size).toBe(10);
+    expect(restingEdges(edges, s, true).size).toBe(70);
+    const hidden = edges.filter((e) => e.count === 1)[30]; // n30: not an end of a resting edge
+    // nothing focused: only the resting edges are visible
+    expect(edges.filter((e) => edgeRole(e, rest.has(e), null).visible)).toHaveLength(10);
+    // focus a node whose edge is not at rest: that edge appears, active, and the rest dim
+    const visible = edges.filter((e) => edgeRole(e, rest.has(e), hidden.source).visible);
+    expect(visible).toHaveLength(11);
+    expect(edgeRole(hidden, false, hidden.source)).toEqual({ active: true, visible: true, dimmed: false });
+    expect(edgeRole(edges[0], true, hidden.source)).toEqual({ active: false, visible: true, dimmed: true });
+    expect(edgeRole(edges[0], true, null)).toEqual({ active: false, visible: true, dimmed: false });
+  });
+
+  it("an edge's identity does not depend on focus, so hover never replaces it", () => {
+    const e = edge("a", "b", { type: "calls" });
+    expect(edgeKey(e)).toBe("a>b:calls");
+    expect(edgeKey(edge("a", "b"))).toBe("a>b");
+  });
+
+  it("the neighbourhood is the focused node and what is one edge away, from every edge", () => {
+    const edges = [edge("a", "b"), edge("c", "a"), edge("d", "e")];
+    expect(neighbourhood(edges, null)).toBeNull();
+    expect([...neighbourhood(edges, "a")!].sort()).toEqual(["a", "b", "c"]);
   });
 
   it("labels every edge when few are drawn, only the strong ones when many are", () => {

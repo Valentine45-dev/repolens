@@ -569,20 +569,46 @@ a {
   background: var(--surface-2);
 }
 
-.graph-skeleton-rows {
+.graph-skeleton {
+  display: flex;
+  justify-content: center;
+  padding: var(--space-12) var(--space-6);
+}
+
+.graph-skeleton-map {
+  display: flex;
+  align-items: center;
+  gap: 56px;
+}
+
+.graph-skeleton-col {
   display: flex;
   flex-direction: column;
-  gap: var(--space-6);
+  gap: var(--space-4);
 }
 
-.graph-skeleton-row {
+.graph-skeleton-card {
   display: flex;
-  gap: var(--space-6);
+  flex-direction: column;
+  justify-content: center;
+  gap: var(--space-2);
+  width: 208px;
+  height: 64px;
+  padding: 0 var(--space-3);
+  border: 1px solid var(--border);
+  border-radius: 4px;
 }
 
-.graph-skeleton-node {
-  width: 140px;
+.graph-skeleton-card .skeleton {
+  background: var(--surface-2);
+}
+
+.list-skeleton-row {
+  display: flex;
+  align-items: center;
   height: 36px;
+  padding: 0 var(--space-3);
+  border-bottom: 1px solid var(--border);
 }
 
 .spin {
@@ -1116,17 +1142,21 @@ a {
   background: var(--surface-2);
 }
 
-.map-node[data-kind="more"][data-dimmed] {
-  opacity: 0.28;
-}
-
 .map-node[data-selected] {
   border-color: var(--text);
   outline: 2px solid var(--text);
 }
 
-.map-node[data-dimmed] {
+/* With a node hovered, focused or selected the container is [data-focus]: everything that is not
+   the node or one edge from it dims, and so do the edges that do not touch it. One attribute
+   changes, not 60 nodes. */
+.canvas-flow[data-focus] .map-node:not([data-near]) {
   opacity: 0.28;
+}
+
+.canvas-flow[data-focus] .graph-edge:not([data-active]),
+.canvas-flow[data-focus] .edge-label:not([data-active]) {
+  opacity: 0.15;
 }
 
 /* Circular imports: Ink border plus the icon and the word "circular", never a new colour. */

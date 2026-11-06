@@ -239,19 +239,42 @@ export function selectEdges(edges: MapEdge[], budget = EDGE_BUDGET): EdgeSelecti
   return { shown: edges.filter((e) => keep.has(e)), total, mode: "tier", minCount };
 }
 
-/** Edges to draw now: the resting set, or all of them, plus every edge of the focused node
- * (hovered, keyboard-focused or selected). */
-export function drawnEdges(
+/** The edges drawn at rest: the selection's, or every one when "Show all edges" is on. */
+export function restingEdges(
   edges: MapEdge[],
   selection: EdgeSelection,
-  focusId: string | null,
   showAll: boolean,
-): MapEdge[] {
-  if (showAll || selection.mode === "all") return edges;
-  const resting = new Set(selection.shown);
-  return edges.filter(
-    (e) => resting.has(e) || (focusId !== null && (e.source === focusId || e.target === focusId)),
-  );
+): Set<MapEdge> {
+  return new Set(showAll || selection.mode === "all" ? edges : selection.shown);
+}
+
+/** Stable identity of an edge, whatever else changes. */
+export function edgeKey(e: MapEdge): string {
+  return `${e.source}>${e.target}${e.type ? `:${e.type}` : ""}`;
+}
+
+/** What hover, keyboard focus or selection does to one edge. Every edge of the focused node is
+ * drawn (and active); at rest only the resting ones are; with a focus the rest are dimmed.
+ * This is the only thing hover changes: nodes and edges keep their identity and their place. */
+export function edgeRole(
+  e: { source: string; target: string },
+  rest: boolean,
+  focusId: string | null,
+): { active: boolean; visible: boolean; dimmed: boolean } {
+  const active = focusId !== null && (e.source === focusId || e.target === focusId);
+  return { active, visible: rest || active, dimmed: focusId !== null && !active };
+}
+
+/** The focused node and the nodes one edge away from it (every edge, drawn or not); null with
+ * no focus. */
+export function neighbourhood(edges: MapEdge[], focusId: string | null): Set<string> | null {
+  if (focusId === null) return null;
+  const ids = new Set([focusId]);
+  for (const e of edges) {
+    if (e.source === focusId) ids.add(e.target);
+    if (e.target === focusId) ids.add(e.source);
+  }
+  return ids;
 }
 
 /** What the canvas says about the edges it leaves out; null when it leaves out none. */
