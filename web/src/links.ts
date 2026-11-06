@@ -23,6 +23,21 @@ export function exploreHref(
   return `/a/${snapshotId}/explore${query ? `?${query}` : ""}`;
 }
 
+/** Findings under a folder (or in one file). `hideTests` matches a map that hides tests, so the
+ * list adds up to the number on the node. A folder gets a trailing "/" so `src` never also
+ * matches `src2`. */
+export function findingsHref(
+  snapshotId: number,
+  opts: { path: string; folder: boolean; hideTests: boolean; ask?: boolean },
+): string {
+  const params = new URLSearchParams();
+  if (opts.path) params.set("path", opts.folder ? `${opts.path.replace(/\/$/, "")}/` : opts.path);
+  if (opts.hideTests) params.set("tests", "hide");
+  if (opts.ask) params.set("ask", "1");
+  const query = params.toString();
+  return `/a/${snapshotId}/findings${query ? `?${query}` : ""}`;
+}
+
 /** '12-15' -> {12, 15}; '12' -> {12, 12}; anything else -> null. */
 export function parseLines(value: string | null): LineRange | null {
   const m = value?.match(/^(\d+)(?:-(\d+))?$/);

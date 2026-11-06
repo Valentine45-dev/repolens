@@ -186,6 +186,93 @@ export interface Graph {
   edges: GraphEdge[];
 }
 
+// --- The folder-first map (GET /graph?level=&root=, backend app/graph_map.py) ---------------
+
+export type MapLevel = "folder" | "file" | "symbol";
+
+export interface MapNode {
+  id: string; // dir:<path> | file:<path> | sym:<id> | more:<path>
+  kind: "folder" | "file" | "more" | "module" | "class" | "function" | "method";
+  path: string;
+  label: string;
+  finding_count: number;
+  // folder, file and "more" nodes
+  file_count?: number;
+  test_file_count?: number;
+  in_cycle?: boolean | null; // null: cycles not known for this snapshot yet
+  cycle_files?: number | null;
+  internal_count?: number;
+  outside_in?: number;
+  outside_out?: number;
+  hidden_count?: number; // "more" only
+  // file nodes
+  file_id?: number;
+  symbol_id?: number;
+  language?: string;
+  loc?: number;
+  external_imports?: number;
+  unresolved_imports?: number;
+  // symbol nodes
+  qualified_name?: string;
+  start_line?: number | null;
+  end_line?: number | null;
+  own?: boolean;
+}
+
+export interface MapEdge {
+  source: string;
+  target: string;
+  count: number;
+  confidence: number;
+  guess: boolean; // true only when every underlying edge is a guess
+  // folder and file levels
+  imports?: number;
+  calls?: number;
+  guess_calls?: number;
+  cycle_edges?: number | null; // null: cycles not known for this snapshot yet
+  // symbol level
+  type?: "calls" | "defines";
+}
+
+export interface Crumb {
+  path: string;
+  label: string; // "" for the repo itself
+}
+
+export interface MapView {
+  snapshot_id: number;
+  level: MapLevel;
+  root: string; // canonical: what the server opened
+  breadcrumbs: Crumb[];
+  view_limit: number;
+  total_files: number;
+  hidden_files: number;
+  hidden_files_under_root?: number;
+  hidden_symbols?: number;
+  hidden_count: number;
+  other_findings?: number;
+  file?: { file_id: number; path: string; in_cycle: boolean | null; finding_count: number }; // symbol level
+  cycle_scope: string;
+  cycles_available: boolean;
+  cycles: { id: number; size: number; files: string[] }[];
+  nodes: MapNode[];
+  edges: MapEdge[];
+}
+
+export function getMapView(
+  snapshotId: number,
+  opts: { level: MapLevel; root: string; showTests: boolean; showGuesses: boolean },
+  signal?: AbortSignal,
+): Promise<MapView> {
+  const params = new URLSearchParams({
+    level: opts.level,
+    exclude_tests: String(!opts.showTests),
+    min_confidence: opts.showGuesses ? "0.5" : "0.9",
+  });
+  if (opts.root) params.set("root", opts.root);
+  return request(`/snapshots/${snapshotId}/graph?${params}`, { signal });
+}
+
 export interface FileSymbol {
   id: number;
   kind: string;
