@@ -13,6 +13,7 @@ import {
 import { useSetParams } from "../links";
 import { AskDrawer } from "./AskDrawer";
 import { ConnectionNotice, isReconnecting } from "./ConnectionNotice";
+import { GraphSkeleton } from "./GraphSkeleton";
 
 export interface AnalysisContext {
   snapshotId: number;
@@ -106,9 +107,7 @@ export function AnalysisShell() {
               </button>
             </div>
           ) : (
-            <div className="canvas-message" aria-busy="true">
-              <p className="caption">Loading analysis…</p>
-            </div>
+            <GraphSkeleton />
           )}
         </div>
         {askOpen && status.data ? (

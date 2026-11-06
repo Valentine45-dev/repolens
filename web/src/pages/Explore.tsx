@@ -8,7 +8,7 @@ import type { AnalysisContext } from "../components/AnalysisShell";
 import { Breadcrumbs } from "../components/Breadcrumbs";
 import { ConnectionNotice, isReconnecting } from "../components/ConnectionNotice";
 import { FileList } from "../components/FileList";
-import { GraphSkeleton } from "../components/GraphSkeleton";
+import { CrumbSkeleton, GraphSkeleton, ListSkeleton } from "../components/GraphSkeleton";
 import { FIT_OPTIONS, firstViewHub, GraphView } from "../components/GraphView";
 import { Icon } from "../components/Icon";
 import { MapView } from "../components/MapView";
@@ -199,10 +199,14 @@ function ExploreInner() {
 
   return (
     <div className="explore">
-      {mapMode && view && !phone ? (
-        <div className="crumb-row">
-          <Breadcrumbs view={view} repo={repo} search={location.search} />
-        </div>
+      {mapMode && !phone ? (
+        view ? (
+          <div className="crumb-row">
+            <Breadcrumbs view={view} repo={repo} search={location.search} />
+          </div>
+        ) : (
+          <CrumbSkeleton />
+        )
       ) : null}
       <div className="toolbar" role="toolbar" aria-label="Graph options">
         {reconnecting ? <ConnectionNotice /> : null}
@@ -324,9 +328,7 @@ function ExploreInner() {
             </div>
           ) : !hasData ? (
             listView ? (
-              <div className="canvas-message" aria-busy="true">
-                <p className="caption">Loading files…</p>
-              </div>
+              <ListSkeleton />
             ) : (
               <GraphSkeleton />
             )

@@ -14,13 +14,24 @@
     <!-- Shown until the app mounts and replaces it, so a first load is never a blank page.
          Styles are inline: the stylesheet is loaded by the app itself. -->
     <div id="root">
-      <p
-        role="status"
-        aria-busy="true"
-        style="margin: 0; padding: 24px; font: 14px/1.5 system-ui, sans-serif; color: var(--text-muted, #52525b)"
-      >
-        Loading RepoLens…
-      </p>
+      <div role="status" aria-busy="true">
+        <span style="position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap">Loading RepoLens</span>
+        <div aria-hidden="true">
+          <div style="display: flex; align-items: center; gap: 16px; height: 52px; padding: 0 24px; border-bottom: 1px solid #e4e4e7">
+            <span style="width: 96px; height: 14px; border-radius: 4px; background: #f4f4f5"></span>
+            <span style="width: 88px; height: 14px; border-radius: 4px; background: #f4f4f5"></span>
+          </div>
+          <div style="padding: 24px">
+            <span style="display: block; width: 240px; height: 20px; border-radius: 4px; background: #f4f4f5"></span>
+            <span style="display: block; width: 160px; height: 14px; margin-top: 16px; border-radius: 4px; background: #f4f4f5"></span>
+            <div style="display: flex; gap: 40px; margin-top: 64px; justify-content: center">
+              <span style="width: 208px; height: 64px; border: 1px solid #e4e4e7; border-radius: 4px"></span>
+              <span style="width: 208px; height: 64px; border: 1px solid #e4e4e7; border-radius: 4px"></span>
+              <span style="width: 208px; height: 64px; border: 1px solid #e4e4e7; border-radius: 4px"></span>
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
     <script type="module" src="/src/main.tsx"></script>
   </body>
