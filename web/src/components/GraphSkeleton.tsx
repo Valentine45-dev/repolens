@@ -104,6 +104,12 @@ export function ExploreFrameSkeleton() {
           Show guessed calls
         </label>
         {list ? null : (
+          <label className="check" data-disabled>
+            <input type="checkbox" disabled readOnly />
+            Show all edges
+          </label>
+        )}
+        {list ? null : (
           <button type="button" className="button button-secondary button-small" disabled>
             Fit
           </button>
@@ -129,6 +135,7 @@ export function ExploreFrameSkeleton() {
               {params.get("guesses") === "1" ? null : " Hidden; turn on “Show guessed calls”."}
             </span>
           </div>
+          <p className="legend-note" />
         </div>
       )}
       <div className="explore-body">

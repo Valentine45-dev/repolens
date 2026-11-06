@@ -80,6 +80,7 @@ export function Findings() {
         <div className="toolbar findings-filters" role="toolbar" aria-label="Filter findings">
           <FilterSelect
             label="Severity"
+            kind="severity"
             value={severity ?? ""}
             onChange={(v) => setFilter("severity", v || null)}
             options={(["high", "medium", "low"] as const).map((s) => ({
@@ -89,6 +90,7 @@ export function Findings() {
           />
           <FilterSelect
             label="Rule"
+            kind="rule"
             value={rule ?? ""}
             onChange={(v) => setFilter("rule", v || null)}
             options={Object.entries(counts?.by_rule ?? {}).map(([id, n]) => ({
@@ -98,6 +100,7 @@ export function Findings() {
           />
           <FilterSelect
             label="Language"
+            kind="language"
             value={language ?? ""}
             onChange={(v) => setFilter("language", v || null)}
             options={["python", "javascript", "typescript"].map((l) => ({
@@ -163,11 +166,13 @@ export function Findings() {
 
 function FilterSelect({
   label,
+  kind,
   value,
   options,
   onChange,
 }: {
   label: string;
+  kind: "severity" | "rule" | "language"; // sets a fixed width, so the options arriving never move the row
   value: string;
   options: { value: string; label: string }[];
   onChange: (value: string) => void;
@@ -176,7 +181,7 @@ function FilterSelect({
   return (
     <span className="filter">
       <label htmlFor={id}>{label}</label>
-      <select id={id} className="select" value={value} onChange={(e) => onChange(e.target.value)}>
+      <select id={id} className={`select select-${kind}`} value={value} onChange={(e) => onChange(e.target.value)}>
         <option value="">All</option>
         {options.map((o) => (
           <option key={o.value} value={o.value}>

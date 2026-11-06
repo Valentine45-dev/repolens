@@ -9,30 +9,356 @@
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
     <title>RepoLens</title>
+    <!-- The three font files the first screen uses, fetched alongside the stylesheet instead of
+         after it: when they arrive late the text changes width and the page moves. -->
+    <link rel="preload" as="font" type="font/woff2" crossorigin href="/node_modules/@fontsource-variable/inter/files/inter-latin-wght-normal.woff2" />
+    <link rel="preload" as="font" type="font/woff2" crossorigin href="/node_modules/@fontsource/jetbrains-mono/files/jetbrains-mono-latin-400-normal.woff2" />
+    <link rel="preload" as="font" type="font/woff2" crossorigin href="/node_modules/@fontsource/jetbrains-mono/files/jetbrains-mono-latin-500-normal.woff2" />
   </head>
   <body>
-    <!-- Shown until the app mounts and replaces it, so a first load is never a blank page.
-         Styles are inline: the stylesheet is loaded by the app itself. -->
-    <div id="root">
-      <div role="status" aria-busy="true">
-        <span style="position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap">Loading RepoLens</span>
-        <div aria-hidden="true">
-          <div style="display: flex; align-items: center; gap: 16px; height: 52px; padding: 0 24px; border-bottom: 1px solid #e4e4e7">
-            <span style="width: 96px; height: 14px; border-radius: 4px; background: #f4f4f5"></span>
-            <span style="width: 88px; height: 14px; border-radius: 4px; background: #f4f4f5"></span>
+    <div id="root"></div>
+
+    <!-- First paint, before any script has loaded. One template per kind of page, built from the
+         real markup and class names (the stylesheet is in the head in the production build), so
+         every placeholder sits where the element it stands for will be and nothing moves when the
+         app mounts (React replaces #root's children). Real text stays real; only what the server
+         will say (repo name, counts) is a grey bar. Keep in step with Home.tsx, AnalysisShell.tsx,
+         Explore.tsx, Findings.tsx: web/src/firstPaint.test.ts checks the text and the classes. -->
+    <template id="fp-topbar">
+      <header class="topbar">
+        <a class="wordmark" href="/" aria-label="RepoLens home"
+          ><img src="/logo-mark.svg" alt="" width="20" height="20" class="wordmark-mark" />RepoLens</a
+        >
+        <nav aria-label="Main"><a class="topbar-link" href="/" data-fp="home-link">New analysis</a></nav>
+      </header>
+    </template>
+
+    <template id="fp-home">
+      <main>
+        <div class="page">
+          <h1 class="page-title">Understand a codebase before you read it.</h1>
+          <p class="lede">
+            RepoLens maps how the files of a public GitHub repository import and call each other. Deep
+            analysis for Python and JavaScript/TypeScript.
+          </p>
+          <form novalidate aria-busy="false">
+            <label for="repo-url" class="visually-hidden">GitHub repository URL</label>
+            <div class="submit-row">
+              <div class="field">
+                <input
+                  id="repo-url"
+                  class="input"
+                  type="url"
+                  inputmode="url"
+                  autocomplete="off"
+                  spellcheck="false"
+                  placeholder="https://github.com/owner/repo"
+                  value=""
+                />
+                <span class="field-icon"
+                  ><svg
+                    width="16"
+                    height="16"
+                    viewBox="0 0 16 16"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="1.5"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    aria-hidden="true"
+                  >
+                    <path d="M3.5 8.5l3 3 6-7" /></svg
+                ></span>
+              </div>
+              <button class="button" type="submit">Analyze</button>
+            </div>
+            <p class="field-message">
+              Public GitHub repositories only · up to 2,000 files · files over 1 MB are skipped
+            </p>
+          </form>
+          <div class="examples">
+            <span class="examples-label">Try an example</span>
+            <button type="button" class="chip">pallets/itsdangerous</button>
+            <button type="button" class="chip">expressjs/express</button>
+            <button type="button" class="chip">sindresorhus/ky</button>
+            <button type="button" class="chip">adeyosemanputra/pygoat</button>
           </div>
-          <div style="padding: 24px">
-            <span style="display: block; width: 240px; height: 20px; border-radius: 4px; background: #f4f4f5"></span>
-            <span style="display: block; width: 160px; height: 14px; margin-top: 16px; border-radius: 4px; background: #f4f4f5"></span>
-            <div style="display: flex; gap: 40px; margin-top: 64px; justify-content: center">
-              <span style="width: 208px; height: 64px; border: 1px solid #e4e4e7; border-radius: 4px"></span>
-              <span style="width: 208px; height: 64px; border: 1px solid #e4e4e7; border-radius: 4px"></span>
-              <span style="width: 208px; height: 64px; border: 1px solid #e4e4e7; border-radius: 4px"></span>
+          <section class="section" id="fp-recent" hidden>
+            <h2 class="section-title">Recent analyses <span class="caption">this browser</span></h2>
+            <ul class="list"></ul>
+          </section>
+        </div>
+      </main>
+    </template>
+
+    <template id="fp-recent-row">
+      <li class="list-row">
+        <a class="list-link" href="/">
+          <span class="list-name mono"></span>
+          <span class="list-meta">
+            <span class="skeleton" style="width: 56px"></span>
+            <span aria-hidden="true">·</span>
+            <span class="mono num"></span>
+            <span aria-hidden="true">·</span>
+            <span class="skeleton" style="width: 64px"></span>
+          </span>
+        </a>
+      </li>
+    </template>
+
+    <template id="fp-analysis-head">
+      <header class="analysis-header">
+        <div class="analysis-heading">
+          <div class="skeleton" style="width: 240px; height: 24px" data-fp="title"></div>
+        </div>
+        <nav class="analysis-tabs" aria-label="Analysis">
+          <a class="analysis-tab" href="#" data-fp="tab-explore">Explorer</a>
+          <a class="analysis-tab" href="#" data-fp="tab-findings">Findings<span class="count mono num" style="color: transparent" aria-hidden="true">00</span></a>
+        </nav>
+        <button type="button" class="button button-secondary button-small analysis-ask" tabindex="-1">Ask</button>
+      </header>
+    </template>
+
+    <template id="fp-explore">
+      <div class="analysis-body">
+        <div class="analysis-main">
+          <div class="explore">
+            <div class="crumb-row" data-fp="crumbs">
+              <nav class="breadcrumbs" aria-label="Breadcrumb">
+                <span class="icon-button breadcrumbs-up" aria-disabled="true"
+                  ><svg
+                    width="16"
+                    height="16"
+                    viewBox="0 0 16 16"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="1.5"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    aria-hidden="true"
+                  >
+                    <path d="M8 13V3.5M4 7.5l4-4 4 4" /></svg
+                ></span>
+                <ol>
+                  <li><span class="skeleton" style="width: 64px; height: 14px"></span></li>
+                </ol>
+              </nav>
+            </div>
+            <div class="toolbar" role="toolbar" aria-label="Graph options">
+              <div class="segmented" role="group" aria-label="View">
+                <button type="button" aria-pressed="true" data-fp="view-graph" tabindex="-1">Graph</button>
+                <button type="button" aria-pressed="false" data-fp="view-list" tabindex="-1">List</button>
+              </div>
+              <div class="segmented" role="group" aria-label="Level of detail" data-fp="levels">
+                <button type="button" aria-pressed="false" data-level="folder" tabindex="-1">Folders</button>
+                <button type="button" aria-pressed="false" data-level="file" tabindex="-1">Files</button>
+                <button type="button" aria-pressed="false" data-level="flat" tabindex="-1">Flat</button>
+              </div>
+              <label class="check"><input type="checkbox" data-fp="tests" tabindex="-1" />Show tests &amp; examples</label>
+              <label class="check"><input type="checkbox" data-fp="guesses" tabindex="-1" />Show guessed calls</label>
+              <label class="check" data-disabled data-fp="alledges"><input type="checkbox" disabled tabindex="-1" />Show all edges</label>
+              <button type="button" class="button button-secondary button-small" data-fp="fit" tabindex="-1">Fit</button>
+              <p class="toolbar-note caption"><span class="skeleton toolbar-note-skeleton"></span></p>
+            </div>
+            <div class="legend" aria-label="Legend" data-fp="legend">
+              <div class="legend-row">
+                <svg width="28" height="8" aria-hidden="true"><line x1="0" y1="4" x2="28" y2="4" class="legend-line" /></svg>
+                Import or call. The number counts connections; thicker means more.
+              </div>
+              <div class="legend-row" data-muted="true" data-fp="legend-guess">
+                <svg width="28" height="8" aria-hidden="true">
+                  <line x1="0" y1="4" x2="28" y2="4" class="legend-line" stroke-dasharray="5 4" />
+                </svg>
+                <span>Dashed: mostly best guesses. Dynamic code makes some calls hard to resolve.<span data-fp="legend-hint"> Hidden; turn on “Show guessed calls”.</span></span>
+              </div>
+              <p class="legend-note"></p>
+            </div>
+            <div class="explore-body">
+              <div class="canvas"><div class="graph-skeleton" data-fp="canvas"><div class="graph-skeleton-grid"></div></div></div>
             </div>
           </div>
         </div>
       </div>
-    </div>
+    </template>
+
+    <template id="fp-card">
+      <div class="graph-skeleton-card">
+        <span class="skeleton" style="width: 62%"></span>
+        <span class="skeleton" style="width: 40%; height: 10px"></span>
+      </div>
+    </template>
+
+    <template id="fp-findings">
+      <div class="analysis-body">
+        <div class="analysis-main">
+          <div class="findings">
+            <div class="findings-main">
+              <div class="findings-head">
+                <h2 class="section-title">Findings</h2>
+                <p class="caption">
+                  These are rule-based checks. They can miss issues and can flag safe code. Review each one.
+                </p>
+              </div>
+              <div class="toolbar findings-filters" role="toolbar" aria-label="Filter findings">
+                <span class="filter"
+                  ><label>Severity</label
+                  ><select class="select select-severity" tabindex="-1" data-fp="severity">
+                    <option value="">All</option>
+                    <option value="high">High</option>
+                    <option value="medium">Medium</option>
+                    <option value="low">Low</option>
+                  </select></span
+                >
+                <span class="filter"
+                  ><label>Rule</label
+                  ><select class="select select-rule" tabindex="-1"><option value="">All</option></select></span
+                >
+                <span class="filter"
+                  ><label>Language</label
+                  ><select class="select select-language" tabindex="-1" data-fp="language">
+                    <option value="">All</option>
+                    <option value="python">Python</option>
+                    <option value="javascript">JavaScript</option>
+                    <option value="typescript">TypeScript</option>
+                  </select></span
+                >
+                <span class="filter"
+                  ><label>Path starts with</label
+                  ><input class="input input-small mono" placeholder="e.g. src/" spellcheck="false" tabindex="-1" data-fp="path"
+                /></span>
+                <label class="check"><input type="checkbox" tabindex="-1" data-fp="hide-tests" />Hide test and example code</label>
+              </div>
+              <div class="panel-message" aria-busy="true">
+                <div class="skeleton" style="width: 70%"></div>
+                <div class="skeleton" style="width: 55%; margin-top: 12px"></div>
+                <div class="skeleton" style="width: 62%; margin-top: 12px"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </template>
+
+    <template id="fp-plain">
+      <main>
+        <div class="page">
+          <div class="skeleton" style="width: 240px; height: 20px"></div>
+          <div class="skeleton" style="width: 160px; margin-top: 16px"></div>
+        </div>
+      </main>
+    </template>
+
+    <script>
+      (function () {
+        var root = document.getElementById("root");
+        var path = location.pathname;
+        var q = new URLSearchParams(location.search);
+        var $ = function (id) { return document.getElementById(id).content.cloneNode(true); };
+        var all = function (el, sel) { return Array.prototype.slice.call(el.querySelectorAll(sel)); };
+        var one = function (el, key) { return el.querySelector('[data-fp="' + key + '"]'); };
+        var m = path.match(/^\/a\/(\d+)\/(explore|findings)\/?$/);
+        var frag = document.createDocumentFragment();
+        frag.appendChild($("fp-topbar"));
+
+        if (path === "/") {
+          one(frag, "home-link").setAttribute("aria-current", "page");
+          frag.appendChild($("fp-home"));
+          // Recent analyses: the names and commits are in this browser; only their status is grey.
+          try {
+            var recent = JSON.parse(localStorage.getItem("repolens.recent") || "[]");
+            if (Array.isArray(recent) && recent.length) {
+              var section = frag.querySelector("#fp-recent");
+              var list = section.querySelector("ul");
+              recent.forEach(function (r) {
+                if (!r || typeof r.url !== "string" || typeof r.commitSha !== "string") return;
+                var row = $("fp-recent-row");
+                row.querySelector(".list-name").textContent = r.url.replace(/^https:\/\/github\.com\//, "").replace(/\.git$/, "").replace(/\/$/, "");
+                row.querySelector(".num").textContent = r.commitSha.slice(0, 7);
+                row.querySelector("a").setAttribute("href", "/a/" + r.snapshotId);
+                list.appendChild(row);
+              });
+              if (list.children.length) section.hidden = false;
+            }
+          } catch (e) {}
+        } else if (m) {
+          var shell = document.createElement("div");
+          shell.className = "analysis";
+          shell.appendChild($("fp-analysis-head"));
+          // An analysis started in this browser is in the recent list: its name is known now, so
+          // the title is real and the tabs beside it do not move when the status arrives.
+          try {
+            var seen = JSON.parse(localStorage.getItem("repolens.recent") || "[]");
+            var mine = Array.isArray(seen) && seen.filter(function (r) { return r && String(r.snapshotId) === m[1] && typeof r.url === "string" && typeof r.commitSha === "string"; })[0];
+            if (mine) {
+              var h1 = document.createElement("h1");
+              h1.className = "explore-title";
+              h1.innerHTML = '<a class="mono" target="_blank" rel="noreferrer"></a> <span class="repo-sha mono"></span>';
+              h1.firstChild.setAttribute("href", mine.url);
+              h1.firstChild.textContent = mine.url.replace(/^https:\/\/github\.com\//, "").replace(/\.git$/, "").replace(/\/$/, "");
+              h1.lastChild.textContent = "@ " + mine.commitSha.slice(0, 7);
+              var t = one(shell, "title");
+              t.parentNode.replaceChild(h1, t);
+            }
+          } catch (e) {}
+          var base = "/a/" + m[1];
+          var keep = q.get("ask") === "1" ? "?ask=1" : "";
+          var tabE = one(shell, "tab-explore"), tabF = one(shell, "tab-findings");
+          tabE.setAttribute("href", base + "/explore" + keep);
+          tabF.setAttribute("href", base + "/findings" + keep);
+          (m[2] === "explore" ? tabE : tabF).className += " active";
+          (m[2] === "explore" ? tabE : tabF).setAttribute("aria-current", "page");
+          if (m[2] === "explore") {
+            var body = $("fp-explore");
+            var list = q.get("view") === "list";
+            var level = q.get("level");
+            var crumbs = one(body, "crumbs");
+            if (list) {
+              crumbs.remove(); one(body, "levels").remove(); one(body, "fit").remove(); one(body, "alledges").remove(); one(body, "legend").remove();
+              one(body, "view-graph").setAttribute("aria-pressed", "false");
+              one(body, "view-list").setAttribute("aria-pressed", "true");
+              one(body, "canvas").remove();
+            } else {
+              all(body, "[data-level]").forEach(function (b) { if (b.getAttribute("data-level") === level) b.setAttribute("aria-pressed", "true"); });
+              var root_ = (q.get("root") || "").replace(/^\/+|\/+$/g, "");
+              if (root_ && level !== "flat") {
+                var ol = crumbs.querySelector("ol");
+                var parts = root_.split("/");
+                parts.forEach(function (p, i) {
+                  var li = document.createElement("li");
+                  li.innerHTML = '<span class="breadcrumbs-sep" aria-hidden="true">/</span><span class="mono' + (i === parts.length - 1 ? " breadcrumbs-here" : "") + '"></span>';
+                  li.lastChild.textContent = p;
+                  ol.appendChild(li);
+                });
+              }
+              if (q.get("guesses") === "1") { one(body, "legend-guess").removeAttribute("data-muted"); one(body, "legend-hint").remove(); }
+              var grid = body.querySelector(".graph-skeleton-grid");
+              for (var i = 0; i < 24; i++) grid.appendChild($("fp-card"));
+            }
+            one(body, "tests").checked = q.get("tests") === "1";
+            one(body, "guesses").checked = q.get("guesses") === "1";
+            shell.appendChild(body);
+          } else {
+            var fb = $("fp-findings");
+            if (q.get("severity")) one(fb, "severity").value = q.get("severity");
+            if (q.get("language")) one(fb, "language").value = q.get("language");
+            if (q.get("path")) one(fb, "path").value = q.get("path");
+            one(fb, "hide-tests").checked = q.get("tests") === "hide";
+            shell.appendChild(fb);
+          }
+          var main = document.createElement("main");
+          main.appendChild(shell);
+          frag.appendChild(main);
+        } else {
+          frag.appendChild($("fp-plain"));
+        }
+        // Not interactive: this is only the shape of the page until the app mounts.
+        var holder = document.createElement("div");
+        holder.setAttribute("inert", "");
+        holder.style.display = "contents";
+        holder.appendChild(frag);
+        root.appendChild(holder);
+      })();
+    </script>
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>

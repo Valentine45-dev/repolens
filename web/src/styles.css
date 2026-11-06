@@ -859,6 +859,11 @@ a {
   user-select: none;
 }
 
+.check[data-disabled] {
+  color: var(--text-subtle);
+  cursor: default;
+}
+
 .check input {
   width: 16px;
   height: 16px;
@@ -1036,13 +1041,18 @@ a {
 }
 
 .legend-cycle {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
   color: var(--text);
   font-weight: 500;
+  vertical-align: bottom;
 }
 
 /* What the canvas leaves out, said in words (the edge-density rule). */
 .legend-note {
   flex-basis: 100%;
+  min-height: 18px; /* a row's height even when empty: captions arriving never move the map */
   margin: 0;
   color: var(--text-muted);
 }
@@ -1611,6 +1621,7 @@ a {
 }
 
 .findings-main {
+  scrollbar-gutter: stable; /* the list's scrollbar arriving never narrows the page */
   display: flex;
   flex: 1;
   flex-direction: column;
@@ -1651,6 +1662,20 @@ a {
 
 .input-small {
   width: 140px;
+}
+
+/* Fixed widths: a select sizes itself to its longest option, and the rule list arrives after the
+   first paint, which used to push the filters to its right along. */
+.select-severity {
+  width: 112px;
+}
+
+.select-rule {
+  width: 260px;
+}
+
+.select-language {
+  width: 132px;
 }
 
 .select:focus-visible,

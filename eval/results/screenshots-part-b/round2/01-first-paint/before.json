@@ -1,0 +1,942 @@
+{
+  "base": "http://localhost:5174",
+  "viewport": [
+    1440,
+    900
+  ],
+  "browser": "msedge.exe",
+  "routes": {
+    "home": {
+      "path": "/",
+      "cls": 0.00019,
+      "shifts": [
+        {
+          "value": 0.00019,
+          "at": 548,
+          "moved": [
+            {
+              "node": "button.chip",
+              "from": [
+                679,
+                394,
+                138,
+                28
+              ],
+              "to": [
+                691,
+                394,
+                148,
+                28
+              ]
+            },
+            {
+              "node": "button.chip",
+              "from": [
+                825,
+                394,
+                125,
+                28
+              ],
+              "to": [
+                848,
+                394,
+                134,
+                28
+              ]
+            },
+            {
+              "node": "span.list-meta",
+              "from": [
+                826,
+                597,
+                197,
+                18
+              ],
+              "to": [
+                822,
+                597,
+                201,
+                18
+              ]
+            },
+            {
+              "node": "span.list-meta",
+              "from": [
+                829,
+                552,
+                194,
+                18
+              ],
+              "to": [
+                826,
+                552,
+                198,
+                18
+              ]
+            }
+          ]
+        }
+      ],
+      "landmarks": {
+        ".topbar": {
+          "skeleton": [],
+          "loaded": [
+            [
+              0,
+              0,
+              1440,
+              52
+            ]
+          ],
+          "maxDelta": null
+        },
+        ".page-title": {
+          "skeleton": [],
+          "loaded": [
+            [
+              400,
+              178,
+              640,
+              33.6
+            ]
+          ],
+          "maxDelta": null
+        },
+        ".lede": {
+          "skeleton": [],
+          "loaded": [
+            [
+              400,
+              223.6,
+              605.6,
+              48
+            ]
+          ],
+          "maxDelta": null
+        },
+        "form": {
+          "skeleton": [],
+          "loaded": [
+            [
+              400,
+              303.6,
+              640,
+              66
+            ]
+          ],
+          "maxDelta": null
+        },
+        ".submit-row": {
+          "skeleton": [],
+          "loaded": [
+            [
+              400,
+              303.6,
+              640,
+              40
+            ]
+          ],
+          "maxDelta": null
+        },
+        "#repo-url": {
+          "skeleton": [],
+          "loaded": [
+            [
+              400,
+              303.6,
+              544.2,
+              40
+            ]
+          ],
+          "maxDelta": null
+        },
+        ".submit-row .button": {
+          "skeleton": [],
+          "loaded": [
+            [
+              952.2,
+              303.6,
+              87.8,
+              40
+            ]
+          ],
+          "maxDelta": null
+        },
+        ".field-message": {
+          "skeleton": [],
+          "loaded": [
+            [
+              400,
+              351.6,
+              640,
+              18
+            ]
+          ],
+          "maxDelta": null
+        },
+        ".examples": {
+          "skeleton": [],
+          "loaded": [
+            [
+              400,
+              393.6,
+              640,
+              64
+            ]
+          ],
+          "maxDelta": null
+        },
+        ".examples .chip": {
+          "skeleton": [],
+          "loaded": [
+            [
+              513.4,
+              393.6,
+              170,
+              28
+            ],
+            [
+              691.4,
+              393.6,
+              148.4,
+              28
+            ],
+            [
+              847.8,
+              393.6,
+              134,
+              28
+            ],
+            [
+              400,
+              429.6,
+              184.4,
+              28
+            ]
+          ],
+          "maxDelta": null
+        },
+        ".section": {
+          "skeleton": [],
+          "loaded": [
+            [
+              400,
+              505.6,
+              640,
+              123
+            ]
+          ],
+          "maxDelta": null
+        },
+        ".list-row": {
+          "skeleton": [],
+          "loaded": [
+            [
+              401,
+              539.6,
+              638,
+              43.5
+            ],
+            [
+              401,
+              583.1,
+              638,
+              44.5
+            ]
+          ],
+          "maxDelta": null
+        }
+      }
+    },
+    "explore": {
+      "path": "/a/6/explore?level=folder&root=src%2Fflask",
+      "cls": 0.08099,
+      "shifts": [
+        {
+          "value": 0.00002,
+          "at": 365,
+          "moved": [
+            {
+              "node": "nav.",
+              "from": [
+                145,
+                12,
+                82,
+                28
+              ],
+              "to": [
+                151,
+                13,
+                89,
+                26
+              ]
+            },
+            {
+              "node": "a.analysis-tab",
+              "from": [
+                356,
+                70,
+                54,
+                36
+              ],
+              "to": [
+                360,
+                70,
+                58,
+                36
+              ]
+            }
+          ]
+        },
+        {
+          "value": 0.00042,
+          "at": 683,
+          "moved": [
+            {
+              "node": "div.analysis-heading",
+              "from": [
+                24,
+                74,
+                240,
+                32
+              ],
+              "to": [
+                24,
+                70,
+                184,
+                36
+              ]
+            },
+            {
+              "node": "nav.analysis-tabs",
+              "from": [
+                288,
+                70,
+                130,
+                36
+              ],
+              "to": [
+                232,
+                70,
+                130,
+                36
+              ]
+            }
+          ]
+        },
+        {
+          "value": 0.00005,
+          "at": 771,
+          "moved": [
+            {
+              "node": "nav.analysis-tabs",
+              "from": [
+                232,
+                70,
+                130,
+                36
+              ],
+              "to": [
+                242,
+                70,
+                130,
+                36
+              ]
+            },
+            {
+              "node": "?",
+              "from": [
+                24,
+                72,
+                184,
+                20
+              ],
+              "to": [
+                24,
+                72,
+                194,
+                20
+              ]
+            }
+          ]
+        },
+        {
+          "value": 0.00002,
+          "at": 790,
+          "moved": [
+            {
+              "node": "nav.analysis-tabs",
+              "from": [
+                242,
+                70,
+                130,
+                36
+              ],
+              "to": [
+                249,
+                70,
+                130,
+                36
+              ]
+            }
+          ]
+        },
+        {
+          "value": 0.08049,
+          "at": 2833,
+          "moved": [
+            {
+              "node": "div.canvas",
+              "from": [
+                0,
+                198,
+                1440,
+                702
+              ],
+              "to": [
+                0,
+                255,
+                1440,
+                645
+              ]
+            },
+            {
+              "node": "button.button",
+              "from": [
+                730,
+                154,
+                40,
+                30
+              ],
+              "to": [
+                878,
+                154,
+                40,
+                30
+              ]
+            }
+          ]
+        }
+      ],
+      "landmarks": {
+        ".topbar": {
+          "skeleton": [],
+          "loaded": [
+            [
+              0,
+              0,
+              1440,
+              52
+            ]
+          ],
+          "maxDelta": null
+        },
+        ".analysis-header": {
+          "skeleton": [],
+          "loaded": [
+            [
+              0,
+              52,
+              1440,
+              55
+            ]
+          ],
+          "maxDelta": null
+        },
+        ".analysis-heading": {
+          "skeleton": [],
+          "loaded": [
+            [
+              24,
+              69.7,
+              200.7,
+              36.3
+            ]
+          ],
+          "maxDelta": null
+        },
+        ".analysis-tabs": {
+          "skeleton": [],
+          "loaded": [
+            [
+              248.7,
+              70,
+              161.9,
+              36
+            ]
+          ],
+          "maxDelta": null
+        },
+        ".analysis-tab": {
+          "skeleton": [],
+          "loaded": [
+            [
+              248.7,
+              70,
+              55.7,
+              36
+            ],
+            [
+              320.4,
+              70,
+              90.2,
+              36
+            ]
+          ],
+          "maxDelta": null
+        },
+        ".analysis-ask": {
+          "skeleton": [],
+          "loaded": [
+            [
+              1368.4,
+              68,
+              47.6,
+              30
+            ]
+          ],
+          "maxDelta": null
+        },
+        ".crumb-row": {
+          "skeleton": [],
+          "loaded": [
+            [
+              0,
+              107,
+              1440,
+              38
+            ]
+          ],
+          "maxDelta": null
+        },
+        ".breadcrumbs-up": {
+          "skeleton": [],
+          "loaded": [
+            [
+              24,
+              115,
+              30,
+              30
+            ]
+          ],
+          "maxDelta": null
+        },
+        ".toolbar": {
+          "skeleton": [],
+          "loaded": [
+            [
+              0,
+              145,
+              1440,
+              53
+            ]
+          ],
+          "maxDelta": null
+        },
+        ".segmented": {
+          "skeleton": [],
+          "loaded": [
+            [
+              24,
+              153,
+              109.4,
+              32
+            ],
+            [
+              157.4,
+              153,
+              168.1,
+              32
+            ]
+          ],
+          "maxDelta": null
+        },
+        ".check": {
+          "skeleton": [],
+          "loaded": [
+            [
+              349.5,
+              158.5,
+              176.7,
+              21
+            ],
+            [
+              550.2,
+              158.5,
+              155.5,
+              21
+            ],
+            [
+              729.6,
+              158.5,
+              124.3,
+              21
+            ]
+          ],
+          "maxDelta": null
+        },
+        ".toolbar .button": {
+          "skeleton": [],
+          "loaded": [
+            [
+              877.9,
+              154,
+              40.2,
+              30
+            ]
+          ],
+          "maxDelta": null
+        },
+        ".legend": {
+          "skeleton": [],
+          "loaded": [
+            [
+              0,
+              198,
+              1440,
+              57
+            ]
+          ],
+          "maxDelta": null
+        },
+        ".explore-body": {
+          "skeleton": [],
+          "loaded": [
+            [
+              0,
+              255,
+              1440,
+              645
+            ]
+          ],
+          "maxDelta": null
+        }
+      }
+    },
+    "findings": {
+      "path": "/a/2/findings",
+      "cls": 0.00271,
+      "shifts": [
+        {
+          "value": 0.00002,
+          "at": 171,
+          "moved": [
+            {
+              "node": "nav.",
+              "from": [
+                145,
+                12,
+                82,
+                28
+              ],
+              "to": [
+                151,
+                13,
+                89,
+                26
+              ]
+            },
+            {
+              "node": "a.analysis-tab",
+              "from": [
+                356,
+                70,
+                54,
+                36
+              ],
+              "to": [
+                360,
+                70,
+                58,
+                36
+              ]
+            }
+          ]
+        },
+        {
+          "value": 0.00014,
+          "at": 292,
+          "moved": [
+            {
+              "node": "div.analysis-heading",
+              "from": [
+                24,
+                74,
+                240,
+                32
+              ],
+              "to": [
+                24,
+                70,
+                258,
+                36
+              ]
+            },
+            {
+              "node": "nav.analysis-tabs",
+              "from": [
+                288,
+                70,
+                130,
+                36
+              ],
+              "to": [
+                306,
+                70,
+                130,
+                36
+              ]
+            }
+          ]
+        },
+        {
+          "value": 0.00014,
+          "at": 352,
+          "moved": [
+            {
+              "node": "?",
+              "from": [
+                24,
+                72,
+                258,
+                20
+              ],
+              "to": [
+                24,
+                72,
+                282,
+                20
+              ]
+            },
+            {
+              "node": "?",
+              "from": [
+                24,
+                74,
+                258,
+                19
+              ],
+              "to": [
+                24,
+                73,
+                282,
+                19
+              ]
+            },
+            {
+              "node": "nav.analysis-tabs",
+              "from": [
+                306,
+                70,
+                130,
+                36
+              ],
+              "to": [
+                329,
+                70,
+                130,
+                36
+              ]
+            }
+          ]
+        },
+        {
+          "value": 0.00241,
+          "at": 552,
+          "moved": [
+            {
+              "node": "span.filter",
+              "from": [
+                549,
+                178,
+                250,
+                30
+              ],
+              "to": [
+                734,
+                179,
+                250,
+                30
+              ]
+            },
+            {
+              "node": "span.filter",
+              "from": [
+                341,
+                178,
+                184,
+                30
+              ],
+              "to": [
+                526,
+                179,
+                184,
+                30
+              ]
+            },
+            {
+              "node": "label.check",
+              "from": [
+                823,
+                183,
+                208,
+                21
+              ],
+              "to": [
+                1008,
+                183,
+                208,
+                21
+              ]
+            }
+          ]
+        }
+      ],
+      "landmarks": {
+        ".analysis-header": {
+          "skeleton": [],
+          "loaded": [
+            [
+              0,
+              52,
+              1440,
+              55
+            ]
+          ],
+          "maxDelta": null
+        },
+        ".analysis-heading": {
+          "skeleton": [],
+          "loaded": [
+            [
+              24,
+              69.7,
+              281,
+              36.3
+            ]
+          ],
+          "maxDelta": null
+        },
+        ".analysis-tabs": {
+          "skeleton": [],
+          "loaded": [
+            [
+              329,
+              70,
+              161.9,
+              36
+            ]
+          ],
+          "maxDelta": null
+        },
+        ".analysis-ask": {
+          "skeleton": [],
+          "loaded": [
+            [
+              1368.4,
+              68,
+              47.6,
+              30
+            ]
+          ],
+          "maxDelta": null
+        },
+        ".findings-head": {
+          "skeleton": [],
+          "loaded": [
+            [
+              0,
+              107,
+              1425,
+              71.5
+            ]
+          ],
+          "maxDelta": null
+        },
+        ".section-title": {
+          "skeleton": [],
+          "loaded": [
+            [
+              24,
+              123,
+              1377,
+              21.5
+            ]
+          ],
+          "maxDelta": null
+        },
+        ".findings-filters": {
+          "skeleton": [],
+          "loaded": [
+            [
+              0,
+              178.5,
+              1425,
+              43
+            ]
+          ],
+          "maxDelta": null
+        },
+        ".filter": {
+          "skeleton": [],
+          "loaded": [
+            [
+              24,
+              178.5,
+              177.2,
+              30
+            ],
+            [
+              225.2,
+              178.5,
+              276.8,
+              30
+            ],
+            [
+              526,
+              178.5,
+              183.5,
+              30
+            ],
+            [
+              733.5,
+              178.5,
+              250.5,
+              30
+            ]
+          ],
+          "maxDelta": null
+        },
+        ".select-rule": {
+          "skeleton": [],
+          "loaded": [],
+          "maxDelta": null
+        },
+        ".input-small": {
+          "skeleton": [],
+          "loaded": [
+            [
+              844,
+              178.5,
+              140,
+              30
+            ]
+          ],
+          "maxDelta": null
+        },
+        ".findings-filters .check": {
+          "skeleton": [],
+          "loaded": [
+            [
+              1008,
+              183,
+              208.4,
+              21
+            ]
+          ],
+          "maxDelta": null
+        }
+      }
+    }
+  }
+}

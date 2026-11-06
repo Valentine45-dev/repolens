@@ -1,5 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
-import { useRef } from "react";
+import { useMemo, useRef } from "react";
 import { Navigate, NavLink, Outlet, useParams, useSearchParams } from "react-router-dom";
 
 import {
@@ -11,6 +11,7 @@ import {
   type SnapshotStatus,
 } from "../api";
 import { useSetParams } from "../links";
+import { loadRecent } from "../recent";
 import { AskDrawer } from "./AskDrawer";
 import { ConnectionNotice, isReconnecting } from "./ConnectionNotice";
 
@@ -49,6 +50,10 @@ export function AnalysisShell() {
     staleTime: Infinity,
   });
 
+  // An analysis started in this browser is in the recent list: its name is known before the server
+  // answers, so the title is real at once and the tabs beside it never move.
+  const known = useMemo(() => loadRecent().find((r) => r.snapshotId === snapshotId), [snapshotId]);
+
   if (!valid || (status.error instanceof ApiError && status.error.status === 404)) {
     return <Navigate to={`/a/${id}`} replace />;
   }
@@ -68,8 +73,15 @@ export function AnalysisShell() {
               </a>{" "}
               <span className="repo-sha mono">@ {status.data.commit_sha.slice(0, 7)}</span>
             </h1>
+          ) : known ? (
+            <h1 className="explore-title">
+              <a href={known.url} target="_blank" rel="noreferrer" className="mono">
+                {repoName(known.url)}
+              </a>{" "}
+              <span className="repo-sha mono">@ {known.commitSha.slice(0, 7)}</span>
+            </h1>
           ) : (
-            <div className="skeleton" style={{ width: 240, height: 20 }} />
+            <div className="skeleton" style={{ width: 240, height: 24 }} />
           )}
           {isReconnecting(status) ? <ConnectionNotice /> : null}
         </div>
@@ -79,7 +91,14 @@ export function AnalysisShell() {
           </NavLink>
           <NavLink to={`/a/${snapshotId}/findings${keep}`} className="analysis-tab">
             Findings
-            {total !== undefined ? <span className="count mono num">{total}</span> : null}
+            {total !== undefined ? (
+              <span className="count mono num">{total}</span>
+            ) : (
+              // The badge's room, so the tab does not grow when the count arrives.
+              <span className="count mono num" style={{ color: "transparent" }} aria-hidden="true">
+                00
+              </span>
+            )}
           </NavLink>
         </nav>
         <button

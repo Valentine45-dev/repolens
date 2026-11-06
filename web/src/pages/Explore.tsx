@@ -198,6 +198,7 @@ function ExploreInner() {
   const repo = status ? (repoName(status.url).split("/").pop() ?? "") : "";
   const mapMode = !listView && !flatMode;
   const caption = selection ? densityCaption(selection, showAllEdges) : null;
+  const canShowAll = showAllEdges || (selection !== null && selection.mode !== "all");
 
   return (
     <div className="explore">
@@ -267,11 +268,14 @@ function ExploreInner() {
           />
           Show guessed calls
         </label>
-        {mapMode && (showAllEdges || (selection !== null && selection.mode !== "all")) ? (
-          <label className="check" title="Draw every connection, not only the strongest">
+        {mapMode ? (
+          // Always there, so the toolbar never changes shape when the view arrives; it is only
+          // available when the map leaves edges out.
+          <label className="check" title="Draw every connection, not only the strongest" data-disabled={!canShowAll || undefined}>
             <input
               type="checkbox"
               checked={showAllEdges}
+              disabled={!canShowAll}
               onChange={(e) => setParam("edges", e.target.checked ? "all" : null)}
             />
             Show all edges
@@ -550,13 +554,18 @@ function MapLegend({
           {showGuesses ? null : " Hidden; turn on “Show guessed calls”."}
         </span>
       </div>
-      {cycle ? (
-        <div className="legend-row legend-cycle">
-          <Icon name="cycle" size={14} />
-          {CYCLE_CAPTION}
-        </div>
-      ) : null}
-      {caption ? <p className="legend-note">{caption}</p> : null}
+      {/* One row that is always there (it holds nothing for a small graph), so a caption arriving
+          with the data never pushes the map down. */}
+      <p className="legend-note">
+        {cycle ? (
+          <span className="legend-cycle">
+            <Icon name="cycle" size={14} />
+            {CYCLE_CAPTION}
+          </span>
+        ) : null}
+        {cycle && caption ? " · " : null}
+        {caption}
+      </p>
     </div>
   );
 }
