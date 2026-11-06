@@ -19,6 +19,8 @@ import { layoutMap } from "../mapLayout";
 import {
   CYCLE_CAPTION,
   densityCaption,
+  edgeBudgetFor,
+  restingEdges,
   emptyViewMessage,
   isDrawn,
   isMapRequest,
@@ -186,10 +188,18 @@ function ExploreInner() {
   const showHubNote = hub !== null && selectedId === null && fittedAt !== graph.dataUpdatedAt;
 
   // --- the map ---
-  const selection = useMemo(() => (view ? selectEdges(view.edges) : null), [view]);
-  const mapPositions = useMemo(
-    () => (view ? layoutMap(view.level, view.nodes, view.edges) : new Map()),
+  const selection = useMemo(
+    () => (view ? selectEdges(view.edges, edgeBudgetFor(view.nodes.length)) : null),
     [view],
+  );
+  // Arranged for the edges that are drawn at rest, so what is on screen is what is untangled;
+  // hovering a node draws more on top of that arrangement without moving anything.
+  const mapPositions = useMemo(
+    () =>
+      view && selection
+        ? layoutMap(view.level, view.nodes, [...restingEdges(view.edges, selection, showAllEdges)])
+        : new Map(),
+    [view, selection, showAllEdges],
   );
 
   const reconnecting = isReconnecting(graph) || (!listView && !flatMode && isReconnecting(map));

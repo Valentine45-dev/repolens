@@ -1225,6 +1225,14 @@ a {
   white-space: nowrap;
 }
 
+.map-node-hidden {
+  overflow: hidden;
+  color: var(--text-subtle);
+  font-size: 10px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
 .map-node-boundary {
   color: var(--text-subtle);
   font-family: var(--font-mono);

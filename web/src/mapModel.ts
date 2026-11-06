@@ -10,6 +10,12 @@ export const START_FILE_LIMIT = 30;
 /** Edges drawn at rest. The server's 60-node limit does not limit edges (flask `src/flask` has
  * 20 nodes and 82 edges; a symbol view reaches 61 nodes and 202). */
 export const EDGE_BUDGET = 40;
+/** About three edges for every four nodes, between 12 and EDGE_BUDGET: a view of 20 nodes draws
+ * at most 15 edges (it used to draw up to 40), a view of 60 still draws 40. What is left out is
+ * one hover or "Show all edges" away. */
+export function edgeBudgetFor(nodeCount: number): number {
+  return Math.min(EDGE_BUDGET, Math.max(12, Math.round(nodeCount * 0.75)));
+}
 /** Up to this many drawn edges every one carries its count; above it only the strong ones do. */
 export const LABEL_ALL_UP_TO = 12;
 

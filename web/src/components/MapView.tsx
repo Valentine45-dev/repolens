@@ -42,6 +42,7 @@ import {
 import { findingsHref } from "../links";
 import { createHoverIntent } from "../hoverIntent";
 import {
+  edgeHandles,
   initialViewport,
   mapNodeHeight,
   mapNodeWidth,
@@ -86,6 +87,8 @@ type MapNodeData = {
   level: MapViewData["level"];
   snapshotId: number;
   hideTests: boolean;
+  /** Connections of this node that are not drawn at rest (hover shows them). */
+  hiddenEdges: number;
 };
 type MapFlowNode = Node<MapNodeData, "map">;
 
@@ -101,6 +104,7 @@ type MapEdgeData = {
   activeLabel: string; // shown when one end is focused
   markerId: string;
   lane: number; // a two-way pair runs as two parallel lines, this far from the centre
+  vertical: boolean; // the lane then shifts x, not y
 };
 type MapFlowEdge = Edge<MapEdgeData, "dep">;
 
@@ -249,11 +253,23 @@ const MapNodeView = memo(function MapNodeView({ data }: NodeProps<MapFlowNode>) 
       ) : (
         <Summary node={node} data={data} />
       )}
+      {data.hiddenEdges > 0 ? (
+        <div
+          className="map-node-hidden"
+          title="These connections are not drawn until you hover this node, or turn on Show all edges."
+        >
+          {plural(data.hiddenEdges, "connection")} not drawn
+        </div>
+      ) : null}
       {boundary && level !== "symbol" ? (
         <div className="map-node-boundary" title={boundaryTitle(node)}>
           {boundary}
         </div>
       ) : null}
+      <Handle id="in-t" type="target" position={Position.Top} isConnectable={false} className="graph-handle" />
+      <Handle id="out-t" type="source" position={Position.Top} isConnectable={false} className="graph-handle" />
+      <Handle id="in-b" type="target" position={Position.Bottom} isConnectable={false} className="graph-handle" />
+      <Handle id="out-b" type="source" position={Position.Bottom} isConnectable={false} className="graph-handle" />
       <Handle id="out-r" type="source" position={Position.Right} isConnectable={false} className="graph-handle" />
       <Handle id="in-r" type="target" position={Position.Right} isConnectable={false} className="graph-handle" />
     </div>
@@ -277,10 +293,10 @@ function DepEdge({
   if (!data || (flags & EDGE_VISIBLE) === 0) return null;
   const active = (flags & EDGE_ACTIVE) !== 0;
   const [path, labelX, labelY] = getBezierPath({
-    sourceX,
-    sourceY: sourceY + data.lane,
-    targetX,
-    targetY: targetY + data.lane,
+    sourceX: sourceX + (data.vertical ? data.lane : 0),
+    sourceY: sourceY + (data.vertical ? 0 : data.lane),
+    targetX: targetX + (data.vertical ? data.lane : 0),
+    targetY: targetY + (data.vertical ? 0 : data.lane),
     sourcePosition,
     targetPosition,
   });
@@ -297,9 +313,9 @@ function DepEdge({
           <marker
             id={data.markerId}
             viewBox="-10 -10 20 20"
-            markerWidth={14}
-            markerHeight={14}
-            markerUnits="strokeWidth"
+            markerWidth={20}
+            markerHeight={20}
+            markerUnits="userSpaceOnUse" /* a fixed size: on a thick edge a scaled arrowhead was huge */
             orient="auto-start-reverse"
             refX={0}
             refY={0}
@@ -335,7 +351,7 @@ function DepEdge({
             onMouseMove={(e) => tip.show(e.clientX, e.clientY, data.title)}
             onMouseLeave={tip.hide}
             style={{
-              transform: `translate(-50%, -50%) translate(${labelX}px, ${labelY + data.lane}px)`,
+              transform: `translate(-50%, -50%) translate(${labelX + (data.vertical ? data.lane : 0)}px, ${labelY + (data.vertical ? 0 : data.lane)}px)`,
             }}
           >
             {label}
@@ -463,6 +479,17 @@ export function MapView({
 
   // Built from the view only (and the "Show all edges" setting for edges): never from hover,
   // focus or selection, so React Flow keeps every node it has measured.
+  const hiddenByNode = useMemo(() => {
+    const rest = restingEdges(view.edges, selection, showAll);
+    const counts = new Map<string, number>();
+    for (const e of view.edges) {
+      if (rest.has(e)) continue;
+      counts.set(e.source, (counts.get(e.source) ?? 0) + 1);
+      counts.set(e.target, (counts.get(e.target) ?? 0) + 1);
+    }
+    return counts;
+  }, [view.edges, selection, showAll]);
+
   const flowNodes = useMemo<MapFlowNode[]>(
     () =>
       view.nodes.map((n) => {
@@ -471,16 +498,20 @@ export function MapView({
           id: n.id,
           type: "map",
           position: { x: p?.x ?? 0, y: p?.y ?? 0 },
-          data: { node: n, level: view.level, snapshotId, hideTests },
+          data: { node: n, level: view.level, snapshotId, hideTests, hiddenEdges: hiddenByNode.get(n.id) ?? 0 },
           draggable: false,
           connectable: false,
           ariaLabel: n.kind === "more" ? n.label : n.path || n.label,
         };
       }),
-    [view.nodes, view.level, positions, snapshotId, hideTests],
+    [view.nodes, view.level, positions, snapshotId, hideTests, hiddenByNode],
   );
 
   const flowEdges = useMemo<MapFlowEdge[]>(() => {
+    const handles = (e: { source: string; target: string }) => {
+      const h = edgeHandles(positions.get(e.source), positions.get(e.target), width);
+      return { sourceHandle: h.sourceHandle, targetHandle: h.targetHandle };
+    };
     const rest = restingEdges(view.edges, selection, showAll);
     const reverse = new Set(view.edges.map((e) => `${e.target}>${e.source}`));
     return view.edges.map((e, i) => {
@@ -513,12 +544,13 @@ export function MapView({
           activeLabel: symbolEdge ? split : String(e.count),
           markerId: `mk-${i}`,
           lane: reverse.has(`${e.source}>${e.target}`) ? (e.source < e.target ? -10 : 10) : 0,
+          vertical: edgeHandles(positions.get(e.source), positions.get(e.target), width).vertical,
         },
-        ...handlesFor(positions.get(e.source), positions.get(e.target)),
+        ...handles(e),
         focusable: false,
       };
     });
-  }, [view.edges, selection, showAll, nodesById, positions]);
+  }, [view.edges, selection, showAll, nodesById, positions, width]);
 
   return (
     // Nodes are focusable but not selectable (selection is the URL's ?node=), so React Flow does
@@ -603,20 +635,6 @@ export function MapView({
       </StoreContext.Provider>
     </div>
   );
-}
-
-/** Forward edges go right side -> left side; edges that point back (to an earlier layer) go
- * left side -> right side; two nodes in one layer, or not in the chain at all, connect on their
- * right sides. */
-function handlesFor(
-  from: MapPosition | undefined,
-  to: MapPosition | undefined,
-): { sourceHandle: string; targetHandle: string } {
-  if (!from || !to) return { sourceHandle: "out-r", targetHandle: "in-l" };
-  if (from.rank === to.rank) return { sourceHandle: "out-r", targetHandle: "in-r" };
-  return from.rank < to.rank
-    ? { sourceHandle: "out-r", targetHandle: "in-l" }
-    : { sourceHandle: "out-l", targetHandle: "in-r" };
 }
 
 function labelOf(nodes: Map<string, MapNode>, id: string): string {

@@ -72,10 +72,54 @@ export function initialViewport(
   return { x: FIT_PAD - minX * READABLE_MIN_ZOOM, y: FIT_PAD - minY * READABLE_MIN_ZOOM, zoom: READABLE_MIN_ZOOM, zoomedIn: true };
 }
 
+/** dagre settings tried for each map; the one with the fewest crossings wins. */
+interface DagreVariant {
+  ranker: "network-simplex" | "tight-tree" | "longest-path";
+  acyclicer?: "greedy";
+}
+const VARIANTS: DagreVariant[] = [
+  { ranker: "network-simplex" },
+  { ranker: "tight-tree" },
+  { ranker: "longest-path" },
+  { ranker: "network-simplex", acyclicer: "greedy" },
+  { ranker: "tight-tree", acyclicer: "greedy" },
+  { ranker: "longest-path", acyclicer: "greedy" },
+];
+
+/** Lay a map out: nodes with a connection through dagre (importers left, what they import to the
+ * right), the rest in a grid below. `edges` should be the edges that are drawn, so the picture
+ * is arranged for what is on screen; hover shows more on top of it. Several dagre settings are
+ * tried (a map has at most 61 nodes, so this is a few milliseconds) and the arrangement with the
+ * fewest crossings, then the fewest edges through other nodes, then the smallest area, is kept. */
 export function layoutMap(
   level: MapLevel,
   nodes: MapNode[],
   edges: MapEdge[],
+): Map<string, MapPosition> {
+  const size = { width: mapNodeWidth(level), height: mapNodeHeight(level) };
+  let best: { positions: Map<string, MapPosition>; score: number[] } | null = null;
+  for (const variant of VARIANTS) {
+    const positions = layoutWith(level, nodes, edges, variant);
+    const m = edgeMetrics(positions, edges, size);
+    const xs = [...positions.values()].map((p) => p.x);
+    const ys = [...positions.values()].map((p) => p.y);
+    const area = xs.length ? (Math.max(...xs) - Math.min(...xs) + 1) * (Math.max(...ys) - Math.min(...ys) + 1) : 0;
+    const score = [m.crossings, m.throughNodes, m.backward + m.sameColumn, area];
+    if (best === null || compareScores(score, best.score) < 0) best = { positions, score };
+  }
+  return best?.positions ?? new Map();
+}
+
+function compareScores(a: number[], b: number[]): number {
+  for (let i = 0; i < a.length; i++) if (a[i] !== b[i]) return a[i] - b[i];
+  return 0;
+}
+
+function layoutWith(
+  level: MapLevel,
+  nodes: MapNode[],
+  edges: MapEdge[],
+  variant: DagreVariant,
 ): Map<string, MapPosition> {
   const height = mapNodeHeight(level);
   const width = mapNodeWidth(level);
@@ -94,7 +138,15 @@ export function layoutMap(
 
   if (connected.length > 0) {
     const g = new DagreGraph();
-    g.setGraph({ rankdir: "LR", nodesep: NODE_GAP, ranksep: LAYER_GAP, marginx: 0, marginy: 0 });
+    g.setGraph({
+      rankdir: "LR",
+      nodesep: NODE_GAP,
+      ranksep: LAYER_GAP,
+      marginx: 0,
+      marginy: 0,
+      ranker: variant.ranker,
+      ...(variant.acyclicer ? { acyclicer: variant.acyclicer } : {}),
+    });
     g.setDefaultEdgeLabel(() => ({}));
     for (const n of connected) g.setNode(n.id, { width, height });
     for (const e of edges) {
@@ -173,4 +225,138 @@ export function layoutMap(
     });
   }
   return result;
+}
+
+// --- How tangled a drawn map is --------------------------------------------------------------
+// From where the nodes are and which edges are drawn. Each edge is judged as a straight line
+// between node centres (the curves we draw stay close to it): a fair yardstick for comparing
+// layouts, not a pixel-exact count.
+
+export interface Placed {
+  x: number; // top-left
+  y: number;
+}
+
+export interface EdgeMetrics {
+  edges: number;
+  /** Pairs of drawn edges that cross, not counting two edges that share a node. */
+  crossings: number;
+  /** Drawn edges that pass through the box of a node that is neither end of them. */
+  throughNodes: number;
+  /** Edges that point back (their target sits left of their source by more than a node). */
+  backward: number;
+  /** Edges between two nodes in the same column (their boxes overlap in x). */
+  sameColumn: number;
+}
+
+type Pt = [number, number];
+
+function ccw(a: Pt, b: Pt, c: Pt): number {
+  return (c[1] - a[1]) * (b[0] - a[0]) - (b[1] - a[1]) * (c[0] - a[0]);
+}
+
+/** Proper intersection of segments ab and cd (touching at an end does not count). */
+function segmentsCross(a: Pt, b: Pt, c: Pt, d: Pt): boolean {
+  const d1 = ccw(a, b, c);
+  const d2 = ccw(a, b, d);
+  const d3 = ccw(c, d, a);
+  const d4 = ccw(c, d, b);
+  return d1 * d2 < 0 && d3 * d4 < 0;
+}
+
+/** Does segment ab pass through the open rectangle (x, y, w, h)? Liang-Barsky clipping. */
+function segmentHitsBox(a: Pt, b: Pt, x: number, y: number, w: number, h: number): boolean {
+  let t0 = 0;
+  let t1 = 1;
+  const dx = b[0] - a[0];
+  const dy = b[1] - a[1];
+  const checks: [number, number][] = [
+    [-dx, a[0] - x],
+    [dx, x + w - a[0]],
+    [-dy, a[1] - y],
+    [dy, y + h - a[1]],
+  ];
+  for (const [p, q] of checks) {
+    if (p === 0) {
+      if (q <= 0) return false;
+    } else {
+      const r = q / p;
+      if (p < 0) {
+        if (r > t1) return false;
+        if (r > t0) t0 = r;
+      } else {
+        if (r < t0) return false;
+        if (r < t1) t1 = r;
+      }
+    }
+  }
+  // Ignore a graze that is only a sliver of the box.
+  return t1 - t0 > 1e-6;
+}
+
+export function edgeMetrics(
+  positions: Map<string, Placed>,
+  edges: { source: string; target: string }[],
+  size: { width: number; height: number },
+): EdgeMetrics {
+  const centre = (id: string): Pt | null => {
+    const p = positions.get(id);
+    return p ? [p.x + size.width / 2, p.y + size.height / 2] : null;
+  };
+  const lines = edges
+    .map((e) => ({ e, a: centre(e.source), b: centre(e.target) }))
+    .filter((l): l is { e: { source: string; target: string }; a: Pt; b: Pt } => l.a !== null && l.b !== null && l.e.source !== l.e.target);
+
+  let crossings = 0;
+  for (let i = 0; i < lines.length; i++) {
+    for (let j = i + 1; j < lines.length; j++) {
+      const p = lines[i];
+      const q = lines[j];
+      if (p.e.source === q.e.source || p.e.source === q.e.target || p.e.target === q.e.source || p.e.target === q.e.target) continue;
+      if (segmentsCross(p.a, p.b, q.a, q.b)) crossings++;
+    }
+  }
+
+  let throughNodes = 0;
+  for (const l of lines) {
+    for (const [id, p] of positions) {
+      if (id === l.e.source || id === l.e.target) continue;
+      if (segmentHitsBox(l.a, l.b, p.x, p.y, size.width, size.height)) throughNodes++;
+    }
+  }
+
+  let backward = 0;
+  let sameColumn = 0;
+  for (const l of lines) {
+    const from = positions.get(l.e.source)!;
+    const to = positions.get(l.e.target)!;
+    if (Math.abs(from.x - to.x) < size.width / 2) sameColumn++;
+    else if (to.x < from.x) backward++;
+  }
+  return { edges: lines.length, crossings, throughNodes, backward, sameColumn };
+}
+
+export interface EdgeHandles {
+  sourceHandle: "out-r" | "out-l" | "out-b" | "out-t";
+  targetHandle: "in-l" | "in-r" | "in-t" | "in-b";
+  vertical: boolean; // leaves and arrives through the top or bottom
+}
+
+/** Which sides an edge uses. Nodes side by side: right side to left side, or, when it points back,
+ * left side to right side. Nodes in one column: bottom to top (or top to bottom), a short straight
+ * line, instead of the loop out to the side and back that two right sides make. */
+export function edgeHandles(
+  from: MapPosition | undefined,
+  to: MapPosition | undefined,
+  width: number,
+): EdgeHandles {
+  if (!from || !to) return { sourceHandle: "out-r", targetHandle: "in-l", vertical: false };
+  if (Math.abs(to.x - from.x) < width / 2) {
+    return to.y >= from.y
+      ? { sourceHandle: "out-b", targetHandle: "in-t", vertical: true }
+      : { sourceHandle: "out-t", targetHandle: "in-b", vertical: true };
+  }
+  return to.x > from.x
+    ? { sourceHandle: "out-r", targetHandle: "in-l", vertical: false }
+    : { sourceHandle: "out-l", targetHandle: "in-r", vertical: false };
 }

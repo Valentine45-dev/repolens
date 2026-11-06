@@ -2,12 +2,13 @@ import { describe, expect, it } from "vitest";
 
 import type { MapEdge, MapNode, MapView } from "./api";
 import { exploreHref, findingsHref } from "./links";
-import { initialViewport, layoutMap, mapNodeHeight, mapNodeWidth, READABLE_MIN_ZOOM } from "./mapLayout";
+import { edgeHandles, edgeMetrics, initialViewport, layoutMap, mapNodeHeight, mapNodeWidth, READABLE_MIN_ZOOM } from "./mapLayout";
 import {
   boundaryText,
   crumbChanges,
   CYCLE_CAPTION,
   densityCaption,
+  edgeBudgetFor,
   edgeKey,
   edgeRole,
   edgeSplit,
@@ -598,5 +599,83 @@ describe("first view", () => {
 
   it("an empty map has a sane view", () => {
     expect(initialViewport("folder", new Map(), { width: 800, height: 600 }).zoomedIn).toBe(false);
+  });
+});
+
+describe("edge budget by size", () => {
+  it("is three edges for every four nodes, between 12 and 40", () => {
+    expect(edgeBudgetFor(9)).toBe(12);
+    expect(edgeBudgetFor(20)).toBe(15);
+    expect(edgeBudgetFor(25)).toBe(19);
+    expect(edgeBudgetFor(60)).toBe(40);
+    expect(edgeBudgetFor(200)).toBe(40);
+  });
+});
+
+describe("how tangled a drawn map is", () => {
+  const at = (pairs: [string, number, number][]) => new Map(pairs.map(([id, x, y]) => [id, { x, y }]));
+  const size = { width: 100, height: 40 };
+
+  it("counts two edges that cross once, and a shared node not at all", () => {
+    const pos = at([["a", 0, 0], ["b", 400, 300], ["c", 0, 300], ["d", 400, 0]]);
+    expect(edgeMetrics(pos, [{ source: "a", target: "b" }, { source: "c", target: "d" }], size).crossings).toBe(1);
+    expect(edgeMetrics(pos, [{ source: "a", target: "b" }, { source: "a", target: "d" }], size).crossings).toBe(0);
+  });
+
+  it("counts an edge that runs through a node that is neither of its ends", () => {
+    const pos = at([["a", 0, 0], ["m", 200, 0], ["b", 400, 0]]);
+    expect(edgeMetrics(pos, [{ source: "a", target: "b" }], size).throughNodes).toBe(1);
+    expect(edgeMetrics(pos, [{ source: "a", target: "m" }, { source: "m", target: "b" }], size).throughNodes).toBe(0);
+  });
+
+  it("counts edges that point back and edges inside one column", () => {
+    const pos = at([["a", 400, 0], ["b", 0, 0], ["c", 400, 200]]);
+    const m = edgeMetrics(pos, [{ source: "a", target: "b" }, { source: "a", target: "c" }], size);
+    expect(m.backward).toBe(1);
+    expect(m.sameColumn).toBe(1);
+  });
+});
+
+describe("layout untangles what is drawn", () => {
+  it("lays two separate chains side by side without a crossing", () => {
+    const ids = ["a1", "a2", "a3", "b1", "b2", "b3"];
+    const nodes = ids.map((id) => node(id, { kind: "file" }));
+    const edges = [edge("a1", "a2"), edge("a2", "a3"), edge("b1", "b2"), edge("b2", "b3")];
+    const pos = layoutMap("folder", nodes, edges);
+    const m = edgeMetrics(pos, edges, { width: mapNodeWidth("folder"), height: mapNodeHeight("folder") });
+    expect(m.crossings).toBe(0);
+    expect(m.throughNodes).toBe(0);
+  });
+
+  it("never does worse than a plain dagre pass on a crowded graph", () => {
+    // 5 importers each using 3 of 4 modules: some crossing is unavoidable, a lot is not
+    const importers = ["i1", "i2", "i3", "i4", "i5"];
+    const modules = ["m1", "m2", "m3", "m4"];
+    const nodes = [...importers, ...modules].map((id) => node(id, { kind: "file" }));
+    const edges = importers.flatMap((i, k) => modules.filter((_, j) => (j + k) % 4 !== 0).map((m) => edge(i, m)));
+    const pos = layoutMap("folder", nodes, edges);
+    expect(pos.size).toBe(nodes.length);
+    const size = { width: mapNodeWidth("folder"), height: mapNodeHeight("folder") };
+    const m = edgeMetrics(pos, edges, size);
+    expect(m.sameColumn).toBe(0);
+  });
+});
+
+describe("which sides an edge uses", () => {
+  const w = 208;
+  const p = (x: number, y: number) => ({ x, y, rank: 0 });
+
+  it("right side to left side when it goes right, the reverse when it points back", () => {
+    expect(edgeHandles(p(0, 0), p(400, 0), w)).toMatchObject({ sourceHandle: "out-r", targetHandle: "in-l", vertical: false });
+    expect(edgeHandles(p(400, 0), p(0, 0), w)).toMatchObject({ sourceHandle: "out-l", targetHandle: "in-r", vertical: false });
+  });
+
+  it("bottom to top inside one column, so it is a line and not a loop out to the side", () => {
+    expect(edgeHandles(p(0, 0), p(10, 200), w)).toMatchObject({ sourceHandle: "out-b", targetHandle: "in-t", vertical: true });
+    expect(edgeHandles(p(0, 200), p(0, 0), w)).toMatchObject({ sourceHandle: "out-t", targetHandle: "in-b", vertical: true });
+  });
+
+  it("defaults sensibly while positions are unknown", () => {
+    expect(edgeHandles(undefined, undefined, w).vertical).toBe(false);
   });
 });
