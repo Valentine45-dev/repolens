@@ -67,3 +67,12 @@ describe("map tooltips", () => {
     expect(rule(".map-tip")).toMatch(/pointer-events:\s*none/);
   });
 });
+
+describe("map placeholder", () => {
+  it("uses the real node size and gap", () => {
+    const grid = rule(".graph-skeleton-grid");
+    expect(grid).toMatch(/repeat\(auto-fill,\s*208px\)/);
+    expect(grid).toMatch(/grid-auto-rows:\s*76px/);
+    expect(grid).toMatch(/gap:\s*14px/);
+  });
+});

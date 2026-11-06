@@ -23,7 +23,8 @@ const SECRET_RULE = "hardcoded-secret";
 
 // Spec §5.6. Filters live in the URL: ?severity=&rule=&language=&path=&tests=hide&page=&finding=
 export function Findings() {
-  const { snapshotId } = useOutletContext<AnalysisContext>();
+  const { snapshotId, status } = useOutletContext<AnalysisContext>();
+  const ready = status !== undefined;
   const [params] = useSearchParams();
   const setParams = useSetParams();
   const severity = (params.get("severity") as Severity | null) ?? undefined;
@@ -46,6 +47,7 @@ export function Findings() {
   const findings = useQuery({
     queryKey: ["findings", snapshotId, filter],
     queryFn: ({ signal }) => getFindings(snapshotId, filter, signal),
+    enabled: ready,
     placeholderData: keepPreviousData,
     staleTime: Infinity,
   });

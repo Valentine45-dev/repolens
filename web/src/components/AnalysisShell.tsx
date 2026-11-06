@@ -13,11 +13,12 @@ import {
 import { useSetParams } from "../links";
 import { AskDrawer } from "./AskDrawer";
 import { ConnectionNotice, isReconnecting } from "./ConnectionNotice";
-import { GraphSkeleton } from "./GraphSkeleton";
 
 export interface AnalysisContext {
   snapshotId: number;
-  status: SnapshotStatus;
+  /** Undefined until the status has loaded: the page draws its chrome at once and waits for this
+   * before it asks for data (an analysis that is not done redirects away). */
+  status: SnapshotStatus | undefined;
 }
 
 // Header on every tab (spec §3.4): repo, commit, tabs, Ask. The Ask drawer (?ask=1) stays open
@@ -97,9 +98,7 @@ export function AnalysisShell() {
           screens too narrow for three docked columns (styles.css). */}
       <div className="analysis-body" data-ask={askOpen || undefined}>
         <div className="analysis-main">
-          {status.data ? (
-            <Outlet context={{ snapshotId, status: status.data } satisfies AnalysisContext} />
-          ) : status.error ? (
+          {status.error && !status.data ? (
             <div className="canvas-message" role="alert">
               <p>{status.error.message}</p>
               <button className="button button-secondary" onClick={() => status.refetch()}>
@@ -107,7 +106,7 @@ export function AnalysisShell() {
               </button>
             </div>
           ) : (
-            <GraphSkeleton />
+            <Outlet context={{ snapshotId, status: status.data } satisfies AnalysisContext} />
           )}
         </div>
         {askOpen && status.data ? (

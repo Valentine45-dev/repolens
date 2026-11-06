@@ -570,21 +570,18 @@ a {
 }
 
 .graph-skeleton {
-  display: flex;
-  justify-content: center;
-  padding: var(--space-12) var(--space-6);
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
 }
 
-.graph-skeleton-map {
-  display: flex;
-  align-items: center;
-  gap: 56px;
-}
-
-.graph-skeleton-col {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-4);
+/* Real node size (208 x 76) and gap (14), left-aligned like the map's grid of loose nodes. */
+.graph-skeleton-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, 208px);
+  grid-auto-rows: 76px;
+  gap: 14px;
+  padding: var(--space-4);
 }
 
 .graph-skeleton-card {
@@ -592,15 +589,16 @@ a {
   flex-direction: column;
   justify-content: center;
   gap: var(--space-2);
-  width: 208px;
-  height: 64px;
   padding: 0 var(--space-3);
   border: 1px solid var(--border);
   border-radius: 4px;
 }
 
-.graph-skeleton-card .skeleton {
-  background: var(--surface-2);
+.toolbar-note-skeleton {
+  display: inline-block;
+  width: 168px;
+  height: 12px;
+  vertical-align: middle;
 }
 
 .list-skeleton-row {

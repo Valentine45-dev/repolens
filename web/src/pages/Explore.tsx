@@ -49,6 +49,7 @@ export function Explore() {
 
 function ExploreInner() {
   const { snapshotId, status } = useOutletContext<AnalysisContext>();
+  const ready = status !== undefined; // no data is asked for before the analysis is known to be done
   const [params] = useSearchParams();
   const location = useLocation();
   const showTests = params.get("tests") === "1";
@@ -79,6 +80,7 @@ function ExploreInner() {
   const graph = useQuery({
     queryKey: ["graph", snapshotId, showTests, showGuesses],
     queryFn: ({ signal }) => getGraph(snapshotId, { showTests, showGuesses }, signal),
+    enabled: ready,
     placeholderData: keepPreviousData, // keep the old picture while a toggle refetches
     staleTime: Infinity,
   });
@@ -99,7 +101,7 @@ function ExploreInner() {
     queryKey: ["map", snapshotId, mapRequest, showTests, showGuesses],
     queryFn: ({ signal }) =>
       getMapView(snapshotId, { ...mapRequest!, showTests, showGuesses }, signal),
-    enabled: mapRequest !== null && !listView,
+    enabled: ready && mapRequest !== null && !listView,
     placeholderData: keepPreviousData,
     staleTime: Infinity,
   });
@@ -193,7 +195,7 @@ function ExploreInner() {
   const hardError = listView || flatMode ? graph.error : (map.error ?? graph.error);
   const hasData = listView || flatMode ? Boolean(graph.data) : Boolean(view);
   const updating = graph.isPlaceholderData || (!listView && !flatMode && map.isPlaceholderData);
-  const repo = repoName(status.url).split("/").pop() ?? "";
+  const repo = status ? (repoName(status.url).split("/").pop() ?? "") : "";
   const mapMode = !listView && !flatMode;
   const caption = selection ? densityCaption(selection, showAllEdges) : null;
 
@@ -205,7 +207,7 @@ function ExploreInner() {
             <Breadcrumbs view={view} repo={repo} search={location.search} />
           </div>
         ) : (
-          <CrumbSkeleton />
+          <CrumbSkeleton root={urlView.root} />
         )
       ) : null}
       <div className="toolbar" role="toolbar" aria-label="Graph options">
@@ -288,19 +290,29 @@ function ExploreInner() {
           </button>
         ) : null}
         <p className="toolbar-note caption" aria-live="polite">
-          {updating
-            ? "Updating…"
-            : listView || flatMode
-              ? graphNote(graph.data, capped, listView)
-              : view
-                ? mapNote(view)
-                : ""}
+          {updating ? (
+            "Updating…"
+          ) : listView || flatMode ? (
+            graph.data ? (
+              graphNote(graph.data, capped, listView)
+            ) : (
+              <span className="skeleton toolbar-note-skeleton" aria-hidden="true" />
+            )
+          ) : view ? (
+            mapNote(view)
+          ) : (
+            <span className="skeleton toolbar-note-skeleton" aria-hidden="true" />
+          )}
         </p>
       </div>
 
-      {mapMode && view && view.nodes.length > 0 ? (
-        <MapLegend showGuesses={showGuesses} cycle={viewHasCycle(view)} caption={caption} />
-      ) : flatMode && graph.data && graph.data.nodes.length > 0 ? (
+      {mapMode && (!view || view.nodes.length > 0) ? (
+        <MapLegend
+          showGuesses={showGuesses}
+          cycle={view ? viewHasCycle(view) : false}
+          caption={caption}
+        />
+      ) : flatMode && (!graph.data || graph.data.nodes.length > 0) ? (
         <Legend showGuesses={showGuesses} />
       ) : null}
 
