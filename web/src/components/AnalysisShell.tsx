@@ -1,5 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
-import { useRef } from "react";
+import { useMemo, useRef } from "react";
 import { Navigate, NavLink, Outlet, useParams, useSearchParams } from "react-router-dom";
 
 import {
@@ -11,12 +11,15 @@ import {
   type SnapshotStatus,
 } from "../api";
 import { useSetParams } from "../links";
+import { loadRecent } from "../recent";
 import { AskDrawer } from "./AskDrawer";
 import { ConnectionNotice, isReconnecting } from "./ConnectionNotice";
 
 export interface AnalysisContext {
   snapshotId: number;
-  status: SnapshotStatus;
+  /** Undefined until the status has loaded: the page draws its chrome at once and waits for this
+   * before it asks for data (an analysis that is not done redirects away). */
+  status: SnapshotStatus | undefined;
 }
 
 // Header on every tab (spec §3.4): repo, commit, tabs, Ask. The Ask drawer (?ask=1) stays open
@@ -47,6 +50,10 @@ export function AnalysisShell() {
     staleTime: Infinity,
   });
 
+  // An analysis started in this browser is in the recent list: its name is known before the server
+  // answers, so the title is real at once and the tabs beside it never move.
+  const known = useMemo(() => loadRecent().find((r) => r.snapshotId === snapshotId), [snapshotId]);
+
   if (!valid || (status.error instanceof ApiError && status.error.status === 404)) {
     return <Navigate to={`/a/${id}`} replace />;
   }
@@ -66,8 +73,15 @@ export function AnalysisShell() {
               </a>{" "}
               <span className="repo-sha mono">@ {status.data.commit_sha.slice(0, 7)}</span>
             </h1>
+          ) : known ? (
+            <h1 className="explore-title">
+              <a href={known.url} target="_blank" rel="noreferrer" className="mono">
+                {repoName(known.url)}
+              </a>{" "}
+              <span className="repo-sha mono">@ {known.commitSha.slice(0, 7)}</span>
+            </h1>
           ) : (
-            <div className="skeleton" style={{ width: 240, height: 20 }} />
+            <div className="skeleton" style={{ width: 240, height: 24 }} />
           )}
           {isReconnecting(status) ? <ConnectionNotice /> : null}
         </div>
@@ -77,7 +91,14 @@ export function AnalysisShell() {
           </NavLink>
           <NavLink to={`/a/${snapshotId}/findings${keep}`} className="analysis-tab">
             Findings
-            {total !== undefined ? <span className="count mono num">{total}</span> : null}
+            {total !== undefined ? (
+              <span className="count mono num">{total}</span>
+            ) : (
+              // The badge's room, so the tab does not grow when the count arrives.
+              <span className="count mono num" style={{ color: "transparent" }} aria-hidden="true">
+                00
+              </span>
+            )}
           </NavLink>
         </nav>
         <button
@@ -96,9 +117,7 @@ export function AnalysisShell() {
           screens too narrow for three docked columns (styles.css). */}
       <div className="analysis-body" data-ask={askOpen || undefined}>
         <div className="analysis-main">
-          {status.data ? (
-            <Outlet context={{ snapshotId, status: status.data } satisfies AnalysisContext} />
-          ) : status.error ? (
+          {status.error && !status.data ? (
             <div className="canvas-message" role="alert">
               <p>{status.error.message}</p>
               <button className="button button-secondary" onClick={() => status.refetch()}>
@@ -106,9 +125,7 @@ export function AnalysisShell() {
               </button>
             </div>
           ) : (
-            <div className="canvas-message" aria-busy="true">
-              <p className="caption">Loading analysis…</p>
-            </div>
+            <Outlet context={{ snapshotId, status: status.data } satisfies AnalysisContext} />
           )}
         </div>
         {askOpen && status.data ? (

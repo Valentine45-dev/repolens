@@ -465,7 +465,10 @@ def search_first(job_id: int, snapshot_id: int, parsed: dict[str, Parsed], deadl
                             False, deadline, percent)
     except JobError as e:
         log.warning("job %s: search stopped: %s", job_id, e)
-        _set_search(job_id, "failed", f"Search for questions was not prepared: {e}")
+        # Only the search stopped: say so, and say what is still complete.
+        _set_search(job_id, "failed",
+                    f"Search setup took longer than {config.MAX_ANALYSIS_S} s and was stopped. "
+                    "The map and findings are complete.")
         return None
     except Exception as e:
         log.error("job %s: search failed: %s", job_id, type(e).__name__)

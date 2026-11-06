@@ -6,6 +6,7 @@ import { GUESS_BELOW, languageLabel } from "../graphModel";
 import type { LineRange } from "../links";
 import { scrollToCenter } from "../scroll";
 import { Icon } from "./Icon";
+import { PanelTitle } from "./PanelTitle";
 import { SeverityBadge } from "./Severity";
 
 type Tab = "code" | "usedBy" | "uses" | "findings";
@@ -21,6 +22,7 @@ export function NodePanel({
   onSelectFile,
   onShowLines,
   onAsk,
+  onShowFunctions,
   onClose,
 }: {
   snapshotId: number;
@@ -31,6 +33,7 @@ export function NodePanel({
   onSelectFile: (fileId: number) => void;
   onShowLines: (lines: LineRange) => void;
   onAsk: (fileId: number, path: string) => void;
+  onShowFunctions?: (path: string) => void; // the map's symbol view of this file
   onClose: () => void;
 }) {
   const [tab, setTab] = useState<Tab>("code");
@@ -83,13 +86,21 @@ export function NodePanel({
     <aside className="panel" aria-labelledby={titleId}>
       <header className="panel-header">
         <div className="panel-heading">
-          <h2 id={titleId} ref={titleRef} tabIndex={-1} className="panel-title mono">
-            {node.path}
-          </h2>
+          <PanelTitle id={titleId} path={node.path} titleRef={titleRef} />
           <p className="caption">
             {languageLabel(node.language)} · <span className="mono num">{node.loc}</span> lines
           </p>
         </div>
+        {onShowFunctions ? (
+          <button
+            type="button"
+            className="button button-secondary button-small"
+            onClick={() => onShowFunctions(node.path)}
+            title="Draw this file's classes and functions and what they connect to"
+          >
+            Functions
+          </button>
+        ) : null}
         <button
           type="button"
           className="button button-secondary button-small"

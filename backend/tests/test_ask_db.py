@@ -506,7 +506,9 @@ def test_retry_preparing_search_after_a_failed_search(client, monkeypatch, fake)
     sid = body["snapshot_id"]
     f = client.get(f"/snapshots/{sid}/status").json()["features"]
     assert (f["ask"], f["retry_search"]) == (False, True)
-    assert "600s" in f["ask_reason"]
+    assert f["ask_reason"] == (
+        "Search setup took longer than 600 s and was stopped. The map and findings are complete."
+    )
     assert ask(client, sid, "How is a user created?")["status"] == "no_context"
 
     # Resubmitting the same commit reuses the finished job and does not embed again.

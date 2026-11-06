@@ -1113,8 +1113,176 @@
     a function. The node limit does not limit edges: flask `src/flask` is 20 nodes and 82 edges (91 with everything);
     a symbol view reaches 61 nodes and 202 edges. Part B has to make those readable.
 
+- **v2 step 4, folder-first map: Part B (UI) built, not merged (6 Nov, `feat/folder-map-ui`).** Owner's go on the Step 0
+  plan. **$0 API spend**: no LLM call (API run with `EMBEDDER=stub` and an empty `LLM_API_KEY`); no backend change.
+  - **Built (web only):** `web/src/mapModel.ts` (pure: start rule, URL state, click actions, edge split and dashes,
+    edge-density rule, cycle test, node text), `mapLayout.ts` (dagre + grid), `components/MapView.tsx` (folder, file,
+    symbol and "N more" nodes, edges with counts), `Breadcrumbs.tsx` (with Up), `Explore.tsx` rewired, `FileList` folder
+    filter, a "Functions" button in the node panel, icons, styles, DESIGN.md "Folder map". The flat graph (`level=flat`)
+    is the old code, unchanged.
+  - **Rules as built:** start in files at 30 or fewer visible files (from the flat query, so it follows the Show-tests
+    toggle), else folders; the URL wins. URL: `level=folder|file|symbol|flat`, `root`, `edges=all`, plus the old params.
+    Selecting a file pins the current level and root in the URL, so a shared link opens the same picture; a link with
+    `node=` and no view (citation chips, Findings) opens that file's folder in a big repo. Edge density: whole tiers of
+    equal count up to 40 drawn at rest (cycle edges always on top), else a labelled sample; hover, keyboard focus or
+    selection draws all of that node's edges; "Show all edges" draws everything; a caption says what is drawn. Dashed when
+    `guess_calls` are more than half of `count`; the tooltip gives the split ("6 imports · 155 calls (152 guesses)").
+    Cycle styling (Ink border, "circular" tag, Ink edges) and the caption "Circular imports (top-level imports only)"
+    come only from the view's own `in_cycle` / `cycle_edges`, never from the repo-wide `cycles` list (flask `src/flask`
+    with everything shown has one cycle in the repo and none on screen). "Show test files" is now "Show tests & examples".
+  - **Choices not in the plan:** a node's findings part is left out at zero ("N files" only), so nothing reads as a
+    verdict; the Findings link under a folder uses `path=<folder>/` and `tests=hide` when tests are hidden, so it adds up to
+    the node (checked: `challenge` 8, `dockerized_labs` 48); back edges leave from the left side and a two-way pair runs as
+    two parallel lines (a bezier back edge looped off the canvas); long dagre chains continue on a new row (flask
+    `src/flask` was a 12-layer strip); unconnected nodes form a grid (express `test/`: 58 loose files).
+  - **Web tests:** `npm test` in `web/`: 77 passed (`mapModel.test.ts` 53 incl. layout, `Breadcrumbs.test.tsx` 3, the old
+    renderer and API tests). Cover aggregated edge display, split text, guess styling, density tiers and sample, hover
+    and show-all, start rule, deep links, URL round trip, breadcrumbs and Up, overflow action, cycle highlighting from
+    `cycle_edges` only (two-way folders, repo-wide list, `cycles_available: false`), node text, empty-folder message.
+    No jsdom: clicks are not unit-tested. `npm run build` ok. Backend untouched: pytest 365 passed, 3 skipped; ruff clean.
+  - **Readability** (`eval/results/graph_ui_readability-part-b-*-4f8ae7b.md`, from `eval/graph_ui_readability.py` + `.mjs`,
+    which runs the web rule under Node). Before = the old default (flat graph, 300 most connected files):
+
+    | Repo, default setting | Before nodes / edges | Opens as | After nodes / edges (drawn) | Worst folder view nodes / edges (drawn) |
+    |---|---|---|---|---|
+    | itsdangerous | 9 / 21 | files | 9 / 21 (21) | 8 / 21 (21) |
+    | PyGoat | 114 / 31 | folders | 9 / 4 (4) | 12 / 10 (10) |
+    | express | 7 / 7 | files | 7 / 7 (7) | 6 / 6 (6) |
+    | flask | 25 / 95 | files | 25 / 95 (24) | `src/flask` 20 / 82 (24) |
+    | black | 55 / 129 | folders | 5 / 1 (1) | `src/black` 25 / 66 (28) |
+
+    With tests and guesses shown: express 142 / 291 -> 4 / 6, flask 83 / 353 -> 4 / 4 (worst view 91 edges, 40 drawn),
+    black 300 (capped from 426) / 225 -> 6 / 5 (worst folder view 61 nodes, 69 edges, 36 drawn). Symbol views (every
+    non-test file, default setting): flask and black are the only repos where the rule hides edges (5 and 10 views; black
+    `trans.py` 61 nodes, 186 edges, 40 drawn).
+  - **Screenshots** (`eval/results/screenshots-part-b/`, 1440x900 viewport, in-app browser, dev server): 01 PyGoat root
+    before (flat, 114 files), 02 PyGoat root after (9 nodes), 03 PyGoat `challenge`, 04 symbol view `challenge/views.py`,
+    05 flask `js_example` with the real cycle (needs "Show tests & examples"), 06 express `test/` overflow, 07 itsdangerous
+    root (opens in files), 08 flask `src/flask` (24 of 82 edges).
+  - **Checked live (DOM-dispatched clicks):** folder opens and pushes history, breadcrumbs and Up, file opens the panel and
+    pins the view, Functions, symbol click puts `lines=` in the URL, "N more" opens List filtered to `test` (92 of 142)
+    and "Show all files" clears it, express test -> lib draws dashed with the split in its tooltip, deep link `?node=480`
+    opens `challenge` with the file selected, List filter chip at 375 px (no horizontal scroll).
+  - **Not verified:** a real mouse click on a node. The in-app browser's coordinate clicks did nothing on this branch and also
+    nothing on the untouched flat graph, so it is a tool limit, not the map; every handler was run by dispatching the
+    click in the page. Keyboard Enter/Space on a node, and the Chrome extension, were not tried.
+  - **Known limits:** the fit on first open happens once per view (a layout change by hot reload does not refit; Fit does);
+    long back edges across rows are long curves; `Show all edges` on flask `src/flask` with everything is 91 edges and
+    readable only by hovering; the layout is left to right, so a long chain (itsdangerous, 7 layers) opens at about
+    0.6 zoom. This PC had ~0.5 GB free during the run: dev server first load took ~15 s.
+  - **Left running:** Docker Desktop, the `db` container, the API (port 8000) and the Vite dev server (5173) were started
+    for this and are still up.
+
+- **Part B hover bug, fixed (6 Nov, `feat/folder-map-ui`).** Owner's real-browser test (Firefox) found the canvas blanking
+  for ~0.5 s on every hover and clicks lost after hovering (a folder click took 5-7 s). **Cause:** the node and edge arrays
+  were rebuilt on every hover (dimming and the extra edges lived in their data). React Flow treats a new node object as
+  a new node and hides it (`visibility: hidden`) until it measures it again; a click that lands in that window is
+  lost. The first build did not show it in my checks because the in-app browser's coordinate clicks did nothing
+  (see "Not verified" above) and I never looked at hover frames.
+  - **Fix:** nodes and edges are built from the view only (edges also from "Show all edges") and keep their identity;
+    layout is memoized on the view data alone; `nodeTypes`/`edgeTypes` were already outside the component; no fitView
+    on hover. Hover, keyboard focus and selection live in `focusStore.ts` (outside React state): each node and edge
+    subscribes to a number about itself, the container gets one `data-focus` attribute and CSS dims everything not
+    near the focus; edges outside the resting set are not drawn until an end of them is focused (the component
+    returns null); the arrowhead takes `currentColor`, so focus never swaps markers. Hover has a 100 ms delay (60 ms to
+    clear, none between two nodes): `hoverIntent.ts`.
+  - **Measured on the production build (`npm run build` + `vite preview`), in-app browser, PyGoat root (9 nodes), 8 hovers
+    and 8 leaves, synthetic mouseover/mouseout:**
+
+    | | Before | After |
+    |---|---|---|
+    | node hidden-style mutations (React Flow re-measure) | 144 | **0** |
+    | frames with a hidden node (of ~335) | 16 | **0** |
+    | node DOM elements replaced | 0 | 0 |
+    | long tasks during the run (harness polls styles every frame) | 5, 452 ms | 1-4, 126-468 ms (noisy) |
+    | long tasks, lean run without polling (48 hovers) | not measured | 1 of 104 ms |
+    | DOM mutations while sweeping 20 nodes in 0.4 s | not measured | 0 |
+
+    express `test/` (61 nodes, 16 hovers): 0 hidden mutations, 0 node elements added or removed; the one long task is
+    ~60 ms. Before-numbers exist only for PyGoat's root. Click: URL changes in 6-8 ms and the new view shows after
+    ~500-800 ms, which is the API (`map_view` loads the whole repo map per request, 80-615 ms measured in Part A), the same
+    before and after. A file click right after hovering every node selects it (same DOM element, `node=480`).
+  - **Skeletons (DESIGN.md "Loading"):** `GraphSkeleton` is four columns of grey node cards (also the Suspense fallback and
+    the analysis-loading state in `AnalysisShell`), `ListSkeleton` for List view, `CrumbSkeleton` so the toolbar does not
+    jump, and `index.html` paints a top bar, title bar and three cards before the app mounts. The words stay for screen
+    readers only. Screenshots 09 and 10 in `eval/results/screenshots-part-b/` (API responses delayed 9 s in the page).
+  - **Tests:** 88 in `web/` (`focusStore.test.ts` 5, `hoverIntent.test.ts` 4, density/role tests updated). Real mouse
+    clicks in Firefox are still the owner's to confirm; the measurements above use synthetic events.
+  - **Servers left running:** `vite preview` on 5173 (the new production build); the dev server was stopped. API on 8000,
+    Docker `db`.
+
+- **Part B side-panel fixes (6 Nov, `feat/folder-map-ui`, separate commit).** Owner's real-Firefox test found three issues.
+  Checked in real Firefox (headless, throwaway profile, the real app and a static page with the real CSS) and in the
+  in-app browser at 1366x768 and 1440x900; screenshots in `eval/results/screenshots-part-b/panel-fixes/`.
+  1. **Gutter:** the sticky gutter had no `z-index`, so the later `position: relative` code painted over it. Now `z-index: 2`
+     with the opaque `--surface` background. Verified: after scrolling right the gutter stays at the panel's left edge and
+     `elementFromPoint` there is the gutter.
+  2. **Panel height:** I could not reproduce a cut-off. In Firefox at 1366x768, 1440x900 and 820x640 the panel's bottom equals the
+     viewport's and the code area scrolls inside it (the page itself never scrolls). Hardened anyway: `.panel` gets
+     `max-height: 100%` and `overflow: hidden`, `.panel-body` `overscroll-behavior: contain`, and under 760px of height the panel
+     header is a little tighter. If the window itself is taller than the screen (the taskbar over its lower part, as in the
+     owner's screenshot), no CSS can help; a short laptop viewport also leaves the code only a few lines under the toolbar,
+     legend and breadcrumbs.
+  3. **Title:** `PanelTitle.tsx`: the folder on one line (cut from the left with an ellipsis), the file name under it (cut at the
+     end), no mid-name break; full path as hover text and `aria-label`.
+  - **Tests:** 95 in `web/` (`PanelTitle.test.tsx` 3, `panelStyles.test.ts` 4 pin the gutter, panel and title rules, read with
+    `node:fs` because Vitest returns an empty string for `styles.css?raw`).
+  - **Method note:** headless Firefox screenshots at the load event, so the real app was wrapped in an iframe served by a small
+    local server that holds the page's load for 8 s (scratchpad only, not in the repo).
+
+- **Part B, round 2 (6 Nov, `feat/folder-map-ui`): the owner's real-Firefox list, one commit per item.** $0 API spend. Screenshots, before and
+  after, in `eval/results/screenshots-part-b/round2/` (Firefox headless, 1440x900; "before" is the build of `9f9a31b` served on :5174, "after" the new
+  build on :5173). Tests: 131 in `web/`.
+  1. **First paint (`77171d4`).** `index.html` ships a template per page (home, Explorer, Findings, plain) built from the real markup and classes; the
+     recent list, a known analysis's title, the toolbar state and the breadcrumb folders come from this browser. Room is reserved for what arrives later
+     (a disabled "Show all edges", an always-present caption row in the legend, the Findings badge, `scrollbar-gutter`, fixed filter-select widths); the
+     three first-screen fonts are preloaded. **Measured** with `eval/layout_shift.mjs` (headless Edge over CDP, 1440x900, production build; skeleton =
+     app scripts blocked) and `eval/layout_overlay.py`: CLS home 0.00019 -> **0**, Explorer 0.081 -> **0.0001**, Findings 0.0027 -> **0**; every landmark
+     within 0.5 px of its placeholder (0 px on home and the Explorer). The remaining Explorer shift is the right-aligned counts text. `firstPaint.test.ts`
+     checks the templates' text and classes against the app. Before, the home skeleton was three cards that matched nothing.
+  2. **Explorer loading (`8a971b7`).** `AnalysisShell` renders its page at once (queries wait for the status); crumb row, toolbar and legend are real, only the
+     repo name and counts are grey; the placeholder is plain rows of node-sized cards (208x76, 14 px). The Suspense fallback is the same frame.
+  3. **Function view (`efe5b88`).** The first view never goes below zoom 0.75 (otherwise it opens at 0.75 top left and the legend row says so; Fit shows all),
+     symbol boxes 208x48 -> 248x56 and names 12 -> 13 px, loose grid sized to a screen. Checked on PyGoat `introduction/views.py` (29 symbols: now fits
+     and reads) and black `trans.py` (opens zoomed in).
+  4. **Edge tooltip (`5303d78`).** Cause: React Flow marks edges `inactive` (`pointer-events: none`) unless they are selectable or clickable, so a real mouse
+     never reached them (hit test on PyGoat's root: pane on all 4 edges). Now a CSS override, an 18 px `interactionWidth`, our own tooltip element (also on the
+     count label), and node tooltips that say something (path, files, tests, findings, what crosses the edge). Hit test after: edge at 0 and 8 px either side.
+  5. **Timeout wording (`9f9a31b`).** "Search setup took longer than 600 s and was stopped. The map and findings are complete." Backend message + test; the
+     stored messages of existing analyses were rewritten in the dev DB only (job 6). Job 3's older test-code message was left.
+  6. **Findings heading (`32970e9`).** "Findings (48 of 60)" with a filter (the 48 equals the SQL count).
+  7. **Side panel / toolbar.** Nothing to change; the toolbar is not collapsed when the panel is open.
+  8. **Dense maps (`2d8e967`, results `graph_crossings-part-b-round2-*.md`).** New: layout arranged for the edges drawn at rest (it used all of them), best of
+     six dagre settings by crossings then edges through nodes then area, edge budget three per four nodes (12..40, was a flat 40), edges inside one column
+     leave bottom to top (no more loop out to the side), fixed-size arrowheads, and every node says "N connections not drawn" (so a node in the grid is
+     never mistaken for an unconnected one). **Crossings** (straight lines between node centres, `edgeMetrics`): flask `src/flask` **35 -> 0** (drawn 24 -> 8,
+     through nodes 15 -> 3), PyGoat root 0 -> 0 (4 edges), black `src/black` **75 -> 5** (drawn 28 -> 19, through nodes 43 -> 22); flask's default (files, 25
+     nodes) 27 -> 0. All 38 folder views: crossings 141 -> 5, edges through nodes 107 -> 43.
+     **Cost:** flask `src/flask` now draws 8 of 82 edges (the strongest tier of equal count that fits 15); the rest is a hover or "Show all edges" away. A
+     bigger budget draws more (budget 25: flask 24 edges, 7 crossings; budget 40: 24 edges, 7). The factor 0.75 is one line (`edgeBudgetFor`).
+     **ELK (not added; owner decides):** `elkjs` would add ~1.4 MB (a web worker) for orthogonal routing around nodes and port constraints. Reason to want
+     it: black `src/black` still has 22 edges drawn through other nodes and 5 crossings; dagre cannot route around a node. Reason not to: the numbers above
+     are already small for the default views, and it is a second layout engine to keep in step with the hover-stable rendering. Recommendation: not now.
+  - **Evidence tools (in `eval/`):** `layout_shift.mjs`, `layout_overlay.py`, `graph_crossings.py` + `.mjs`. Scratch only: a screenshot helper, a slow-load
+    wrapper and a proxy that delays `/api`, used to capture loading states in Firefox.
+  - **Known limits:** crossings are judged on straight lines, the drawn curves differ a little; the Explorer's toolbar-note counts change width on arrival
+    (0.0001 CLS); the real mouse was exercised only by hit-testing and dispatched events here, the owner's Firefox pass is the real test.
+
+- **Part B (folder-map UI) merged into `main` (6 Nov), owner's go after a real-mouse pass in Firefox.** Passed there: no blink on hover,
+  clicks after hover, folders open fast, Functions and jump to lines, breadcrumbs and Up, the real cycle in flask `js_example`, no false cycle on
+  PyGoat `challenge` <-> `scoring`, the findings link, the edge-density caption and "Show all edges", the side panel (gutter, title, height),
+  page-aware skeletons with no jump, edge and node tooltips, readable function names, flask `src/flask` clean, "Findings (48 of 60)". Local: web 131
+  tests, backend 365 passed and 3 skipped; CI green on the branch.
+  - **ELK: later, if needed.** Not added. `elkjs` (~1.4 MB, a web worker) would route edges around nodes; worth it only if a dense view still reads badly
+    (black `src/black` has 22 edges through other nodes and 5 crossings, down from 43 and 75). Needs the owner's OK first.
+  - **Polish for later:**
+    1. The legend strip keeps an empty reserved row under it when there is no caption (it stops the map moving when a caption arrives). A calmer way:
+       reserve the room without the visible grey band, or show the caption elsewhere.
+    2. The disabled "Show all edges" has no hint. Add a tooltip: "All connections are already shown."
+  - **State left running:** Docker `db`, the API on 8000 and `vite preview` on 5173 (the new build) were started for this work.
+
 ### Notes for the Part B (UI) session
-Decided in Step 0 of the folder map. Not started; `feat/folder-map-ui` branches off `main` after Part A is merged.
+Decided in Step 0 of the folder map and followed by the Part B build above (kept for the reasoning).
 - **Keep the flat query for the node panel and List view.** `selected` comes from the graph response
   (`web/src/pages/Explore.tsx`, `graph.data?.nodes.find`), and so do `isInGraph` and the List view. In a folder view
   a file outside that view would have no node, so citation chips, "Open in Explorer" and Ask's graph results would

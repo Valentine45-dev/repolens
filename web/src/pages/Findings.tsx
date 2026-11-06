@@ -15,6 +15,7 @@ import { Icon } from "../components/Icon";
 import { PathText } from "../components/PathText";
 import { SeverityBadge } from "../components/Severity";
 import { languageLabel } from "../graphModel";
+import { findingsCountLabel } from "../findingsCount";
 import { exploreHref, useSetParams } from "../links";
 
 const PAGE = 50;
@@ -22,7 +23,8 @@ const SECRET_RULE = "hardcoded-secret";
 
 // Spec §5.6. Filters live in the URL: ?severity=&rule=&language=&path=&tests=hide&page=&finding=
 export function Findings() {
-  const { snapshotId } = useOutletContext<AnalysisContext>();
+  const { snapshotId, status } = useOutletContext<AnalysisContext>();
+  const ready = status !== undefined;
   const [params] = useSearchParams();
   const setParams = useSetParams();
   const severity = (params.get("severity") as Severity | null) ?? undefined;
@@ -45,6 +47,7 @@ export function Findings() {
   const findings = useQuery({
     queryKey: ["findings", snapshotId, filter],
     queryFn: ({ signal }) => getFindings(snapshotId, filter, signal),
+    enabled: ready,
     placeholderData: keepPreviousData,
     staleTime: Infinity,
   });
@@ -63,7 +66,10 @@ export function Findings() {
       <div className="findings-main">
         <div className="findings-head">
           <h2 className="section-title">
-            Findings{counts ? <span className="mono num"> ({counts.total})</span> : null}
+            Findings
+            {counts && findings.data ? (
+              <span className="mono num"> {findingsCountLabel(findings.data.total, counts.total)}</span>
+            ) : null}
           </h2>
           <p className="caption">
             These are rule-based checks. They can miss issues and can flag safe code. Review each
@@ -74,6 +80,7 @@ export function Findings() {
         <div className="toolbar findings-filters" role="toolbar" aria-label="Filter findings">
           <FilterSelect
             label="Severity"
+            kind="severity"
             value={severity ?? ""}
             onChange={(v) => setFilter("severity", v || null)}
             options={(["high", "medium", "low"] as const).map((s) => ({
@@ -83,6 +90,7 @@ export function Findings() {
           />
           <FilterSelect
             label="Rule"
+            kind="rule"
             value={rule ?? ""}
             onChange={(v) => setFilter("rule", v || null)}
             options={Object.entries(counts?.by_rule ?? {}).map(([id, n]) => ({
@@ -92,6 +100,7 @@ export function Findings() {
           />
           <FilterSelect
             label="Language"
+            kind="language"
             value={language ?? ""}
             onChange={(v) => setFilter("language", v || null)}
             options={["python", "javascript", "typescript"].map((l) => ({
@@ -157,11 +166,13 @@ export function Findings() {
 
 function FilterSelect({
   label,
+  kind,
   value,
   options,
   onChange,
 }: {
   label: string;
+  kind: "severity" | "rule" | "language"; // sets a fixed width, so the options arriving never move the row
   value: string;
   options: { value: string; label: string }[];
   onChange: (value: string) => void;
@@ -170,7 +181,7 @@ function FilterSelect({
   return (
     <span className="filter">
       <label htmlFor={id}>{label}</label>
-      <select id={id} className="select" value={value} onChange={(e) => onChange(e.target.value)}>
+      <select id={id} className={`select select-${kind}`} value={value} onChange={(e) => onChange(e.target.value)}>
         <option value="">All</option>
         {options.map((o) => (
           <option key={o.value} value={o.value}>

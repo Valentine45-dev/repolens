@@ -1,0 +1,3495 @@
+{
+  "run": {
+    "commit_sha": "4f8ae7b50c61ad1c88876821dbd8206796022e08",
+    "dirty": false,
+    "run_at": "2026-11-06T08:17:06+00:00",
+    "machine": "LAPTOP-4C2E555R",
+    "cpu": "Intel(R) Pentium(R) Silver N5030 CPU @ 1.10GHz",
+    "cpu_threads": 4,
+    "ram_gb": 7.8,
+    "os": "Windows 11 (10.0.22631)",
+    "python": "3.12.16",
+    "packages": {
+      "torch": "2.14.1+cpu",
+      "sentence-transformers": "6.2.0",
+      "transformers": "5.21.0",
+      "tree-sitter": "0.25.2",
+      "anthropic": "2.3.0"
+    },
+    "max_analysis_s": 600,
+    "tool_pins": {
+      "bandit": "bandit==1.9.4",
+      "semgrep": "semgrep==1.182.1"
+    },
+    "notes": "Part B: folder-map UI, edge-density rule budget 40. Screenshots in eval/results/screenshots-part-b/.",
+    "embedder": "sentence-transformers",
+    "embed_model": "sentence-transformers/all-MiniLM-L6-v2",
+    "embed_revision": "1110a243fdf4706b3f48f1d95db1a4f5529b4d41",
+    "llm_used": false,
+    "llm": {
+      "provider": "anthropic",
+      "model": "claude-sonnet-5-5",
+      "effort": "low",
+      "thinking": "between_tools",
+      "max_tokens": 4000,
+      "prompt_version": "2026-10-28.2"
+    },
+    "retrieval": {
+      "top_k": 8,
+      "graph_expansion": true,
+      "expand_max": 8,
+      "context_tokens": 6000
+    }
+  },
+  "repos": {
+    "itsdangerous": {
+      "snapshot_id": 1,
+      "commit": "672971d66a2ef9f85151e53283113f33d642dabd",
+      "default": {
+        "before": {
+          "flat_nodes": 9,
+          "flat_edges": 21,
+          "nodes_drawn": 9,
+          "edges_drawn": 21,
+          "capped": false
+        },
+        "default": {
+          "level": "file",
+          "root": "",
+          "visible_files": 9,
+          "nodes": 9,
+          "edges_total": 21,
+          "edges_drawn": 21,
+          "mode": "all",
+          "min_count": null
+        },
+        "folders": [
+          {
+            "root": "/",
+            "files_under": 9,
+            "flat_edges_among": 21,
+            "nodes": 2,
+            "edges_total": 0,
+            "overflow": 0,
+            "edges_drawn": 0,
+            "mode": "all",
+            "min_count": null
+          },
+          {
+            "root": "src/itsdangerous",
+            "files_under": 8,
+            "flat_edges_among": 21,
+            "nodes": 8,
+            "edges_total": 21,
+            "overflow": 0,
+            "edges_drawn": 21,
+            "mode": "all",
+            "min_count": null
+          }
+        ],
+        "symbols": [
+          {
+            "path": "docs/conf.py",
+            "nodes": 0,
+            "edges_total": 0,
+            "overflow": 0,
+            "edges_drawn": 0,
+            "mode": "all"
+          },
+          {
+            "path": "src/itsdangerous/encoding.py",
+            "nodes": 22,
+            "edges_total": 25,
+            "overflow": 0,
+            "edges_drawn": 25,
+            "mode": "all"
+          },
+          {
+            "path": "src/itsdangerous/exc.py",
+            "nodes": 17,
+            "edges_total": 12,
+            "overflow": 0,
+            "edges_drawn": 12,
+            "mode": "all"
+          },
+          {
+            "path": "src/itsdangerous/__init__.py",
+            "nodes": 0,
+            "edges_total": 0,
+            "overflow": 0,
+            "edges_drawn": 0,
+            "mode": "all"
+          },
+          {
+            "path": "src/itsdangerous/_json.py",
+            "nodes": 3,
+            "edges_total": 2,
+            "overflow": 0,
+            "edges_drawn": 2,
+            "mode": "all"
+          },
+          {
+            "path": "src/itsdangerous/serializer.py",
+            "nodes": 26,
+            "edges_total": 34,
+            "overflow": 0,
+            "edges_drawn": 34,
+            "mode": "all"
+          },
+          {
+            "path": "src/itsdangerous/signer.py",
+            "nodes": 24,
+            "edges_total": 32,
+            "overflow": 0,
+            "edges_drawn": 32,
+            "mode": "all"
+          },
+          {
+            "path": "src/itsdangerous/timed.py",
+            "nodes": 19,
+            "edges_total": 22,
+            "overflow": 0,
+            "edges_drawn": 22,
+            "mode": "all"
+          },
+          {
+            "path": "src/itsdangerous/url_safe.py",
+            "nodes": 8,
+            "edges_total": 5,
+            "overflow": 0,
+            "edges_drawn": 5,
+            "mode": "all"
+          }
+        ],
+        "summary": {
+          "folder_views": 2,
+          "max_nodes": 8,
+          "max_edges_total": 21,
+          "max_edges_drawn": 21,
+          "views_with_hidden_edges": 0,
+          "median_edges_total": 10.5,
+          "symbol_views": 9,
+          "symbol_max_nodes": 26,
+          "symbol_max_edges_total": 34,
+          "symbol_max_edges_drawn": 34,
+          "symbol_views_with_hidden_edges": 0
+        }
+      },
+      "everything": {
+        "before": {
+          "flat_nodes": 15,
+          "flat_edges": 37,
+          "nodes_drawn": 15,
+          "edges_drawn": 37,
+          "capped": false
+        },
+        "default": {
+          "level": "file",
+          "root": "",
+          "visible_files": 15,
+          "nodes": 15,
+          "edges_total": 37,
+          "edges_drawn": 37,
+          "mode": "all",
+          "min_count": null
+        },
+        "folders": [
+          {
+            "root": "/",
+            "files_under": 15,
+            "flat_edges_among": 37,
+            "nodes": 3,
+            "edges_total": 2,
+            "overflow": 0,
+            "edges_drawn": 2,
+            "mode": "all",
+            "min_count": null
+          },
+          {
+            "root": "src/itsdangerous",
+            "files_under": 8,
+            "flat_edges_among": 21,
+            "nodes": 8,
+            "edges_total": 21,
+            "overflow": 0,
+            "edges_drawn": 21,
+            "mode": "all",
+            "min_count": null
+          },
+          {
+            "root": "tests/test_itsdangerous",
+            "files_under": 6,
+            "flat_edges_among": 4,
+            "nodes": 6,
+            "edges_total": 4,
+            "overflow": 0,
+            "edges_drawn": 4,
+            "mode": "all",
+            "min_count": null
+          }
+        ],
+        "symbols": [],
+        "summary": {
+          "folder_views": 3,
+          "max_nodes": 8,
+          "max_edges_total": 21,
+          "max_edges_drawn": 21,
+          "views_with_hidden_edges": 0,
+          "median_edges_total": 4
+        }
+      }
+    },
+    "pygoat": {
+      "snapshot_id": 2,
+      "commit": "46fef968f3f44d1191363baf936aaa3335dc5c6d",
+      "default": {
+        "before": {
+          "flat_nodes": 114,
+          "flat_edges": 31,
+          "nodes_drawn": 114,
+          "edges_drawn": 31,
+          "capped": false
+        },
+        "default": {
+          "level": "folder",
+          "root": "",
+          "visible_files": 114,
+          "nodes": 9,
+          "edges_total": 4,
+          "edges_drawn": 4,
+          "mode": "all",
+          "min_count": null
+        },
+        "folders": [
+          {
+            "root": "/",
+            "files_under": 114,
+            "flat_edges_among": 31,
+            "nodes": 9,
+            "edges_total": 4,
+            "overflow": 0,
+            "edges_drawn": 4,
+            "mode": "all",
+            "min_count": null
+          },
+          {
+            "root": "challenge",
+            "files_under": 22,
+            "flat_edges_among": 7,
+            "nodes": 11,
+            "edges_total": 5,
+            "overflow": 0,
+            "edges_drawn": 5,
+            "mode": "all",
+            "min_count": null
+          },
+          {
+            "root": "challenge/labs",
+            "files_under": 3,
+            "flat_edges_among": 0,
+            "nodes": 3,
+            "edges_total": 0,
+            "overflow": 0,
+            "edges_drawn": 0,
+            "mode": "all",
+            "min_count": null
+          },
+          {
+            "root": "challenge/management/commands",
+            "files_under": 3,
+            "flat_edges_among": 0,
+            "nodes": 3,
+            "edges_total": 0,
+            "overflow": 0,
+            "edges_drawn": 0,
+            "mode": "all",
+            "min_count": null
+          },
+          {
+            "root": "challenge/migrations",
+            "files_under": 8,
+            "flat_edges_among": 0,
+            "nodes": 8,
+            "edges_total": 0,
+            "overflow": 0,
+            "edges_drawn": 0,
+            "mode": "all",
+            "min_count": null
+          },
+          {
+            "root": "dockerized_labs",
+            "files_under": 32,
+            "flat_edges_among": 3,
+            "nodes": 21,
+            "edges_total": 0,
+            "overflow": 0,
+            "edges_drawn": 0,
+            "mode": "all",
+            "min_count": null
+          },
+          {
+            "root": "dockerized_labs/insufficient_logging_lab",
+            "files_under": 1,
+            "flat_edges_among": 0,
+            "nodes": 1,
+            "edges_total": 0,
+            "overflow": 0,
+            "edges_drawn": 0,
+            "mode": "all",
+            "min_count": null
+          },
+          {
+            "root": "dockerized_labs/sec_misconfig",
+            "files_under": 1,
+            "flat_edges_among": 0,
+            "nodes": 1,
+            "edges_total": 0,
+            "overflow": 0,
+            "edges_drawn": 0,
+            "mode": "all",
+            "min_count": null
+          },
+          {
+            "root": "dockerized_labs/sensitive_data_exposure",
+            "files_under": 12,
+            "flat_edges_among": 3,
+            "nodes": 3,
+            "edges_total": 0,
+            "overflow": 0,
+            "edges_drawn": 0,
+            "mode": "all",
+            "min_count": null
+          },
+          {
+            "root": "dockerized_labs/sensitive_data_exposure/dataexposure",
+            "files_under": 7,
+            "flat_edges_among": 3,
+            "nodes": 6,
+            "edges_total": 3,
+            "overflow": 0,
+            "edges_drawn": 3,
+            "mode": "all",
+            "min_count": null
+          },
+          {
+            "root": "dockerized_labs/sensitive_data_exposure/dataexposure/migrations",
+            "files_under": 2,
+            "flat_edges_among": 0,
+            "nodes": 2,
+            "edges_total": 0,
+            "overflow": 0,
+            "edges_drawn": 0,
+            "mode": "all",
+            "min_count": null
+          },
+          {
+            "root": "dockerized_labs/sensitive_data_exposure/sensitive_data_lab",
+            "files_under": 4,
+            "flat_edges_among": 0,
+            "nodes": 4,
+            "edges_total": 0,
+            "overflow": 0,
+            "edges_drawn": 0,
+            "mode": "all",
+            "min_count": null
+          },
+          {
+            "root": "introduction",
+            "files_under": 35,
+            "flat_edges_among": 2,
+            "nodes": 9,
+            "edges_total": 2,
+            "overflow": 0,
+            "edges_drawn": 2,
+            "mode": "all",
+            "min_count": null
+          },
+          {
+            "root": "introduction/migrations",
+            "files_under": 26,
+            "flat_edges_among": 0,
+            "nodes": 26,
+            "edges_total": 0,
+            "overflow": 0,
+            "edges_drawn": 0,
+            "mode": "all",
+            "min_count": null
+          },
+          {
+            "root": "introduction/static/js",
+            "files_under": 2,
+            "flat_edges_among": 0,
+            "nodes": 2,
+            "edges_total": 0,
+            "overflow": 0,
+            "edges_drawn": 0,
+            "mode": "all",
+            "min_count": null
+          },
+          {
+            "root": "pygoat",
+            "files_under": 5,
+            "flat_edges_among": 0,
+            "nodes": 5,
+            "edges_total": 0,
+            "overflow": 0,
+            "edges_drawn": 0,
+            "mode": "all",
+            "min_count": null
+          },
+          {
+            "root": "scoring",
+            "files_under": 16,
+            "flat_edges_among": 10,
+            "nodes": 12,
+            "edges_total": 10,
+            "overflow": 0,
+            "edges_drawn": 10,
+            "mode": "all",
+            "min_count": null
+          },
+          {
+            "root": "scoring/management",
+            "files_under": 3,
+            "flat_edges_among": 0,
+            "nodes": 2,
+            "edges_total": 0,
+            "overflow": 0,
+            "edges_drawn": 0,
+            "mode": "all",
+            "min_count": null
+          },
+          {
+            "root": "scoring/management/commands",
+            "files_under": 2,
+            "flat_edges_among": 0,
+            "nodes": 2,
+            "edges_total": 0,
+            "overflow": 0,
+            "edges_drawn": 0,
+            "mode": "all",
+            "min_count": null
+          },
+          {
+            "root": "scoring/migrations",
+            "files_under": 3,
+            "flat_edges_among": 0,
+            "nodes": 3,
+            "edges_total": 0,
+            "overflow": 0,
+            "edges_drawn": 0,
+            "mode": "all",
+            "min_count": null
+          }
+        ],
+        "symbols": [
+          {
+            "path": "challenge/admin.py",
+            "nodes": 4,
+            "edges_total": 0,
+            "overflow": 0,
+            "edges_drawn": 0,
+            "mode": "all"
+          },
+          {
+            "path": "challenge/apps.py",
+            "nodes": 1,
+            "edges_total": 0,
+            "overflow": 0,
+            "edges_drawn": 0,
+            "mode": "all"
+          },
+          {
+            "path": "challenge/context_processors.py",
+            "nodes": 1,
+            "edges_total": 0,
+            "overflow": 0,
+            "edges_drawn": 0,
+            "mode": "all"
+          },
+          {
+            "path": "challenge/__init__.py",
+            "nodes": 0,
+            "edges_total": 0,
+            "overflow": 0,
+            "edges_drawn": 0,
+            "mode": "all"
+          },
+          {
+            "path": "challenge/labs/bopla_lab/app.py",
+            "nodes": 9,
+            "edges_total": 0,
+            "overflow": 0,
+            "edges_drawn": 0,
+            "mode": "all"
+          },
+          {
+            "path": "challenge/labs/business_logic_lab/app.py",
+            "nodes": 12,
+            "edges_total": 9,
+            "overflow": 0,
+            "edges_drawn": 9,
+            "mode": "all"
+          },
+          {
+            "path": "challenge/labs/security_headers_lab/app.py",
+            "nodes": 15,
+            "edges_total": 12,
+            "overflow": 0,
+            "edges_drawn": 12,
+            "mode": "all"
+          },
+          {
+            "path": "challenge/management/commands/populate_challenges.py",
+            "nodes": 3,
+            "edges_total": 2,
+            "overflow": 0,
+            "edges_drawn": 2,
+            "mode": "all"
+          },
+          {
+            "path": "challenge/management/commands/populate_labs.py",
+            "nodes": 4,
+            "edges_total": 4,
+            "overflow": 0,
+            "edges_drawn": 4,
+            "mode": "all"
+          },
+          {
+            "path": "challenge/management/commands/startuplabs.py",
+            "nodes": 2,
+            "edges_total": 1,
+            "overflow": 0,
+            "edges_drawn": 1,
+            "mode": "all"
+          },
+          {
+            "path": "challenge/migrations/0001_initial.py",
+            "nodes": 1,
+            "edges_total": 0,
+            "overflow": 0,
+            "edges_drawn": 0,
+            "mode": "all"
+          },
+          {
+            "path": "challenge/migrations/0002_challenge_docker_port.py",
+            "nodes": 1,
+            "edges_total": 0,
+            "overflow": 0,
+            "edges_drawn": 0,
+            "mode": "all"
+          },
+          {
+            "path": "challenge/migrations/0003_alter_challenge_docker_image_alter_challenge_id_and_more.py",
+            "nodes": 1,
+            "edges_total": 0,
+            "overflow": 0,
+            "edges_drawn": 0,
+            "mode": "all"
+          },
+          {
+            "path": "challenge/migrations/0004_lab.py",
+            "nodes": 1,
+            "edges_total": 0,
+            "overflow": 0,
+            "edges_drawn": 0,
+            "mode": "all"
+          },
+          {
+            "path": "challenge/migrations/0006_lab_is_custom.py",
+            "nodes": 1,
+            "edges_total": 0,
+            "overflow": 0,
+            "edges_drawn": 0,
+            "mode": "all"
+          },
+          {
+            "path": "challenge/migrations/0007_labcategorymapping.py",
+            "nodes": 1,
+            "edges_total": 0,
+            "overflow": 0,
+            "edges_drawn": 0,
+            "mode": "all"
+          },
+          {
+            "path": "challenge/migrations/0008_challenge_difficulty_lab_difficulty.py",
+            "nodes": 1,
+            "edges_total": 0,
+            "overflow": 0,
+            "edges_drawn": 0,
+            "mode": "all"
+          },
+          {
+            "path": "challenge/migrations/__init__.py",
+            "nodes": 0,
+            "edges_total": 0,
+            "overflow": 0,
+            "edges_drawn": 0,
+            "mode": "all"
+          },
+          {
+            "path": "challenge/models.py",
+            "nodes": 13,
+            "edges_total": 9,
+            "overflow": 0,
+            "edges_drawn": 9,
+            "mode": "all"
+          },
+          {
+            "path": "challenge/urls.py",
+            "nodes": 0,
+            "edges_total": 0,
+            "overflow": 0,
+            "edges_drawn": 0,
+            "mode": "all"
+          },
+          {
+            "path": "challenge/utility.py",
+            "nodes": 1,
+            "edges_total": 0,
+            "overflow": 0,
+            "edges_drawn": 0,
+            "mode": "all"
+          },
+          {
+            "path": "challenge/views.py",
+            "nodes": 32,
+            "edges_total": 40,
+            "overflow": 0,
+            "edges_drawn": 40,
+            "mode": "all"
+          },
+          {
+            "path": "dockerized_labs/a9_uckv_lab/app.py",
+            "nodes": 8,
+            "edges_total": 2,
+            "overflow": 0,
+            "edges_drawn": 2,
+            "mode": "all"
+          },
+          {
+            "path": "dockerized_labs/auth_failure_lab/app.py",
+            "nodes": 10,
+            "edges_total": 2,
+            "overflow": 0,
+            "edges_drawn": 2,
+            "mode": "all"
+          },
+          {
+            "path": "dockerized_labs/broken_access_lab/main.py",
+            "nodes": 6,
+            "edges_total": 1,
+            "overflow": 0,
+            "edges_drawn": 1,
+            "mode": "all"
+          },
+          {
+            "path": "dockerized_labs/broken_auth_lab/app.py",
+            "nodes": 8,
+            "edges_total": 0,
+            "overflow": 0,
+            "edges_drawn": 0,
+            "mode": "all"
+          },
+          {
+            "path": "dockerized_labs/command_injection_lab/app.py",
+            "nodes": 4,
+            "edges_total": 0,
+            "overflow": 0,
+            "edges_drawn": 0,
+            "mode": "all"
+          },
+          {
+            "path": "dockerized_labs/crypto_failure_lab/app.py",
+            "nodes": 6,
+            "edges_total": 1,
+            "overflow": 0,
+            "edges_drawn": 1,
+            "mode": "all"
+          },
+          {
+            "path": "dockerized_labs/dependency_attack_lab/app.py",
+            "nodes": 11,
+            "edges_total": 3,
+            "overflow": 0,
+            "edges_drawn": 3,
+            "mode": "all"
+          },
+          {
+            "path": "dockerized_labs/insec_des_lab/main.py",
+            "nodes": 6,
+            "edges_total": 2,
+            "overflow": 0,
+            "edges_drawn": 2,
+            "mode": "all"
+          },
+          {
+            "path": "dockerized_labs/insecure_design_lab/app.py",
+            "nodes": 10,
+            "edges_total": 3,
+            "overflow": 0,
+            "edges_drawn": 3,
+            "mode": "all"
+          },
+          {
+            "path": "dockerized_labs/insufficient_logging_lab/app.py",
+            "nodes": 9,
+            "edges_total": 1,
+            "overflow": 0,
+            "edges_drawn": 1,
+            "mode": "all"
+          },
+          {
+            "path": "dockerized_labs/open_source_library_attack_lab/app.py",
+            "nodes": 10,
+            "edges_total": 0,
+            "overflow": 0,
+            "edges_drawn": 0,
+            "mode": "all"
+          },
+          {
+            "path": "dockerized_labs/package_injection_lab/app.py",
+            "nodes": 12,
+            "edges_total": 4,
+            "overflow": 0,
+            "edges_drawn": 4,
+            "mode": "all"
+          },
+          {
+            "path": "dockerized_labs/sde/app.py",
+            "nodes": 5,
+            "edges_total": 0,
+            "overflow": 0,
+            "edges_drawn": 0,
+            "mode": "all"
+          },
+          {
+            "path": "dockerized_labs/sec_misconfig/app.py",
+            "nodes": 10,
+            "edges_total": 0,
+            "overflow": 0,
+            "edges_drawn": 0,
+            "mode": "all"
+          },
+          {
+            "path": "dockerized_labs/sensitive_data_exposure/dataexposure/forms.py",
+            "nodes": 5,
+            "edges_total": 2,
+            "overflow": 0,
+            "edges_drawn": 2,
+            "mode": "all"
+          },
+          {
+            "path": "dockerized_labs/sensitive_data_exposure/dataexposure/__init__.py",
+            "nodes": 0,
+            "edges_total": 0,
+            "overflow": 0,
+            "edges_drawn": 0,
+            "mode": "all"
+          },
+          {
+            "path": "dockerized_labs/sensitive_data_exposure/dataexposure/migrations/0001_initial.py",
+            "nodes": 1,
+            "edges_total": 0,
+            "overflow": 0,
+            "edges_drawn": 0,
+            "mode": "all"
+          },
+          {
+            "path": "dockerized_labs/sensitive_data_exposure/dataexposure/migrations/__init__.py",
+            "nodes": 0,
+            "edges_total": 0,
+            "overflow": 0,
+            "edges_drawn": 0,
+            "mode": "all"
+          },
+          {
+            "path": "dockerized_labs/sensitive_data_exposure/dataexposure/models.py",
+            "nodes": 2,
+            "edges_total": 1,
+            "overflow": 0,
+            "edges_drawn": 1,
+            "mode": "all"
+          },
+          {
+            "path": "dockerized_labs/sensitive_data_exposure/dataexposure/urls.py",
+            "nodes": 0,
+            "edges_total": 0,
+            "overflow": 0,
+            "edges_drawn": 0,
+            "mode": "all"
+          },
+          {
+            "path": "dockerized_labs/sensitive_data_exposure/dataexposure/views.py",
+            "nodes": 13,
+            "edges_total": 5,
+            "overflow": 0,
+            "edges_drawn": 5,
+            "mode": "all"
+          },
+          {
+            "path": "dockerized_labs/sensitive_data_exposure/manage.py",
+            "nodes": 2,
+            "edges_total": 1,
+            "overflow": 0,
+            "edges_drawn": 1,
+            "mode": "all"
+          },
+          {
+            "path": "dockerized_labs/sensitive_data_exposure/sensitive_data_lab/__init__.py",
+            "nodes": 0,
+            "edges_total": 0,
+            "overflow": 0,
+            "edges_drawn": 0,
+            "mode": "all"
+          },
+          {
+            "path": "dockerized_labs/sensitive_data_exposure/sensitive_data_lab/settings.py",
+            "nodes": 0,
+            "edges_total": 0,
+            "overflow": 0,
+            "edges_drawn": 0,
+            "mode": "all"
+          },
+          {
+            "path": "dockerized_labs/sensitive_data_exposure/sensitive_data_lab/urls.py",
+            "nodes": 0,
+            "edges_total": 0,
+            "overflow": 0,
+            "edges_drawn": 0,
+            "mode": "all"
+          },
+          {
+            "path": "dockerized_labs/sensitive_data_exposure/sensitive_data_lab/wsgi.py",
+            "nodes": 0,
+            "edges_total": 0,
+            "overflow": 0,
+            "edges_drawn": 0,
+            "mode": "all"
+          },
+          {
+            "path": "dockerized_labs/software_integrity_lab/app.py",
+            "nodes": 7,
+            "edges_total": 1,
+            "overflow": 0,
+            "edges_drawn": 1,
+            "mode": "all"
+          },
+          {
+            "path": "dockerized_labs/sql_injection_lab/app.py",
+            "nodes": 5,
+            "edges_total": 1,
+            "overflow": 0,
+            "edges_drawn": 1,
+            "mode": "all"
+          },
+          {
+            "path": "dockerized_labs/ssrf_lab/app.py",
+            "nodes": 6,
+            "edges_total": 1,
+            "overflow": 0,
+            "edges_drawn": 1,
+            "mode": "all"
+          },
+          {
+            "path": "dockerized_labs/template_injection_lab/app.py",
+            "nodes": 8,
+            "edges_total": 2,
+            "overflow": 0,
+            "edges_drawn": 2,
+            "mode": "all"
+          },
+          {
+            "path": "dockerized_labs/xss_lab/app.py",
+            "nodes": 6,
+            "edges_total": 0,
+            "overflow": 0,
+            "edges_drawn": 0,
+            "mode": "all"
+          },
+          {
+            "path": "dockerized_labs/xxe_lab/app.py",
+            "nodes": 7,
+            "edges_total": 2,
+            "overflow": 0,
+            "edges_drawn": 2,
+            "mode": "all"
+          },
+          {
+            "path": "introduction/admin.py",
+            "nodes": 0,
+            "edges_total": 0,
+            "overflow": 0,
+            "edges_drawn": 0,
+            "mode": "all"
+          },
+          {
+            "path": "introduction/apps.py",
+            "nodes": 1,
+            "edges_total": 0,
+            "overflow": 0,
+            "edges_drawn": 0,
+            "mode": "all"
+          },
+          {
+            "path": "introduction/forms.py",
+            "nodes": 4,
+            "edges_total": 2,
+            "overflow": 0,
+            "edges_drawn": 2,
+            "mode": "all"
+          },
+          {
+            "path": "introduction/__init__.py",
+            "nodes": 0,
+            "edges_total": 0,
+            "overflow": 0,
+            "edges_drawn": 0,
+            "mode": "all"
+          },
+          {
+            "path": "introduction/migrations/0001_initial.py",
+            "nodes": 1,
+            "edges_total": 0,
+            "overflow": 0,
+            "edges_drawn": 0,
+            "mode": "all"
+          },
+          {
+            "path": "introduction/migrations/0002_auto_20210414_1510.py",
+            "nodes": 1,
+            "edges_total": 0,
+            "overflow": 0,
+            "edges_drawn": 0,
+            "mode": "all"
+          },
+          {
+            "path": "introduction/migrations/0003_password_user.py",
+            "nodes": 1,
+            "edges_total": 0,
+            "overflow": 0,
+            "edges_drawn": 0,
+            "mode": "all"
+          },
+          {
+            "path": "introduction/migrations/0004_auto_20210415_1722.py",
+            "nodes": 1,
+            "edges_total": 0,
+            "overflow": 0,
+            "edges_drawn": 0,
+            "mode": "all"
+          },
+          {
+            "path": "introduction/migrations/0005_auto_20210415_1748.py",
+            "nodes": 1,
+            "edges_total": 0,
+            "overflow": 0,
+            "edges_drawn": 0,
+            "mode": "all"
+          },
+          {
+            "path": "introduction/migrations/0006_comments.py",
+            "nodes": 1,
+            "edges_total": 0,
+            "overflow": 0,
+            "edges_drawn": 0,
+            "mode": "all"
+          },
+          {
+            "path": "introduction/migrations/0007_auto_20210418_0022.py",
+            "nodes": 1,
+            "edges_total": 0,
+            "overflow": 0,
+            "edges_drawn": 0,
+            "mode": "all"
+          },
+          {
+            "path": "introduction/migrations/0008_otp.py",
+            "nodes": 1,
+            "edges_total": 0,
+            "overflow": 0,
+            "edges_drawn": 0,
+            "mode": "all"
+          },
+          {
+            "path": "introduction/migrations/0009_auto_20210517_2047.py",
+            "nodes": 1,
+            "edges_total": 0,
+            "overflow": 0,
+            "edges_drawn": 0,
+            "mode": "all"
+          },
+          {
+            "path": "introduction/migrations/0010_authlogin.py",
+            "nodes": 1,
+            "edges_total": 0,
+            "overflow": 0,
+            "edges_drawn": 0,
+            "mode": "all"
+          },
+          {
+            "path": "introduction/migrations/0011_tickits.py",
+            "nodes": 1,
+            "edges_total": 0,
+            "overflow": 0,
+            "edges_drawn": 0,
+            "mode": "all"
+          },
+          {
+            "path": "introduction/migrations/0012_alter_tickits_user.py",
+            "nodes": 1,
+            "edges_total": 0,
+            "overflow": 0,
+            "edges_drawn": 0,
+            "mode": "all"
+          },
+          {
+            "path": "introduction/migrations/0013_alter_comments_id_alter_faang_id_alter_info_id_and_more.py",
+            "nodes": 1,
+            "edges_total": 0,
+            "overflow": 0,
+            "edges_drawn": 0,
+            "mode": "all"
+          },
+          {
+            "path": "introduction/migrations/0014_sql_lab_table.py",
+            "nodes": 1,
+            "edges_total": 0,
+            "overflow": 0,
+            "edges_drawn": 0,
+            "mode": "all"
+          },
+          {
+            "path": "introduction/migrations/0015_blogs.py",
+            "nodes": 1,
+            "edges_total": 0,
+            "overflow": 0,
+            "edges_drawn": 0,
+            "mode": "all"
+          },
+          {
+            "path": "introduction/migrations/0016_alter_blogs_blog_id.py",
+            "nodes": 1,
+            "edges_total": 0,
+            "overflow": 0,
+            "edges_drawn": 0,
+            "mode": "all"
+          },
+          {
+            "path": "introduction/migrations/0017_cf_user.py",
+            "nodes": 1,
+            "edges_total": 0,
+            "overflow": 0,
+            "edges_drawn": 0,
+            "mode": "all"
+          },
+          {
+            "path": "introduction/migrations/0018_cf_user_password2.py",
+            "nodes": 1,
+            "edges_total": 0,
+            "overflow": 0,
+            "edges_drawn": 0,
+            "mode": "all"
+          },
+          {
+            "path": "introduction/migrations/0019_af_admin.py",
+            "nodes": 1,
+            "edges_total": 0,
+            "overflow": 0,
+            "edges_drawn": 0,
+            "mode": "all"
+          },
+          {
+            "path": "introduction/migrations/0020_af_session_id_alter_af_admin_lockout_cooldown.py",
+            "nodes": 1,
+            "edges_total": 0,
+            "overflow": 0,
+            "edges_drawn": 0,
+            "mode": "all"
+          },
+          {
+            "path": "introduction/migrations/0021_csrf_user_tbl.py",
+            "nodes": 1,
+            "edges_total": 0,
+            "overflow": 0,
+            "edges_drawn": 0,
+            "mode": "all"
+          },
+          {
+            "path": "introduction/migrations/0022_remove_owasp2017_lab_models.py",
+            "nodes": 1,
+            "edges_total": 0,
+            "overflow": 0,
+            "edges_drawn": 0,
+            "mode": "all"
+          },
+          {
+            "path": "introduction/migrations/0022_remove_owasp2021_lab_models.py",
+            "nodes": 1,
+            "edges_total": 0,
+            "overflow": 0,
+            "edges_drawn": 0,
+            "mode": "all"
+          },
+          {
+            "path": "introduction/migrations/0023_merge_20260531_1500.py",
+            "nodes": 1,
+            "edges_total": 0,
+            "overflow": 0,
+            "edges_drawn": 0,
+            "mode": "all"
+          },
+          {
+            "path": "introduction/migrations/0024_delete_csrf_user_tbl.py",
+            "nodes": 1,
+            "edges_total": 0,
+            "overflow": 0,
+            "edges_drawn": 0,
+            "mode": "all"
+          },
+          {
+            "path": "introduction/migrations/__init__.py",
+            "nodes": 0,
+            "edges_total": 0,
+            "overflow": 0,
+            "edges_drawn": 0,
+            "mode": "all"
+          },
+          {
+            "path": "introduction/models.py",
+            "nodes": 0,
+            "edges_total": 0,
+            "overflow": 0,
+            "edges_drawn": 0,
+            "mode": "all"
+          },
+          {
+            "path": "introduction/static/js/lab_manager.js",
+            "nodes": 16,
+            "edges_total": 30,
+            "overflow": 0,
+            "edges_drawn": 30,
+            "mode": "all"
+          },
+          {
+            "path": "introduction/static/js/theme.js",
+            "nodes": 1,
+            "edges_total": 0,
+            "overflow": 0,
+            "edges_drawn": 0,
+            "mode": "all"
+          },
+          {
+            "path": "introduction/urls.py",
+            "nodes": 0,
+            "edges_total": 0,
+            "overflow": 0,
+            "edges_drawn": 0,
+            "mode": "all"
+          },
+          {
+            "path": "introduction/views.py",
+            "nodes": 32,
+            "edges_total": 3,
+            "overflow": 0,
+            "edges_drawn": 3,
+            "mode": "all"
+          },
+          {
+            "path": "manage.py",
+            "nodes": 2,
+            "edges_total": 1,
+            "overflow": 0,
+            "edges_drawn": 1,
+            "mode": "all"
+          },
+          {
+            "path": "pygoat/asgi.py",
+            "nodes": 0,
+            "edges_total": 0,
+            "overflow": 0,
+            "edges_drawn": 0,
+            "mode": "all"
+          },
+          {
+            "path": "PyGoatBot.py",
+            "nodes": 0,
+            "edges_total": 0,
+            "overflow": 0,
+            "edges_drawn": 0,
+            "mode": "all"
+          },
+          {
+            "path": "pygoat/__init__.py",
+            "nodes": 0,
+            "edges_total": 0,
+            "overflow": 0,
+            "edges_drawn": 0,
+            "mode": "all"
+          },
+          {
+            "path": "pygoat/settings.py",
+            "nodes": 0,
+            "edges_total": 0,
+            "overflow": 0,
+            "edges_drawn": 0,
+            "mode": "all"
+          },
+          {
+            "path": "pygoat/urls.py",
+            "nodes": 0,
+            "edges_total": 0,
+            "overflow": 0,
+            "edges_drawn": 0,
+            "mode": "all"
+          },
+          {
+            "path": "pygoat/wsgi.py",
+            "nodes": 0,
+            "edges_total": 0,
+            "overflow": 0,
+            "edges_drawn": 0,
+            "mode": "all"
+          },
+          {
+            "path": "scoring/admin.py",
+            "nodes": 13,
+            "edges_total": 7,
+            "overflow": 0,
+            "edges_drawn": 7,
+            "mode": "all"
+          },
+          {
+            "path": "scoring/apps.py",
+            "nodes": 2,
+            "edges_total": 1,
+            "overflow": 0,
+            "edges_drawn": 1,
+            "mode": "all"
+          },
+          {
+            "path": "scoring/context_processors.py",
+            "nodes": 1,
+            "edges_total": 0,
+            "overflow": 0,
+            "edges_drawn": 0,
+            "mode": "all"
+          },
+          {
+            "path": "scoring/__init__.py",
+            "nodes": 0,
+            "edges_total": 0,
+            "overflow": 0,
+            "edges_drawn": 0,
+            "mode": "all"
+          },
+          {
+            "path": "scoring/management/commands/__init__.py",
+            "nodes": 0,
+            "edges_total": 0,
+            "overflow": 0,
+            "edges_drawn": 0,
+            "mode": "all"
+          },
+          {
+            "path": "scoring/management/commands/seed_scoring.py",
+            "nodes": 3,
+            "edges_total": 2,
+            "overflow": 0,
+            "edges_drawn": 2,
+            "mode": "all"
+          },
+          {
+            "path": "scoring/management/__init__.py",
+            "nodes": 0,
+            "edges_total": 0,
+            "overflow": 0,
+            "edges_drawn": 0,
+            "mode": "all"
+          },
+          {
+            "path": "scoring/migrations/0001_initial.py",
+            "nodes": 1,
+            "edges_total": 0,
+            "overflow": 0,
+            "edges_drawn": 0,
+            "mode": "all"
+          },
+          {
+            "path": "scoring/migrations/0002_alter_achievementmilestone_icon.py",
+            "nodes": 1,
+            "edges_total": 0,
+            "overflow": 0,
+            "edges_drawn": 0,
+            "mode": "all"
+          },
+          {
+            "path": "scoring/migrations/__init__.py",
+            "nodes": 0,
+            "edges_total": 0,
+            "overflow": 0,
+            "edges_drawn": 0,
+            "mode": "all"
+          },
+          {
+            "path": "scoring/models.py",
+            "nodes": 26,
+            "edges_total": 14,
+            "overflow": 0,
+            "edges_drawn": 14,
+            "mode": "all"
+          },
+          {
+            "path": "scoring/scoring_engine.py",
+            "nodes": 4,
+            "edges_total": 2,
+            "overflow": 0,
+            "edges_drawn": 2,
+            "mode": "all"
+          },
+          {
+            "path": "scoring/services.py",
+            "nodes": 7,
+            "edges_total": 4,
+            "overflow": 0,
+            "edges_drawn": 4,
+            "mode": "all"
+          },
+          {
+            "path": "scoring/signals.py",
+            "nodes": 6,
+            "edges_total": 6,
+            "overflow": 0,
+            "edges_drawn": 6,
+            "mode": "all"
+          },
+          {
+            "path": "scoring/urls.py",
+            "nodes": 0,
+            "edges_total": 0,
+            "overflow": 0,
+            "edges_drawn": 0,
+            "mode": "all"
+          },
+          {
+            "path": "scoring/views.py",
+            "nodes": 3,
+            "edges_total": 0,
+            "overflow": 0,
+            "edges_drawn": 0,
+            "mode": "all"
+          },
+          {
+            "path": "setup.py",
+            "nodes": 0,
+            "edges_total": 0,
+            "overflow": 0,
+            "edges_drawn": 0,
+            "mode": "all"
+          },
+          {
+            "path": "uninstaller.py",
+            "nodes": 6,
+            "edges_total": 5,
+            "overflow": 0,
+            "edges_drawn": 5,
+            "mode": "all"
+          }
+        ],
+        "summary": {
+          "folder_views": 20,
+          "max_nodes": 26,
+          "max_edges_total": 10,
+          "max_edges_drawn": 10,
+          "views_with_hidden_edges": 0,
+          "median_edges_total": 0.0,
+          "symbol_views": 114,
+          "symbol_max_nodes": 32,
+          "symbol_max_edges_total": 40,
+          "symbol_max_edges_drawn": 40,
+          "symbol_views_with_hidden_edges": 0
+        }
+      },
+      "everything": {
+        "before": {
+          "flat_nodes": 117,
+          "flat_edges": 69,
+          "nodes_drawn": 117,
+          "edges_drawn": 69,
+          "capped": false
+        },
+        "default": {
+          "level": "folder",
+          "root": "",
+          "visible_files": 117,
+          "nodes": 9,
+          "edges_total": 7,
+          "edges_drawn": 7,
+          "mode": "all",
+          "min_count": null
+        },
+        "folders": [
+          {
+            "root": "/",
+            "files_under": 117,
+            "flat_edges_among": 69,
+            "nodes": 9,
+            "edges_total": 7,
+            "overflow": 0,
+            "edges_drawn": 7,
+            "mode": "all",
+            "min_count": null
+          },
+          {
+            "root": "challenge",
+            "files_under": 23,
+            "flat_edges_among": 15,
+            "nodes": 12,
+            "edges_total": 9,
+            "overflow": 0,
+            "edges_drawn": 9,
+            "mode": "all",
+            "min_count": null
+          },
+          {
+            "root": "challenge/labs",
+            "files_under": 3,
+            "flat_edges_among": 0,
+            "nodes": 3,
+            "edges_total": 0,
+            "overflow": 0,
+            "edges_drawn": 0,
+            "mode": "all",
+            "min_count": null
+          },
+          {
+            "root": "challenge/management/commands",
+            "files_under": 3,
+            "flat_edges_among": 0,
+            "nodes": 3,
+            "edges_total": 0,
+            "overflow": 0,
+            "edges_drawn": 0,
+            "mode": "all",
+            "min_count": null
+          },
+          {
+            "root": "challenge/migrations",
+            "files_under": 8,
+            "flat_edges_among": 0,
+            "nodes": 8,
+            "edges_total": 0,
+            "overflow": 0,
+            "edges_drawn": 0,
+            "mode": "all",
+            "min_count": null
+          },
+          {
+            "root": "dockerized_labs",
+            "files_under": 32,
+            "flat_edges_among": 3,
+            "nodes": 21,
+            "edges_total": 0,
+            "overflow": 0,
+            "edges_drawn": 0,
+            "mode": "all",
+            "min_count": null
+          },
+          {
+            "root": "dockerized_labs/insufficient_logging_lab",
+            "files_under": 1,
+            "flat_edges_among": 0,
+            "nodes": 1,
+            "edges_total": 0,
+            "overflow": 0,
+            "edges_drawn": 0,
+            "mode": "all",
+            "min_count": null
+          },
+          {
+            "root": "dockerized_labs/sec_misconfig",
+            "files_under": 1,
+            "flat_edges_among": 0,
+            "nodes": 1,
+            "edges_total": 0,
+            "overflow": 0,
+            "edges_drawn": 0,
+            "mode": "all",
+            "min_count": null
+          },
+          {
+            "root": "dockerized_labs/sensitive_data_exposure",
+            "files_under": 12,
+            "flat_edges_among": 3,
+            "nodes": 3,
+            "edges_total": 0,
+            "overflow": 0,
+            "edges_drawn": 0,
+            "mode": "all",
+            "min_count": null
+          },
+          {
+            "root": "dockerized_labs/sensitive_data_exposure/dataexposure",
+            "files_under": 7,
+            "flat_edges_among": 3,
+            "nodes": 6,
+            "edges_total": 3,
+            "overflow": 0,
+            "edges_drawn": 3,
+            "mode": "all",
+            "min_count": null
+          },
+          {
+            "root": "dockerized_labs/sensitive_data_exposure/dataexposure/migrations",
+            "files_under": 2,
+            "flat_edges_among": 0,
+            "nodes": 2,
+            "edges_total": 0,
+            "overflow": 0,
+            "edges_drawn": 0,
+            "mode": "all",
+            "min_count": null
+          },
+          {
+            "root": "dockerized_labs/sensitive_data_exposure/sensitive_data_lab",
+            "files_under": 4,
+            "flat_edges_among": 0,
+            "nodes": 4,
+            "edges_total": 0,
+            "overflow": 0,
+            "edges_drawn": 0,
+            "mode": "all",
+            "min_count": null
+          },
+          {
+            "root": "introduction",
+            "files_under": 36,
+            "flat_edges_among": 2,
+            "nodes": 10,
+            "edges_total": 2,
+            "overflow": 0,
+            "edges_drawn": 2,
+            "mode": "all",
+            "min_count": null
+          },
+          {
+            "root": "introduction/migrations",
+            "files_under": 26,
+            "flat_edges_among": 0,
+            "nodes": 26,
+            "edges_total": 0,
+            "overflow": 0,
+            "edges_drawn": 0,
+            "mode": "all",
+            "min_count": null
+          },
+          {
+            "root": "introduction/static/js",
+            "files_under": 2,
+            "flat_edges_among": 0,
+            "nodes": 2,
+            "edges_total": 0,
+            "overflow": 0,
+            "edges_drawn": 0,
+            "mode": "all",
+            "min_count": null
+          },
+          {
+            "root": "pygoat",
+            "files_under": 5,
+            "flat_edges_among": 0,
+            "nodes": 5,
+            "edges_total": 0,
+            "overflow": 0,
+            "edges_drawn": 0,
+            "mode": "all",
+            "min_count": null
+          },
+          {
+            "root": "scoring",
+            "files_under": 17,
+            "flat_edges_among": 13,
+            "nodes": 13,
+            "edges_total": 13,
+            "overflow": 0,
+            "edges_drawn": 13,
+            "mode": "all",
+            "min_count": null
+          },
+          {
+            "root": "scoring/management",
+            "files_under": 3,
+            "flat_edges_among": 0,
+            "nodes": 2,
+            "edges_total": 0,
+            "overflow": 0,
+            "edges_drawn": 0,
+            "mode": "all",
+            "min_count": null
+          },
+          {
+            "root": "scoring/management/commands",
+            "files_under": 2,
+            "flat_edges_among": 0,
+            "nodes": 2,
+            "edges_total": 0,
+            "overflow": 0,
+            "edges_drawn": 0,
+            "mode": "all",
+            "min_count": null
+          },
+          {
+            "root": "scoring/migrations",
+            "files_under": 3,
+            "flat_edges_among": 0,
+            "nodes": 3,
+            "edges_total": 0,
+            "overflow": 0,
+            "edges_drawn": 0,
+            "mode": "all",
+            "min_count": null
+          }
+        ],
+        "symbols": [],
+        "summary": {
+          "folder_views": 20,
+          "max_nodes": 26,
+          "max_edges_total": 13,
+          "max_edges_drawn": 13,
+          "views_with_hidden_edges": 0,
+          "median_edges_total": 0.0
+        }
+      }
+    },
+    "express": {
+      "snapshot_id": 3,
+      "commit": "1c6f1b0fe4000977b9a7b4f34097e4d527dd9824",
+      "default": {
+        "before": {
+          "flat_nodes": 7,
+          "flat_edges": 7,
+          "nodes_drawn": 7,
+          "edges_drawn": 7,
+          "capped": false
+        },
+        "default": {
+          "level": "file",
+          "root": "",
+          "visible_files": 7,
+          "nodes": 7,
+          "edges_total": 7,
+          "edges_drawn": 7,
+          "mode": "all",
+          "min_count": null
+        },
+        "folders": [
+          {
+            "root": "/",
+            "files_under": 7,
+            "flat_edges_among": 7,
+            "nodes": 2,
+            "edges_total": 1,
+            "overflow": 0,
+            "edges_drawn": 1,
+            "mode": "all",
+            "min_count": null
+          },
+          {
+            "root": "lib",
+            "files_under": 6,
+            "flat_edges_among": 6,
+            "nodes": 6,
+            "edges_total": 6,
+            "overflow": 0,
+            "edges_drawn": 6,
+            "mode": "all",
+            "min_count": null
+          }
+        ],
+        "symbols": [
+          {
+            "path": "index.js",
+            "nodes": 0,
+            "edges_total": 0,
+            "overflow": 0,
+            "edges_drawn": 0,
+            "mode": "all"
+          },
+          {
+            "path": "lib/application.js",
+            "nodes": 18,
+            "edges_total": 12,
+            "overflow": 0,
+            "edges_drawn": 12,
+            "mode": "all"
+          },
+          {
+            "path": "lib/express.js",
+            "nodes": 1,
+            "edges_total": 0,
+            "overflow": 0,
+            "edges_drawn": 0,
+            "mode": "all"
+          },
+          {
+            "path": "lib/request.js",
+            "nodes": 9,
+            "edges_total": 1,
+            "overflow": 0,
+            "edges_drawn": 1,
+            "mode": "all"
+          },
+          {
+            "path": "lib/response.js",
+            "nodes": 29,
+            "edges_total": 27,
+            "overflow": 0,
+            "edges_drawn": 27,
+            "mode": "all"
+          },
+          {
+            "path": "lib/utils.js",
+            "nodes": 10,
+            "edges_total": 2,
+            "overflow": 0,
+            "edges_drawn": 2,
+            "mode": "all"
+          },
+          {
+            "path": "lib/view.js",
+            "nodes": 5,
+            "edges_total": 2,
+            "overflow": 0,
+            "edges_drawn": 2,
+            "mode": "all"
+          }
+        ],
+        "summary": {
+          "folder_views": 2,
+          "max_nodes": 6,
+          "max_edges_total": 6,
+          "max_edges_drawn": 6,
+          "views_with_hidden_edges": 0,
+          "median_edges_total": 3.5,
+          "symbol_views": 7,
+          "symbol_max_nodes": 29,
+          "symbol_max_edges_total": 27,
+          "symbol_max_edges_drawn": 27,
+          "symbol_views_with_hidden_edges": 0
+        }
+      },
+      "everything": {
+        "before": {
+          "flat_nodes": 142,
+          "flat_edges": 291,
+          "nodes_drawn": 142,
+          "edges_drawn": 291,
+          "capped": false
+        },
+        "default": {
+          "level": "folder",
+          "root": "",
+          "visible_files": 142,
+          "nodes": 4,
+          "edges_total": 6,
+          "edges_drawn": 6,
+          "mode": "all",
+          "min_count": null
+        },
+        "folders": [
+          {
+            "root": "/",
+            "files_under": 142,
+            "flat_edges_among": 291,
+            "nodes": 4,
+            "edges_total": 6,
+            "overflow": 0,
+            "edges_drawn": 6,
+            "mode": "all",
+            "min_count": null
+          },
+          {
+            "root": "examples",
+            "files_under": 43,
+            "flat_edges_among": 13,
+            "nodes": 25,
+            "edges_total": 0,
+            "overflow": 0,
+            "edges_drawn": 0,
+            "mode": "all",
+            "min_count": null
+          },
+          {
+            "root": "examples/content-negotiation",
+            "files_under": 3,
+            "flat_edges_among": 2,
+            "nodes": 3,
+            "edges_total": 2,
+            "overflow": 0,
+            "edges_drawn": 2,
+            "mode": "all",
+            "min_count": null
+          },
+          {
+            "root": "examples/multi-router",
+            "files_under": 3,
+            "flat_edges_among": 2,
+            "nodes": 2,
+            "edges_total": 1,
+            "overflow": 0,
+            "edges_drawn": 1,
+            "mode": "all",
+            "min_count": null
+          },
+          {
+            "root": "examples/multi-router/controllers",
+            "files_under": 2,
+            "flat_edges_among": 0,
+            "nodes": 2,
+            "edges_total": 0,
+            "overflow": 0,
+            "edges_drawn": 0,
+            "mode": "all",
+            "min_count": null
+          },
+          {
+            "root": "examples/mvc",
+            "files_under": 7,
+            "flat_edges_among": 4,
+            "nodes": 4,
+            "edges_total": 2,
+            "overflow": 0,
+            "edges_drawn": 2,
+            "mode": "all",
+            "min_count": null
+          },
+          {
+            "root": "examples/mvc/controllers",
+            "files_under": 4,
+            "flat_edges_among": 0,
+            "nodes": 4,
+            "edges_total": 0,
+            "overflow": 0,
+            "edges_drawn": 0,
+            "mode": "all",
+            "min_count": null
+          },
+          {
+            "root": "examples/route-separation",
+            "files_under": 4,
+            "flat_edges_among": 3,
+            "nodes": 4,
+            "edges_total": 3,
+            "overflow": 0,
+            "edges_drawn": 3,
+            "mode": "all",
+            "min_count": null
+          },
+          {
+            "root": "examples/search",
+            "files_under": 2,
+            "flat_edges_among": 0,
+            "nodes": 2,
+            "edges_total": 0,
+            "overflow": 0,
+            "edges_drawn": 0,
+            "mode": "all",
+            "min_count": null
+          },
+          {
+            "root": "examples/session",
+            "files_under": 2,
+            "flat_edges_among": 0,
+            "nodes": 2,
+            "edges_total": 0,
+            "overflow": 0,
+            "edges_drawn": 0,
+            "mode": "all",
+            "min_count": null
+          },
+          {
+            "root": "examples/static-files",
+            "files_under": 2,
+            "flat_edges_among": 0,
+            "nodes": 2,
+            "edges_total": 0,
+            "overflow": 0,
+            "edges_drawn": 0,
+            "mode": "all",
+            "min_count": null
+          },
+          {
+            "root": "examples/view-constructor",
+            "files_under": 2,
+            "flat_edges_among": 1,
+            "nodes": 2,
+            "edges_total": 1,
+            "overflow": 0,
+            "edges_drawn": 1,
+            "mode": "all",
+            "min_count": null
+          },
+          {
+            "root": "examples/view-locals",
+            "files_under": 2,
+            "flat_edges_among": 1,
+            "nodes": 2,
+            "edges_total": 1,
+            "overflow": 0,
+            "edges_drawn": 1,
+            "mode": "all",
+            "min_count": null
+          },
+          {
+            "root": "lib",
+            "files_under": 6,
+            "flat_edges_among": 8,
+            "nodes": 6,
+            "edges_total": 8,
+            "overflow": 0,
+            "edges_drawn": 8,
+            "mode": "all",
+            "min_count": null
+          },
+          {
+            "root": "test",
+            "files_under": 92,
+            "flat_edges_among": 12,
+            "nodes": 61,
+            "edges_total": 12,
+            "overflow": 13,
+            "edges_drawn": 12,
+            "mode": "all",
+            "min_count": null
+          },
+          {
+            "root": "test/acceptance",
+            "files_under": 18,
+            "flat_edges_among": 0,
+            "nodes": 18,
+            "edges_total": 0,
+            "overflow": 0,
+            "edges_drawn": 0,
+            "mode": "all",
+            "min_count": null
+          },
+          {
+            "root": "test/support",
+            "files_under": 3,
+            "flat_edges_among": 0,
+            "nodes": 3,
+            "edges_total": 0,
+            "overflow": 0,
+            "edges_drawn": 0,
+            "mode": "all",
+            "min_count": null
+          }
+        ],
+        "symbols": [],
+        "summary": {
+          "folder_views": 17,
+          "max_nodes": 61,
+          "max_edges_total": 12,
+          "max_edges_drawn": 12,
+          "views_with_hidden_edges": 0,
+          "median_edges_total": 1
+        }
+      }
+    },
+    "flask": {
+      "snapshot_id": 6,
+      "commit": "49943b5a94413a530761350f04e896f76e8d620e",
+      "default": {
+        "before": {
+          "flat_nodes": 25,
+          "flat_edges": 95,
+          "nodes_drawn": 25,
+          "edges_drawn": 95,
+          "capped": false
+        },
+        "default": {
+          "level": "file",
+          "root": "",
+          "visible_files": 25,
+          "nodes": 25,
+          "edges_total": 95,
+          "edges_drawn": 24,
+          "mode": "tier",
+          "min_count": 2
+        },
+        "folders": [
+          {
+            "root": "/",
+            "files_under": 25,
+            "flat_edges_among": 95,
+            "nodes": 2,
+            "edges_total": 0,
+            "overflow": 0,
+            "edges_drawn": 0,
+            "mode": "all",
+            "min_count": null
+          },
+          {
+            "root": "docs",
+            "files_under": 1,
+            "flat_edges_among": 0,
+            "nodes": 1,
+            "edges_total": 0,
+            "overflow": 0,
+            "edges_drawn": 0,
+            "mode": "all",
+            "min_count": null
+          },
+          {
+            "root": "src/flask",
+            "files_under": 24,
+            "flat_edges_among": 95,
+            "nodes": 20,
+            "edges_total": 82,
+            "overflow": 0,
+            "edges_drawn": 24,
+            "mode": "tier",
+            "min_count": 2
+          },
+          {
+            "root": "src/flask/json",
+            "files_under": 3,
+            "flat_edges_among": 2,
+            "nodes": 3,
+            "edges_total": 2,
+            "overflow": 0,
+            "edges_drawn": 2,
+            "mode": "all",
+            "min_count": null
+          },
+          {
+            "root": "src/flask/sansio",
+            "files_under": 3,
+            "flat_edges_among": 4,
+            "nodes": 3,
+            "edges_total": 4,
+            "overflow": 0,
+            "edges_drawn": 4,
+            "mode": "all",
+            "min_count": null
+          }
+        ],
+        "symbols": [
+          {
+            "path": "docs/conf.py",
+            "nodes": 2,
+            "edges_total": 0,
+            "overflow": 0,
+            "edges_drawn": 0,
+            "mode": "all"
+          },
+          {
+            "path": "src/flask/app.py",
+            "nodes": 54,
+            "edges_total": 80,
+            "overflow": 0,
+            "edges_drawn": 40,
+            "mode": "sample"
+          },
+          {
+            "path": "src/flask/blueprints.py",
+            "nodes": 7,
+            "edges_total": 7,
+            "overflow": 0,
+            "edges_drawn": 7,
+            "mode": "all"
+          },
+          {
+            "path": "src/flask/cli.py",
+            "nodes": 50,
+            "edges_total": 42,
+            "overflow": 0,
+            "edges_drawn": 40,
+            "mode": "sample"
+          },
+          {
+            "path": "src/flask/config.py",
+            "nodes": 16,
+            "edges_total": 15,
+            "overflow": 0,
+            "edges_drawn": 15,
+            "mode": "all"
+          },
+          {
+            "path": "src/flask/ctx.py",
+            "nodes": 33,
+            "edges_total": 30,
+            "overflow": 0,
+            "edges_drawn": 30,
+            "mode": "all"
+          },
+          {
+            "path": "src/flask/debughelpers.py",
+            "nodes": 14,
+            "edges_total": 9,
+            "overflow": 0,
+            "edges_drawn": 9,
+            "mode": "all"
+          },
+          {
+            "path": "src/flask/globals.py",
+            "nodes": 8,
+            "edges_total": 1,
+            "overflow": 0,
+            "edges_drawn": 1,
+            "mode": "all"
+          },
+          {
+            "path": "src/flask/helpers.py",
+            "nodes": 38,
+            "edges_total": 23,
+            "overflow": 0,
+            "edges_drawn": 23,
+            "mode": "all"
+          },
+          {
+            "path": "src/flask/__init__.py",
+            "nodes": 0,
+            "edges_total": 0,
+            "overflow": 0,
+            "edges_drawn": 0,
+            "mode": "all"
+          },
+          {
+            "path": "src/flask/json/__init__.py",
+            "nodes": 7,
+            "edges_total": 2,
+            "overflow": 0,
+            "edges_drawn": 2,
+            "mode": "all"
+          },
+          {
+            "path": "src/flask/json/provider.py",
+            "nodes": 13,
+            "edges_total": 15,
+            "overflow": 0,
+            "edges_drawn": 15,
+            "mode": "all"
+          },
+          {
+            "path": "src/flask/json/tag.py",
+            "nodes": 47,
+            "edges_total": 42,
+            "overflow": 0,
+            "edges_drawn": 40,
+            "mode": "sample"
+          },
+          {
+            "path": "src/flask/logging.py",
+            "nodes": 4,
+            "edges_total": 2,
+            "overflow": 0,
+            "edges_drawn": 2,
+            "mode": "all"
+          },
+          {
+            "path": "src/flask/__main__.py",
+            "nodes": 2,
+            "edges_total": 1,
+            "overflow": 0,
+            "edges_drawn": 1,
+            "mode": "all"
+          },
+          {
+            "path": "src/flask/sansio/app.py",
+            "nodes": 46,
+            "edges_total": 41,
+            "overflow": 0,
+            "edges_drawn": 40,
+            "mode": "sample"
+          },
+          {
+            "path": "src/flask/sansio/blueprints.py",
+            "nodes": 43,
+            "edges_total": 43,
+            "overflow": 0,
+            "edges_drawn": 40,
+            "mode": "sample"
+          },
+          {
+            "path": "src/flask/sansio/scaffold.py",
+            "nodes": 41,
+            "edges_total": 39,
+            "overflow": 0,
+            "edges_drawn": 39,
+            "mode": "all"
+          },
+          {
+            "path": "src/flask/sessions.py",
+            "nodes": 30,
+            "edges_total": 23,
+            "overflow": 0,
+            "edges_drawn": 23,
+            "mode": "all"
+          },
+          {
+            "path": "src/flask/signals.py",
+            "nodes": 0,
+            "edges_total": 0,
+            "overflow": 0,
+            "edges_drawn": 0,
+            "mode": "all"
+          },
+          {
+            "path": "src/flask/templating.py",
+            "nodes": 20,
+            "edges_total": 19,
+            "overflow": 0,
+            "edges_drawn": 19,
+            "mode": "all"
+          },
+          {
+            "path": "src/flask/testing.py",
+            "nodes": 19,
+            "edges_total": 20,
+            "overflow": 0,
+            "edges_drawn": 20,
+            "mode": "all"
+          },
+          {
+            "path": "src/flask/typing.py",
+            "nodes": 0,
+            "edges_total": 0,
+            "overflow": 0,
+            "edges_drawn": 0,
+            "mode": "all"
+          },
+          {
+            "path": "src/flask/views.py",
+            "nodes": 8,
+            "edges_total": 4,
+            "overflow": 0,
+            "edges_drawn": 4,
+            "mode": "all"
+          },
+          {
+            "path": "src/flask/wrappers.py",
+            "nodes": 16,
+            "edges_total": 11,
+            "overflow": 0,
+            "edges_drawn": 11,
+            "mode": "all"
+          }
+        ],
+        "summary": {
+          "folder_views": 5,
+          "max_nodes": 20,
+          "max_edges_total": 82,
+          "max_edges_drawn": 24,
+          "views_with_hidden_edges": 1,
+          "median_edges_total": 2,
+          "symbol_views": 25,
+          "symbol_max_nodes": 54,
+          "symbol_max_edges_total": 80,
+          "symbol_max_edges_drawn": 40,
+          "symbol_views_with_hidden_edges": 5
+        }
+      },
+      "everything": {
+        "before": {
+          "flat_nodes": 83,
+          "flat_edges": 353,
+          "nodes_drawn": 83,
+          "edges_drawn": 353,
+          "capped": false
+        },
+        "default": {
+          "level": "folder",
+          "root": "",
+          "visible_files": 83,
+          "nodes": 4,
+          "edges_total": 4,
+          "edges_drawn": 4,
+          "mode": "all",
+          "min_count": null
+        },
+        "folders": [
+          {
+            "root": "/",
+            "files_under": 83,
+            "flat_edges_among": 353,
+            "nodes": 4,
+            "edges_total": 4,
+            "overflow": 0,
+            "edges_drawn": 4,
+            "mode": "all",
+            "min_count": null
+          },
+          {
+            "root": "docs",
+            "files_under": 1,
+            "flat_edges_among": 0,
+            "nodes": 1,
+            "edges_total": 0,
+            "overflow": 0,
+            "edges_drawn": 0,
+            "mode": "all",
+            "min_count": null
+          },
+          {
+            "root": "examples",
+            "files_under": 17,
+            "flat_edges_among": 20,
+            "nodes": 3,
+            "edges_total": 0,
+            "overflow": 0,
+            "edges_drawn": 0,
+            "mode": "all",
+            "min_count": null
+          },
+          {
+            "root": "examples/celery",
+            "files_under": 4,
+            "flat_edges_among": 3,
+            "nodes": 2,
+            "edges_total": 1,
+            "overflow": 0,
+            "edges_drawn": 1,
+            "mode": "all",
+            "min_count": null
+          },
+          {
+            "root": "examples/celery/src/task_app",
+            "files_under": 3,
+            "flat_edges_among": 2,
+            "nodes": 3,
+            "edges_total": 2,
+            "overflow": 0,
+            "edges_drawn": 2,
+            "mode": "all",
+            "min_count": null
+          },
+          {
+            "root": "examples/javascript",
+            "files_under": 4,
+            "flat_edges_among": 3,
+            "nodes": 2,
+            "edges_total": 1,
+            "overflow": 0,
+            "edges_drawn": 1,
+            "mode": "all",
+            "min_count": null
+          },
+          {
+            "root": "examples/javascript/js_example",
+            "files_under": 2,
+            "flat_edges_among": 2,
+            "nodes": 2,
+            "edges_total": 2,
+            "overflow": 0,
+            "edges_drawn": 2,
+            "mode": "all",
+            "min_count": null
+          },
+          {
+            "root": "examples/javascript/tests",
+            "files_under": 2,
+            "flat_edges_among": 0,
+            "nodes": 2,
+            "edges_total": 0,
+            "overflow": 0,
+            "edges_drawn": 0,
+            "mode": "all",
+            "min_count": null
+          },
+          {
+            "root": "examples/tutorial",
+            "files_under": 9,
+            "flat_edges_among": 14,
+            "nodes": 2,
+            "edges_total": 1,
+            "overflow": 0,
+            "edges_drawn": 1,
+            "mode": "all",
+            "min_count": null
+          },
+          {
+            "root": "examples/tutorial/flaskr",
+            "files_under": 4,
+            "flat_edges_among": 6,
+            "nodes": 4,
+            "edges_total": 6,
+            "overflow": 0,
+            "edges_drawn": 6,
+            "mode": "all",
+            "min_count": null
+          },
+          {
+            "root": "examples/tutorial/tests",
+            "files_under": 5,
+            "flat_edges_among": 2,
+            "nodes": 5,
+            "edges_total": 2,
+            "overflow": 0,
+            "edges_drawn": 2,
+            "mode": "all",
+            "min_count": null
+          },
+          {
+            "root": "src/flask",
+            "files_under": 24,
+            "flat_edges_among": 107,
+            "nodes": 20,
+            "edges_total": 91,
+            "overflow": 0,
+            "edges_drawn": 40,
+            "mode": "tier",
+            "min_count": 2
+          },
+          {
+            "root": "src/flask/json",
+            "files_under": 3,
+            "flat_edges_among": 2,
+            "nodes": 3,
+            "edges_total": 2,
+            "overflow": 0,
+            "edges_drawn": 2,
+            "mode": "all",
+            "min_count": null
+          },
+          {
+            "root": "src/flask/sansio",
+            "files_under": 3,
+            "flat_edges_among": 4,
+            "nodes": 3,
+            "edges_total": 4,
+            "overflow": 0,
+            "edges_drawn": 4,
+            "mode": "all",
+            "min_count": null
+          },
+          {
+            "root": "tests",
+            "files_under": 41,
+            "flat_edges_among": 11,
+            "nodes": 25,
+            "edges_total": 9,
+            "overflow": 0,
+            "edges_drawn": 9,
+            "mode": "all",
+            "min_count": null
+          },
+          {
+            "root": "tests/test_apps",
+            "files_under": 15,
+            "flat_edges_among": 2,
+            "nodes": 4,
+            "edges_total": 0,
+            "overflow": 0,
+            "edges_drawn": 0,
+            "mode": "all",
+            "min_count": null
+          },
+          {
+            "root": "tests/test_apps/blueprintapp",
+            "files_under": 4,
+            "flat_edges_among": 2,
+            "nodes": 2,
+            "edges_total": 1,
+            "overflow": 0,
+            "edges_drawn": 1,
+            "mode": "all",
+            "min_count": null
+          },
+          {
+            "root": "tests/test_apps/blueprintapp/apps",
+            "files_under": 3,
+            "flat_edges_among": 0,
+            "nodes": 3,
+            "edges_total": 0,
+            "overflow": 0,
+            "edges_drawn": 0,
+            "mode": "all",
+            "min_count": null
+          },
+          {
+            "root": "tests/test_apps/cliapp",
+            "files_under": 8,
+            "flat_edges_among": 0,
+            "nodes": 6,
+            "edges_total": 0,
+            "overflow": 0,
+            "edges_drawn": 0,
+            "mode": "all",
+            "min_count": null
+          },
+          {
+            "root": "tests/test_apps/cliapp/inner1",
+            "files_under": 3,
+            "flat_edges_among": 0,
+            "nodes": 2,
+            "edges_total": 0,
+            "overflow": 0,
+            "edges_drawn": 0,
+            "mode": "all",
+            "min_count": null
+          },
+          {
+            "root": "tests/test_apps/cliapp/inner1/inner2",
+            "files_under": 2,
+            "flat_edges_among": 0,
+            "nodes": 2,
+            "edges_total": 0,
+            "overflow": 0,
+            "edges_drawn": 0,
+            "mode": "all",
+            "min_count": null
+          },
+          {
+            "root": "tests/test_apps/helloworld",
+            "files_under": 2,
+            "flat_edges_among": 0,
+            "nodes": 2,
+            "edges_total": 0,
+            "overflow": 0,
+            "edges_drawn": 0,
+            "mode": "all",
+            "min_count": null
+          },
+          {
+            "root": "tests/type_check",
+            "files_under": 3,
+            "flat_edges_among": 0,
+            "nodes": 3,
+            "edges_total": 0,
+            "overflow": 0,
+            "edges_drawn": 0,
+            "mode": "all",
+            "min_count": null
+          }
+        ],
+        "symbols": [],
+        "summary": {
+          "folder_views": 23,
+          "max_nodes": 25,
+          "max_edges_total": 91,
+          "max_edges_drawn": 40,
+          "views_with_hidden_edges": 1,
+          "median_edges_total": 1
+        }
+      }
+    },
+    "black": {
+      "snapshot_id": 7,
+      "commit": "b4f1fcae48826790b6f93ca9226d20003bce0eaa",
+      "default": {
+        "before": {
+          "flat_nodes": 55,
+          "flat_edges": 129,
+          "nodes_drawn": 55,
+          "edges_drawn": 129,
+          "capped": false
+        },
+        "default": {
+          "level": "folder",
+          "root": "",
+          "visible_files": 55,
+          "nodes": 5,
+          "edges_total": 1,
+          "edges_drawn": 1,
+          "mode": "all",
+          "min_count": null
+        },
+        "folders": [
+          {
+            "root": "/",
+            "files_under": 55,
+            "flat_edges_among": 129,
+            "nodes": 5,
+            "edges_total": 1,
+            "overflow": 0,
+            "edges_drawn": 1,
+            "mode": "all",
+            "min_count": null
+          },
+          {
+            "root": "profiling",
+            "files_under": 5,
+            "flat_edges_among": 0,
+            "nodes": 5,
+            "edges_total": 0,
+            "overflow": 0,
+            "edges_drawn": 0,
+            "mode": "all",
+            "min_count": null
+          },
+          {
+            "root": "scripts",
+            "files_under": 7,
+            "flat_edges_among": 0,
+            "nodes": 7,
+            "edges_total": 0,
+            "overflow": 0,
+            "edges_drawn": 0,
+            "mode": "all",
+            "min_count": null
+          },
+          {
+            "root": "src",
+            "files_under": 41,
+            "flat_edges_among": 127,
+            "nodes": 4,
+            "edges_total": 4,
+            "overflow": 0,
+            "edges_drawn": 4,
+            "mode": "all",
+            "min_count": null
+          },
+          {
+            "root": "src/black",
+            "files_under": 25,
+            "flat_edges_among": 66,
+            "nodes": 25,
+            "edges_total": 66,
+            "overflow": 0,
+            "edges_drawn": 28,
+            "mode": "tier",
+            "min_count": 3
+          },
+          {
+            "root": "src/blackd",
+            "files_under": 4,
+            "flat_edges_among": 2,
+            "nodes": 4,
+            "edges_total": 2,
+            "overflow": 0,
+            "edges_drawn": 2,
+            "mode": "all",
+            "min_count": null
+          },
+          {
+            "root": "src/blib2to3",
+            "files_under": 11,
+            "flat_edges_among": 22,
+            "nodes": 4,
+            "edges_total": 4,
+            "overflow": 0,
+            "edges_drawn": 4,
+            "mode": "all",
+            "min_count": null
+          },
+          {
+            "root": "src/blib2to3/pgen2",
+            "files_under": 8,
+            "flat_edges_among": 15,
+            "nodes": 8,
+            "edges_total": 15,
+            "overflow": 0,
+            "edges_drawn": 15,
+            "mode": "all",
+            "min_count": null
+          }
+        ],
+        "symbols": [
+          {
+            "path": "action/main.py",
+            "nodes": 4,
+            "edges_total": 3,
+            "overflow": 0,
+            "edges_drawn": 3,
+            "mode": "all"
+          },
+          {
+            "path": "docs/conf.py",
+            "nodes": 5,
+            "edges_total": 2,
+            "overflow": 0,
+            "edges_drawn": 2,
+            "mode": "all"
+          },
+          {
+            "path": "profiling/dict_big.py",
+            "nodes": 0,
+            "edges_total": 0,
+            "overflow": 0,
+            "edges_drawn": 0,
+            "mode": "all"
+          },
+          {
+            "path": "profiling/list_big.py",
+            "nodes": 0,
+            "edges_total": 0,
+            "overflow": 0,
+            "edges_drawn": 0,
+            "mode": "all"
+          },
+          {
+            "path": "profiling/list_huge.py",
+            "nodes": 0,
+            "edges_total": 0,
+            "overflow": 0,
+            "edges_drawn": 0,
+            "mode": "all"
+          },
+          {
+            "path": "profiling/mix_big.py",
+            "nodes": 0,
+            "edges_total": 0,
+            "overflow": 0,
+            "edges_drawn": 0,
+            "mode": "all"
+          },
+          {
+            "path": "profiling/mix_small.py",
+            "nodes": 0,
+            "edges_total": 0,
+            "overflow": 0,
+            "edges_drawn": 0,
+            "mode": "all"
+          },
+          {
+            "path": "scripts/diff_shades_gha_helper.py",
+            "nodes": 10,
+            "edges_total": 11,
+            "overflow": 0,
+            "edges_drawn": 11,
+            "mode": "all"
+          },
+          {
+            "path": "scripts/fuzz.py",
+            "nodes": 5,
+            "edges_total": 4,
+            "overflow": 0,
+            "edges_drawn": 4,
+            "mode": "all"
+          },
+          {
+            "path": "scripts/generate_schema.py",
+            "nodes": 3,
+            "edges_total": 2,
+            "overflow": 0,
+            "edges_drawn": 2,
+            "mode": "all"
+          },
+          {
+            "path": "scripts/__init__.py",
+            "nodes": 0,
+            "edges_total": 0,
+            "overflow": 0,
+            "edges_drawn": 0,
+            "mode": "all"
+          },
+          {
+            "path": "scripts/make_width_table.py",
+            "nodes": 3,
+            "edges_total": 2,
+            "overflow": 0,
+            "edges_drawn": 2,
+            "mode": "all"
+          },
+          {
+            "path": "scripts/release.py",
+            "nodes": 17,
+            "edges_total": 27,
+            "overflow": 0,
+            "edges_drawn": 27,
+            "mode": "all"
+          },
+          {
+            "path": "scripts/release_tests.py",
+            "nodes": 10,
+            "edges_total": 9,
+            "overflow": 0,
+            "edges_drawn": 9,
+            "mode": "all"
+          },
+          {
+            "path": "src/black/brackets.py",
+            "nodes": 23,
+            "edges_total": 26,
+            "overflow": 0,
+            "edges_drawn": 26,
+            "mode": "all"
+          },
+          {
+            "path": "src/black/cache.py",
+            "nodes": 15,
+            "edges_total": 18,
+            "overflow": 0,
+            "edges_drawn": 18,
+            "mode": "all"
+          },
+          {
+            "path": "src/black/comments.py",
+            "nodes": 45,
+            "edges_total": 65,
+            "overflow": 0,
+            "edges_drawn": 40,
+            "mode": "sample"
+          },
+          {
+            "path": "src/black/concurrency.py",
+            "nodes": 10,
+            "edges_total": 9,
+            "overflow": 0,
+            "edges_drawn": 9,
+            "mode": "all"
+          },
+          {
+            "path": "src/black/const.py",
+            "nodes": 0,
+            "edges_total": 0,
+            "overflow": 0,
+            "edges_drawn": 0,
+            "mode": "all"
+          },
+          {
+            "path": "src/blackd/client.py",
+            "nodes": 4,
+            "edges_total": 3,
+            "overflow": 0,
+            "edges_drawn": 3,
+            "mode": "all"
+          },
+          {
+            "path": "src/black/debug.py",
+            "nodes": 7,
+            "edges_total": 8,
+            "overflow": 0,
+            "edges_drawn": 8,
+            "mode": "all"
+          },
+          {
+            "path": "src/blackd/__init__.py",
+            "nodes": 15,
+            "edges_total": 13,
+            "overflow": 0,
+            "edges_drawn": 13,
+            "mode": "all"
+          },
+          {
+            "path": "src/blackd/__main__.py",
+            "nodes": 2,
+            "edges_total": 1,
+            "overflow": 0,
+            "edges_drawn": 1,
+            "mode": "all"
+          },
+          {
+            "path": "src/blackd/middlewares.py",
+            "nodes": 3,
+            "edges_total": 1,
+            "overflow": 0,
+            "edges_drawn": 1,
+            "mode": "all"
+          },
+          {
+            "path": "src/black/files.py",
+            "nodes": 27,
+            "edges_total": 33,
+            "overflow": 0,
+            "edges_drawn": 33,
+            "mode": "all"
+          },
+          {
+            "path": "src/black/handle_ipynb_magics.py",
+            "nodes": 30,
+            "edges_total": 37,
+            "overflow": 0,
+            "edges_drawn": 37,
+            "mode": "all"
+          },
+          {
+            "path": "src/black/__init__.py",
+            "nodes": 61,
+            "edges_total": 89,
+            "overflow": 27,
+            "edges_drawn": 7,
+            "mode": "tier"
+          },
+          {
+            "path": "src/black/linegen.py",
+            "nodes": 61,
+            "edges_total": 167,
+            "overflow": 98,
+            "edges_drawn": 38,
+            "mode": "tier"
+          },
+          {
+            "path": "src/black/lines.py",
+            "nodes": 61,
+            "edges_total": 140,
+            "overflow": 59,
+            "edges_drawn": 10,
+            "mode": "tier"
+          },
+          {
+            "path": "src/black/__main__.py",
+            "nodes": 2,
+            "edges_total": 1,
+            "overflow": 0,
+            "edges_drawn": 1,
+            "mode": "all"
+          },
+          {
+            "path": "src/black/mode.py",
+            "nodes": 13,
+            "edges_total": 8,
+            "overflow": 0,
+            "edges_drawn": 8,
+            "mode": "all"
+          },
+          {
+            "path": "src/black/nodes.py",
+            "nodes": 61,
+            "edges_total": 85,
+            "overflow": 88,
+            "edges_drawn": 31,
+            "mode": "tier"
+          },
+          {
+            "path": "src/black/numerics.py",
+            "nodes": 6,
+            "edges_total": 7,
+            "overflow": 0,
+            "edges_drawn": 7,
+            "mode": "all"
+          },
+          {
+            "path": "src/black/output.py",
+            "nodes": 31,
+            "edges_total": 35,
+            "overflow": 0,
+            "edges_drawn": 35,
+            "mode": "all"
+          },
+          {
+            "path": "src/black/parsing.py",
+            "nodes": 22,
+            "edges_total": 21,
+            "overflow": 0,
+            "edges_drawn": 21,
+            "mode": "all"
+          },
+          {
+            "path": "src/black/ranges.py",
+            "nodes": 36,
+            "edges_total": 47,
+            "overflow": 0,
+            "edges_drawn": 40,
+            "mode": "sample"
+          },
+          {
+            "path": "src/black/report.py",
+            "nodes": 13,
+            "edges_total": 11,
+            "overflow": 0,
+            "edges_drawn": 11,
+            "mode": "all"
+          },
+          {
+            "path": "src/black/resources/__init__.py",
+            "nodes": 0,
+            "edges_total": 0,
+            "overflow": 0,
+            "edges_drawn": 0,
+            "mode": "all"
+          },
+          {
+            "path": "src/black/rusty.py",
+            "nodes": 19,
+            "edges_total": 19,
+            "overflow": 0,
+            "edges_drawn": 19,
+            "mode": "all"
+          },
+          {
+            "path": "src/black/schema.py",
+            "nodes": 1,
+            "edges_total": 0,
+            "overflow": 0,
+            "edges_drawn": 0,
+            "mode": "all"
+          },
+          {
+            "path": "src/black/strings.py",
+            "nodes": 42,
+            "edges_total": 49,
+            "overflow": 0,
+            "edges_drawn": 40,
+            "mode": "sample"
+          },
+          {
+            "path": "src/black/trans.py",
+            "nodes": 61,
+            "edges_total": 186,
+            "overflow": 40,
+            "edges_drawn": 25,
+            "mode": "tier"
+          },
+          {
+            "path": "src/_black_version.pyi",
+            "nodes": 0,
+            "edges_total": 0,
+            "overflow": 0,
+            "edges_drawn": 0,
+            "mode": "all"
+          },
+          {
+            "path": "src/black/_width_table.py",
+            "nodes": 0,
+            "edges_total": 0,
+            "overflow": 0,
+            "edges_drawn": 0,
+            "mode": "all"
+          },
+          {
+            "path": "src/blib2to3/__init__.py",
+            "nodes": 0,
+            "edges_total": 0,
+            "overflow": 0,
+            "edges_drawn": 0,
+            "mode": "all"
+          },
+          {
+            "path": "src/blib2to3/pgen2/driver.py",
+            "nodes": 27,
+            "edges_total": 29,
+            "overflow": 0,
+            "edges_drawn": 29,
+            "mode": "all"
+          },
+          {
+            "path": "src/blib2to3/pgen2/grammar.py",
+            "nodes": 9,
+            "edges_total": 10,
+            "overflow": 0,
+            "edges_drawn": 10,
+            "mode": "all"
+          },
+          {
+            "path": "src/blib2to3/pgen2/__init__.py",
+            "nodes": 0,
+            "edges_total": 0,
+            "overflow": 0,
+            "edges_drawn": 0,
+            "mode": "all"
+          },
+          {
+            "path": "src/blib2to3/pgen2/literals.py",
+            "nodes": 4,
+            "edges_total": 2,
+            "overflow": 0,
+            "edges_drawn": 2,
+            "mode": "all"
+          },
+          {
+            "path": "src/blib2to3/pgen2/parse.py",
+            "nodes": 23,
+            "edges_total": 32,
+            "overflow": 0,
+            "edges_drawn": 32,
+            "mode": "all"
+          },
+          {
+            "path": "src/blib2to3/pgen2/pgen.py",
+            "nodes": 31,
+            "edges_total": 57,
+            "overflow": 0,
+            "edges_drawn": 40,
+            "mode": "sample"
+          },
+          {
+            "path": "src/blib2to3/pgen2/tokenize.py",
+            "nodes": 8,
+            "edges_total": 7,
+            "overflow": 0,
+            "edges_drawn": 7,
+            "mode": "all"
+          },
+          {
+            "path": "src/blib2to3/pgen2/token.py",
+            "nodes": 0,
+            "edges_total": 0,
+            "overflow": 0,
+            "edges_drawn": 0,
+            "mode": "all"
+          },
+          {
+            "path": "src/blib2to3/pygram.py",
+            "nodes": 9,
+            "edges_total": 7,
+            "overflow": 0,
+            "edges_drawn": 7,
+            "mode": "all"
+          },
+          {
+            "path": "src/blib2to3/pytree.py",
+            "nodes": 61,
+            "edges_total": 75,
+            "overflow": 13,
+            "edges_drawn": 3,
+            "mode": "tier"
+          }
+        ],
+        "summary": {
+          "folder_views": 8,
+          "max_nodes": 25,
+          "max_edges_total": 66,
+          "max_edges_drawn": 28,
+          "views_with_hidden_edges": 1,
+          "median_edges_total": 3.0,
+          "symbol_views": 55,
+          "symbol_max_nodes": 61,
+          "symbol_max_edges_total": 186,
+          "symbol_max_edges_drawn": 40,
+          "symbol_views_with_hidden_edges": 10
+        }
+      },
+      "everything": {
+        "before": {
+          "flat_nodes": 426,
+          "flat_edges": 225,
+          "nodes_drawn": 300,
+          "edges_drawn": 225,
+          "capped": true
+        },
+        "default": {
+          "level": "folder",
+          "root": "",
+          "visible_files": 426,
+          "nodes": 6,
+          "edges_total": 5,
+          "edges_drawn": 5,
+          "mode": "all",
+          "min_count": null
+        },
+        "folders": [
+          {
+            "root": "/",
+            "files_under": 426,
+            "flat_edges_among": 225,
+            "nodes": 6,
+            "edges_total": 5,
+            "overflow": 0,
+            "edges_drawn": 5,
+            "mode": "all",
+            "min_count": null
+          },
+          {
+            "root": "profiling",
+            "files_under": 5,
+            "flat_edges_among": 0,
+            "nodes": 5,
+            "edges_total": 0,
+            "overflow": 0,
+            "edges_drawn": 0,
+            "mode": "all",
+            "min_count": null
+          },
+          {
+            "root": "scripts",
+            "files_under": 7,
+            "flat_edges_among": 1,
+            "nodes": 7,
+            "edges_total": 1,
+            "overflow": 0,
+            "edges_drawn": 1,
+            "mode": "all",
+            "min_count": null
+          },
+          {
+            "root": "src",
+            "files_under": 41,
+            "flat_edges_among": 143,
+            "nodes": 4,
+            "edges_total": 5,
+            "overflow": 0,
+            "edges_drawn": 5,
+            "mode": "all",
+            "min_count": null
+          },
+          {
+            "root": "src/black",
+            "files_under": 25,
+            "flat_edges_among": 69,
+            "nodes": 25,
+            "edges_total": 69,
+            "overflow": 0,
+            "edges_drawn": 36,
+            "mode": "tier",
+            "min_count": 3
+          },
+          {
+            "root": "src/blackd",
+            "files_under": 4,
+            "flat_edges_among": 2,
+            "nodes": 4,
+            "edges_total": 2,
+            "overflow": 0,
+            "edges_drawn": 2,
+            "mode": "all",
+            "min_count": null
+          },
+          {
+            "root": "src/blib2to3",
+            "files_under": 11,
+            "flat_edges_among": 24,
+            "nodes": 4,
+            "edges_total": 4,
+            "overflow": 0,
+            "edges_drawn": 4,
+            "mode": "all",
+            "min_count": null
+          },
+          {
+            "root": "src/blib2to3/pgen2",
+            "files_under": 8,
+            "flat_edges_among": 15,
+            "nodes": 8,
+            "edges_total": 15,
+            "overflow": 0,
+            "edges_drawn": 15,
+            "mode": "all",
+            "min_count": null
+          },
+          {
+            "root": "tests",
+            "files_under": 371,
+            "flat_edges_among": 11,
+            "nodes": 19,
+            "edges_total": 8,
+            "overflow": 0,
+            "edges_drawn": 8,
+            "mode": "all",
+            "min_count": null
+          },
+          {
+            "root": "tests/data",
+            "files_under": 353,
+            "flat_edges_among": 3,
+            "nodes": 10,
+            "edges_total": 0,
+            "overflow": 0,
+            "edges_drawn": 0,
+            "mode": "all",
+            "min_count": null
+          },
+          {
+            "root": "tests/data/cases",
+            "files_under": 304,
+            "flat_edges_among": 3,
+            "nodes": 61,
+            "edges_total": 3,
+            "overflow": 244,
+            "edges_drawn": 3,
+            "mode": "all",
+            "min_count": null
+          },
+          {
+            "root": "tests/data/gitignore_used_on_multiple_sources",
+            "files_under": 4,
+            "flat_edges_among": 0,
+            "nodes": 2,
+            "edges_total": 0,
+            "overflow": 0,
+            "edges_drawn": 0,
+            "mode": "all",
+            "min_count": null
+          },
+          {
+            "root": "tests/data/gitignore_used_on_multiple_sources/dir1",
+            "files_under": 2,
+            "flat_edges_among": 0,
+            "nodes": 2,
+            "edges_total": 0,
+            "overflow": 0,
+            "edges_drawn": 0,
+            "mode": "all",
+            "min_count": null
+          },
+          {
+            "root": "tests/data/gitignore_used_on_multiple_sources/dir2",
+            "files_under": 2,
+            "flat_edges_among": 0,
+            "nodes": 2,
+            "edges_total": 0,
+            "overflow": 0,
+            "edges_drawn": 0,
+            "mode": "all",
+            "min_count": null
+          },
+          {
+            "root": "tests/data/ignore_directory_gitignore_tests",
+            "files_under": 6,
+            "flat_edges_among": 0,
+            "nodes": 3,
+            "edges_total": 0,
+            "overflow": 0,
+            "edges_drawn": 0,
+            "mode": "all",
+            "min_count": null
+          },
+          {
+            "root": "tests/data/ignore_directory_gitignore_tests/large_ignored_dir_two",
+            "files_under": 4,
+            "flat_edges_among": 0,
+            "nodes": 4,
+            "edges_total": 0,
+            "overflow": 0,
+            "edges_drawn": 0,
+            "mode": "all",
+            "min_count": null
+          },
+          {
+            "root": "tests/data/ignore_subfolders_gitignore_tests",
+            "files_under": 3,
+            "flat_edges_among": 0,
+            "nodes": 2,
+            "edges_total": 0,
+            "overflow": 0,
+            "edges_drawn": 0,
+            "mode": "all",
+            "min_count": null
+          },
+          {
+            "root": "tests/data/ignore_subfolders_gitignore_tests/subdir",
+            "files_under": 2,
+            "flat_edges_among": 0,
+            "nodes": 2,
+            "edges_total": 0,
+            "overflow": 0,
+            "edges_drawn": 0,
+            "mode": "all",
+            "min_count": null
+          },
+          {
+            "root": "tests/data/include_exclude_tests/b",
+            "files_under": 8,
+            "flat_edges_among": 0,
+            "nodes": 3,
+            "edges_total": 0,
+            "overflow": 0,
+            "edges_drawn": 0,
+            "mode": "all",
+            "min_count": null
+          },
+          {
+            "root": "tests/data/include_exclude_tests/b/.definitely_exclude",
+            "files_under": 2,
+            "flat_edges_among": 0,
+            "nodes": 2,
+            "edges_total": 0,
+            "overflow": 0,
+            "edges_drawn": 0,
+            "mode": "all",
+            "min_count": null
+          },
+          {
+            "root": "tests/data/include_exclude_tests/b/dont_exclude",
+            "files_under": 2,
+            "flat_edges_among": 0,
+            "nodes": 2,
+            "edges_total": 0,
+            "overflow": 0,
+            "edges_drawn": 0,
+            "mode": "all",
+            "min_count": null
+          },
+          {
+            "root": "tests/data/include_exclude_tests/b/exclude",
+            "files_under": 4,
+            "flat_edges_among": 0,
+            "nodes": 3,
+            "edges_total": 0,
+            "overflow": 0,
+            "edges_drawn": 0,
+            "mode": "all",
+            "min_count": null
+          },
+          {
+            "root": "tests/data/include_exclude_tests/b/exclude/still_exclude",
+            "files_under": 2,
+            "flat_edges_among": 0,
+            "nodes": 2,
+            "edges_total": 0,
+            "overflow": 0,
+            "edges_drawn": 0,
+            "mode": "all",
+            "min_count": null
+          },
+          {
+            "root": "tests/data/invalid_nested_gitignore_tests",
+            "files_under": 2,
+            "flat_edges_among": 0,
+            "nodes": 2,
+            "edges_total": 0,
+            "overflow": 0,
+            "edges_drawn": 0,
+            "mode": "all",
+            "min_count": null
+          },
+          {
+            "root": "tests/data/line_ranges_formatted",
+            "files_under": 6,
+            "flat_edges_among": 0,
+            "nodes": 6,
+            "edges_total": 0,
+            "overflow": 0,
+            "edges_drawn": 0,
+            "mode": "all",
+            "min_count": null
+          },
+          {
+            "root": "tests/data/miscellaneous",
+            "files_under": 12,
+            "flat_edges_among": 0,
+            "nodes": 12,
+            "edges_total": 0,
+            "overflow": 0,
+            "edges_drawn": 0,
+            "mode": "all",
+            "min_count": null
+          },
+          {
+            "root": "tests/data/nested_gitignore_tests",
+            "files_under": 7,
+            "flat_edges_among": 0,
+            "nodes": 2,
+            "edges_total": 0,
+            "overflow": 0,
+            "edges_drawn": 0,
+            "mode": "all",
+            "min_count": null
+          },
+          {
+            "root": "tests/data/nested_gitignore_tests/root",
+            "files_under": 6,
+            "flat_edges_among": 0,
+            "nodes": 4,
+            "edges_total": 0,
+            "overflow": 0,
+            "edges_drawn": 0,
+            "mode": "all",
+            "min_count": null
+          },
+          {
+            "root": "tests/data/nested_gitignore_tests/root/child",
+            "files_under": 3,
+            "flat_edges_among": 0,
+            "nodes": 3,
+            "edges_total": 0,
+            "overflow": 0,
+            "edges_drawn": 0,
+            "mode": "all",
+            "min_count": null
+          }
+        ],
+        "symbols": [],
+        "summary": {
+          "folder_views": 29,
+          "max_nodes": 61,
+          "max_edges_total": 69,
+          "max_edges_drawn": 36,
+          "views_with_hidden_edges": 1,
+          "median_edges_total": 0
+        }
+      }
+    }
+  }
+}

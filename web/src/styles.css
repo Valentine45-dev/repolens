@@ -569,20 +569,44 @@ a {
   background: var(--surface-2);
 }
 
-.graph-skeleton-rows {
+.graph-skeleton {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+}
+
+/* Real node size (208 x 76) and gap (14), left-aligned like the map's grid of loose nodes. */
+.graph-skeleton-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, 208px);
+  grid-auto-rows: 76px;
+  gap: 14px;
+  padding: var(--space-4);
+}
+
+.graph-skeleton-card {
   display: flex;
   flex-direction: column;
-  gap: var(--space-6);
+  justify-content: center;
+  gap: var(--space-2);
+  padding: 0 var(--space-3);
+  border: 1px solid var(--border);
+  border-radius: 4px;
 }
 
-.graph-skeleton-row {
+.toolbar-note-skeleton {
+  display: inline-block;
+  width: 168px;
+  height: 12px;
+  vertical-align: middle;
+}
+
+.list-skeleton-row {
   display: flex;
-  gap: var(--space-6);
-}
-
-.graph-skeleton-node {
-  width: 140px;
+  align-items: center;
   height: 36px;
+  padding: 0 var(--space-3);
+  border-bottom: 1px solid var(--border);
 }
 
 .spin {
@@ -835,6 +859,11 @@ a {
   user-select: none;
 }
 
+.check[data-disabled] {
+  color: var(--text-subtle);
+  cursor: default;
+}
+
 .check input {
   width: 16px;
   height: 16px;
@@ -1011,6 +1040,317 @@ a {
   stroke-width: 1.5;
 }
 
+.legend-cycle {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  color: var(--text);
+  font-weight: 500;
+  vertical-align: bottom;
+}
+
+/* What the canvas leaves out, said in words (the edge-density rule). */
+.legend-note {
+  flex-basis: 100%;
+  min-height: 18px; /* a row's height even when empty: captions arriving never move the map */
+  margin: 0;
+  color: var(--text-muted);
+}
+
+/* Folder-first map: breadcrumbs, nodes, edge labels. Tokens only; the one emphasis colour is Ink. */
+.crumb-row {
+  display: flex;
+  align-items: center;
+  padding: var(--space-2) var(--space-6) 0;
+}
+
+.breadcrumbs {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  min-width: 0;
+}
+
+.breadcrumbs ol {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  font-size: var(--text-sm);
+}
+
+.breadcrumbs li {
+  display: inline-flex;
+  align-items: center;
+}
+
+.breadcrumbs a {
+  color: var(--text-muted);
+  text-decoration: none;
+}
+
+.breadcrumbs ol a:hover {
+  color: var(--text);
+  text-decoration: underline;
+}
+
+.breadcrumbs-sep {
+  padding: 0 var(--space-2);
+  color: var(--text-subtle);
+}
+
+.breadcrumbs-here {
+  font-weight: 500;
+}
+
+.breadcrumbs-up {
+  text-decoration: none;
+  border-color: var(--border-strong);
+}
+
+.breadcrumbs-up[aria-disabled="true"] {
+  color: var(--text-subtle);
+  opacity: 0.5;
+  cursor: default;
+}
+
+.breadcrumbs-up[aria-disabled="true"]:hover {
+  background: transparent;
+  color: var(--text-subtle);
+}
+
+.map-node {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 2px;
+  padding: 0 var(--space-3);
+  border: 1px solid var(--border-strong);
+  border-radius: 4px;
+  background: var(--bg);
+  cursor: pointer;
+  line-height: 1.3;
+  transition: opacity 150ms var(--ease-out), border-color 150ms var(--ease-out);
+}
+
+.map-node:hover {
+  border-color: var(--text-subtle);
+}
+
+/* A folder is told from a file by its fill and its icon, not by a colour. */
+.map-node[data-kind="folder"] {
+  background: var(--surface);
+}
+
+.map-node[data-kind="more"] {
+  border-style: dashed;
+  background: var(--surface-2);
+}
+
+.map-node[data-selected] {
+  border-color: var(--text);
+  outline: 2px solid var(--text);
+}
+
+/* With a node hovered, focused or selected the container is [data-focus]: everything that is not
+   the node or one edge from it dims, and so do the edges that do not touch it. One attribute
+   changes, not 60 nodes. */
+.canvas-flow[data-focus] .map-node:not([data-near]) {
+  opacity: 0.28;
+}
+
+.canvas-flow[data-focus] .graph-edge:not([data-active]),
+.canvas-flow[data-focus] .edge-label:not([data-active]) {
+  opacity: 0.15;
+}
+
+/* Circular imports: Ink border plus the icon and the word "circular", never a new colour. */
+.map-node[data-cycle] {
+  border: 2px solid var(--text);
+}
+
+.map-node-head {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  min-width: 0;
+}
+
+.map-node-icon {
+  display: inline-flex;
+  flex: none;
+  color: var(--text-muted);
+}
+
+.map-node-text {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  flex: 1;
+}
+
+.map-node-name {
+  overflow: hidden;
+  font-family: var(--font-mono);
+  font-size: 12px;
+  font-weight: 500;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  min-width: 0;
+}
+
+.map-node-head > .map-node-name {
+  flex: 1;
+}
+
+/* Symbol view: boxes and text a size up; it is what you read there. */
+.map-node[data-level="symbol"] .map-node-name {
+  font-size: 13px;
+}
+
+.map-node[data-level="symbol"] .graph-node-dir {
+  font-size: 11px;
+}
+
+.map-node-hint,
+.map-node-sub,
+.map-node-boundary {
+  overflow: hidden;
+  color: var(--text-muted);
+  font-size: 11px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.map-node-hidden {
+  overflow: hidden;
+  color: var(--text-subtle);
+  font-size: 10px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.map-node-boundary {
+  color: var(--text-subtle);
+  font-family: var(--font-mono);
+  font-size: 10px;
+}
+
+.map-cycle-tag {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  gap: 3px;
+  padding: 1px 5px;
+  border: 1px solid var(--text);
+  border-radius: 3px;
+  font-size: 10px;
+  font-weight: 500;
+}
+
+.map-findings-link {
+  color: var(--text);
+  text-decoration: underline;
+  text-decoration-color: var(--border-strong);
+  text-underline-offset: 2px;
+}
+
+.map-findings-link:hover {
+  text-decoration-color: var(--text);
+}
+
+.graph-node-lang[data-lang="python"] {
+  background: var(--node-python);
+}
+
+.graph-node-lang[data-lang="javascript"],
+.graph-node-lang[data-lang="typescript"] {
+  background: var(--node-js);
+}
+
+.graph-edge[data-cycle] .react-flow__edge-path {
+  stroke: var(--text);
+}
+
+.edge-label {
+  position: absolute;
+  padding: 0 4px;
+  border: 1px solid var(--border);
+  border-radius: 3px;
+  background: var(--bg);
+  color: var(--text-muted);
+  font-size: 11px;
+  line-height: 16px;
+  pointer-events: all; /* hovering the count shows the same tooltip as the line */
+  cursor: default;
+}
+
+/* React Flow gives an edge "inactive" (pointer-events: none) unless it is selectable or clickable;
+   ours are neither, but must take the pointer for the tooltip. The wide invisible stroke
+   (interactionWidth) is the hit zone. */
+.canvas-flow .react-flow__edge.inactive {
+  pointer-events: visibleStroke;
+  cursor: default;
+}
+
+/* Edge tooltip: Paper, Hairline, no shadow (DESIGN.md: no elevation). */
+.map-tip {
+  position: absolute;
+  z-index: 5;
+  max-width: 320px;
+  padding: var(--space-2) var(--space-3);
+  border: 1px solid var(--border-strong);
+  border-radius: 4px;
+  background: var(--bg);
+  color: var(--text);
+  font-size: var(--text-xs);
+  line-height: 1.45;
+  white-space: pre-line;
+  pointer-events: none;
+}
+
+.edge-label[data-active],
+.edge-label[data-cycle] {
+  border-color: var(--text);
+  color: var(--text);
+}
+
+.edge-label[data-dimmed] {
+  opacity: 0.15;
+}
+
+.crumb-row + .toolbar,
+.crumb-row ~ .toolbar {
+  padding-top: var(--space-2);
+}
+
+.list-filter {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2) var(--space-4);
+  padding: var(--space-2) var(--space-6);
+  border-bottom: 1px solid var(--border);
+  background: var(--surface);
+  font-size: var(--text-xs);
+  color: var(--text-muted);
+}
+
+.link-button {
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--text);
+  font: inherit;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  cursor: pointer;
+}
+
 /* List view */
 .file-list {
   height: 100%;
@@ -1078,6 +1418,8 @@ a {
   flex-direction: column;
   width: min(480px, 42vw);
   min-height: 0;
+  max-height: 100%; /* never taller than the canvas area: the code scrolls inside, not the page */
+  overflow: hidden;
   border-left: 1px solid var(--border);
   background: var(--bg);
 }
@@ -1098,6 +1440,31 @@ a {
   font-size: var(--text-sm);
   font-weight: 500;
   overflow-wrap: anywhere;
+}
+
+/* A file path: folder over name, each on one line and cut with an ellipsis, never in mid-name. */
+.panel-title-path {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  overflow-wrap: normal;
+  word-break: normal;
+}
+
+.panel-title-dir {
+  overflow: hidden;
+  color: var(--text-subtle);
+  font-size: 11px;
+  font-weight: 400;
+  text-align: left;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.panel-title-name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 /* Focus is moved here programmatically (tabindex -1, not in the tab order) so a screen reader
@@ -1159,7 +1526,8 @@ a {
   position: relative; /* keeps absolutely positioned content (.visually-hidden) inside the scroller */
   flex: 1;
   min-height: 0;
-  overflow: auto;
+  overflow: auto; /* the code area fills what is left and scrolls both ways */
+  overscroll-behavior: contain;
 }
 
 .panel-message {
@@ -1188,6 +1556,7 @@ a {
 .code-gutter {
   position: sticky;
   left: 0;
+  z-index: 2; /* above the code (position: relative) and the highlight band, like an editor */
   padding-left: var(--space-3) !important;
   padding-right: var(--space-3) !important;
   border-right: 1px solid var(--border);
@@ -1223,6 +1592,19 @@ a {
   position: relative; /* above the highlight; the sticky gutter already is */
 }
 
+/* Short screens (a 1366x768 laptop leaves ~650px under the browser's own toolbars): the toolbar,
+   legend and breadcrumbs already take ~230px, so the panel's header gives a little back. */
+@media (max-height: 760px) {
+  .panel-header {
+    padding-top: var(--space-3);
+    padding-bottom: var(--space-2);
+  }
+
+  .panel-facts {
+    padding-bottom: var(--space-2);
+  }
+}
+
 /* --- Severity (icon + word + colour) --- */
 
 .severity {
@@ -1256,6 +1638,7 @@ a {
 }
 
 .findings-main {
+  scrollbar-gutter: stable; /* the list's scrollbar arriving never narrows the page */
   display: flex;
   flex: 1;
   flex-direction: column;
@@ -1296,6 +1679,20 @@ a {
 
 .input-small {
   width: 140px;
+}
+
+/* Fixed widths: a select sizes itself to its longest option, and the rule list arrives after the
+   first paint, which used to push the filters to its right along. */
+.select-severity {
+  width: 112px;
+}
+
+.select-rule {
+  width: 260px;
+}
+
+.select-language {
+  width: 132px;
 }
 
 .select:focus-visible,
