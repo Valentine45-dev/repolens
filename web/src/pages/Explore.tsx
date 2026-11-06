@@ -1,21 +1,44 @@
 import { keepPreviousData, useQuery } from "@tanstack/react-query";
 import { ReactFlowProvider, useReactFlow } from "@xyflow/react";
 import { useCallback, useMemo, useState } from "react";
-import { useOutletContext, useSearchParams } from "react-router-dom";
+import { useLocation, useOutletContext, useSearchParams } from "react-router-dom";
 
-import { getGraph } from "../api";
+import { ApiError, getGraph, getMapView, type MapView as MapViewData, repoName } from "../api";
 import type { AnalysisContext } from "../components/AnalysisShell";
+import { Breadcrumbs } from "../components/Breadcrumbs";
 import { ConnectionNotice, isReconnecting } from "../components/ConnectionNotice";
 import { FileList } from "../components/FileList";
 import { GraphSkeleton } from "../components/GraphSkeleton";
 import { FIT_OPTIONS, firstViewHub, GraphView } from "../components/GraphView";
+import { Icon } from "../components/Icon";
+import { MapView } from "../components/MapView";
 import { NodePanel } from "../components/NodePanel";
 import { applyCap, degrees, layoutGraph, RENDER_CAP } from "../graphModel";
 import { parseLines, useSetParams, type LineRange } from "../links";
+import { layoutMap } from "../mapLayout";
+import {
+  CYCLE_CAPTION,
+  densityCaption,
+  emptyViewMessage,
+  isDrawn,
+  isMapRequest,
+  navigateChanges,
+  type NodeAction,
+  parentDir,
+  parseViewParams,
+  plural,
+  resolveView,
+  selectEdges,
+  viewFolder,
+  viewHasCycle,
+  type ViewLevel,
+  viewNote,
+} from "../mapModel";
 import { useMediaQuery } from "../useMediaQuery";
 
-// State lives in the URL (spec §3.6): ?tests=1&guesses=1&view=list&node=<file id>&lines=12-15.
-// The analysis header, tabs and Ask drawer come from AnalysisShell.
+// State lives in the URL (spec §3.6): ?level=folder|file|symbol|flat&root=<path>&tests=1&guesses=1
+// &edges=all&view=list&node=<file id>&lines=12-15. The analysis header, tabs and Ask drawer come
+// from AnalysisShell.
 export function Explore() {
   return (
     <ReactFlowProvider>
@@ -25,10 +48,12 @@ export function Explore() {
 }
 
 function ExploreInner() {
-  const { snapshotId } = useOutletContext<AnalysisContext>();
+  const { snapshotId, status } = useOutletContext<AnalysisContext>();
   const [params] = useSearchParams();
+  const location = useLocation();
   const showTests = params.get("tests") === "1";
   const showGuesses = params.get("guesses") === "1";
+  const showAllEdges = params.get("edges") === "all";
   // Spec §10: under 768px the graph is not readable, so phones get the list only.
   const phone = useMediaQuery("(max-width: 767px)");
   const listView = phone || params.get("view") === "list";
@@ -40,6 +65,7 @@ function ExploreInner() {
   const selectedId = params.get("node") ? Number(params.get("node")) : null;
   const linesParam = params.get("lines");
   const highlight = useMemo(() => parseLines(linesParam), [linesParam]);
+  const urlView = useMemo(() => parseViewParams(params), [params]);
   const { fitView } = useReactFlow();
 
   const setParams = useSetParams();
@@ -47,12 +73,61 @@ function ExploreInner() {
     (key: string, value: string | null, replace = true) => setParams({ [key]: value }, replace),
     [setParams],
   );
-  // Selecting a node is a navigation step (Back undoes it); toggles replace the entry. Lines
-  // belong to the file they were cited in, so a new selection drops them.
+
+  // The flat file graph stays the index of every file: the node panel, the List view, citation
+  // chips and the start rule all read it. (A folder view only has the files it draws.)
+  const graph = useQuery({
+    queryKey: ["graph", snapshotId, showTests, showGuesses],
+    queryFn: ({ signal }) => getGraph(snapshotId, { showTests, showGuesses }, signal),
+    placeholderData: keepPreviousData, // keep the old picture while a toggle refetches
+    staleTime: Infinity,
+  });
+  const deg = useMemo(() => (graph.data ? degrees(graph.data) : new Map()), [graph.data]);
+  const allIds = useMemo(() => new Set(graph.data?.nodes.map((n) => n.id) ?? []), [graph.data]);
+  const selected = graph.data?.nodes.find((n) => n.id === selectedId) ?? null;
+  const isInGraph = useCallback((fileId: number) => allIds.has(fileId), [allIds]);
+
+  // Which view: the URL wins; with no level and no root the start rule picks files for a small
+  // repo and folders for a big one; a link to a file opens that file's folder.
+  const request = useMemo(
+    () => resolveView({ ...urlView, nodeId: selectedId }, graph.data ?? null),
+    [urlView, selectedId, graph.data],
+  );
+  const flatMode = request?.level === "flat";
+  const mapRequest = isMapRequest(request) ? request : null;
+  const map = useQuery({
+    queryKey: ["map", snapshotId, mapRequest, showTests, showGuesses],
+    queryFn: ({ signal }) =>
+      getMapView(snapshotId, { ...mapRequest!, showTests, showGuesses }, signal),
+    enabled: mapRequest !== null && !listView,
+    placeholderData: keepPreviousData,
+    staleTime: Infinity,
+  });
+  const view = !listView && !flatMode ? (map.data ?? null) : null;
+
+  // Selecting is a navigation step (Back undoes it); toggles replace the entry. It pins the view
+  // in the URL, so a link shared from here opens the same picture. Lines belong to the file
+  // they were cited in, so a new selection drops them.
+  const pin = useMemo<Record<string, string | null>>(
+    () =>
+      request
+        ? { level: request.level as string, root: request.root || null }
+        : ({} as Record<string, string | null>),
+    [request],
+  );
   const select = useCallback(
-    (fileId: number | null) =>
-      setParams({ node: fileId === null ? null : String(fileId), lines: null }, false),
-    [setParams],
+    (fileId: number | null, lines: LineRange | null = null) =>
+      setParams(
+        fileId === null
+          ? { node: null, lines: null }
+          : {
+              node: String(fileId),
+              lines: lines ? `${lines.start}-${lines.end}` : null,
+              ...pin,
+            },
+        false,
+      ),
+    [setParams, pin],
   );
   const closePanel = useCallback(() => select(null), [select]);
   const showLines = useCallback(
@@ -64,27 +139,41 @@ function ExploreInner() {
       setParams({ ask: "1", askq: `About ${path}: `, askfile: String(fileId), askpath: path }),
     [setParams],
   );
+  const onAction = useCallback(
+    (action: NodeAction) => {
+      if (action.type === "open") setParams(navigateChanges(action.level, action.root), false);
+      else if (action.type === "select") select(action.fileId, action.lines);
+      else if (action.type === "list") {
+        setParams({ view: "list", root: action.root, level: null, node: null, lines: null }, false);
+      }
+    },
+    [setParams, select],
+  );
+  const showFunctions = useCallback(
+    (path: string) => setParams({ level: "symbol", root: path }, false),
+    [setParams],
+  );
+  // Folders / Files / Flat keep the selected file; they only change what is drawn.
+  const setLevel = useCallback(
+    (level: ViewLevel) => {
+      const root = view ? viewFolder(view) : urlView.root;
+      setParams({ level, root: level === "flat" || !root ? null : root }, false);
+    },
+    [setParams, view, urlView.root],
+  );
 
-  const graph = useQuery({
-    queryKey: ["graph", snapshotId, showTests, showGuesses],
-    queryFn: ({ signal }) => getGraph(snapshotId, { showTests, showGuesses }, signal),
-    placeholderData: keepPreviousData, // keep the old picture while a toggle refetches
-    staleTime: Infinity,
-  });
-
-  const deg = useMemo(() => (graph.data ? degrees(graph.data) : new Map()), [graph.data]);
-  const capped = useMemo(() => (graph.data ? applyCap(graph.data, deg) : null), [graph.data, deg]);
-  // The layout is the slow part (dagre, main thread) and only the graph needs it.
+  // --- the old flat picture (level=flat) ---
+  const capped = useMemo(
+    () => (flatMode && graph.data ? applyCap(graph.data, deg) : null),
+    [flatMode, graph.data, deg],
+  );
   const positions = useMemo(
     () => (capped && !listView ? layoutGraph(capped.nodes, capped.edges) : new Map()),
     [capped, listView],
   );
   const shownIds = useMemo(() => new Set(capped?.nodes.map((n) => n.id) ?? []), [capped]);
-  const allIds = useMemo(() => new Set(graph.data?.nodes.map((n) => n.id) ?? []), [graph.data]);
-  const selected = graph.data?.nodes.find((n) => n.id === selectedId) ?? null;
-  const isInGraph = useCallback((fileId: number) => allIds.has(fileId), [allIds]);
-  // A big graph opens on its most connected file; say which one until the user picks a file
-  // or presses Fit. A new picture (a toggle) opens fresh, so the note comes back with it.
+  // A big graph opens on its most connected file; say which one until the user picks a file or
+  // presses Fit. A new picture (a toggle) opens fresh, so the note comes back with it.
   const hubId = useMemo(
     () => (capped ? firstViewHub(positions, capped.edges) : null),
     [capped, positions],
@@ -93,11 +182,28 @@ function ExploreInner() {
   const [fittedAt, setFittedAt] = useState<number | null>(null);
   const showHubNote = hub !== null && selectedId === null && fittedAt !== graph.dataUpdatedAt;
 
-  const reconnecting = isReconnecting(graph);
-  const hardError = graph.error;
+  // --- the map ---
+  const selection = useMemo(() => (view ? selectEdges(view.edges) : null), [view]);
+  const mapPositions = useMemo(
+    () => (view ? layoutMap(view.level, view.nodes, view.edges) : new Map()),
+    [view],
+  );
+
+  const reconnecting = isReconnecting(graph) || (!listView && !flatMode && isReconnecting(map));
+  const hardError = listView || flatMode ? graph.error : (map.error ?? graph.error);
+  const hasData = listView || flatMode ? Boolean(graph.data) : Boolean(view);
+  const updating = graph.isPlaceholderData || (!listView && !flatMode && map.isPlaceholderData);
+  const repo = repoName(status.url).split("/").pop() ?? "";
+  const mapMode = !listView && !flatMode;
+  const caption = selection ? densityCaption(selection, showAllEdges) : null;
 
   return (
     <div className="explore">
+      {mapMode && view && !phone ? (
+        <div className="crumb-row">
+          <Breadcrumbs view={view} repo={repo} search={location.search} />
+        </div>
+      ) : null}
       <div className="toolbar" role="toolbar" aria-label="Graph options">
         {reconnecting ? <ConnectionNotice /> : null}
         {phone ? (
@@ -112,13 +218,40 @@ function ExploreInner() {
             </button>
           </div>
         )}
-        <label className="check">
+        {!listView && !phone ? (
+          <div className="segmented" role="group" aria-label="Level of detail">
+            {(
+              [
+                ["folder", "Folders"],
+                ["file", "Files"],
+                ["flat", "Flat"],
+              ] as const
+            ).map(([level, label]) => (
+              <button
+                key={level}
+                type="button"
+                aria-pressed={request?.level === level}
+                onClick={() => setLevel(level)}
+                title={
+                  level === "flat"
+                    ? "Every file at once, the original graph"
+                    : level === "folder"
+                      ? "Folders first; click one to open it"
+                      : "Every file under this folder"
+                }
+              >
+                {label}
+              </button>
+            ))}
+          </div>
+        ) : null}
+        <label className="check" title="Tests, and example code under examples/">
           <input
             type="checkbox"
             checked={showTests}
             onChange={(e) => setParam("tests", e.target.checked ? "1" : null)}
           />
-          Show test files
+          Show tests &amp; examples
         </label>
         <label className="check">
           <input
@@ -128,6 +261,16 @@ function ExploreInner() {
           />
           Show guessed calls
         </label>
+        {mapMode && (showAllEdges || (selection !== null && selection.mode !== "all")) ? (
+          <label className="check" title="Draw every connection, not only the strongest">
+            <input
+              type="checkbox"
+              checked={showAllEdges}
+              onChange={(e) => setParam("edges", e.target.checked ? "all" : null)}
+            />
+            Show all edges
+          </label>
+        ) : null}
         {!listView ? (
           <button
             type="button"
@@ -141,24 +284,45 @@ function ExploreInner() {
           </button>
         ) : null}
         <p className="toolbar-note caption" aria-live="polite">
-          {graph.isPlaceholderData ? "Updating…" : graphNote(graph.data, capped, listView)}
+          {updating
+            ? "Updating…"
+            : listView || flatMode
+              ? graphNote(graph.data, capped, listView)
+              : view
+                ? mapNote(view)
+                : ""}
         </p>
       </div>
 
-      {!listView && graph.data && graph.data.nodes.length > 0 ? (
+      {mapMode && view && view.nodes.length > 0 ? (
+        <MapLegend showGuesses={showGuesses} cycle={viewHasCycle(view)} caption={caption} />
+      ) : flatMode && graph.data && graph.data.nodes.length > 0 ? (
         <Legend showGuesses={showGuesses} />
       ) : null}
 
       <div className="explore-body">
         <div className="canvas">
-          {hardError && !graph.data ? (
+          {hardError && !hasData ? (
             <div className="canvas-message" role="alert">
               <p>{hardError.message}</p>
-              <button className="button button-secondary" onClick={() => graph.refetch()}>
-                Try again
-              </button>
+              {hardError instanceof ApiError && hardError.status === 404 ? (
+                // A shared link to a folder that is not in this analysis.
+                <button
+                  className="button button-secondary"
+                  onClick={() => setParams({ level: null, root: null, node: null, lines: null })}
+                >
+                  Open the repo root
+                </button>
+              ) : (
+                <button
+                  className="button button-secondary"
+                  onClick={() => (listView || flatMode ? graph.refetch() : map.refetch())}
+                >
+                  Try again
+                </button>
+              )}
             </div>
-          ) : !graph.data || !capped ? (
+          ) : !hasData ? (
             listView ? (
               <div className="canvas-message" aria-busy="true">
                 <p className="caption">Loading files…</p>
@@ -166,41 +330,83 @@ function ExploreInner() {
             ) : (
               <GraphSkeleton />
             )
-          ) : graph.data.nodes.length === 0 ? (
-            <div className="canvas-message">
-              <p>No Python or JavaScript/TypeScript files to show.</p>
-              {graph.data.hidden_files ? (
-                <p className="caption">
-                  {graph.data.hidden_files} test files are hidden. Turn on “Show test files” to
-                  see them.
-                </p>
-              ) : null}
-            </div>
           ) : listView ? (
-            <FileList nodes={graph.data.nodes} deg={deg} selectedId={selectedId} onSelect={select} />
-          ) : (
-            <>
-              <GraphView
-                key={graph.dataUpdatedAt} // new data (a toggle) remounts, so it opens fitted
-                nodes={capped.nodes}
-                edges={capped.edges}
-                positions={positions}
+            graph.data && graph.data.nodes.length > 0 ? (
+              <FileList
+                nodes={graph.data.nodes}
+                deg={deg}
                 selectedId={selectedId}
-                panelOverlay={panelOverlay}
                 onSelect={select}
+                root={urlView.root}
+                onClearRoot={() => setParam("root", null)}
               />
-              {selectedId !== null && selected && !shownIds.has(selectedId) ? (
-                <p className="canvas-hint caption">
-                  {selected.path} is outside the {RENDER_CAP} files drawn. It is in List view.
-                </p>
-              ) : showHubNote ? (
-                <p className="canvas-hint caption">
-                  Opened on <span className="mono">{hub.path}</span>, the most connected file, and
-                  its neighbours. Fit shows all files.
-                </p>
-              ) : null}
-            </>
-          )}
+            ) : (
+              <EmptyFiles hidden={graph.data?.hidden_files ?? 0} />
+            )
+          ) : flatMode && graph.data && capped ? (
+            graph.data.nodes.length === 0 ? (
+              <EmptyFiles hidden={graph.data.hidden_files} />
+            ) : (
+              <>
+                <GraphView
+                  key={graph.dataUpdatedAt} // new data (a toggle) remounts, so it opens fitted
+                  nodes={capped.nodes}
+                  edges={capped.edges}
+                  positions={positions}
+                  selectedId={selectedId}
+                  panelOverlay={panelOverlay}
+                  onSelect={select}
+                />
+                {selectedId !== null && selected && !shownIds.has(selectedId) ? (
+                  <p className="canvas-hint caption">
+                    {selected.path} is outside the {RENDER_CAP} files drawn. It is in List view.
+                  </p>
+                ) : showHubNote && hub ? (
+                  <p className="canvas-hint caption">
+                    Opened on <span className="mono">{hub.path}</span>, the most connected file, and
+                    its neighbours. Fit shows all files.
+                  </p>
+                ) : null}
+              </>
+            )
+          ) : view && selection ? (
+            view.nodes.length === 0 ? (
+              <EmptyView
+                message={emptyViewMessage(view)}
+                onShowTests={() => setParam("tests", "1")}
+              />
+            ) : (
+              <>
+                <MapView
+                  key={`${view.level}:${view.root}:${showTests}:${showGuesses}`}
+                  view={view}
+                  positions={mapPositions}
+                  selection={selection}
+                  showAll={showAllEdges}
+                  snapshotId={snapshotId}
+                  hideTests={!showTests}
+                  selectedFileId={selectedId}
+                  panelOverlay={panelOverlay}
+                  onAction={onAction}
+                  onClear={closePanel}
+                />
+                {selected && !isDrawn(view, selected.path) ? (
+                  <p className="canvas-hint caption">
+                    <span className="mono">{selected.path}</span> is not drawn in this view.{" "}
+                    <button
+                      type="button"
+                      className="link-button"
+                      onClick={() =>
+                        setParams({ level: "folder", root: parentDir(selected.path) || null }, false)
+                      }
+                    >
+                      Show its folder
+                    </button>
+                  </p>
+                ) : null}
+              </>
+            )
+          ) : null}
         </div>
 
         {selected ? (
@@ -213,6 +419,9 @@ function ExploreInner() {
             onSelectFile={select}
             onShowLines={showLines}
             onAsk={askAbout}
+            onShowFunctions={
+              request?.level === "symbol" && request.root === selected.path ? undefined : showFunctions
+            }
             onClose={closePanel}
           />
         ) : null}
@@ -221,22 +430,62 @@ function ExploreInner() {
   );
 }
 
+function mapNote(view: MapViewData): string {
+  const parts = [viewNote(view)];
+  if (view.other_findings) {
+    parts.push(`${plural(view.other_findings, "finding")} in files that are not code`);
+  }
+  return parts.filter(Boolean).join(" · ");
+}
+
 function graphNote(
   data: { nodes: unknown[]; hidden_files: number } | undefined,
   capped: { total: number; capped: boolean; nodes: unknown[] } | null,
   listView: boolean,
 ): string {
-  if (!data || !capped) return "";
+  if (!data) return "";
   const parts = [];
-  if (!listView && capped.capped) {
+  if (!listView && capped?.capped) {
     parts.push(
       `Showing ${capped.nodes.length} of ${capped.total} files, the most connected. List view shows all.`,
     );
   } else {
     parts.push(`${data.nodes.length} files`);
   }
-  if (data.hidden_files) parts.push(`${data.hidden_files} test files hidden`);
+  if (data.hidden_files) parts.push(`${data.hidden_files} test or example files hidden`);
   return parts.join(" · ");
+}
+
+function EmptyFiles({ hidden }: { hidden: number }) {
+  return (
+    <div className="canvas-message">
+      <p>No Python or JavaScript/TypeScript files to show.</p>
+      {hidden ? (
+        <p className="caption">
+          {hidden} test or example files are hidden. Turn on “Show tests &amp; examples” to see them.
+        </p>
+      ) : null}
+    </div>
+  );
+}
+
+function EmptyView({
+  message,
+  onShowTests,
+}: {
+  message: { text: string; hiddenFiles: number };
+  onShowTests: () => void;
+}) {
+  return (
+    <div className="canvas-message">
+      <p>{message.text}</p>
+      {message.hiddenFiles > 0 ? (
+        <button type="button" className="button button-secondary" onClick={onShowTests}>
+          Show tests &amp; examples
+        </button>
+      ) : null}
+    </div>
+  );
 }
 
 function Legend({ showGuesses }: { showGuesses: boolean }) {
@@ -257,6 +506,43 @@ function Legend({ showGuesses }: { showGuesses: boolean }) {
           {showGuesses ? null : " Hidden; turn on “Show guessed calls”."}
         </span>
       </div>
+    </div>
+  );
+}
+
+function MapLegend({
+  showGuesses,
+  cycle,
+  caption,
+}: {
+  showGuesses: boolean;
+  cycle: boolean;
+  caption: string | null;
+}) {
+  return (
+    <div className="legend" aria-label="Legend">
+      <div className="legend-row">
+        <svg width="28" height="8" aria-hidden="true">
+          <line x1="0" y1="4" x2="28" y2="4" className="legend-line" />
+        </svg>
+        Import or call. The number counts connections; thicker means more.
+      </div>
+      <div className="legend-row" data-muted={!showGuesses || undefined}>
+        <svg width="28" height="8" aria-hidden="true">
+          <line x1="0" y1="4" x2="28" y2="4" className="legend-line" strokeDasharray="5 4" />
+        </svg>
+        <span>
+          Dashed: mostly best guesses. Dynamic code makes some calls hard to resolve.
+          {showGuesses ? null : " Hidden; turn on “Show guessed calls”."}
+        </span>
+      </div>
+      {cycle ? (
+        <div className="legend-row legend-cycle">
+          <Icon name="cycle" size={14} />
+          {CYCLE_CAPTION}
+        </div>
+      ) : null}
+      {caption ? <p className="legend-note">{caption}</p> : null}
     </div>
   );
 }

@@ -19,7 +19,10 @@ type IconName =
   | "graph"
   | "spark"
   | "expand"
-  | "collapse";
+  | "collapse"
+  | "folder"
+  | "up"
+  | "cycle";
 
 const PATHS: Record<IconName, ReactNode> = {
   check: <path d="M3.5 8.5l3 3 6-7" />,
@@ -65,6 +68,14 @@ const PATHS: Record<IconName, ReactNode> = {
   spark: <path d="M8 1.75 9.4 6.6 14.25 8 9.4 9.4 8 14.25 6.6 9.4 1.75 8 6.6 6.6z" />,
   expand: <path d="M9.5 2.5h4v4M6.5 13.5h-4v-4M13.5 2.5 9 7M2.5 13.5 7 9" />,
   collapse: <path d="M13.5 6.5h-4v-4M2.5 9.5h4v4M9.5 6.5l4-4M6.5 9.5l-4 4" />,
+  // Map: a folder node, "up one level", and a circular import (two arrows chasing each other).
+  folder: (
+    <path d="M2 4.5A1.5 1.5 0 0 1 3.5 3h2.8l1.4 1.5h4.8A1.5 1.5 0 0 1 14 6v6a1.5 1.5 0 0 1-1.5 1.5h-9A1.5 1.5 0 0 1 2 12z" />
+  ),
+  up: <path d="M8 13V3.5M4 7.5l4-4 4 4" />,
+  cycle: (
+    <path d="M3.5 8a4.5 4.5 0 0 1 7.7-3.2M12 2.5v2.6H9.4M12.5 8a4.5 4.5 0 0 1-7.7 3.2M4 13.5v-2.6h2.6" />
+  ),
 };
 
 export function Icon({ name, size = 16, label }: { name: IconName; size?: number; label?: string }) {

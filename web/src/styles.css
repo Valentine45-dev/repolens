@@ -1011,6 +1011,266 @@ a {
   stroke-width: 1.5;
 }
 
+.legend-cycle {
+  color: var(--text);
+  font-weight: 500;
+}
+
+/* What the canvas leaves out, said in words (the edge-density rule). */
+.legend-note {
+  flex-basis: 100%;
+  margin: 0;
+  color: var(--text-muted);
+}
+
+/* Folder-first map: breadcrumbs, nodes, edge labels. Tokens only; the one emphasis colour is Ink. */
+.crumb-row {
+  display: flex;
+  align-items: center;
+  padding: var(--space-2) var(--space-6) 0;
+}
+
+.breadcrumbs {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  min-width: 0;
+}
+
+.breadcrumbs ol {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  font-size: var(--text-sm);
+}
+
+.breadcrumbs li {
+  display: inline-flex;
+  align-items: center;
+}
+
+.breadcrumbs a {
+  color: var(--text-muted);
+  text-decoration: none;
+}
+
+.breadcrumbs ol a:hover {
+  color: var(--text);
+  text-decoration: underline;
+}
+
+.breadcrumbs-sep {
+  padding: 0 var(--space-2);
+  color: var(--text-subtle);
+}
+
+.breadcrumbs-here {
+  font-weight: 500;
+}
+
+.breadcrumbs-up {
+  text-decoration: none;
+  border-color: var(--border-strong);
+}
+
+.breadcrumbs-up[aria-disabled="true"] {
+  color: var(--text-subtle);
+  opacity: 0.5;
+  cursor: default;
+}
+
+.breadcrumbs-up[aria-disabled="true"]:hover {
+  background: transparent;
+  color: var(--text-subtle);
+}
+
+.map-node {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 2px;
+  padding: 0 var(--space-3);
+  border: 1px solid var(--border-strong);
+  border-radius: 4px;
+  background: var(--bg);
+  cursor: pointer;
+  line-height: 1.3;
+  transition: opacity 150ms var(--ease-out), border-color 150ms var(--ease-out);
+}
+
+.map-node:hover {
+  border-color: var(--text-subtle);
+}
+
+/* A folder is told from a file by its fill and its icon, not by a colour. */
+.map-node[data-kind="folder"] {
+  background: var(--surface);
+}
+
+.map-node[data-kind="more"] {
+  border-style: dashed;
+  background: var(--surface-2);
+}
+
+.map-node[data-kind="more"][data-dimmed] {
+  opacity: 0.28;
+}
+
+.map-node[data-selected] {
+  border-color: var(--text);
+  outline: 2px solid var(--text);
+}
+
+.map-node[data-dimmed] {
+  opacity: 0.28;
+}
+
+/* Circular imports: Ink border plus the icon and the word "circular", never a new colour. */
+.map-node[data-cycle] {
+  border: 2px solid var(--text);
+}
+
+.map-node-head {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  min-width: 0;
+}
+
+.map-node-icon {
+  display: inline-flex;
+  flex: none;
+  color: var(--text-muted);
+}
+
+.map-node-text {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  flex: 1;
+}
+
+.map-node-name {
+  overflow: hidden;
+  font-family: var(--font-mono);
+  font-size: 12px;
+  font-weight: 500;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  min-width: 0;
+}
+
+.map-node-head > .map-node-name {
+  flex: 1;
+}
+
+.map-node-hint,
+.map-node-sub,
+.map-node-boundary {
+  overflow: hidden;
+  color: var(--text-muted);
+  font-size: 11px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.map-node-boundary {
+  color: var(--text-subtle);
+  font-family: var(--font-mono);
+  font-size: 10px;
+}
+
+.map-cycle-tag {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  gap: 3px;
+  padding: 1px 5px;
+  border: 1px solid var(--text);
+  border-radius: 3px;
+  font-size: 10px;
+  font-weight: 500;
+}
+
+.map-findings-link {
+  color: var(--text);
+  text-decoration: underline;
+  text-decoration-color: var(--border-strong);
+  text-underline-offset: 2px;
+}
+
+.map-findings-link:hover {
+  text-decoration-color: var(--text);
+}
+
+.graph-node-lang[data-lang="python"] {
+  background: var(--node-python);
+}
+
+.graph-node-lang[data-lang="javascript"],
+.graph-node-lang[data-lang="typescript"] {
+  background: var(--node-js);
+}
+
+.graph-edge[data-cycle] .react-flow__edge-path {
+  stroke: var(--text);
+}
+
+.edge-label {
+  position: absolute;
+  padding: 0 4px;
+  border: 1px solid var(--border);
+  border-radius: 3px;
+  background: var(--bg);
+  color: var(--text-muted);
+  font-size: 11px;
+  line-height: 16px;
+  pointer-events: none;
+}
+
+.edge-label[data-active],
+.edge-label[data-cycle] {
+  border-color: var(--text);
+  color: var(--text);
+}
+
+.edge-label[data-dimmed] {
+  opacity: 0.15;
+}
+
+.crumb-row + .toolbar,
+.crumb-row ~ .toolbar {
+  padding-top: var(--space-2);
+}
+
+.list-filter {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2) var(--space-4);
+  padding: var(--space-2) var(--space-6);
+  border-bottom: 1px solid var(--border);
+  background: var(--surface);
+  font-size: var(--text-xs);
+  color: var(--text-muted);
+}
+
+.link-button {
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--text);
+  font: inherit;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  cursor: pointer;
+}
+
 /* List view */
 .file-list {
   height: 100%;

@@ -21,6 +21,7 @@ export function NodePanel({
   onSelectFile,
   onShowLines,
   onAsk,
+  onShowFunctions,
   onClose,
 }: {
   snapshotId: number;
@@ -31,6 +32,7 @@ export function NodePanel({
   onSelectFile: (fileId: number) => void;
   onShowLines: (lines: LineRange) => void;
   onAsk: (fileId: number, path: string) => void;
+  onShowFunctions?: (path: string) => void; // the map's symbol view of this file
   onClose: () => void;
 }) {
   const [tab, setTab] = useState<Tab>("code");
@@ -90,6 +92,16 @@ export function NodePanel({
             {languageLabel(node.language)} · <span className="mono num">{node.loc}</span> lines
           </p>
         </div>
+        {onShowFunctions ? (
+          <button
+            type="button"
+            className="button button-secondary button-small"
+            onClick={() => onShowFunctions(node.path)}
+            title="Draw this file's classes and functions and what they connect to"
+          >
+            Functions
+          </button>
+        ) : null}
         <button
           type="button"
           className="button button-secondary button-small"

@@ -2,6 +2,7 @@ import { useMemo } from "react";
 
 import type { GraphNode } from "../api";
 import { type Degrees, languageLabel } from "../graphModel";
+import { plural } from "../mapModel";
 import { PathText } from "./PathText";
 
 // The accessible alternative to the graph (spec §5.4): every file, never capped, as a table.
@@ -10,19 +11,35 @@ export function FileList({
   deg,
   selectedId,
   onSelect,
+  root,
+  onClearRoot,
 }: {
   nodes: GraphNode[];
   deg: Map<number, Degrees>;
   selectedId: number | null;
   onSelect: (fileId: number) => void;
+  root?: string; // only files under this folder (from the map's "N more" node)
+  onClearRoot?: () => void;
 }) {
   const rows = useMemo(() => {
     const total = (n: GraphNode) => (deg.get(n.id)?.uses ?? 0) + (deg.get(n.id)?.usedBy ?? 0);
-    return [...nodes].sort((a, b) => total(b) - total(a) || a.path.localeCompare(b.path));
-  }, [nodes, deg]);
+    const inside = root ? nodes.filter((n) => n.path === root || n.path.startsWith(`${root}/`)) : nodes;
+    return [...inside].sort((a, b) => total(b) - total(a) || a.path.localeCompare(b.path));
+  }, [nodes, deg, root]);
 
   return (
     <div className="file-list">
+      {root ? (
+        <div className="list-filter" role="status">
+          <span>
+            Showing {plural(rows.length, "file")} under <span className="mono">{root}</span> (of{" "}
+            {nodes.length})
+          </span>
+          <button type="button" className="button button-secondary button-small" onClick={onClearRoot}>
+            Show all files
+          </button>
+        </div>
+      ) : null}
       <table className="table">
         <caption className="visually-hidden">
           Files ranked by connections. Select a file to inspect it.
