@@ -184,6 +184,17 @@ export function edgeSplit(e: MapEdge): string {
   return parts.join(" · ") || plural(e.count, "connection");
 }
 
+/** "Called at views.py:12, 40, :58 (+2 more)": where a symbol-view call edge happens, for the
+ * tooltip. null for imports/defines and for analyses that predate sites. */
+export function edgeSites(e: MapEdge): string | null {
+  if (e.type !== "calls" || !e.sites?.length) return null;
+  const byPath = new Map<string, number[]>();
+  for (const s of e.sites) byPath.set(s.path, [...(byPath.get(s.path) ?? []), s.line]);
+  const parts = [...byPath].map(([path, lines]) => `${path.split("/").pop()}:${lines.join(", ")}`);
+  const more = (e.site_count ?? e.sites.length) - e.sites.length;
+  return `Called at ${parts.join(" · ")}${more > 0 ? ` (+${more} more)` : ""}`;
+}
+
 /** Count on a log scale: 1 -> 1.25px, 10 -> 2.7px, 160 -> 4.5px. */
 export function edgeWidth(count: number): number {
   return Math.min(5, 1.25 + Math.log2(Math.max(count, 1)) * 0.45);

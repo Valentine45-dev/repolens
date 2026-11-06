@@ -331,13 +331,14 @@ def parse_js(path: str, source: str) -> ParsedFile:
         visit(node, scope)
 
     def record_call(fn: Node | None, scope: str, node: Node) -> None:
-        line = node.start_point.row + 1
         if fn is None:
             return
         if fn.type == "identifier":
-            out.calls.append(ParsedCall(scope, text(fn), None, line))
+            out.calls.append(ParsedCall(scope, text(fn), None, fn.start_point.row + 1))
         elif fn.type == "member_expression":
+            # The callee name's line, so a chained multi-line call points at the right line.
             prop = fn.child_by_field_name("property")
+            line = (prop or fn).start_point.row + 1
             out.calls.append(ParsedCall(
                 scope, text(prop), _receiver(fn.child_by_field_name("object")), line,
             ))

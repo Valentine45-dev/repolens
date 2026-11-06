@@ -2309,3 +2309,44 @@ a {
     animation-duration: 2.4s;
   }
 }
+
+/* Where an import or call happens: file:line chips (NodePanel Used by / Uses, graph answers) */
+.site-chips {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px;
+  margin-left: 6px;
+  vertical-align: middle;
+}
+
+.site-chip {
+  display: inline-flex;
+  align-items: center;
+  min-height: 22px;
+  padding: 0 6px;
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-control);
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--font-mono);
+  font-size: 12px;
+  line-height: 1;
+  text-decoration: none;
+  cursor: pointer;
+  transition: border-color 150ms var(--ease-out), background-color 150ms var(--ease-out);
+}
+
+.site-chip[data-static] {
+  cursor: default;
+  color: var(--text-subtle);
+}
+
+.site-chip:not([data-static]):hover {
+  border-color: var(--text);
+  background: var(--surface);
+}
+
+.result-rows li > .site-chips {
+  margin: 2px 0 0 12px;
+}

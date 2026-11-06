@@ -7,6 +7,7 @@ from fastapi import APIRouter, HTTPException, Query
 from app.db import pool
 from app.graph_map import (
     GUESS_BELOW,
+    SYMBOL_EDGE_SITES,
     CodeFile,
     FileLink,
     MapSymbol,
@@ -19,6 +20,7 @@ from app.paths import is_test_path
 router = APIRouter()
 
 # Confidence is stored as REAL (0.9 -> 0.8999...), so compare and return it rounded.
+MAX_SITES = 20
 CONFIDENCE = "round(e.confidence::numeric, 2)"
 
 
@@ -124,13 +126,20 @@ def _load_symbols(conn, snapshot_id: int, file: CodeFile,
     ).fetchall()
     own_ids = [r["id"] for r in own]
     rows = conn.execute(
-        f"SELECT e.src_id, e.dst_id, e.type, {CONFIDENCE} AS confidence FROM edges e"
+        f"SELECT e.id, e.site_count, e.src_id, e.dst_id, e.type, {CONFIDENCE} AS confidence"
+        " FROM edges e"
         " JOIN symbols s ON s.id = e.src_id JOIN symbols d ON d.id = e.dst_id"
         " WHERE e.snapshot_id = %s AND e.type IN ('calls', 'defines')"
         " AND s.file_id IS NOT NULL AND d.file_id IS NOT NULL"
         f" AND (e.src_id = ANY(%s) OR e.dst_id = ANY(%s)) AND {CONFIDENCE} >= %s",
         (snapshot_id, own_ids, own_ids, min_confidence),
     ).fetchall()
+    lines: dict[int, list[int]] = {}
+    for sr in conn.execute(
+        "SELECT edge_id, line FROM edge_sites WHERE edge_id = ANY(%s) ORDER BY line",
+        ([r["id"] for r in rows],),
+    ):
+        lines.setdefault(sr["edge_id"], []).append(sr["line"])
     ids = set(own_ids) | {r["src_id"] for r in rows} | {r["dst_id"] for r in rows}
     symbols = conn.execute(
         "SELECT s.id, s.kind, s.name, s.qualified_name, s.start_line, s.end_line, s.file_id,"
@@ -141,7 +150,9 @@ def _load_symbols(conn, snapshot_id: int, file: CodeFile,
     return (
         [MapSymbol(s["id"], s["kind"], s["name"], s["qualified_name"], s["path"], s["file_id"],
                    s["start_line"], s["end_line"], s["findings"]) for s in symbols],
-        [SymbolEdge(r["src_id"], r["dst_id"], r["type"], float(r["confidence"])) for r in rows],
+        [SymbolEdge(r["src_id"], r["dst_id"], r["type"], float(r["confidence"]),
+                    tuple(lines.get(r["id"], ())[:SYMBOL_EDGE_SITES]), r["site_count"])
+         for r in rows],
     )
 
 
@@ -301,7 +312,9 @@ def _neighbours(symbol_id: int, min_confidence: float, direction: str) -> dict:
             scope, scope_arg, same_file = "e.{near} = %s", symbol_id, ""
             args = (scope_arg, min_confidence)
         rows = conn.execute(
-            f"SELECT e.type, {CONFIDENCE} AS confidence, o.id, o.kind, o.name,"
+            f"SELECT e.id AS edge_id, e.site_count, e.type, {CONFIDENCE} AS confidence, o.id,"
+            " o.kind,"
+            " o.name,"
             " o.qualified_name, o.file_id, o.start_line, o.end_line, f.path FROM edges e"
             f" JOIN symbols o ON o.id = e.{far} LEFT JOIN files f ON f.id = o.file_id"
             # `defines` (class -> method) is structure, not a dependency.
@@ -311,20 +324,56 @@ def _neighbours(symbol_id: int, min_confidence: float, direction: str) -> dict:
             args,
         ).fetchall()
 
+    with pool().connection() as conn:
+        site_rows = conn.execute(
+            "SELECT edge_id, line, round(confidence::numeric, 2) AS confidence FROM edge_sites"
+            " WHERE edge_id = ANY(%s) ORDER BY line",
+            ([r["edge_id"] for r in rows],),
+        ).fetchall()
+    sites_of: dict[int, list[dict]] = {}
+    for sr in site_rows:
+        sites_of.setdefault(sr["edge_id"], []).append({
+            "line": sr["line"],
+            "confidence": float(sr["confidence"]) if sr["confidence"] is not None else None,
+        })
+
     items = []
-    seen = set()
+    by_key: dict = {}
     for r in rows:
         key = (r["type"], r["id"])
-        if key in seen:  # several of our symbols -> the same one: list it once
+        if key in by_key:  # several of our symbols -> the same one: list it once, sites merged
+            by_key[key]["_edges"].append(r)
             continue
-        seen.add(key)
-        items.append({
+        # Where the import/call happens: in the other file when something depends on this symbol,
+        # in this file otherwise.
+        in_file = (r["file_id"], r["path"]) if direction == "in" else (sym["file_id"], sym["path"])
+        item = {
             "type": r["type"],
             "confidence": float(r["confidence"]),
             "symbol": {k: r[k] for k in (
                 "id", "kind", "name", "qualified_name", "file_id", "path", "start_line", "end_line"
             )},
-        })
+            "site_file_id": in_file[0],
+            "site_path": in_file[1],
+            "_edges": [r],
+        }
+        by_key[key] = item
+        items.append(item)
+    for item in items:
+        edges = item.pop("_edges")
+        merged: dict[int, dict] = {}
+        for r in edges:
+            for site in sites_of.get(r["edge_id"], []):
+                prev = merged.get(site["line"])
+                if prev is None or (site["confidence"] or 0) > (prev["confidence"] or 0):
+                    merged[site["line"]] = site
+        known = all(r["site_count"] is not None for r in edges)
+        lines = [merged[n] for n in sorted(merged)]
+        item["sites"] = lines[:MAX_SITES]
+        # None = this snapshot's edges predate sites (rebuild them); never 0 for "unknown".
+        item["site_count"] = (
+            max(len(lines), max(r["site_count"] for r in edges)) if known else None
+        )
     return {
         "symbol": sym,
         "min_confidence": min_confidence,

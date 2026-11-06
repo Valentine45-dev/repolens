@@ -104,6 +104,12 @@ export interface Citation {
   in_test: boolean;
 }
 
+/** One place an import or call happens, in the file named by `site_path` next to it. */
+export interface Site {
+  line: number;
+  confidence: number | null; // that site's own, for calls; null for imports
+}
+
 export interface GraphResult {
   node_id: number;
   kind: string;
@@ -116,6 +122,12 @@ export interface GraphResult {
   in_test: boolean;
   edge?: "imports" | "calls";
   confidence?: number;
+  // Where the import/call happens (graph answers only). site_count counts every line; `sites`
+  // lists the first few. null count = this analysis predates sites.
+  sites?: Site[];
+  site_count?: number | null;
+  site_file_id?: number | null;
+  site_path?: string | null;
 }
 
 export type AskStatus =
@@ -232,6 +244,8 @@ export interface MapEdge {
   cycle_edges?: number | null; // null: cycles not known for this snapshot yet
   // symbol level
   type?: "calls" | "defines";
+  sites?: { path: string; line: number }[]; // call lines (the first few); calls only
+  site_count?: number | null; // every call line; null: not known for this analysis
 }
 
 export interface Crumb {
@@ -298,6 +312,11 @@ export interface FileDetail {
 export interface Neighbour {
   type: "imports" | "calls";
   confidence: number;
+  // Where it happens, in the file `site_path` (file id `site_file_id`).
+  sites?: Site[];
+  site_count?: number | null;
+  site_file_id?: number | null;
+  site_path?: string | null;
   symbol: {
     id: number;
     kind: string;

@@ -11,6 +11,7 @@ import {
   edgeBudgetFor,
   edgeKey,
   edgeRole,
+  edgeSites,
   edgeSplit,
   edgeWidth,
   EDGE_BUDGET,
@@ -677,5 +678,28 @@ describe("which sides an edge uses", () => {
 
   it("defaults sensibly while positions are unknown", () => {
     expect(edgeHandles(undefined, undefined, w).vertical).toBe(false);
+  });
+});
+
+describe("edgeSites", () => {
+  const call = (over: Partial<MapEdge>) => edge("s1", "s2", { type: "calls", ...over });
+
+  it("names the call lines by file, with how many are left", () => {
+    const e = call({
+      sites: [
+        { path: "app/views.py", line: 12 },
+        { path: "app/views.py", line: 40 },
+        { path: "app/other.py", line: 7 },
+      ],
+      site_count: 5,
+    });
+    expect(edgeSites(e)).toBe("Called at views.py:12, 40 · other.py:7 (+2 more)");
+  });
+
+  it("says nothing without sites, for imports, defines, or an analysis that predates them", () => {
+    expect(edgeSites(call({ sites: [], site_count: null }))).toBeNull();
+    expect(edgeSites(call({}))).toBeNull();
+    expect(edgeSites(edge("a", "b"))).toBeNull();
+    expect(edgeSites(edge("s1", "s2", { type: "defines", sites: [] }))).toBeNull();
   });
 });

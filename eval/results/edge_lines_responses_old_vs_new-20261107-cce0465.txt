@@ -1,0 +1,13 @@
+responses 5219 same keys True differ 5
+DIFF ask 1 What does the first file import?
+DIFF ask 1 Which files import os?
+DIFF ask 3 What does the first file import?
+DIFF ask 3 Which files import os?
+DIFF ask 4 What does the first file import?
+
+Reading: old2.json = main's code on the rebuilt DB; new.json = feat/edge-lines on the same DB.
+The 5 differences are the only LLM answers in the capture (two questions that the router sent to
+the AI route; 18 real calls in all over three captures). Every graph answer and every neighbour
+and map response is identical. Against old.json (main's code on the DB before the rebuild) 6
+neighbour responses also differed in `confidence`: ties between edges reaching the same symbol
+were broken by physical row order, which the rebuild changed (see PROGRESS.md).

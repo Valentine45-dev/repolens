@@ -247,6 +247,7 @@ Quiet and solid; one black button per screen.
 ### Chips
 - **Style:** full pill, 28px tall, 12px side padding, Paper fill, Hairline border, Data Mono text (repo names).
 - **State:** hover fills Sunk Grey and strengthens the border; disabled text drops to Ash. Chips are actions (start an example analysis), not filters.
+- **Site chips** (`.site-chip`, `SiteChips.tsx`): where an import or call happens, as `file:line` (the file's base name; the full path is the hover title). Radius-control corners (not a pill), 22px tall, Data Mono 12px, Paper fill, strong border; hover fills Sunk Grey. At most three per import or call, then "+N more" as a caption. A chip opens the code at that line, highlighted (Used by / Uses in the node panel, graph answers in Ask); with no way to open the file (a test file the graph hides) it is plain grey text. An analysis that predates sites shows no chips: no line is better than a wrong one. In the symbol view the call lines live in the edge tooltip ("Called at views.py:12, 40 (+2 more)"), not as chips.
 
 ### Inputs / Fields
 - **Style:** 40px, 6px radius, Strong Hairline border, Paper fill, mono 13px text, Ash placeholder; 36px right padding reserves room for an inline status icon.

@@ -1,0 +1,4 @@
+itsdangerous: import statements checked 39 -> 39 correct, 0 not; edges (file,target) in the checked files 22, all lines correct: 22; call sites in repo 378, name on reported line 378
+express: import statements checked 58 -> 58 correct, 0 not; edges (file,target) in the checked files 52, all lines correct: 52; call sites in repo 11649, name on reported line 11649
+ky: import statements checked 54 -> 54 correct, 0 not; edges (file,target) in the checked files 50, all lines correct: 50; call sites in repo 14349, name on reported line 14349
+[('itsdangerous', 22, 22, 378, 378), ('express', 52, 52, 11649, 11649), ('ky', 50, 50, 14349, 14349)]

@@ -168,11 +168,14 @@ def parse_python(path: str, source: str) -> ParsedFile:
             elif child.type == "call":
                 fn = child.child_by_field_name("function")
                 if fn is not None and fn.type == "identifier":
-                    out.calls.append(ParsedCall(scope, text(fn), None, child.start_point.row + 1))
+                    out.calls.append(ParsedCall(scope, text(fn), None, fn.start_point.row + 1))
                 elif fn is not None and fn.type == "attribute":
+                    # The callee name's line, not the call's start: in a chained call
+                    # `a .b() .c()` over several lines the call node starts where `a` does.
+                    name_node = fn.child_by_field_name("attribute")
                     out.calls.append(ParsedCall(
-                        scope, text(fn.child_by_field_name("attribute")),
-                        _receiver(fn.child_by_field_name("object")), child.start_point.row + 1,
+                        scope, text(name_node),
+                        _receiver(fn.child_by_field_name("object")), name_node.start_point.row + 1,
                     ))
                 visit(child, scope, in_class, runs)
             else:
