@@ -1,13 +1,21 @@
 import { useQuery } from "@tanstack/react-query";
 import { useEffect, useId, useMemo, useRef, useState, type CSSProperties } from "react";
 
-import { getFile, getNeighbours, type FileDetail, type GraphNode, type Neighbour } from "../api";
+import {
+  getFile,
+  getNeighbours,
+  type FileDetail,
+  type GraphNode,
+  type Neighbour,
+  type Site,
+} from "../api";
 import { GUESS_BELOW, languageLabel } from "../graphModel";
 import type { LineRange } from "../links";
 import { scrollToCenter } from "../scroll";
 import { Icon } from "./Icon";
 import { PanelTitle } from "./PanelTitle";
 import { SeverityBadge } from "./Severity";
+import { SiteChips } from "./SiteChips";
 
 type Tab = "code" | "usedBy" | "uses" | "findings";
 
@@ -30,7 +38,7 @@ export function NodePanel({
   minConfidence: number;
   highlight: LineRange | null; // cited or flagged lines, from the URL
   isInGraph: (fileId: number) => boolean;
-  onSelectFile: (fileId: number) => void;
+  onSelectFile: (fileId: number, lines?: LineRange) => void;
   onShowLines: (lines: LineRange) => void;
   onAsk: (fileId: number, path: string) => void;
   onShowFunctions?: (path: string) => void; // the map's symbol view of this file
@@ -65,6 +73,16 @@ export function NodePanel({
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
   }, [onClose]);
+
+  // A line chip in Used by / Uses: show that line in the code, in this file or in the other one.
+  function openSite(fileId: number, line: number) {
+    const lines = { start: line, end: line };
+    setTab("code");
+    if (fileId === node.id) onShowLines(lines);
+    else onSelectFile(fileId, lines);
+  }
+  const canOpenSite = (fileId: number | null | undefined) =>
+    fileId !== null && fileId !== undefined && (fileId === node.id || isInGraph(fileId));
 
   const file = useQuery({
     queryKey: ["file", snapshotId, node.id],
@@ -174,6 +192,8 @@ export function NodePanel({
               empty="No other file imports or calls this one."
               isInGraph={isInGraph}
               onSelectFile={onSelectFile}
+              canOpenSite={canOpenSite}
+              onOpenSite={openSite}
             />
           ) : (
             <PanelState query={usedBy} />
@@ -190,6 +210,8 @@ export function NodePanel({
             empty="This file imports nothing and calls nothing outside itself."
             isInGraph={isInGraph}
             onSelectFile={onSelectFile}
+            canOpenSite={canOpenSite}
+            onOpenSite={openSite}
           />
         ) : (
           <PanelState query={uses} />
@@ -308,8 +330,25 @@ interface FileGroup {
   fileId: number | null;
   path: string;
   kind: string; // module | external | unresolved
-  imports: boolean;
-  calls: { name: string; guess: boolean }[];
+  imports: SiteRef | null;
+  calls: (SiteRef & { name: string; guess: boolean })[];
+}
+
+// Where one import or call happens (the lines are in the file with id `fileId`).
+interface SiteRef {
+  fileId: number | null;
+  path: string | null;
+  sites: Site[];
+  count: number | null;
+}
+
+function siteRef(item: Neighbour): SiteRef {
+  return {
+    fileId: item.site_file_id ?? null,
+    path: item.site_path ?? null,
+    sites: item.sites ?? [],
+    count: item.site_count ?? null,
+  };
 }
 
 function groupByFile(items: Neighbour[]): FileGroup[] {
@@ -324,13 +363,19 @@ function groupByFile(items: Neighbour[]): FileGroup[] {
         fileId: s.file_id,
         path: s.path ?? s.qualified_name,
         kind: s.file_id !== null ? "module" : s.kind,
-        imports: false,
+        imports: null,
         calls: [],
       };
       groups.set(key, g);
     }
-    if (item.type === "imports") g.imports = true;
-    else g.calls.push({ name: s.kind === "module" ? "(top level)" : s.name, guess: item.confidence < GUESS_BELOW });
+    if (item.type === "imports") g.imports = siteRef(item);
+    else {
+      g.calls.push({
+        ...siteRef(item),
+        name: s.kind === "module" ? "(top level)" : s.name,
+        guess: item.confidence < GUESS_BELOW,
+      });
+    }
   }
   const order = { module: 0, unresolved: 1, external: 2 } as Record<string, number>;
   return [...groups.values()].sort(
@@ -343,13 +388,25 @@ function NeighbourList({
   empty,
   isInGraph,
   onSelectFile,
+  canOpenSite,
+  onOpenSite,
 }: {
   items: Neighbour[];
   empty: string;
   isInGraph: (fileId: number) => boolean;
   onSelectFile: (fileId: number) => void;
+  canOpenSite: (fileId: number | null | undefined) => boolean;
+  onOpenSite: (fileId: number, line: number) => void;
 }) {
   const groups = useMemo(() => groupByFile(items), [items]);
+  const chips = (ref: SiteRef) => (
+    <SiteChips
+      path={ref.path}
+      sites={ref.sites}
+      count={ref.count}
+      onOpen={canOpenSite(ref.fileId) ? (line) => onOpenSite(ref.fileId!, line) : undefined}
+    />
+  );
   if (groups.length === 0) return <p className="panel-message">{empty}</p>;
   return (
     <ul className="neighbours">
@@ -371,6 +428,7 @@ function NeighbourList({
           </div>
           <p className="neighbour-what caption">
             {g.imports ? "imports" : null}
+            {g.imports ? chips(g.imports) : null}
             {g.imports && g.calls.length ? " · " : null}
             {g.calls.length ? "calls " : null}
             {g.calls.map((c, i) => (
@@ -383,6 +441,7 @@ function NeighbourList({
                     (guess)
                   </span>
                 ) : null}
+                {chips(c)}
               </span>
             ))}
             {g.kind === "unresolved" ? " · no matching file in this repository" : null}

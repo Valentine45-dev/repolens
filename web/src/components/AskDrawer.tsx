@@ -15,6 +15,7 @@ import {
 } from "../api";
 import { degrees } from "../graphModel";
 import { exploreHref, useSetParams } from "../links";
+import { SiteChips } from "./SiteChips";
 import { scrollToStart } from "../scroll";
 import { Icon } from "./Icon";
 import { Markdown } from "./Markdown";
@@ -600,6 +601,23 @@ function AnswerView({
                   r={r}
                   onAsk={onAsk}
                   busy={busy}
+                />
+                <SiteChips
+                  path={r.site_path}
+                  sites={r.sites}
+                  count={r.site_count}
+                  href={
+                    r.site_file_id
+                      ? (line) =>
+                          exploreHref(snapshotId, {
+                            fileId: r.site_file_id!,
+                            lines: { start: line, end: line },
+                            // the lines are in this result's file, or else in the asked-about one
+                            tests: r.site_file_id === r.file_id ? r.in_test : !!answer.target?.in_test,
+                            ask: true,
+                          })
+                      : undefined
+                  }
                 />
               </li>
             ))}

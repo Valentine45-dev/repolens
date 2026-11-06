@@ -53,6 +53,7 @@ import {
   boundaryText,
   boundaryTitle,
   edgeKey,
+  edgeSites,
   edgeSplit,
   edgeWidth,
   type EdgeSelection,
@@ -521,6 +522,7 @@ export function MapView({
       const split = edgeSplit(e);
       const notes = [
         `${labelOf(nodesById, e.source)} → ${labelOf(nodesById, e.target)}: ${split}`,
+        edgeSites(e),
         cycle ? "Part of a circular import (top-level imports only)." : null,
         dashed && !symbolEdge
           ? "Drawn dashed: mostly best guesses, because dynamic code makes some calls hard to resolve."
