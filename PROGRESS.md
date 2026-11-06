@@ -1211,6 +1211,25 @@
   - **Servers left running:** `vite preview` on 5173 (the new production build); the dev server was stopped. API on 8000,
     Docker `db`.
 
+- **Part B side-panel fixes (6 Nov, `feat/folder-map-ui`, separate commit).** Owner's real-Firefox test found three issues.
+  Checked in real Firefox (headless, throwaway profile, the real app and a static page with the real CSS) and in the
+  in-app browser at 1366x768 and 1440x900; screenshots in `eval/results/screenshots-part-b/panel-fixes/`.
+  1. **Gutter:** the sticky gutter had no `z-index`, so the later `position: relative` code painted over it. Now `z-index: 2`
+     with the opaque `--surface` background. Verified: after scrolling right the gutter stays at the panel's left edge and
+     `elementFromPoint` there is the gutter.
+  2. **Panel height:** I could not reproduce a cut-off. In Firefox at 1366x768, 1440x900 and 820x640 the panel's bottom equals the
+     viewport's and the code area scrolls inside it (the page itself never scrolls). Hardened anyway: `.panel` gets
+     `max-height: 100%` and `overflow: hidden`, `.panel-body` `overscroll-behavior: contain`, and under 760px of height the panel
+     header is a little tighter. If the window itself is taller than the screen (the taskbar over its lower part, as in the
+     owner's screenshot), no CSS can help; a short laptop viewport also leaves the code only a few lines under the toolbar,
+     legend and breadcrumbs.
+  3. **Title:** `PanelTitle.tsx`: the folder on one line (cut from the left with an ellipsis), the file name under it (cut at the
+     end), no mid-name break; full path as hover text and `aria-label`.
+  - **Tests:** 95 in `web/` (`PanelTitle.test.tsx` 3, `panelStyles.test.ts` 4 pin the gutter, panel and title rules, read with
+    `node:fs` because Vitest returns an empty string for `styles.css?raw`).
+  - **Method note:** headless Firefox screenshots at the load event, so the real app was wrapped in an iframe served by a small
+    local server that holds the page's load for 8 s (scratchpad only, not in the repo).
+
 ### Notes for the Part B (UI) session
 Decided in Step 0 of the folder map and followed by the Part B build above (kept for the reasoning).
 - **Keep the flat query for the node panel and List view.** `selected` comes from the graph response

@@ -1368,6 +1368,8 @@ a {
   flex-direction: column;
   width: min(480px, 42vw);
   min-height: 0;
+  max-height: 100%; /* never taller than the canvas area: the code scrolls inside, not the page */
+  overflow: hidden;
   border-left: 1px solid var(--border);
   background: var(--bg);
 }
@@ -1388,6 +1390,31 @@ a {
   font-size: var(--text-sm);
   font-weight: 500;
   overflow-wrap: anywhere;
+}
+
+/* A file path: folder over name, each on one line and cut with an ellipsis, never in mid-name. */
+.panel-title-path {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  overflow-wrap: normal;
+  word-break: normal;
+}
+
+.panel-title-dir {
+  overflow: hidden;
+  color: var(--text-subtle);
+  font-size: 11px;
+  font-weight: 400;
+  text-align: left;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.panel-title-name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 /* Focus is moved here programmatically (tabindex -1, not in the tab order) so a screen reader
@@ -1449,7 +1476,8 @@ a {
   position: relative; /* keeps absolutely positioned content (.visually-hidden) inside the scroller */
   flex: 1;
   min-height: 0;
-  overflow: auto;
+  overflow: auto; /* the code area fills what is left and scrolls both ways */
+  overscroll-behavior: contain;
 }
 
 .panel-message {
@@ -1478,6 +1506,7 @@ a {
 .code-gutter {
   position: sticky;
   left: 0;
+  z-index: 2; /* above the code (position: relative) and the highlight band, like an editor */
   padding-left: var(--space-3) !important;
   padding-right: var(--space-3) !important;
   border-right: 1px solid var(--border);
@@ -1511,6 +1540,19 @@ a {
 
 .code-text {
   position: relative; /* above the highlight; the sticky gutter already is */
+}
+
+/* Short screens (a 1366x768 laptop leaves ~650px under the browser's own toolbars): the toolbar,
+   legend and breadcrumbs already take ~230px, so the panel's header gives a little back. */
+@media (max-height: 760px) {
+  .panel-header {
+    padding-top: var(--space-3);
+    padding-bottom: var(--space-2);
+  }
+
+  .panel-facts {
+    padding-bottom: var(--space-2);
+  }
 }
 
 /* --- Severity (icon + word + colour) --- */

@@ -6,6 +6,7 @@ import { GUESS_BELOW, languageLabel } from "../graphModel";
 import type { LineRange } from "../links";
 import { scrollToCenter } from "../scroll";
 import { Icon } from "./Icon";
+import { PanelTitle } from "./PanelTitle";
 import { SeverityBadge } from "./Severity";
 
 type Tab = "code" | "usedBy" | "uses" | "findings";
@@ -85,9 +86,7 @@ export function NodePanel({
     <aside className="panel" aria-labelledby={titleId}>
       <header className="panel-header">
         <div className="panel-heading">
-          <h2 id={titleId} ref={titleRef} tabIndex={-1} className="panel-title mono">
-            {node.path}
-          </h2>
+          <PanelTitle id={titleId} path={node.path} titleRef={titleRef} />
           <p className="caption">
             {languageLabel(node.language)} · <span className="mono num">{node.loc}</span> lines
           </p>
