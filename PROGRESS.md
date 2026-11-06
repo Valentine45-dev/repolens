@@ -1173,6 +1173,44 @@
   - **Left running:** Docker Desktop, the `db` container, the API (port 8000) and the Vite dev server (5173) were started
     for this and are still up.
 
+- **Part B hover bug, fixed (6 Nov, `feat/folder-map-ui`).** Owner's real-browser test (Firefox) found the canvas blanking
+  for ~0.5 s on every hover and clicks lost after hovering (a folder click took 5-7 s). **Cause:** the node and edge arrays
+  were rebuilt on every hover (dimming and the extra edges lived in their data). React Flow treats a new node object as
+  a new node and hides it (`visibility: hidden`) until it measures it again; a click that lands in that window is
+  lost. The first build did not show it in my checks because the in-app browser's coordinate clicks did nothing
+  (see "Not verified" above) and I never looked at hover frames.
+  - **Fix:** nodes and edges are built from the view only (edges also from "Show all edges") and keep their identity;
+    layout is memoized on the view data alone; `nodeTypes`/`edgeTypes` were already outside the component; no fitView
+    on hover. Hover, keyboard focus and selection live in `focusStore.ts` (outside React state): each node and edge
+    subscribes to a number about itself, the container gets one `data-focus` attribute and CSS dims everything not
+    near the focus; edges outside the resting set are not drawn until an end of them is focused (the component
+    returns null); the arrowhead takes `currentColor`, so focus never swaps markers. Hover has a 100 ms delay (60 ms to
+    clear, none between two nodes): `hoverIntent.ts`.
+  - **Measured on the production build (`npm run build` + `vite preview`), in-app browser, PyGoat root (9 nodes), 8 hovers
+    and 8 leaves, synthetic mouseover/mouseout:**
+
+    | | Before | After |
+    |---|---|---|
+    | node hidden-style mutations (React Flow re-measure) | 144 | **0** |
+    | frames with a hidden node (of ~335) | 16 | **0** |
+    | node DOM elements replaced | 0 | 0 |
+    | long tasks during the run (harness polls styles every frame) | 5, 452 ms | 1-4, 126-468 ms (noisy) |
+    | long tasks, lean run without polling (48 hovers) | not measured | 1 of 104 ms |
+    | DOM mutations while sweeping 20 nodes in 0.4 s | not measured | 0 |
+
+    express `test/` (61 nodes, 16 hovers): 0 hidden mutations, 0 node elements added or removed; the one long task is
+    ~60 ms. Before-numbers exist only for PyGoat's root. Click: URL changes in 6-8 ms and the new view shows after
+    ~500-800 ms, which is the API (`map_view` loads the whole repo map per request, 80-615 ms measured in Part A), the same
+    before and after. A file click right after hovering every node selects it (same DOM element, `node=480`).
+  - **Skeletons (DESIGN.md "Loading"):** `GraphSkeleton` is four columns of grey node cards (also the Suspense fallback and
+    the analysis-loading state in `AnalysisShell`), `ListSkeleton` for List view, `CrumbSkeleton` so the toolbar does not
+    jump, and `index.html` paints a top bar, title bar and three cards before the app mounts. The words stay for screen
+    readers only. Screenshots 09 and 10 in `eval/results/screenshots-part-b/` (API responses delayed 9 s in the page).
+  - **Tests:** 88 in `web/` (`focusStore.test.ts` 5, `hoverIntent.test.ts` 4, density/role tests updated). Real mouse
+    clicks in Firefox are still the owner's to confirm; the measurements above use synthetic events.
+  - **Servers left running:** `vite preview` on 5173 (the new production build); the dev server was stopped. API on 8000,
+    Docker `db`.
+
 ### Notes for the Part B (UI) session
 Decided in Step 0 of the folder map and followed by the Part B build above (kept for the reasoning).
 - **Keep the flat query for the node panel and List view.** `selected` comes from the graph response
