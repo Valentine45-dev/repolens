@@ -1113,8 +1113,68 @@
     a function. The node limit does not limit edges: flask `src/flask` is 20 nodes and 82 edges (91 with everything);
     a symbol view reaches 61 nodes and 202 edges. Part B has to make those readable.
 
+- **v2 step 4, folder-first map: Part B (UI) built, not merged (6 Nov, `feat/folder-map-ui`).** Owner's go on the Step 0
+  plan. **$0 API spend**: no LLM call (API run with `EMBEDDER=stub` and an empty `LLM_API_KEY`); no backend change.
+  - **Built (web only):** `web/src/mapModel.ts` (pure: start rule, URL state, click actions, edge split and dashes,
+    edge-density rule, cycle test, node text), `mapLayout.ts` (dagre + grid), `components/MapView.tsx` (folder, file,
+    symbol and "N more" nodes, edges with counts), `Breadcrumbs.tsx` (with Up), `Explore.tsx` rewired, `FileList` folder
+    filter, a "Functions" button in the node panel, icons, styles, DESIGN.md "Folder map". The flat graph (`level=flat`)
+    is the old code, unchanged.
+  - **Rules as built:** start in files at 30 or fewer visible files (from the flat query, so it follows the Show-tests
+    toggle), else folders; the URL wins. URL: `level=folder|file|symbol|flat`, `root`, `edges=all`, plus the old params.
+    Selecting a file pins the current level and root in the URL, so a shared link opens the same picture; a link with
+    `node=` and no view (citation chips, Findings) opens that file's folder in a big repo. Edge density: whole tiers of
+    equal count up to 40 drawn at rest (cycle edges always on top), else a labelled sample; hover, keyboard focus or
+    selection draws all of that node's edges; "Show all edges" draws everything; a caption says what is drawn. Dashed when
+    `guess_calls` are more than half of `count`; the tooltip gives the split ("6 imports · 155 calls (152 guesses)").
+    Cycle styling (Ink border, "circular" tag, Ink edges) and the caption "Circular imports (top-level imports only)"
+    come only from the view's own `in_cycle` / `cycle_edges`, never from the repo-wide `cycles` list (flask `src/flask`
+    with everything shown has one cycle in the repo and none on screen). "Show test files" is now "Show tests & examples".
+  - **Choices not in the plan:** a node's findings part is left out at zero ("N files" only), so nothing reads as a
+    verdict; the Findings link under a folder uses `path=<folder>/` and `tests=hide` when tests are hidden, so it adds up to
+    the node (checked: `challenge` 8, `dockerized_labs` 48); back edges leave from the left side and a two-way pair runs as
+    two parallel lines (a bezier back edge looped off the canvas); long dagre chains continue on a new row (flask
+    `src/flask` was a 12-layer strip); unconnected nodes form a grid (express `test/`: 58 loose files).
+  - **Web tests:** `npm test` in `web/`: 77 passed (`mapModel.test.ts` 53 incl. layout, `Breadcrumbs.test.tsx` 3, the old
+    renderer and API tests). Cover aggregated edge display, split text, guess styling, density tiers and sample, hover
+    and show-all, start rule, deep links, URL round trip, breadcrumbs and Up, overflow action, cycle highlighting from
+    `cycle_edges` only (two-way folders, repo-wide list, `cycles_available: false`), node text, empty-folder message.
+    No jsdom: clicks are not unit-tested. `npm run build` ok. Backend untouched: pytest 365 passed, 3 skipped; ruff clean.
+  - **Readability** (`eval/results/graph_ui_readability-part-b-*-4f8ae7b.md`, from `eval/graph_ui_readability.py` + `.mjs`,
+    which runs the web rule under Node). Before = the old default (flat graph, 300 most connected files):
+
+    | Repo, default setting | Before nodes / edges | Opens as | After nodes / edges (drawn) | Worst folder view nodes / edges (drawn) |
+    |---|---|---|---|---|
+    | itsdangerous | 9 / 21 | files | 9 / 21 (21) | 8 / 21 (21) |
+    | PyGoat | 114 / 31 | folders | 9 / 4 (4) | 12 / 10 (10) |
+    | express | 7 / 7 | files | 7 / 7 (7) | 6 / 6 (6) |
+    | flask | 25 / 95 | files | 25 / 95 (24) | `src/flask` 20 / 82 (24) |
+    | black | 55 / 129 | folders | 5 / 1 (1) | `src/black` 25 / 66 (28) |
+
+    With tests and guesses shown: express 142 / 291 -> 4 / 6, flask 83 / 353 -> 4 / 4 (worst view 91 edges, 40 drawn),
+    black 300 (capped from 426) / 225 -> 6 / 5 (worst folder view 61 nodes, 69 edges, 36 drawn). Symbol views (every
+    non-test file, default setting): flask and black are the only repos where the rule hides edges (5 and 10 views; black
+    `trans.py` 61 nodes, 186 edges, 40 drawn).
+  - **Screenshots** (`eval/results/screenshots-part-b/`, 1440x900 viewport, in-app browser, dev server): 01 PyGoat root
+    before (flat, 114 files), 02 PyGoat root after (9 nodes), 03 PyGoat `challenge`, 04 symbol view `challenge/views.py`,
+    05 flask `js_example` with the real cycle (needs "Show tests & examples"), 06 express `test/` overflow, 07 itsdangerous
+    root (opens in files), 08 flask `src/flask` (24 of 82 edges).
+  - **Checked live (DOM-dispatched clicks):** folder opens and pushes history, breadcrumbs and Up, file opens the panel and
+    pins the view, Functions, symbol click puts `lines=` in the URL, "N more" opens List filtered to `test` (92 of 142)
+    and "Show all files" clears it, express test -> lib draws dashed with the split in its tooltip, deep link `?node=480`
+    opens `challenge` with the file selected, List filter chip at 375 px (no horizontal scroll).
+  - **Not verified:** a real mouse click on a node. The in-app browser's coordinate clicks did nothing on this branch and also
+    nothing on the untouched flat graph, so it is a tool limit, not the map; every handler was run by dispatching the
+    click in the page. Keyboard Enter/Space on a node, and the Chrome extension, were not tried.
+  - **Known limits:** the fit on first open happens once per view (a layout change by hot reload does not refit; Fit does);
+    long back edges across rows are long curves; `Show all edges` on flask `src/flask` with everything is 91 edges and
+    readable only by hovering; the layout is left to right, so a long chain (itsdangerous, 7 layers) opens at about
+    0.6 zoom. This PC had ~0.5 GB free during the run: dev server first load took ~15 s.
+  - **Left running:** Docker Desktop, the `db` container, the API (port 8000) and the Vite dev server (5173) were started
+    for this and are still up.
+
 ### Notes for the Part B (UI) session
-Decided in Step 0 of the folder map. Not started; `feat/folder-map-ui` branches off `main` after Part A is merged.
+Decided in Step 0 of the folder map and followed by the Part B build above (kept for the reasoning).
 - **Keep the flat query for the node panel and List view.** `selected` comes from the graph response
   (`web/src/pages/Explore.tsx`, `graph.data?.nodes.find`), and so do `isInGraph` and the List view. In a folder view
   a file outside that view would have no node, so citation chips, "Open in Explorer" and Ask's graph results would
