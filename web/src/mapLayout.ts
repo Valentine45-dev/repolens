@@ -7,12 +7,19 @@ import { Graph as DagreGraph, layout } from "@dagrejs/dagre";
 
 import type { MapEdge, MapLevel, MapNode } from "./api";
 
-export const MAP_NODE_WIDTH = 208;
+export const MAP_NODE_WIDTH = 208; // folder and file nodes
+export const SYMBOL_NODE_WIDTH = 248; // longer names, and they are what is read in a symbol view
+
+/** Zoom below which names stop being readable: the first view never goes under it. */
+export const READABLE_MIN_ZOOM = 0.75;
+export const FIT_MAX_ZOOM = 1.1;
+const FIT_PAD = 24;
 const NODE_GAP = 14;
 const LAYER_GAP = 72;
 const GRID_GAP = 56;
 const BAND_GAP = 48;
 const COLUMN_HEIGHT = 720; // a layer taller than this wraps into extra columns
+const LOOSE_ROW_UNITS = 1800; // the width of a screen at the readable zoom
 const ROW_WIDTH = 1800; // a chain of layers longer than this continues on a new row
 
 export interface MapPosition {
@@ -22,7 +29,47 @@ export interface MapPosition {
 }
 
 export function mapNodeHeight(level: MapLevel): number {
-  return level === "symbol" ? 48 : 76;
+  return level === "symbol" ? 56 : 76;
+}
+
+export function mapNodeWidth(level: MapLevel): number {
+  return level === "symbol" ? SYMBOL_NODE_WIDTH : MAP_NODE_WIDTH;
+}
+
+export interface Viewport {
+  x: number;
+  y: number;
+  zoom: number;
+}
+
+/** Where the first view of a map sits. Everything fits when that keeps names readable (zoom of
+ * READABLE_MIN_ZOOM or more); otherwise the view opens at that zoom on the top left of the map,
+ * and the rest is a scroll away (`zoomedIn`: the canvas says so, and Fit shows everything). */
+export function initialViewport(
+  level: MapLevel,
+  positions: Map<string, MapPosition>,
+  canvas: { width: number; height: number },
+): Viewport & { zoomedIn: boolean } {
+  const w = mapNodeWidth(level);
+  const h = mapNodeHeight(level);
+  if (positions.size === 0) return { x: FIT_PAD, y: FIT_PAD, zoom: 1, zoomedIn: false };
+  const xs = [...positions.values()].map((p) => p.x);
+  const ys = [...positions.values()].map((p) => p.y);
+  const minX = Math.min(...xs);
+  const minY = Math.min(...ys);
+  const width = Math.max(...xs) + w - minX;
+  const height = Math.max(...ys) + h - minY;
+  const fit = Math.min((canvas.width - 2 * FIT_PAD) / width, (canvas.height - 2 * FIT_PAD) / height);
+  if (fit >= READABLE_MIN_ZOOM) {
+    const zoom = Math.min(fit, FIT_MAX_ZOOM);
+    return {
+      x: (canvas.width - width * zoom) / 2 - minX * zoom,
+      y: (canvas.height - height * zoom) / 2 - minY * zoom,
+      zoom,
+      zoomedIn: false,
+    };
+  }
+  return { x: FIT_PAD - minX * READABLE_MIN_ZOOM, y: FIT_PAD - minY * READABLE_MIN_ZOOM, zoom: READABLE_MIN_ZOOM, zoomedIn: true };
 }
 
 export function layoutMap(
@@ -31,6 +78,7 @@ export function layoutMap(
   edges: MapEdge[],
 ): Map<string, MapPosition> {
   const height = mapNodeHeight(level);
+  const width = mapNodeWidth(level);
   const ids = new Set(nodes.map((n) => n.id));
   const linked = new Set<string>();
   for (const e of edges) {
@@ -48,7 +96,7 @@ export function layoutMap(
     const g = new DagreGraph();
     g.setGraph({ rankdir: "LR", nodesep: NODE_GAP, ranksep: LAYER_GAP, marginx: 0, marginy: 0 });
     g.setDefaultEdgeLabel(() => ({}));
-    for (const n of connected) g.setNode(n.id, { width: MAP_NODE_WIDTH, height });
+    for (const n of connected) g.setNode(n.id, { width, height });
     for (const e of edges) {
       if (e.source !== e.target && linked.has(e.source) && linked.has(e.target)) {
         g.setEdge(e.source, e.target);
@@ -76,7 +124,7 @@ export function layoutMap(
           members,
           wraps,
           perColumn,
-          width: wraps * (MAP_NODE_WIDTH + NODE_GAP * 2) - NODE_GAP * 2,
+          width: wraps * (width + NODE_GAP * 2) - NODE_GAP * 2,
         };
       });
 
@@ -101,7 +149,7 @@ export function layoutMap(
           const row = i % layer.perColumn;
           const rows = Math.min(layer.perColumn, layer.members.length - col * layer.perColumn);
           const y = top + (tall - rows * (height + NODE_GAP)) / 2 + row * (height + NODE_GAP);
-          result.set(n.id, { x: x + col * (MAP_NODE_WIDTH + NODE_GAP * 2), y, rank: layer.rank });
+          result.set(n.id, { x: x + col * (width + NODE_GAP * 2), y, rank: layer.rank });
           bottom = Math.max(bottom, y + height);
         });
         x += layer.width + LAYER_GAP;
@@ -112,11 +160,13 @@ export function layoutMap(
 
   if (loose.length > 0) {
     // Wide rather than tall: a screen is wider than it is high (58 loose files -> 8 x 8).
-    const columns = Math.max(1, Math.min(Math.ceil(Math.sqrt(loose.length * 2)), 8));
+    // As many columns as fit a screen at the readable zoom (~1800 units), or a squarish block.
+    const fits = Math.max(1, Math.floor(LOOSE_ROW_UNITS / (width + NODE_GAP)));
+    const columns = Math.max(1, Math.min(Math.ceil(Math.sqrt(loose.length * 2)), fits));
     const top = connected.length > 0 ? bottom + GRID_GAP : 0;
     loose.forEach((n, i) => {
       result.set(n.id, {
-        x: (i % columns) * (MAP_NODE_WIDTH + NODE_GAP),
+        x: (i % columns) * (width + NODE_GAP),
         y: top + Math.floor(i / columns) * (height + NODE_GAP),
         rank: -1,
       });

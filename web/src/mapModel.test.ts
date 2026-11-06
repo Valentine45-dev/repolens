@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import type { MapEdge, MapNode, MapView } from "./api";
 import { exploreHref, findingsHref } from "./links";
-import { layoutMap, MAP_NODE_WIDTH, mapNodeHeight } from "./mapLayout";
+import { initialViewport, layoutMap, mapNodeHeight, mapNodeWidth, READABLE_MIN_ZOOM } from "./mapLayout";
 import {
   boundaryText,
   crumbChanges,
@@ -496,7 +496,7 @@ describe("layout", () => {
     for (let i = 0; i < list.length; i++) {
       for (let j = i + 1; j < list.length; j++) {
         const apart =
-          Math.abs(list[i].x - list[j].x) >= MAP_NODE_WIDTH || Math.abs(list[i].y - list[j].y) >= h;
+          Math.abs(list[i].x - list[j].x) >= mapNodeWidth("folder") || Math.abs(list[i].y - list[j].y) >= h;
         expect(apart).toBe(true);
       }
     }
@@ -562,5 +562,41 @@ describe("node tooltips say something the label does not", () => {
     const more = node("more:test", { kind: "more", label: "13 more", hidden_count: 13, file_count: 13 });
     expect(nodeTooltip(more, "folder")).toContain("13 items not drawn, 13 files in all.");
     expect(nodeTooltip(more, "folder")).toContain("List view");
+  });
+});
+
+describe("first view", () => {
+  const pos = (n: number, cols: number, w = 208, h = 76) =>
+    new Map(Array.from({ length: n }, (_, i) => [`n${i}`, { x: (i % cols) * (w + 14), y: Math.floor(i / cols) * (h + 14), rank: 0 }]));
+
+  it("fits and centres a small map, never magnified past 1.1", () => {
+    const vp = initialViewport("folder", pos(4, 4), { width: 1440, height: 800 });
+    expect(vp.zoomedIn).toBe(false);
+    expect(vp.zoom).toBeCloseTo(1.1);
+    // centred: the map's left and right margins are equal
+    const widthPx = (4 * 222 - 14) * vp.zoom;
+    expect(vp.x).toBeCloseTo((1440 - widthPx) / 2, 0);
+  });
+
+  it("a map that needs a smaller zoom than the readable one opens at the readable zoom, top left", () => {
+    const vp = initialViewport("symbol", pos(40, 6, 248, 56), { width: 1200, height: 700 });
+    expect(vp.zoomedIn).toBe(true);
+    expect(vp.zoom).toBe(READABLE_MIN_ZOOM);
+    expect(vp.x).toBe(24); // the first node starts at the padding, not off to the left
+    expect(vp.y).toBe(24);
+  });
+
+  it("a map that fits at exactly the readable zoom is shown whole", () => {
+    const vp = initialViewport("folder", pos(8, 4), { width: 4 * 222 * READABLE_MIN_ZOOM + 48, height: 2000 });
+    expect(vp.zoomedIn).toBe(false);
+  });
+
+  it("symbol boxes are bigger than folder and file boxes", () => {
+    expect(mapNodeWidth("symbol")).toBeGreaterThan(mapNodeWidth("folder"));
+    expect(mapNodeHeight("symbol")).toBeGreaterThan(48);
+  });
+
+  it("an empty map has a sane view", () => {
+    expect(initialViewport("folder", new Map(), { width: 800, height: 600 }).zoomedIn).toBe(false);
   });
 });

@@ -1206,6 +1206,15 @@ a {
   flex: 1;
 }
 
+/* Symbol view: boxes and text a size up; it is what you read there. */
+.map-node[data-level="symbol"] .map-node-name {
+  font-size: 13px;
+}
+
+.map-node[data-level="symbol"] .graph-node-dir {
+  font-size: 11px;
+}
+
 .map-node-hint,
 .map-node-sub,
 .map-node-boundary {

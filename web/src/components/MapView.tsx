@@ -41,7 +41,13 @@ import {
 } from "../focusStore";
 import { findingsHref } from "../links";
 import { createHoverIntent } from "../hoverIntent";
-import { MAP_NODE_WIDTH, mapNodeHeight, type MapPosition } from "../mapLayout";
+import {
+  initialViewport,
+  mapNodeHeight,
+  mapNodeWidth,
+  type MapPosition,
+  READABLE_MIN_ZOOM,
+} from "../mapLayout";
 import {
   boundaryText,
   boundaryTitle,
@@ -58,7 +64,6 @@ import {
   restingEdges,
   showEdgeLabel,
 } from "../mapModel";
-import { FIT_OPTIONS } from "./GraphView";
 import { Icon } from "./Icon";
 
 // Hover, keyboard focus and selection live in a store, not in the node and edge objects: React
@@ -166,7 +171,8 @@ const MapNodeView = memo(function MapNodeView({ data }: NodeProps<MapFlowNode>) 
     "data-selected": selected || undefined,
     "data-near": near || undefined,
     "data-cycle": node.in_cycle === true || undefined,
-    style: { width: MAP_NODE_WIDTH, height: mapNodeHeight(level) },
+    "data-level": level,
+    style: { width: mapNodeWidth(level), height: mapNodeHeight(level) },
   };
   let head;
   const title = nodeTooltip(node, level);
@@ -360,6 +366,7 @@ export function MapView({
   panelOverlay,
   onAction,
   onClear,
+  onZoomedIn,
 }: {
   view: MapViewData;
   positions: Map<string, MapPosition>;
@@ -371,9 +378,12 @@ export function MapView({
   panelOverlay: boolean; // the node panel covers the canvas instead of docking beside it
   onAction: (action: NodeAction) => void;
   onClear: () => void;
+  /** True while the first view is zoomed in (not everything is on screen); the legend says so. */
+  onZoomedIn: (zoomedIn: boolean) => void;
 }) {
   const { getViewport, setCenter } = useReactFlow();
   const height = mapNodeHeight(view.level);
+  const width = mapNodeWidth(view.level);
   const nodesById = useMemo(() => new Map(view.nodes.map((n) => [n.id, n])), [view.nodes]);
   const selectedNodeId = useMemo(
     () =>
@@ -416,7 +426,10 @@ export function MapView({
   );
 
   // Centre a selected file in the part of the canvas the panel leaves free.
+  // First view: everything when names stay readable, else the top left at a readable zoom.
   const [fitOnMount] = useState(selectedNodeId === null);
+  const setZoomedIn = onZoomedIn;
+  useEffect(() => () => onZoomedIn(false), [onZoomedIn]);
   const canvasRef = useRef<HTMLDivElement>(null);
   const [ready, setReady] = useState(false);
   const [canvasSize, setCanvasSize] = useState("");
@@ -438,15 +451,15 @@ export function MapView({
       const zoom = Math.max(getViewport().zoom, READABLE_ZOOM);
       const covered = panelOverlay ? Math.min(480, canvas.clientWidth) : 0;
       const visibleWidth = canvas.clientWidth - covered;
-      const shift = covered > 0 && visibleWidth > MAP_NODE_WIDTH * zoom ? covered / 2 / zoom : 0;
+      const shift = covered > 0 && visibleWidth > width * zoom ? covered / 2 / zoom : 0;
       const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-      void setCenter(p.x + MAP_NODE_WIDTH / 2 + shift, p.y + height / 2, {
+      void setCenter(p.x + width / 2 + shift, p.y + height / 2, {
         zoom,
         duration: reduced ? 0 : 200,
       });
     });
     return () => cancelAnimationFrame(frame);
-  }, [selectedNodeId, positions, ready, canvasSize, panelOverlay, height, getViewport, setCenter]);
+  }, [selectedNodeId, positions, ready, canvasSize, panelOverlay, height, width, getViewport, setCenter]);
 
   // Built from the view only (and the "Show all edges" setting for edges): never from hover,
   // focus or selection, so React Flow keeps every node it has measured.
@@ -547,9 +560,22 @@ export function MapView({
         onEdgeMouseMove={onEdgeMouseMove}
         onEdgeMouseLeave={tip.hide}
         onPaneClick={onClear}
-        fitView={fitOnMount}
-        fitViewOptions={FIT_OPTIONS}
-        onInit={() => setReady(true)}
+        onInit={(instance) => {
+          const canvas = canvasRef.current;
+          if (fitOnMount && canvas) {
+            const vp = initialViewport(view.level, positions, {
+              width: canvas.clientWidth,
+              height: canvas.clientHeight,
+            });
+            void instance.setViewport({ x: vp.x, y: vp.y, zoom: vp.zoom }, { duration: 0 });
+            setZoomedIn(vp.zoomedIn);
+          }
+          setReady(true);
+        }}
+        // A move the user made (a drag or the wheel) ends the "zoomed in" note; so does Fit,
+        // which ends below the readable zoom.
+        onMoveStart={(event) => event && setZoomedIn(false)}
+        onMoveEnd={(_, viewport) => viewport.zoom < READABLE_MIN_ZOOM - 0.01 && setZoomedIn(false)}
         minZoom={0.08}
         maxZoom={2}
         nodesConnectable={false}

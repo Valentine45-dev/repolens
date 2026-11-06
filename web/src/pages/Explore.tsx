@@ -182,6 +182,7 @@ function ExploreInner() {
   );
   const hub = hubId === null ? null : (graph.data?.nodes.find((n) => n.id === hubId) ?? null);
   const [fittedAt, setFittedAt] = useState<number | null>(null);
+  const [zoomedIn, setZoomedIn] = useState(false);
   const showHubNote = hub !== null && selectedId === null && fittedAt !== graph.dataUpdatedAt;
 
   // --- the map ---
@@ -315,6 +316,7 @@ function ExploreInner() {
           showGuesses={showGuesses}
           cycle={view ? viewHasCycle(view) : false}
           caption={caption}
+          zoomedIn={zoomedIn}
         />
       ) : flatMode && (!graph.data || graph.data.nodes.length > 0) ? (
         <Legend showGuesses={showGuesses} />
@@ -407,6 +409,7 @@ function ExploreInner() {
                   panelOverlay={panelOverlay}
                   onAction={onAction}
                   onClear={closePanel}
+                  onZoomedIn={setZoomedIn}
                 />
                 {selected && !isDrawn(view, selected.path) ? (
                   <p className="canvas-hint caption">
@@ -532,10 +535,12 @@ function MapLegend({
   showGuesses,
   cycle,
   caption,
+  zoomedIn,
 }: {
   showGuesses: boolean;
   cycle: boolean;
   caption: string | null;
+  zoomedIn: boolean;
 }) {
   return (
     <div className="legend" aria-label="Legend">
@@ -565,6 +570,8 @@ function MapLegend({
         ) : null}
         {cycle && caption ? " · " : null}
         {caption}
+        {(cycle || caption) && zoomedIn ? " · " : null}
+        {zoomedIn ? "Zoomed in so names stay readable; drag to move, Fit shows everything." : null}
       </p>
     </div>
   );
