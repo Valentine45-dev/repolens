@@ -21,6 +21,7 @@ from dataclasses import dataclass, field
 from app.paths import is_test_path
 
 VIEW_NODE_LIMIT = 60
+SYMBOL_EDGE_SITES = 3  # call lines listed on one symbol-view edge; site_count has the total
 GUESS_BELOW = 0.9  # same threshold as the flat graph's dashed edges (web/src/graphModel.ts)
 CYCLE_SCOPE = "top_level_imports"
 
@@ -426,6 +427,8 @@ class SymbolEdge:
     target: int
     type: str  # calls|defines
     confidence: float
+    lines: tuple[int, ...] = ()  # call lines in the source symbol's file (first few)
+    site_count: int | None = None  # None: not known (edges predate sites) or a `defines` edge
 
 
 def symbol_view(repo: RepoMap, file: CodeFile, symbols: list[MapSymbol],
@@ -472,12 +475,21 @@ def symbol_view(repo: RepoMap, file: CodeFile, symbols: list[MapSymbol],
             continue
         edge = grouped.setdefault((a, b, e.type), {
             "source": a, "target": b, "type": e.type, "count": 0, "confidence": 0.0,
+            "sites": [], "site_count": 0, "_sites_known": e.type == "calls",
         })
         edge["count"] += 1
         edge["confidence"] = max(edge["confidence"], e.confidence)
+        if e.site_count is None:
+            edge["_sites_known"] = False
+        else:
+            edge["site_count"] += e.site_count
+            edge["sites"] += [{"path": by_id[e.source].path, "line": n} for n in e.lines]
     out_edges = sorted(grouped.values(), key=lambda e: (e["source"], e["target"], e["type"]))
     for e in out_edges:
         e["guess"] = e["confidence"] < GUESS_BELOW
+        known = e.pop("_sites_known")
+        e["sites"] = e["sites"][:SYMBOL_EDGE_SITES] if known else []
+        e["site_count"] = e["site_count"] if known else None
 
     nodes = [{
         "id": f"sym:{s.id}",

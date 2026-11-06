@@ -198,7 +198,12 @@ def graph_answer(snapshot_id: int, route: Route) -> dict | None:
     results = []
     for item in found[:MAX_RESULTS]:
         node = _node(item["symbol"])
-        results.append({**node, "edge": item["type"], "confidence": item["confidence"]})
+        results.append({
+            **node, "edge": item["type"], "confidence": item["confidence"],
+            # Where it happens: `site_path` lines, a few at most (site_count has the total).
+            "sites": item["sites"], "site_count": item["site_count"],
+            "site_file_id": item["site_file_id"], "site_path": item["site_path"],
+        })
     lower = len(everything) - len(found)
 
     some, none = _SENTENCE[(route.direction, route.edge)]

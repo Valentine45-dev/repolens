@@ -48,6 +48,9 @@ class CallEdge:
     src: Ref
     dst: Ref
     confidence: float
+    # Every call site that resolved to this pair: (line, that site's own confidence), one per
+    # line (the best confidence on that line), in line order. `confidence` is the maximum.
+    sites: tuple[tuple[int, float], ...] = ()
 
 
 class _Index:
@@ -182,6 +185,7 @@ def _owner_matches(s: ParsedSymbol, receiver: str) -> bool:
 def resolve_calls(files: dict[str, ParsedFile], resolve_import: ImportResolver) -> list[CallEdge]:
     ix = _Index(files, resolve_import)
     best: dict[tuple[Ref, Ref], float] = {}
+    sites: dict[tuple[Ref, Ref], dict[int, float]] = defaultdict(dict)
     for path, pf in files.items():
         for call in pf.calls:
             hit = _resolve(ix, path, call.caller, call.name, call.receiver)
@@ -189,6 +193,11 @@ def resolve_calls(files: dict[str, ParsedFile], resolve_import: ImportResolver) 
                 continue
             dst, confidence = hit
             src = (path, call.caller)
-            if dst != src and confidence > best.get((src, dst), 0.0):
+            if dst == src:
+                continue
+            if confidence > best.get((src, dst), 0.0):
                 best[(src, dst)] = confidence
-    return [CallEdge(src, dst, c) for (src, dst), c in best.items()]
+            at = sites[(src, dst)]
+            at[call.line] = max(confidence, at.get(call.line, 0.0))
+    return [CallEdge(src, dst, c, tuple(sorted(sites[(src, dst)].items())))
+            for (src, dst), c in best.items()]

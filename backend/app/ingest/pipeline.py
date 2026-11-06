@@ -191,6 +191,25 @@ def store_symbols(snapshot_id: int, job_id: int, deadline: float) -> dict[str, P
     return parsed
 
 
+MAX_SITES_PER_EDGE = 20
+
+
+def _insert_edge(cur, edge: tuple, sites: list[tuple[int, float | None]]) -> int:
+    """One edge row plus its first MAX_SITES_PER_EDGE sites; site_count (in `edge`) is the total."""
+    edge_id = cur.execute(
+        "INSERT INTO edges (snapshot_id, src_id, dst_id, type, confidence, import_scope,"
+        " site_count)"
+        " VALUES (%s, %s, %s, %s, %s, %s, %s) RETURNING id",
+        edge,
+    ).fetchone()["id"]
+    if sites:
+        cur.executemany(
+            "INSERT INTO edge_sites (edge_id, line, confidence) VALUES (%s, %s, %s)",
+            [(edge_id, line, c) for line, c in sites[:MAX_SITES_PER_EDGE]],
+        )
+    return edge_id
+
+
 def store_edges(snapshot_id: int, parsed: dict[str, Parsed]) -> Counter:
     """Edges stage, Python and JS/TS: import edges from each file's module symbol to an internal
     module, an external package or an unresolved import; call edges between symbols (calls.py)."""
@@ -210,12 +229,14 @@ def store_edges(snapshot_id: int, parsed: dict[str, Parsed]) -> Counter:
         return resolve_js(path, imp, js_modules)
 
     wanted: dict[tuple[str, Target], str] = {}  # one edge per (file, target), first seen first
+    import_lines: dict[tuple[str, Target], set[int]] = {}
     for path, p in parsed.items():
         for imp in p.result.imports:
             for target in resolve_import(path, imp):
                 if not (target.kind == "internal" and target.key == path):
                     seen = wanted.get((path, target), imp.scope)
                     wanted[(path, target)] = min(seen, imp.scope, key=IMPORT_SCOPES.index)
+                    import_lines.setdefault((path, target), set()).add(imp.line)
     calls = resolve_calls({path: p.result for path, p in parsed.items()}, resolve_import)
 
     counts: Counter = Counter()
@@ -244,18 +265,15 @@ def store_edges(snapshot_id: int, parsed: dict[str, Parsed]) -> Counter:
                 (snapshot_id, target.kind, target.key, target.key),
             ).fetchone()["id"]
 
-        rows = []
-        for (path, target), scope in wanted.items():
-            dst = module_ids.get(target.key) if target.kind == "internal" else node_ids[target]
-            if dst is not None:
-                rows.append((snapshot_id, module_ids[path], dst, scope))
-                counts[target.kind] += 1
         with conn.cursor() as cur:
-            cur.executemany(
-                "INSERT INTO edges (snapshot_id, src_id, dst_id, type, confidence, import_scope)"
-                " VALUES (%s, %s, %s, 'imports', 1.0, %s)",
-                rows,
-            )
+            for (path, target), scope in wanted.items():
+                dst = module_ids.get(target.key) if target.kind == "internal" else node_ids[target]
+                if dst is None:
+                    continue
+                lines = sorted(import_lines[(path, target)])
+                _insert_edge(cur, (snapshot_id, module_ids[path], dst, "imports", 1.0,
+                                             scope, len(lines)), [(n, None) for n in lines])
+                counts[target.kind] += 1
 
         symbol_ids: dict[tuple[str, str], int] = {}
         kinds: dict[int, str] = {}
@@ -282,18 +300,13 @@ def store_edges(snapshot_id: int, parsed: dict[str, Parsed]) -> Counter:
                 define_rows,
             )
         counts["defines"] = len(define_rows)
-        call_rows = []
-        for edge in calls:
-            src, dst = symbol_ids.get(edge.src), symbol_ids.get(edge.dst)
-            if src is not None and dst is not None:
-                call_rows.append((snapshot_id, src, dst, edge.confidence))
-                counts[f"calls@{edge.confidence}"] += 1
         with conn.cursor() as cur:
-            cur.executemany(
-                "INSERT INTO edges (snapshot_id, src_id, dst_id, type, confidence)"
-                " VALUES (%s, %s, %s, 'calls', %s)",
-                call_rows,
-            )
+            for edge in calls:
+                src, dst = symbol_ids.get(edge.src), symbol_ids.get(edge.dst)
+                if src is not None and dst is not None:
+                    _insert_edge(cur, (snapshot_id, src, dst, "calls", edge.confidence, None,
+                                       len(edge.sites)), list(edge.sites))
+                    counts[f"calls@{edge.confidence}"] += 1
     return counts
 
 

@@ -1,4 +1,5 @@
-"""Rebuild the edges of finished snapshots from their stored files, to fill edges.import_scope.
+"""Rebuild the edges of finished snapshots from their stored files, to fill edges.import_scope and
+edges.site_count / edge_sites.
 
 No clone, no embedding, no LLM: the parse stage reads the same stored (redacted) text. Chunks and
 findings are not touched; only import, call and defines edges and the external/unresolved symbols
@@ -48,12 +49,14 @@ def backfill_snapshot(snapshot_id: int) -> dict:
 
 
 def snapshots_to_backfill() -> list[int]:
-    """Finished snapshots with an import edge that has no scope yet."""
+    """Finished snapshots with an import edge without a scope, or an import/call edge without
+    site_count (analysed before sites existed)."""
     with pool().connection() as conn:
         rows = conn.execute(
             "SELECT DISTINCT st.snapshot_id FROM snapshot_status st"
             " JOIN edges e ON e.snapshot_id = st.snapshot_id"
-            " WHERE st.status = 'done' AND e.type = 'imports' AND e.import_scope IS NULL"
+            " WHERE st.status = 'done' AND ((e.type = 'imports' AND e.import_scope IS NULL)"
+            " OR (e.type IN ('imports', 'calls') AND e.site_count IS NULL))"
             " ORDER BY 1"
         ).fetchall()
     return [r["snapshot_id"] for r in rows]

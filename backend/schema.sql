@@ -95,10 +95,23 @@ CREATE TABLE edges (
   confidence   REAL NOT NULL DEFAULT 1.0,
   -- imports only: when the import runs (app/ingest/parse.py). Cycle detection uses top_level.
   -- NULL on an import edge = analysed before this column existed: cycles are not known yet.
-  import_scope TEXT CHECK (import_scope IN ('top_level', 'nested', 'type_checking'))
+  import_scope TEXT CHECK (import_scope IN ('top_level', 'nested', 'type_checking')),
+  -- imports and calls: how many distinct lines the pair occurs on (edge_sites keeps at most 20).
+  -- NULL = analysed before sites existed.
+  site_count   INT
 );
 CREATE INDEX edges_src ON edges (snapshot_id, src_id);
 CREATE INDEX edges_dst ON edges (snapshot_id, dst_id);
+
+-- Where an import or call happens. The file is the source symbol's file (the importing module, or
+-- the caller). One row per (edge, line); `confidence` is that site's own, for calls (the edge keeps
+-- the maximum); NULL for imports. Rebuilt with the edges (ids change), so nothing may store edge ids.
+CREATE TABLE edge_sites (
+  edge_id     BIGINT NOT NULL REFERENCES edges(id) ON DELETE CASCADE,
+  line        INT NOT NULL,
+  confidence  REAL,
+  PRIMARY KEY (edge_id, line)
+);
 
 CREATE TABLE findings (
   id           BIGSERIAL PRIMARY KEY,
