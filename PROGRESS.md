@@ -1230,6 +1230,44 @@
   - **Method note:** headless Firefox screenshots at the load event, so the real app was wrapped in an iframe served by a small
     local server that holds the page's load for 8 s (scratchpad only, not in the repo).
 
+- **Part B, round 2 (6 Nov, `feat/folder-map-ui`): the owner's real-Firefox list, one commit per item.** $0 API spend. Screenshots, before and
+  after, in `eval/results/screenshots-part-b/round2/` (Firefox headless, 1440x900; "before" is the build of `9f9a31b` served on :5174, "after" the new
+  build on :5173). Tests: 131 in `web/`.
+  1. **First paint (`77171d4`).** `index.html` ships a template per page (home, Explorer, Findings, plain) built from the real markup and classes; the
+     recent list, a known analysis's title, the toolbar state and the breadcrumb folders come from this browser. Room is reserved for what arrives later
+     (a disabled "Show all edges", an always-present caption row in the legend, the Findings badge, `scrollbar-gutter`, fixed filter-select widths); the
+     three first-screen fonts are preloaded. **Measured** with `eval/layout_shift.mjs` (headless Edge over CDP, 1440x900, production build; skeleton =
+     app scripts blocked) and `eval/layout_overlay.py`: CLS home 0.00019 -> **0**, Explorer 0.081 -> **0.0001**, Findings 0.0027 -> **0**; every landmark
+     within 0.5 px of its placeholder (0 px on home and the Explorer). The remaining Explorer shift is the right-aligned counts text. `firstPaint.test.ts`
+     checks the templates' text and classes against the app. Before, the home skeleton was three cards that matched nothing.
+  2. **Explorer loading (`8a971b7`).** `AnalysisShell` renders its page at once (queries wait for the status); crumb row, toolbar and legend are real, only the
+     repo name and counts are grey; the placeholder is plain rows of node-sized cards (208x76, 14 px). The Suspense fallback is the same frame.
+  3. **Function view (`efe5b88`).** The first view never goes below zoom 0.75 (otherwise it opens at 0.75 top left and the legend row says so; Fit shows all),
+     symbol boxes 208x48 -> 248x56 and names 12 -> 13 px, loose grid sized to a screen. Checked on PyGoat `introduction/views.py` (29 symbols: now fits
+     and reads) and black `trans.py` (opens zoomed in).
+  4. **Edge tooltip (`5303d78`).** Cause: React Flow marks edges `inactive` (`pointer-events: none`) unless they are selectable or clickable, so a real mouse
+     never reached them (hit test on PyGoat's root: pane on all 4 edges). Now a CSS override, an 18 px `interactionWidth`, our own tooltip element (also on the
+     count label), and node tooltips that say something (path, files, tests, findings, what crosses the edge). Hit test after: edge at 0 and 8 px either side.
+  5. **Timeout wording (`9f9a31b`).** "Search setup took longer than 600 s and was stopped. The map and findings are complete." Backend message + test; the
+     stored messages of existing analyses were rewritten in the dev DB only (job 6). Job 3's older test-code message was left.
+  6. **Findings heading (`32970e9`).** "Findings (48 of 60)" with a filter (the 48 equals the SQL count).
+  7. **Side panel / toolbar.** Nothing to change; the toolbar is not collapsed when the panel is open.
+  8. **Dense maps (`2d8e967`, results `graph_crossings-part-b-round2-*.md`).** New: layout arranged for the edges drawn at rest (it used all of them), best of
+     six dagre settings by crossings then edges through nodes then area, edge budget three per four nodes (12..40, was a flat 40), edges inside one column
+     leave bottom to top (no more loop out to the side), fixed-size arrowheads, and every node says "N connections not drawn" (so a node in the grid is
+     never mistaken for an unconnected one). **Crossings** (straight lines between node centres, `edgeMetrics`): flask `src/flask` **35 -> 0** (drawn 24 -> 8,
+     through nodes 15 -> 3), PyGoat root 0 -> 0 (4 edges), black `src/black` **75 -> 5** (drawn 28 -> 19, through nodes 43 -> 22); flask's default (files, 25
+     nodes) 27 -> 0. All 38 folder views: crossings 141 -> 5, edges through nodes 107 -> 43.
+     **Cost:** flask `src/flask` now draws 8 of 82 edges (the strongest tier of equal count that fits 15); the rest is a hover or "Show all edges" away. A
+     bigger budget draws more (budget 25: flask 24 edges, 7 crossings; budget 40: 24 edges, 7). The factor 0.75 is one line (`edgeBudgetFor`).
+     **ELK (not added; owner decides):** `elkjs` would add ~1.4 MB (a web worker) for orthogonal routing around nodes and port constraints. Reason to want
+     it: black `src/black` still has 22 edges drawn through other nodes and 5 crossings; dagre cannot route around a node. Reason not to: the numbers above
+     are already small for the default views, and it is a second layout engine to keep in step with the hover-stable rendering. Recommendation: not now.
+  - **Evidence tools (in `eval/`):** `layout_shift.mjs`, `layout_overlay.py`, `graph_crossings.py` + `.mjs`. Scratch only: a screenshot helper, a slow-load
+    wrapper and a proxy that delays `/api`, used to capture loading states in Firefox.
+  - **Known limits:** crossings are judged on straight lines, the drawn curves differ a little; the Explorer's toolbar-note counts change width on arrival
+    (0.0001 CLS); the real mouse was exercised only by hit-testing and dispatched events here, the owner's Firefox pass is the real test.
+
 ### Notes for the Part B (UI) session
 Decided in Step 0 of the folder map and followed by the Part B build above (kept for the reasoning).
 - **Keep the flat query for the node panel and List view.** `selected` comes from the graph response

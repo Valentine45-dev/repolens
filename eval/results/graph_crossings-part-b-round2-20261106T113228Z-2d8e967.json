@@ -1,0 +1,1002 @@
+{
+  "run": {
+    "commit_sha": "2d8e967febb156a6c13a8868f802cf36be0a508c",
+    "dirty": false,
+    "run_at": "2026-11-06T11:32:28+00:00",
+    "machine": "LAPTOP-4C2E555R",
+    "cpu": "Intel(R) Pentium(R) Silver N5030 CPU @ 1.10GHz",
+    "cpu_threads": 4,
+    "ram_gb": 7.8,
+    "os": "Windows 11 (10.0.22631)",
+    "python": "3.12.16",
+    "packages": {
+      "torch": "2.14.1+cpu",
+      "sentence-transformers": "6.2.0",
+      "transformers": "5.21.0",
+      "tree-sitter": "0.25.2",
+      "anthropic": "2.3.0"
+    },
+    "max_analysis_s": 600,
+    "tool_pins": {
+      "bandit": "bandit==1.9.4",
+      "semgrep": "semgrep==1.182.1"
+    },
+    "notes": "",
+    "embedder": "sentence-transformers",
+    "embed_model": "sentence-transformers/all-MiniLM-L6-v2",
+    "embed_revision": "1110a243fdf4706b3f48f1d95db1a4f5529b4d41",
+    "llm_used": false,
+    "llm": {
+      "provider": "anthropic",
+      "model": "claude-sonnet-5-5",
+      "effort": "low",
+      "thinking": "between_tools",
+      "max_tokens": 4000,
+      "prompt_version": "2026-10-28.2"
+    },
+    "retrieval": {
+      "top_k": 8,
+      "graph_expansion": true,
+      "expand_max": 8,
+      "context_tokens": 6000
+    }
+  },
+  "named": [
+    "6|folder|src/flask",
+    "2|folder|",
+    "7|folder|src/black",
+    "6|file|"
+  ],
+  "views": [
+    {
+      "id": "6|folder|src/flask",
+      "label": "flask src/flask (folder level)",
+      "level": "folder",
+      "nodes": 20,
+      "edgesTotal": 82,
+      "before": {
+        "budget": 40,
+        "mode": "tier",
+        "edges": 24,
+        "crossings": 35,
+        "throughNodes": 15,
+        "backward": 7,
+        "sameColumn": 3
+      },
+      "after": {
+        "budget": 15,
+        "mode": "tier",
+        "edges": 8,
+        "crossings": 0,
+        "throughNodes": 3,
+        "backward": 0,
+        "sameColumn": 0
+      }
+    },
+    {
+      "id": "2|folder|",
+      "label": "pygoat (root) (folder level)",
+      "level": "folder",
+      "nodes": 9,
+      "edgesTotal": 4,
+      "before": {
+        "budget": 40,
+        "mode": "all",
+        "edges": 4,
+        "crossings": 0,
+        "throughNodes": 0,
+        "backward": 1,
+        "sameColumn": 0
+      },
+      "after": {
+        "budget": 12,
+        "mode": "all",
+        "edges": 4,
+        "crossings": 0,
+        "throughNodes": 0,
+        "backward": 1,
+        "sameColumn": 0
+      }
+    },
+    {
+      "id": "7|folder|src/black",
+      "label": "black src/black (folder level)",
+      "level": "folder",
+      "nodes": 25,
+      "edgesTotal": 66,
+      "before": {
+        "budget": 40,
+        "mode": "tier",
+        "edges": 28,
+        "crossings": 75,
+        "throughNodes": 43,
+        "backward": 9,
+        "sameColumn": 0
+      },
+      "after": {
+        "budget": 19,
+        "mode": "tier",
+        "edges": 19,
+        "crossings": 5,
+        "throughNodes": 22,
+        "backward": 0,
+        "sameColumn": 0
+      }
+    },
+    {
+      "id": "6|file|",
+      "label": "flask (root) (file level)",
+      "level": "file",
+      "nodes": 25,
+      "edgesTotal": 95,
+      "before": {
+        "budget": 40,
+        "mode": "tier",
+        "edges": 24,
+        "crossings": 27,
+        "throughNodes": 15,
+        "backward": 6,
+        "sameColumn": 2
+      },
+      "after": {
+        "budget": 19,
+        "mode": "tier",
+        "edges": 8,
+        "crossings": 0,
+        "throughNodes": 4,
+        "backward": 0,
+        "sameColumn": 0
+      }
+    },
+    {
+      "id": "1|folder|",
+      "label": "itsdangerous (root)",
+      "level": "folder",
+      "nodes": 2,
+      "edgesTotal": 0,
+      "before": {
+        "budget": 40,
+        "mode": "all",
+        "edges": 0,
+        "crossings": 0,
+        "throughNodes": 0,
+        "backward": 0,
+        "sameColumn": 0
+      },
+      "after": {
+        "budget": 12,
+        "mode": "all",
+        "edges": 0,
+        "crossings": 0,
+        "throughNodes": 0,
+        "backward": 0,
+        "sameColumn": 0
+      }
+    },
+    {
+      "id": "1|folder|src/itsdangerous",
+      "label": "itsdangerous src/itsdangerous",
+      "level": "folder",
+      "nodes": 8,
+      "edgesTotal": 21,
+      "before": {
+        "budget": 40,
+        "mode": "all",
+        "edges": 21,
+        "crossings": 4,
+        "throughNodes": 17,
+        "backward": 5,
+        "sameColumn": 1
+      },
+      "after": {
+        "budget": 12,
+        "mode": "tier",
+        "edges": 10,
+        "crossings": 0,
+        "throughNodes": 6,
+        "backward": 0,
+        "sameColumn": 0
+      }
+    },
+    {
+      "id": "2|folder|challenge",
+      "label": "pygoat challenge",
+      "level": "folder",
+      "nodes": 11,
+      "edgesTotal": 5,
+      "before": {
+        "budget": 40,
+        "mode": "all",
+        "edges": 5,
+        "crossings": 0,
+        "throughNodes": 0,
+        "backward": 0,
+        "sameColumn": 0
+      },
+      "after": {
+        "budget": 12,
+        "mode": "all",
+        "edges": 5,
+        "crossings": 0,
+        "throughNodes": 0,
+        "backward": 0,
+        "sameColumn": 0
+      }
+    },
+    {
+      "id": "2|folder|challenge/labs",
+      "label": "pygoat challenge/labs",
+      "level": "folder",
+      "nodes": 3,
+      "edgesTotal": 0,
+      "before": {
+        "budget": 40,
+        "mode": "all",
+        "edges": 0,
+        "crossings": 0,
+        "throughNodes": 0,
+        "backward": 0,
+        "sameColumn": 0
+      },
+      "after": {
+        "budget": 12,
+        "mode": "all",
+        "edges": 0,
+        "crossings": 0,
+        "throughNodes": 0,
+        "backward": 0,
+        "sameColumn": 0
+      }
+    },
+    {
+      "id": "2|folder|challenge/management/commands",
+      "label": "pygoat challenge/management/commands",
+      "level": "folder",
+      "nodes": 3,
+      "edgesTotal": 0,
+      "before": {
+        "budget": 40,
+        "mode": "all",
+        "edges": 0,
+        "crossings": 0,
+        "throughNodes": 0,
+        "backward": 0,
+        "sameColumn": 0
+      },
+      "after": {
+        "budget": 12,
+        "mode": "all",
+        "edges": 0,
+        "crossings": 0,
+        "throughNodes": 0,
+        "backward": 0,
+        "sameColumn": 0
+      }
+    },
+    {
+      "id": "2|folder|challenge/migrations",
+      "label": "pygoat challenge/migrations",
+      "level": "folder",
+      "nodes": 8,
+      "edgesTotal": 0,
+      "before": {
+        "budget": 40,
+        "mode": "all",
+        "edges": 0,
+        "crossings": 0,
+        "throughNodes": 0,
+        "backward": 0,
+        "sameColumn": 0
+      },
+      "after": {
+        "budget": 12,
+        "mode": "all",
+        "edges": 0,
+        "crossings": 0,
+        "throughNodes": 0,
+        "backward": 0,
+        "sameColumn": 0
+      }
+    },
+    {
+      "id": "2|folder|dockerized_labs",
+      "label": "pygoat dockerized_labs",
+      "level": "folder",
+      "nodes": 21,
+      "edgesTotal": 0,
+      "before": {
+        "budget": 40,
+        "mode": "all",
+        "edges": 0,
+        "crossings": 0,
+        "throughNodes": 0,
+        "backward": 0,
+        "sameColumn": 0
+      },
+      "after": {
+        "budget": 16,
+        "mode": "all",
+        "edges": 0,
+        "crossings": 0,
+        "throughNodes": 0,
+        "backward": 0,
+        "sameColumn": 0
+      }
+    },
+    {
+      "id": "2|folder|dockerized_labs/insufficient_logging_lab",
+      "label": "pygoat dockerized_labs/insufficient_logging_lab",
+      "level": "folder",
+      "nodes": 1,
+      "edgesTotal": 0,
+      "before": {
+        "budget": 40,
+        "mode": "all",
+        "edges": 0,
+        "crossings": 0,
+        "throughNodes": 0,
+        "backward": 0,
+        "sameColumn": 0
+      },
+      "after": {
+        "budget": 12,
+        "mode": "all",
+        "edges": 0,
+        "crossings": 0,
+        "throughNodes": 0,
+        "backward": 0,
+        "sameColumn": 0
+      }
+    },
+    {
+      "id": "2|folder|dockerized_labs/sec_misconfig",
+      "label": "pygoat dockerized_labs/sec_misconfig",
+      "level": "folder",
+      "nodes": 1,
+      "edgesTotal": 0,
+      "before": {
+        "budget": 40,
+        "mode": "all",
+        "edges": 0,
+        "crossings": 0,
+        "throughNodes": 0,
+        "backward": 0,
+        "sameColumn": 0
+      },
+      "after": {
+        "budget": 12,
+        "mode": "all",
+        "edges": 0,
+        "crossings": 0,
+        "throughNodes": 0,
+        "backward": 0,
+        "sameColumn": 0
+      }
+    },
+    {
+      "id": "2|folder|dockerized_labs/sensitive_data_exposure",
+      "label": "pygoat dockerized_labs/sensitive_data_exposure",
+      "level": "folder",
+      "nodes": 3,
+      "edgesTotal": 0,
+      "before": {
+        "budget": 40,
+        "mode": "all",
+        "edges": 0,
+        "crossings": 0,
+        "throughNodes": 0,
+        "backward": 0,
+        "sameColumn": 0
+      },
+      "after": {
+        "budget": 12,
+        "mode": "all",
+        "edges": 0,
+        "crossings": 0,
+        "throughNodes": 0,
+        "backward": 0,
+        "sameColumn": 0
+      }
+    },
+    {
+      "id": "2|folder|dockerized_labs/sensitive_data_exposure/dataexposure",
+      "label": "pygoat dockerized_labs/sensitive_data_exposure/dataexposure",
+      "level": "folder",
+      "nodes": 6,
+      "edgesTotal": 3,
+      "before": {
+        "budget": 40,
+        "mode": "all",
+        "edges": 3,
+        "crossings": 0,
+        "throughNodes": 0,
+        "backward": 0,
+        "sameColumn": 0
+      },
+      "after": {
+        "budget": 12,
+        "mode": "all",
+        "edges": 3,
+        "crossings": 0,
+        "throughNodes": 0,
+        "backward": 0,
+        "sameColumn": 0
+      }
+    },
+    {
+      "id": "2|folder|dockerized_labs/sensitive_data_exposure/dataexposure/migrations",
+      "label": "pygoat dockerized_labs/sensitive_data_exposure/dataexposure/migrations",
+      "level": "folder",
+      "nodes": 2,
+      "edgesTotal": 0,
+      "before": {
+        "budget": 40,
+        "mode": "all",
+        "edges": 0,
+        "crossings": 0,
+        "throughNodes": 0,
+        "backward": 0,
+        "sameColumn": 0
+      },
+      "after": {
+        "budget": 12,
+        "mode": "all",
+        "edges": 0,
+        "crossings": 0,
+        "throughNodes": 0,
+        "backward": 0,
+        "sameColumn": 0
+      }
+    },
+    {
+      "id": "2|folder|dockerized_labs/sensitive_data_exposure/sensitive_data_lab",
+      "label": "pygoat dockerized_labs/sensitive_data_exposure/sensitive_data_lab",
+      "level": "folder",
+      "nodes": 4,
+      "edgesTotal": 0,
+      "before": {
+        "budget": 40,
+        "mode": "all",
+        "edges": 0,
+        "crossings": 0,
+        "throughNodes": 0,
+        "backward": 0,
+        "sameColumn": 0
+      },
+      "after": {
+        "budget": 12,
+        "mode": "all",
+        "edges": 0,
+        "crossings": 0,
+        "throughNodes": 0,
+        "backward": 0,
+        "sameColumn": 0
+      }
+    },
+    {
+      "id": "2|folder|introduction",
+      "label": "pygoat introduction",
+      "level": "folder",
+      "nodes": 9,
+      "edgesTotal": 2,
+      "before": {
+        "budget": 40,
+        "mode": "all",
+        "edges": 2,
+        "crossings": 0,
+        "throughNodes": 0,
+        "backward": 0,
+        "sameColumn": 0
+      },
+      "after": {
+        "budget": 12,
+        "mode": "all",
+        "edges": 2,
+        "crossings": 0,
+        "throughNodes": 0,
+        "backward": 0,
+        "sameColumn": 0
+      }
+    },
+    {
+      "id": "2|folder|introduction/migrations",
+      "label": "pygoat introduction/migrations",
+      "level": "folder",
+      "nodes": 26,
+      "edgesTotal": 0,
+      "before": {
+        "budget": 40,
+        "mode": "all",
+        "edges": 0,
+        "crossings": 0,
+        "throughNodes": 0,
+        "backward": 0,
+        "sameColumn": 0
+      },
+      "after": {
+        "budget": 20,
+        "mode": "all",
+        "edges": 0,
+        "crossings": 0,
+        "throughNodes": 0,
+        "backward": 0,
+        "sameColumn": 0
+      }
+    },
+    {
+      "id": "2|folder|introduction/static/js",
+      "label": "pygoat introduction/static/js",
+      "level": "folder",
+      "nodes": 2,
+      "edgesTotal": 0,
+      "before": {
+        "budget": 40,
+        "mode": "all",
+        "edges": 0,
+        "crossings": 0,
+        "throughNodes": 0,
+        "backward": 0,
+        "sameColumn": 0
+      },
+      "after": {
+        "budget": 12,
+        "mode": "all",
+        "edges": 0,
+        "crossings": 0,
+        "throughNodes": 0,
+        "backward": 0,
+        "sameColumn": 0
+      }
+    },
+    {
+      "id": "2|folder|pygoat",
+      "label": "pygoat pygoat",
+      "level": "folder",
+      "nodes": 5,
+      "edgesTotal": 0,
+      "before": {
+        "budget": 40,
+        "mode": "all",
+        "edges": 0,
+        "crossings": 0,
+        "throughNodes": 0,
+        "backward": 0,
+        "sameColumn": 0
+      },
+      "after": {
+        "budget": 12,
+        "mode": "all",
+        "edges": 0,
+        "crossings": 0,
+        "throughNodes": 0,
+        "backward": 0,
+        "sameColumn": 0
+      }
+    },
+    {
+      "id": "2|folder|scoring",
+      "label": "pygoat scoring",
+      "level": "folder",
+      "nodes": 12,
+      "edgesTotal": 10,
+      "before": {
+        "budget": 40,
+        "mode": "all",
+        "edges": 10,
+        "crossings": 0,
+        "throughNodes": 4,
+        "backward": 0,
+        "sameColumn": 0
+      },
+      "after": {
+        "budget": 12,
+        "mode": "all",
+        "edges": 10,
+        "crossings": 0,
+        "throughNodes": 4,
+        "backward": 0,
+        "sameColumn": 0
+      }
+    },
+    {
+      "id": "2|folder|scoring/management",
+      "label": "pygoat scoring/management",
+      "level": "folder",
+      "nodes": 2,
+      "edgesTotal": 0,
+      "before": {
+        "budget": 40,
+        "mode": "all",
+        "edges": 0,
+        "crossings": 0,
+        "throughNodes": 0,
+        "backward": 0,
+        "sameColumn": 0
+      },
+      "after": {
+        "budget": 12,
+        "mode": "all",
+        "edges": 0,
+        "crossings": 0,
+        "throughNodes": 0,
+        "backward": 0,
+        "sameColumn": 0
+      }
+    },
+    {
+      "id": "2|folder|scoring/management/commands",
+      "label": "pygoat scoring/management/commands",
+      "level": "folder",
+      "nodes": 2,
+      "edgesTotal": 0,
+      "before": {
+        "budget": 40,
+        "mode": "all",
+        "edges": 0,
+        "crossings": 0,
+        "throughNodes": 0,
+        "backward": 0,
+        "sameColumn": 0
+      },
+      "after": {
+        "budget": 12,
+        "mode": "all",
+        "edges": 0,
+        "crossings": 0,
+        "throughNodes": 0,
+        "backward": 0,
+        "sameColumn": 0
+      }
+    },
+    {
+      "id": "2|folder|scoring/migrations",
+      "label": "pygoat scoring/migrations",
+      "level": "folder",
+      "nodes": 3,
+      "edgesTotal": 0,
+      "before": {
+        "budget": 40,
+        "mode": "all",
+        "edges": 0,
+        "crossings": 0,
+        "throughNodes": 0,
+        "backward": 0,
+        "sameColumn": 0
+      },
+      "after": {
+        "budget": 12,
+        "mode": "all",
+        "edges": 0,
+        "crossings": 0,
+        "throughNodes": 0,
+        "backward": 0,
+        "sameColumn": 0
+      }
+    },
+    {
+      "id": "3|folder|",
+      "label": "express (root)",
+      "level": "folder",
+      "nodes": 2,
+      "edgesTotal": 1,
+      "before": {
+        "budget": 40,
+        "mode": "all",
+        "edges": 1,
+        "crossings": 0,
+        "throughNodes": 0,
+        "backward": 0,
+        "sameColumn": 0
+      },
+      "after": {
+        "budget": 12,
+        "mode": "all",
+        "edges": 1,
+        "crossings": 0,
+        "throughNodes": 0,
+        "backward": 0,
+        "sameColumn": 0
+      }
+    },
+    {
+      "id": "3|folder|lib",
+      "label": "express lib",
+      "level": "folder",
+      "nodes": 6,
+      "edgesTotal": 6,
+      "before": {
+        "budget": 40,
+        "mode": "all",
+        "edges": 6,
+        "crossings": 0,
+        "throughNodes": 0,
+        "backward": 0,
+        "sameColumn": 0
+      },
+      "after": {
+        "budget": 12,
+        "mode": "all",
+        "edges": 6,
+        "crossings": 0,
+        "throughNodes": 0,
+        "backward": 0,
+        "sameColumn": 0
+      }
+    },
+    {
+      "id": "6|folder|",
+      "label": "flask (root)",
+      "level": "folder",
+      "nodes": 2,
+      "edgesTotal": 0,
+      "before": {
+        "budget": 40,
+        "mode": "all",
+        "edges": 0,
+        "crossings": 0,
+        "throughNodes": 0,
+        "backward": 0,
+        "sameColumn": 0
+      },
+      "after": {
+        "budget": 12,
+        "mode": "all",
+        "edges": 0,
+        "crossings": 0,
+        "throughNodes": 0,
+        "backward": 0,
+        "sameColumn": 0
+      }
+    },
+    {
+      "id": "6|folder|docs",
+      "label": "flask docs",
+      "level": "folder",
+      "nodes": 1,
+      "edgesTotal": 0,
+      "before": {
+        "budget": 40,
+        "mode": "all",
+        "edges": 0,
+        "crossings": 0,
+        "throughNodes": 0,
+        "backward": 0,
+        "sameColumn": 0
+      },
+      "after": {
+        "budget": 12,
+        "mode": "all",
+        "edges": 0,
+        "crossings": 0,
+        "throughNodes": 0,
+        "backward": 0,
+        "sameColumn": 0
+      }
+    },
+    {
+      "id": "6|folder|src/flask/json",
+      "label": "flask src/flask/json",
+      "level": "folder",
+      "nodes": 3,
+      "edgesTotal": 2,
+      "before": {
+        "budget": 40,
+        "mode": "all",
+        "edges": 2,
+        "crossings": 0,
+        "throughNodes": 0,
+        "backward": 0,
+        "sameColumn": 0
+      },
+      "after": {
+        "budget": 12,
+        "mode": "all",
+        "edges": 2,
+        "crossings": 0,
+        "throughNodes": 0,
+        "backward": 0,
+        "sameColumn": 0
+      }
+    },
+    {
+      "id": "6|folder|src/flask/sansio",
+      "label": "flask src/flask/sansio",
+      "level": "folder",
+      "nodes": 3,
+      "edgesTotal": 4,
+      "before": {
+        "budget": 40,
+        "mode": "all",
+        "edges": 4,
+        "crossings": 0,
+        "throughNodes": 1,
+        "backward": 1,
+        "sameColumn": 0
+      },
+      "after": {
+        "budget": 12,
+        "mode": "all",
+        "edges": 4,
+        "crossings": 0,
+        "throughNodes": 1,
+        "backward": 1,
+        "sameColumn": 0
+      }
+    },
+    {
+      "id": "7|folder|",
+      "label": "black (root)",
+      "level": "folder",
+      "nodes": 5,
+      "edgesTotal": 1,
+      "before": {
+        "budget": 40,
+        "mode": "all",
+        "edges": 1,
+        "crossings": 0,
+        "throughNodes": 0,
+        "backward": 0,
+        "sameColumn": 0
+      },
+      "after": {
+        "budget": 12,
+        "mode": "all",
+        "edges": 1,
+        "crossings": 0,
+        "throughNodes": 0,
+        "backward": 0,
+        "sameColumn": 0
+      }
+    },
+    {
+      "id": "7|folder|profiling",
+      "label": "black profiling",
+      "level": "folder",
+      "nodes": 5,
+      "edgesTotal": 0,
+      "before": {
+        "budget": 40,
+        "mode": "all",
+        "edges": 0,
+        "crossings": 0,
+        "throughNodes": 0,
+        "backward": 0,
+        "sameColumn": 0
+      },
+      "after": {
+        "budget": 12,
+        "mode": "all",
+        "edges": 0,
+        "crossings": 0,
+        "throughNodes": 0,
+        "backward": 0,
+        "sameColumn": 0
+      }
+    },
+    {
+      "id": "7|folder|scripts",
+      "label": "black scripts",
+      "level": "folder",
+      "nodes": 7,
+      "edgesTotal": 0,
+      "before": {
+        "budget": 40,
+        "mode": "all",
+        "edges": 0,
+        "crossings": 0,
+        "throughNodes": 0,
+        "backward": 0,
+        "sameColumn": 0
+      },
+      "after": {
+        "budget": 12,
+        "mode": "all",
+        "edges": 0,
+        "crossings": 0,
+        "throughNodes": 0,
+        "backward": 0,
+        "sameColumn": 0
+      }
+    },
+    {
+      "id": "7|folder|src",
+      "label": "black src",
+      "level": "folder",
+      "nodes": 4,
+      "edgesTotal": 4,
+      "before": {
+        "budget": 40,
+        "mode": "all",
+        "edges": 4,
+        "crossings": 0,
+        "throughNodes": 1,
+        "backward": 0,
+        "sameColumn": 0
+      },
+      "after": {
+        "budget": 12,
+        "mode": "all",
+        "edges": 4,
+        "crossings": 0,
+        "throughNodes": 1,
+        "backward": 0,
+        "sameColumn": 0
+      }
+    },
+    {
+      "id": "7|folder|src/blackd",
+      "label": "black src/blackd",
+      "level": "folder",
+      "nodes": 4,
+      "edgesTotal": 2,
+      "before": {
+        "budget": 40,
+        "mode": "all",
+        "edges": 2,
+        "crossings": 0,
+        "throughNodes": 0,
+        "backward": 0,
+        "sameColumn": 0
+      },
+      "after": {
+        "budget": 12,
+        "mode": "all",
+        "edges": 2,
+        "crossings": 0,
+        "throughNodes": 0,
+        "backward": 0,
+        "sameColumn": 0
+      }
+    },
+    {
+      "id": "7|folder|src/blib2to3",
+      "label": "black src/blib2to3",
+      "level": "folder",
+      "nodes": 4,
+      "edgesTotal": 4,
+      "before": {
+        "budget": 40,
+        "mode": "all",
+        "edges": 4,
+        "crossings": 0,
+        "throughNodes": 1,
+        "backward": 2,
+        "sameColumn": 0
+      },
+      "after": {
+        "budget": 12,
+        "mode": "all",
+        "edges": 4,
+        "crossings": 0,
+        "throughNodes": 1,
+        "backward": 2,
+        "sameColumn": 0
+      }
+    },
+    {
+      "id": "7|folder|src/blib2to3/pgen2",
+      "label": "black src/blib2to3/pgen2",
+      "level": "folder",
+      "nodes": 8,
+      "edgesTotal": 15,
+      "before": {
+        "budget": 40,
+        "mode": "all",
+        "edges": 15,
+        "crossings": 0,
+        "throughNodes": 10,
+        "backward": 1,
+        "sameColumn": 0
+      },
+      "after": {
+        "budget": 12,
+        "mode": "tier",
+        "edges": 5,
+        "crossings": 0,
+        "throughNodes": 1,
+        "backward": 0,
+        "sameColumn": 0
+      }
+    }
+  ]
+}
