@@ -15,6 +15,7 @@ import { Icon } from "../components/Icon";
 import { PathText } from "../components/PathText";
 import { SeverityBadge } from "../components/Severity";
 import { languageLabel } from "../graphModel";
+import { findingsCountLabel } from "../findingsCount";
 import { exploreHref, useSetParams } from "../links";
 
 const PAGE = 50;
@@ -63,7 +64,10 @@ export function Findings() {
       <div className="findings-main">
         <div className="findings-head">
           <h2 className="section-title">
-            Findings{counts ? <span className="mono num"> ({counts.total})</span> : null}
+            Findings
+            {counts && findings.data ? (
+              <span className="mono num"> {findingsCountLabel(findings.data.total, counts.total)}</span>
+            ) : null}
           </h2>
           <p className="caption">
             These are rule-based checks. They can miss issues and can flag safe code. Review each
