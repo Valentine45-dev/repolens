@@ -53,3 +53,17 @@ describe("panel title", () => {
     }
   });
 });
+
+describe("map tooltips", () => {
+  it("edge count labels take the pointer, so hovering one shows the tooltip", () => {
+    expect(rule(".edge-label")).toMatch(/pointer-events:\s*all/);
+  });
+
+  it("edges take the pointer although React Flow marks them inactive", () => {
+    expect(rule(".canvas-flow .react-flow__edge.inactive")).toMatch(/pointer-events:\s*visibleStroke/);
+  });
+
+  it("the tooltip itself never takes the pointer", () => {
+    expect(rule(".map-tip")).toMatch(/pointer-events:\s*none/);
+  });
+});

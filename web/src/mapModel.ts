@@ -327,6 +327,47 @@ export function boundaryTitle(n: MapNode): string {
   );
 }
 
+/** Hover text for a node: what it is and what it holds, not its name again. */
+export function nodeTooltip(n: MapNode, level: "folder" | "file" | "symbol"): string {
+  const lines: string[] = [];
+  if (n.kind === "more") {
+    return level === "symbol"
+      ? `${plural(n.hidden_count ?? 0, "more symbol")} are not drawn: this view shows the 60 best connected.`
+      : `${plural(n.hidden_count ?? 0, "item")} not drawn, ${plural(n.file_count ?? 0, "file")} in all.\nClick to open them in List view.`;
+  }
+  if (n.kind === "folder") {
+    lines.push(`${n.path}/`);
+    const parts = [plural(n.file_count ?? 0, "file")];
+    if (n.test_file_count) parts.push(`${n.test_file_count} of them tests or examples`);
+    if (n.finding_count) parts.push(plural(n.finding_count, "finding"));
+    lines.push(parts.join(" · "));
+  } else if (n.kind === "file") {
+    lines.push(n.path);
+    const parts = [languageName(n.language), n.loc != null ? plural(n.loc, "line") : ""].filter(Boolean);
+    if (n.finding_count) parts.push(plural(n.finding_count, "finding"));
+    if (n.external_imports) parts.push(`${plural(n.external_imports, "external import")}`);
+    lines.push(parts.join(" · "));
+  } else {
+    lines.push(n.qualified_name ?? n.label);
+    const where = n.start_line != null ? `${n.path}:${n.start_line}-${n.end_line}` : n.path;
+    lines.push(`${n.kind} · ${where}`);
+    if (n.finding_count) lines.push(plural(n.finding_count, "finding"));
+  }
+  if (level !== "symbol") {
+    const crossing = boundaryText(n);
+    if (crossing) lines.push(`${crossing}: ${boundaryTitle(n)}`);
+  }
+  if (n.in_cycle === true) lines.push("Part of a circular import (top-level imports only).");
+  return lines.join("\n");
+}
+
+function languageName(language: string | undefined): string {
+  if (language === "python") return "Python";
+  if (language === "typescript") return "TypeScript";
+  if (language === "javascript") return "JavaScript";
+  return language ?? "";
+}
+
 /** The note beside the toolbar: what is on the canvas and what is hidden. */
 export function viewNote(view: MapView): string {
   const parts: string[] = [];

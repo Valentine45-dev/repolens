@@ -19,6 +19,7 @@ import {
   isDashed,
   isDrawn,
   nodeAction,
+  nodeTooltip,
   nodeSummary,
   navigateChanges,
   paramsWith,
@@ -514,5 +515,52 @@ describe("layout", () => {
   it("ignores edges to nodes that are not in the view", () => {
     const pos = layoutMap("folder", [node("a")], [edge("a", "missing")]);
     expect(pos.size).toBe(1);
+  });
+});
+
+describe("node tooltips say something the label does not", () => {
+  it("a folder: path, files, tests, findings and what crosses its edge", () => {
+    const t = nodeTooltip(
+      node("dir:challenge", {
+        path: "challenge", file_count: 22, test_file_count: 3, finding_count: 8,
+        outside_in: 4, outside_out: 2, in_cycle: false,
+      }),
+      "folder",
+    );
+    expect(t).toContain("challenge/");
+    expect(t).toContain("22 files · 3 of them tests or examples · 8 findings");
+    expect(t).toContain("↑ 4 in · 2 out");
+    expect(t).not.toContain("circular");
+  });
+
+  it("a file: path, language, lines, findings and external imports", () => {
+    const t = nodeTooltip(
+      node("file:a.py", {
+        kind: "file", path: "src/a.py", language: "python", loc: 120, finding_count: 1,
+        external_imports: 3, outside_in: 0, outside_out: 0,
+      }),
+      "file",
+    );
+    expect(t).toBe("src/a.py\nPython · 120 lines · 1 finding · 3 external imports");
+  });
+
+  it("a symbol: qualified name, kind and where it is", () => {
+    const t = nodeTooltip(
+      node("sym:1", {
+        kind: "method", label: "sign", qualified_name: "Signer.sign", path: "src/signer.py",
+        start_line: 10, end_line: 22,
+      }),
+      "symbol",
+    );
+    expect(t).toBe("Signer.sign\nmethod · src/signer.py:10-22");
+  });
+
+  it("marks circular members and explains '+ N more'", () => {
+    expect(nodeTooltip(node("file:a.py", { kind: "file", path: "a.py", in_cycle: true }), "file")).toContain(
+      "circular import",
+    );
+    const more = node("more:test", { kind: "more", label: "13 more", hidden_count: 13, file_count: 13 });
+    expect(nodeTooltip(more, "folder")).toContain("13 items not drawn, 13 files in all.");
+    expect(nodeTooltip(more, "folder")).toContain("List view");
   });
 });

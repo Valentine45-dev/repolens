@@ -1259,6 +1259,31 @@ a {
   color: var(--text-muted);
   font-size: 11px;
   line-height: 16px;
+  pointer-events: all; /* hovering the count shows the same tooltip as the line */
+  cursor: default;
+}
+
+/* React Flow gives an edge "inactive" (pointer-events: none) unless it is selectable or clickable;
+   ours are neither, but must take the pointer for the tooltip. The wide invisible stroke
+   (interactionWidth) is the hit zone. */
+.canvas-flow .react-flow__edge.inactive {
+  pointer-events: visibleStroke;
+  cursor: default;
+}
+
+/* Edge tooltip: Paper, Hairline, no shadow (DESIGN.md: no elevation). */
+.map-tip {
+  position: absolute;
+  z-index: 5;
+  max-width: 320px;
+  padding: var(--space-2) var(--space-3);
+  border: 1px solid var(--border-strong);
+  border-radius: 4px;
+  background: var(--bg);
+  color: var(--text);
+  font-size: var(--text-xs);
+  line-height: 1.45;
+  white-space: pre-line;
   pointer-events: none;
 }
 

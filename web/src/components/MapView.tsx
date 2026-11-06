@@ -3,6 +3,7 @@ import "@xyflow/react/dist/style.css";
 import {
   BaseEdge,
   type Edge,
+  type EdgeMouseHandler,
   type EdgeProps,
   EdgeLabelRenderer,
   getBezierPath,
@@ -29,7 +30,7 @@ import {
 import { Link } from "react-router-dom";
 
 import type { MapNode, MapView as MapViewData } from "../api";
-import { languageLabel, splitPath } from "../graphModel";
+import { splitPath } from "../graphModel";
 import {
   createFocusStore,
   EDGE_ACTIVE,
@@ -52,6 +53,7 @@ import {
   isDashed,
   type NodeAction,
   nodeAction,
+  nodeTooltip,
   plural,
   restingEdges,
   showEdgeLabel,
@@ -65,6 +67,14 @@ import { Icon } from "./Icon";
 // and edge subscribes to a number about itself (so a hover re-renders a handful of them, not the
 // canvas) and the dimming of everything else is one attribute on the container.
 const StoreContext = createContext<FocusStore>(createFocusStore());
+
+// The edge tooltip is ours (a native <title> shows late, and only over the thin line): it follows
+// the pointer over an edge, its wide invisible hit zone, and its count label.
+interface Tip {
+  show(clientX: number, clientY: number, text: string): void;
+  hide(): void;
+}
+const TipContext = createContext<Tip>({ show: () => undefined, hide: () => undefined });
 
 type MapNodeData = {
   node: MapNode;
@@ -159,7 +169,7 @@ const MapNodeView = memo(function MapNodeView({ data }: NodeProps<MapFlowNode>) 
     style: { width: MAP_NODE_WIDTH, height: mapNodeHeight(level) },
   };
   let head;
-  let title = node.path;
+  const title = nodeTooltip(node, level);
   if (node.kind === "folder") {
     head = (
       <>
@@ -171,7 +181,6 @@ const MapNodeView = memo(function MapNodeView({ data }: NodeProps<MapFlowNode>) 
     );
   } else if (node.kind === "file") {
     const [dir, name] = splitPath(node.label);
-    title = `${node.path} · ${languageLabel(node.language ?? "")}`;
     head = (
       <>
         <span className="graph-node-lang" data-lang={node.language} aria-hidden="true">
@@ -189,7 +198,6 @@ const MapNodeView = memo(function MapNodeView({ data }: NodeProps<MapFlowNode>) 
     );
   } else if (node.kind === "more") {
     const opens = level !== "symbol";
-    title = opens ? `${node.label}: open them in List view` : `${node.label}: not drawn`;
     head = (
       <span className="map-node-text">
         <span className="map-node-name">+ {node.label}</span>
@@ -198,7 +206,6 @@ const MapNodeView = memo(function MapNodeView({ data }: NodeProps<MapFlowNode>) 
     );
   } else {
     const own = node.own !== false;
-    title = `${node.qualified_name ?? node.label} · ${node.path}`;
     head = (
       <>
         <span className="graph-node-lang" data-symbol aria-hidden="true">
@@ -257,6 +264,7 @@ function DepEdge({
   data,
 }: EdgeProps<MapFlowEdge>) {
   const store = useContext(StoreContext);
+  const tip = useContext(TipContext);
   const flags = useSyncExternalStore(store.subscribe, () =>
     data ? store.edgeFlags(data.source, data.target, data.rest) : 0,
   );
@@ -303,6 +311,7 @@ function DepEdge({
         <title>{data.title}</title>
         <BaseEdge
           path={path}
+          interactionWidth={EDGE_HIT_WIDTH}
           markerEnd={`url(#${data.markerId})`}
           style={{
             strokeDasharray: data.dashed ? "5 4" : undefined,
@@ -316,6 +325,9 @@ function DepEdge({
             className="edge-label mono num"
             data-active={active || undefined}
             data-cycle={data.cycle || undefined}
+            onMouseEnter={(e) => tip.show(e.clientX, e.clientY, data.title)}
+            onMouseMove={(e) => tip.show(e.clientX, e.clientY, data.title)}
+            onMouseLeave={tip.hide}
             style={{
               transform: `translate(-50%, -50%) translate(${labelX}px, ${labelY + data.lane}px)`,
             }}
@@ -327,6 +339,9 @@ function DepEdge({
     </>
   );
 }
+
+// A wide invisible zone around each edge line, so a 1-px line can be hit with a real mouse.
+const EDGE_HIT_WIDTH = 18;
 
 const nodeTypes = { map: MapNodeView };
 const edgeTypes = { dep: DepEdge };
@@ -371,12 +386,34 @@ export function MapView({
   // Hover and keyboard focus show every edge of a node, like a selection does. Hover waits a
   // moment, so sweeping across the map does not restyle it for every node it crosses.
   const store = useMemo(createFocusStore, []);
+  const [tipState, setTipState] = useState<{ x: number; y: number; text: string } | null>(null);
+  const tip = useMemo<Tip>(
+    () => ({
+      show(clientX, clientY, text) {
+        const box = canvasRef.current?.getBoundingClientRect();
+        if (!box) return;
+        const x = Math.round(clientX - box.left);
+        const y = Math.round(clientY - box.top);
+        setTipState((old) =>
+          old && old.text === text && Math.abs(old.x - x) < 4 && Math.abs(old.y - y) < 4
+            ? old
+            : { x, y, text },
+        );
+      },
+      hide: () => setTipState(null),
+    }),
+    [],
+  );
   useLayoutEffect(() => store.configure(view.edges, selectedNodeId), [store, view.edges, selectedNodeId]);
   const intent = useMemo(() => createHoverIntent(store.setHover), [store]);
   useEffect(() => () => intent.cancel(), [intent]);
   const onNodeMouseEnter = useCallback<NodeMouseHandler>((_, node) => intent.enter(node.id), [intent]);
   const onNodeMouseLeave = useCallback<NodeMouseHandler>(() => intent.leave(), [intent]);
   const focusing = useSyncExternalStore(store.subscribe, store.focusing);
+  const onEdgeMouseMove = useCallback<EdgeMouseHandler<MapFlowEdge>>(
+    (event, edge) => tip.show(event.clientX, event.clientY, edge.data?.title ?? ""),
+    [tip],
+  );
 
   // Centre a selected file in the part of the canvas the panel leaves free.
   const [fitOnMount] = useState(selectedNodeId === null);
@@ -493,6 +530,7 @@ export function MapView({
       onBlur={() => store.setFocused(null)}
     >
       <StoreContext.Provider value={store}>
+      <TipContext.Provider value={tip}>
       <ReactFlow<MapFlowNode, MapFlowEdge>
         nodes={flowNodes}
         edges={flowEdges}
@@ -504,6 +542,10 @@ export function MapView({
         }}
         onNodeMouseEnter={onNodeMouseEnter}
         onNodeMouseLeave={onNodeMouseLeave}
+        // Edges ignore the pointer unless the canvas has an edge handler; these also drive the tooltip.
+        onEdgeMouseEnter={onEdgeMouseMove}
+        onEdgeMouseMove={onEdgeMouseMove}
+        onEdgeMouseLeave={tip.hide}
         onPaneClick={onClear}
         fitView={fitOnMount}
         fitViewOptions={FIT_OPTIONS}
@@ -515,6 +557,23 @@ export function MapView({
         elementsSelectable={false}
         onlyRenderVisibleElements
       />
+      {tipState ? (
+        <div
+          className="map-tip"
+          role="tooltip"
+          style={{
+            left: tipState.x + 14,
+            top: tipState.y + 14,
+            transform:
+              canvasRef.current && tipState.x > canvasRef.current.clientWidth - 340
+                ? "translateX(calc(-100% - 28px))"
+                : undefined,
+          }}
+        >
+          {tipState.text}
+        </div>
+      ) : null}
+      </TipContext.Provider>
       </StoreContext.Provider>
     </div>
   );
