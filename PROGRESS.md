@@ -1268,6 +1268,19 @@
   - **Known limits:** crossings are judged on straight lines, the drawn curves differ a little; the Explorer's toolbar-note counts change width on arrival
     (0.0001 CLS); the real mouse was exercised only by hit-testing and dispatched events here, the owner's Firefox pass is the real test.
 
+- **Part B (folder-map UI) merged into `main` (6 Nov), owner's go after a real-mouse pass in Firefox.** Passed there: no blink on hover,
+  clicks after hover, folders open fast, Functions and jump to lines, breadcrumbs and Up, the real cycle in flask `js_example`, no false cycle on
+  PyGoat `challenge` <-> `scoring`, the findings link, the edge-density caption and "Show all edges", the side panel (gutter, title, height),
+  page-aware skeletons with no jump, edge and node tooltips, readable function names, flask `src/flask` clean, "Findings (48 of 60)". Local: web 131
+  tests, backend 365 passed and 3 skipped; CI green on the branch.
+  - **ELK: later, if needed.** Not added. `elkjs` (~1.4 MB, a web worker) would route edges around nodes; worth it only if a dense view still reads badly
+    (black `src/black` has 22 edges through other nodes and 5 crossings, down from 43 and 75). Needs the owner's OK first.
+  - **Polish for later:**
+    1. The legend strip keeps an empty reserved row under it when there is no caption (it stops the map moving when a caption arrives). A calmer way:
+       reserve the room without the visible grey band, or show the caption elsewhere.
+    2. The disabled "Show all edges" has no hint. Add a tooltip: "All connections are already shown."
+  - **State left running:** Docker `db`, the API on 8000 and `vite preview` on 5173 (the new build) were started for this work.
+
 ### Notes for the Part B (UI) session
 Decided in Step 0 of the folder map and followed by the Part B build above (kept for the reasoning).
 - **Keep the flat query for the node panel and List view.** `selected` comes from the graph response
