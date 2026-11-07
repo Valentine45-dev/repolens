@@ -1,0 +1,251 @@
+{
+  "run": {
+    "commit_sha": "f0af11f77c5ec03a0243db3530c099a78504654b",
+    "dirty": false,
+    "run_at": "2026-11-07T09:52:52+00:00",
+    "machine": "LAPTOP-4C2E555R",
+    "cpu": "Intel(R) Pentium(R) Silver N5030 CPU @ 1.10GHz",
+    "cpu_threads": 4,
+    "ram_gb": 7.8,
+    "os": "Windows 11 (10.0.22631)",
+    "python": "3.12.16",
+    "packages": {
+      "torch": "2.14.1+cpu",
+      "sentence-transformers": "6.2.0",
+      "transformers": "5.21.0",
+      "tree-sitter": "0.25.2",
+      "anthropic": "2.3.0"
+    },
+    "max_analysis_s": 600,
+    "tool_pins": {
+      "bandit": "bandit==1.9.4",
+      "semgrep": "semgrep==1.182.1"
+    },
+    "notes": "",
+    "embedder": "sentence-transformers",
+    "embed_model": "sentence-transformers/all-MiniLM-L6-v2",
+    "embed_revision": "1110a243fdf4706b3f48f1d95db1a4f5529b4d41",
+    "llm_used": false,
+    "llm": {
+      "provider": "anthropic",
+      "model": "claude-sonnet-5-5",
+      "effort": "low",
+      "thinking": "between_tools",
+      "max_tokens": 4000,
+      "prompt_version": "2026-10-28.2"
+    },
+    "retrieval": {
+      "top_k": 8,
+      "graph_expansion": true,
+      "expand_max": 8,
+      "context_tokens": 6000
+    }
+  },
+  "repos": {
+    "pygoat": {
+      "snapshot_id": 2,
+      "commit": "46fef968f3f44d1191363baf936aaa3335dc5c6d"
+    },
+    "flask": {
+      "snapshot_id": 6,
+      "commit": "49943b5a94413a530761350f04e896f76e8d620e"
+    },
+    "black": {
+      "snapshot_id": 7,
+      "commit": "b4f1fcae48826790b6f93ca9226d20003bce0eaa"
+    },
+    "express": {
+      "snapshot_id": 3,
+      "commit": "1c6f1b0fe4000977b9a7b4f34097e4d527dd9824"
+    }
+  },
+  "rule": "eval/call_calibration_rule.md",
+  "seed": 20261107,
+  "caps": {
+    "per_edge": 1,
+    "per_callee": 2
+  },
+  "populations_non_test_python": {
+    "pygoat 1.0": {
+      "sites": 107,
+      "distinct_callees": 55,
+      "distinct_caller_files": 27,
+      "distinct_callee_files": 28
+    },
+    "flask 1.0": {
+      "sites": 92,
+      "distinct_callees": 51,
+      "distinct_caller_files": 16,
+      "distinct_callee_files": 13
+    },
+    "black 1.0": {
+      "sites": 1161,
+      "distinct_callees": 421,
+      "distinct_caller_files": 37,
+      "distinct_callee_files": 38
+    },
+    "pygoat 0.9": {
+      "sites": 1,
+      "distinct_callees": 1,
+      "distinct_caller_files": 1,
+      "distinct_callee_files": 1
+    },
+    "flask 0.9": {
+      "sites": 92,
+      "distinct_callees": 59,
+      "distinct_caller_files": 13,
+      "distinct_callee_files": 13
+    },
+    "black 0.9": {
+      "sites": 197,
+      "distinct_callees": 101,
+      "distinct_caller_files": 15,
+      "distinct_callee_files": 15
+    },
+    "pygoat 0.5": {
+      "sites": 150,
+      "distinct_callees": 5,
+      "distinct_caller_files": 30,
+      "distinct_callee_files": 3
+    },
+    "flask 0.5": {
+      "sites": 100,
+      "distinct_callees": 50,
+      "distinct_caller_files": 14,
+      "distinct_callee_files": 12
+    },
+    "black 0.5": {
+      "sites": 269,
+      "distinct_callees": 74,
+      "distinct_caller_files": 30,
+      "distinct_callee_files": 15
+    }
+  },
+  "populations_express_all_code": {
+    "1.0": {
+      "sites": 331,
+      "distinct_callees": 49,
+      "distinct_caller_files": 40,
+      "distinct_callee_files": 33,
+      "in_test_or_example": 307
+    },
+    "0.9": {
+      "sites": 47,
+      "distinct_callees": 17,
+      "distinct_caller_files": 3,
+      "distinct_callee_files": 3,
+      "in_test_or_example": 0
+    },
+    "0.5": {
+      "sites": 1038,
+      "distinct_callees": 35,
+      "distinct_caller_files": 96,
+      "distinct_callee_files": 5,
+      "in_test_or_example": 1034
+    }
+  },
+  "drawn": {
+    "black 0.5": {
+      "sites": 10,
+      "distinct_callees": 8,
+      "distinct_caller_files": 7,
+      "distinct_callee_files": 7
+    },
+    "express 0.5": {
+      "sites": 8,
+      "distinct_callees": 7,
+      "distinct_caller_files": 8,
+      "distinct_callee_files": 3,
+      "in_test_or_example": 8
+    },
+    "flask 0.5": {
+      "sites": 11,
+      "distinct_callees": 11,
+      "distinct_caller_files": 6,
+      "distinct_callee_files": 7
+    },
+    "pygoat 0.5": {
+      "sites": 9,
+      "distinct_callees": 5,
+      "distinct_caller_files": 5,
+      "distinct_callee_files": 3
+    },
+    "black 0.9": {
+      "sites": 14,
+      "distinct_callees": 13,
+      "distinct_caller_files": 7,
+      "distinct_callee_files": 7
+    },
+    "express 0.9": {
+      "sites": 8,
+      "distinct_callees": 7,
+      "distinct_caller_files": 3,
+      "distinct_callee_files": 3,
+      "in_test_or_example": 0
+    },
+    "flask 0.9": {
+      "sites": 15,
+      "distinct_callees": 12,
+      "distinct_caller_files": 7,
+      "distinct_callee_files": 7
+    },
+    "pygoat 0.9": {
+      "sites": 1,
+      "distinct_callees": 1,
+      "distinct_caller_files": 1,
+      "distinct_callee_files": 1
+    },
+    "express 1.0": {
+      "sites": 8,
+      "distinct_callees": 8,
+      "distinct_caller_files": 8,
+      "distinct_callee_files": 8,
+      "in_test_or_example": 8
+    },
+    "flask 1.0": {
+      "sites": 15,
+      "distinct_callees": 15,
+      "distinct_caller_files": 8,
+      "distinct_callee_files": 6
+    },
+    "pygoat 1.0": {
+      "sites": 15,
+      "distinct_callees": 13,
+      "distinct_caller_files": 6,
+      "distinct_callee_files": 8
+    }
+  },
+  "drawn_per_band_main": {
+    "1.0": {
+      "sites": 30,
+      "distinct_callees": 28,
+      "distinct_caller_files": 14,
+      "distinct_callee_files": 14
+    },
+    "0.9": {
+      "sites": 30,
+      "distinct_callees": 26,
+      "distinct_caller_files": 15,
+      "distinct_callee_files": 15
+    },
+    "0.5": {
+      "sites": 30,
+      "distinct_callees": 24,
+      "distinct_caller_files": 18,
+      "distinct_callee_files": 17
+    }
+  },
+  "rows": {
+    "main": 90,
+    "express": 24,
+    "judge2": 30
+  },
+  "sha256": {
+    "sheet-blank.csv": "56391cd702ab18d6455822b1a0dcc9df9264b63535eb140ce5bb53a7948cf46e",
+    "sheet-blank-express.csv": "b6a7b478cfb37f014c80875d8b25f6550cc65fe7cfa301ccdd57e98324fc9c57",
+    "sheet-blank-judge2.csv": "1c7b891e18b278dcb2b5c2eb2ed77af1fceb29307a75c86b44ca7df11d25d3ee",
+    "key.json": "28424cfa3d2aacd815cf784e37104f2a4472530c0abf5844e9f477d3e2640dd0"
+  },
+  "files_location": "C:\\projects\\repolens-eval-assets\\call-calibration",
+  "note": "key.json is not opened until labelling is done; the labelled sheet's hash is committed before it is opened."
+}
