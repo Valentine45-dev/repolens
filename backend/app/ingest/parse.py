@@ -4,6 +4,7 @@ Tree-sitter tolerates syntax errors, so a broken file still yields what it can.
 The JS/TS parser (parse_js.py) returns the same ParsedFile shape.
 """
 
+import re
 from dataclasses import dataclass, field
 
 import tree_sitter_python
@@ -40,6 +41,9 @@ class ParsedImport:
     names: tuple[tuple[str, str], ...]
     line: int
     scope: str = TOP_LEVEL
+    # Inside a `try` whose handler can catch an ImportError (a fallback or optional dependency):
+    # a missing module there is expected, so the broken-import rule skips it.
+    guarded: bool = False
 
 
 @dataclass(frozen=True)
@@ -104,6 +108,27 @@ def _is_type_checking(condition: Node | None) -> bool:
             and text(condition.child_by_field_name("attribute")) == "TYPE_CHECKING")
 
 
+_IMPORT_GUARD = re.compile(r"\b(?:ImportError|ModuleNotFoundError|Exception|BaseException)\b")
+
+
+def guarded_by_try(node: Node) -> bool:
+    """True when `node` sits in the body of a try statement with a handler that would catch a
+    failed import: a bare `except`, or one naming ImportError, ModuleNotFoundError or Exception.
+    (JS: any try with a catch clause.) A handler body or `finally` does not count."""
+    child, parent = node, node.parent
+    while parent is not None:
+        if parent.type == "try_statement" and child == parent.child_by_field_name("body"):
+            for handler in parent.named_children:
+                if handler.type == "catch_clause":
+                    return True
+                if handler.type in ("except_clause", "except_group_clause"):
+                    header = text(handler).split(":", 1)[0].strip()
+                    if header in ("except", "except*") or _IMPORT_GUARD.search(header):
+                        return True
+        child, parent = parent, parent.parent
+    return False
+
+
 def _from_import(node: Node, scope: str) -> ParsedImport:
     """`from .m import a, b as c` -> ParsedImport('.m', (('a', 'a'), ('b', 'c')))."""
     module_node = node.child_by_field_name("module_name")
@@ -118,20 +143,22 @@ def _from_import(node: Node, scope: str) -> ParsedImport:
                           text(child.child_by_field_name("alias"))))
         elif child.type == "dotted_name":
             names.append((text(child), text(child)))
-    return ParsedImport(text(module_node), tuple(names), node.start_point.row + 1, scope)
+    return ParsedImport(text(module_node), tuple(names), node.start_point.row + 1, scope,
+                        guarded_by_try(node))
 
 
 def _plain_imports(node: Node, scope: str) -> list[ParsedImport]:
     """`import a.b, c as d` -> one ParsedImport per module."""
     line = node.start_point.row + 1
+    guarded = guarded_by_try(node)
     result = []
     for child in node.named_children:
         if child.type == "aliased_import":
             module = text(child.child_by_field_name("name"))
             result.append(ParsedImport(module, (("*", text(child.child_by_field_name("alias"))),),
-                                       line, scope))
+                                       line, scope, guarded))
         elif child.type == "dotted_name":
-            result.append(ParsedImport(text(child), (("*", text(child)),), line, scope))
+            result.append(ParsedImport(text(child), (("*", text(child)),), line, scope, guarded))
     return result
 
 
