@@ -1,0 +1,4 @@
+# Repos of the locked Q&A set: names only (their questions are never opened). Listed by the owner, 8 Nov 2026.
+# A pool repo on this list is skipped by the counting run. Later additions are recorded in the report, not swapped.
+https://github.com/sindresorhus/p-limit
+https://github.com/jd/tenacity
