@@ -30,12 +30,12 @@ export function findingsHref(
   snapshotId: number,
   opts: { path: string; folder: boolean; hideTests: boolean; ask?: boolean },
 ): string {
-  const params = new URLSearchParams();
+  // The map counts every finding, so the list opens on "All"; its default is Security only.
+  const params = new URLSearchParams({ category: "all" });
   if (opts.path) params.set("path", opts.folder ? `${opts.path.replace(/\/$/, "")}/` : opts.path);
   if (opts.hideTests) params.set("tests", "hide");
   if (opts.ask) params.set("ask", "1");
-  const query = params.toString();
-  return `/a/${snapshotId}/findings${query ? `?${query}` : ""}`;
+  return `/a/${snapshotId}/findings?${params}`;
 }
 
 /** '12-15' -> {12, 15}; '12' -> {12, 12}; anything else -> null. */

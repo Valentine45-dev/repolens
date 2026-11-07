@@ -1140,6 +1140,7 @@ dependencies = [
     { name = "anthropic" },
     { name = "fastapi" },
     { name = "psycopg", extra = ["binary", "pool"] },
+    { name = "ruff" },
     { name = "tree-sitter" },
     { name = "tree-sitter-javascript" },
     { name = "tree-sitter-python" },
@@ -1152,7 +1153,6 @@ dev = [
     { name = "httpx" },
     { name = "pytest" },
     { name = "pyyaml" },
-    { name = "ruff" },
 ]
 embed = [
     { name = "sentence-transformers" },
@@ -1165,6 +1165,7 @@ requires-dist = [
     { name = "anthropic", specifier = ">=2.3.0" },
     { name = "fastapi", specifier = ">=0.162.0" },
     { name = "psycopg", extras = ["binary", "pool"], specifier = ">=3.3.6" },
+    { name = "ruff", specifier = ">=0.17.2" },
     { name = "tree-sitter", specifier = ">=0.25.2,<0.26" },
     { name = "tree-sitter-javascript", specifier = ">=0.25.0" },
     { name = "tree-sitter-python", specifier = ">=0.25.0" },
@@ -1177,7 +1178,6 @@ dev = [
     { name = "httpx", specifier = ">=0.28.1" },
     { name = "pytest", specifier = ">=9.1.1" },
     { name = "pyyaml", specifier = ">=6" },
-    { name = "ruff", specifier = ">=0.17.2" },
 ]
 embed = [
     { name = "sentence-transformers", specifier = ">=3.0" },

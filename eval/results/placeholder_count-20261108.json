@@ -1,0 +1,48 @@
+{
+ "adeyosemanputra/pygoat@46fef96": {
+  "by_location_and_class": {
+   "doc: not a placeholder": 1,
+   "other: not a placeholder": 40,
+   "other: template value, severity kept (code / runtime config)": 5,
+   "test: not a placeholder": 2
+  },
+  "by_pattern": {
+   "(not a placeholder)": 43,
+   "your-or-here": 5
+  },
+  "secret_matches": 48
+ },
+ "expressjs/express@1c6f1b0": {
+  "by_location_and_class": {
+   "test: not a placeholder": 1
+  },
+  "by_pattern": {
+   "(not a placeholder)": 1
+  },
+  "secret_matches": 1
+ },
+ "pallets/flask@49943b5": {
+  "by_location_and_class": {
+   "doc: not a placeholder": 6,
+   "test: not a placeholder": 8
+  },
+  "by_pattern": {
+   "(not a placeholder)": 14
+  },
+  "secret_matches": 14
+ },
+ "pallets/itsdangerous@672971d": {
+  "by_location_and_class": {
+   "test: not a placeholder": 7
+  },
+  "by_pattern": {
+   "(not a placeholder)": 7
+  },
+  "secret_matches": 7
+ },
+ "psf/black@b4f1fca": {
+  "by_location_and_class": {},
+  "by_pattern": {},
+  "secret_matches": 0
+ }
+}

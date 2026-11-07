@@ -72,12 +72,50 @@ _CONFIG_NOT_SECRET = re.compile(
 _PLACEHOLDER_ONLY = re.compile(r"(?:\{[^{}\s]*\})+")
 
 
+# Values that are clearly stand-ins, not credentials. Only wording and shapes that say "fill this
+# in" are listed. Weak real passwords (admin, password123, secret, 123456) are NOT placeholders:
+# a guessable credential in code is the finding. The name returned is the pattern that matched.
+_PLACEHOLDER_MARKERS = re.compile(
+    r"change[-_ ]?me|change[-_ ]?this|replace[-_ ]?me|placeholder|dummy|fake|example|redacted"
+    r"|not[-_ ]?a[-_ ]?secret|todo|fixme",
+    re.IGNORECASE,
+)
+_PLACEHOLDER_PATTERNS: list[tuple[str, re.Pattern[str]]] = [
+    # <your-key>, ${API_KEY}, $API_KEY, {{ token }}, %(token)s
+    ("template", re.compile(r"^(?:<[^<>]*>|\$\{[^}]*\}|\$[A-Za-z_]\w*|\{\{.*\}\}|%\([^)]*\)s)$")),
+    # your-api-key, YOUR_SECRET_HERE, insert-token-here, paste_key_here
+    ("your-or-here", re.compile(
+        r"^(?:your|insert|enter|paste|put)[-_. ]\w|^your(?:key|token|secret|pass|api)"
+        r"|[-_.](?:here|goes[-_.]?here)$",
+        re.IGNORECASE)),
+    ("marker-word", _PLACEHOLDER_MARKERS),
+    # xxxxxx, ******, aaaaaa, 000000 (six or more of one character)
+    ("repeated-char", re.compile(r"^(.)\1{5,}$")),
+    # xxxx-xxxx-xxxx, ****-****, ####
+    ("mask", re.compile(r"^[xX*#._-]{4,}$")),
+    # values copied from vendor documentation
+    ("vendor-doc", re.compile(
+        r"^(?:wJalrXUtnFEMI/|sk_test_" + "4eC39HqLyjWDarjtT1zdp7dc|"
+        r"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9\.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIi)")),
+]
+
+
+def placeholder_pattern(value: str) -> str | None:
+    """Name of the placeholder pattern `value` matches, or None. Looks at the raw value in
+    memory; the value is never stored or logged."""
+    for name, pattern in _PLACEHOLDER_PATTERNS:
+        if (pattern.search(value) if name == "marker-word" else pattern.match(value)):
+            return name
+    return None
+
+
 @dataclass(frozen=True)
 class SecretMatch:
     """Where a secret was found. Never holds the secret value."""
 
     line: int  # 1-based, in the original (and redacted) text
     kind: str
+    placeholder: str | None = None  # name of the placeholder pattern, if the value is a stand-in
 
 
 def redact(text: str, config: bool = False) -> tuple[str, list[SecretMatch]]:
@@ -108,7 +146,8 @@ def redact(text: str, config: bool = False) -> tuple[str, list[SecretMatch]]:
     for start, end, kind in spans:
         out.append(text[pos:start])
         out.append(REDACTED + "\n" * text.count("\n", start, end))
-        matches.append(SecretMatch(line=text.count("\n", 0, start) + 1, kind=kind))
+        matches.append(SecretMatch(line=text.count("\n", 0, start) + 1, kind=kind,
+                                   placeholder=placeholder_pattern(text[start:end])))
         pos = end
     out.append(text[pos:])
     return "".join(out), matches

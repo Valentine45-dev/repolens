@@ -17,6 +17,7 @@ from app.ingest.parse import (
     ParsedFile,
     ParsedImport,
     ParsedSymbol,
+    guarded_by_try,
     line_count,
     text,
 )
@@ -209,7 +210,8 @@ def parse_js(path: str, source: str) -> ParsedFile:
             scope = TYPE_ONLY
         elif scope is None:
             scope = NESTED if _inside_function(node) else TOP_LEVEL
-        out.imports.append(ParsedImport(specifier, tuple(names), node.start_point.row + 1, scope))
+        out.imports.append(ParsedImport(specifier, tuple(names), node.start_point.row + 1, scope,
+                                        guarded_by_try(node)))
 
     def visit(node: Node, scope: str) -> None:
         for child in node.named_children:

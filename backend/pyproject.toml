@@ -7,6 +7,8 @@ dependencies = [
     "anthropic>=2.3.0",
     "fastapi>=0.162.0",
     "psycopg[binary,pool]>=3.3.6",
+    # Runs at analysis time for the Bug / Quality findings (app/detect/ruff.py); also lints our code.
+    "ruff>=0.17.2",
     "tree-sitter>=0.25.2,<0.26",
     "tree-sitter-javascript>=0.25.0",
     "tree-sitter-python>=0.25.0",
@@ -19,7 +21,6 @@ dev = [
     "httpx>=0.28.1",
     "pytest>=9.1.1",
     "pyyaml>=6",
-    "ruff>=0.17.2",
 ]
 # The embedding model. Installed by default (plain `uv sync` / `uv run`); CI skips it with
 # UV_NO_GROUP=embed and uses the stub embedder, so it never downloads torch or the model.

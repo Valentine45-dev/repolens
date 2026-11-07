@@ -1,0 +1,48 @@
+{
+ "adeyosemanputra/pygoat@46fef96": {
+  "by_location_and_class": {
+   "doc:kept": 1,
+   "other:kept": 40,
+   "other:placeholder": 5,
+   "test:kept": 2
+  },
+  "by_pattern": {
+   "(not a placeholder)": 43,
+   "your-or-here": 5
+  },
+  "secret_matches": 48
+ },
+ "expressjs/express@1c6f1b0": {
+  "by_location_and_class": {
+   "test:kept": 1
+  },
+  "by_pattern": {
+   "(not a placeholder)": 1
+  },
+  "secret_matches": 1
+ },
+ "pallets/flask@49943b5": {
+  "by_location_and_class": {
+   "doc:kept": 6,
+   "test:kept": 8
+  },
+  "by_pattern": {
+   "(not a placeholder)": 14
+  },
+  "secret_matches": 14
+ },
+ "pallets/itsdangerous@672971d": {
+  "by_location_and_class": {
+   "test:kept": 7
+  },
+  "by_pattern": {
+   "(not a placeholder)": 7
+  },
+  "secret_matches": 7
+ },
+ "psf/black@b4f1fca": {
+  "by_location_and_class": {},
+  "by_pattern": {},
+  "secret_matches": 0
+ }
+}

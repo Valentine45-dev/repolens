@@ -107,8 +107,18 @@ def test_ingest_fixture_repo(client, tmp_path):
         (c["src"], c["dst"], round(c["confidence"], 2)) for c in calls
     }
 
+    # The fixture's unresolvable imports (broken.py, app.ts) are the seeded broken imports.
+    broken = query("SELECT fi.path, f.line, f.message, f.severity, f.in_test FROM findings f"
+                   " JOIN files fi ON fi.id = f.file_id WHERE f.rule_id = 'broken-internal-import'"
+                   " ORDER BY fi.path, f.line")
+    assert [(b["path"], b["line"]) for b in broken] == [
+        ("sample_app/broken.py", 14), ("sample_app/broken.py", 15), ("web/src/app.ts", 6),
+    ]
+    assert broken[0]["message"] == "Import of `sample_app.gone` matches no file in this repository."
+    assert all(b["severity"] == "medium" and not b["in_test"] for b in broken)
+
     (finding,) = query("SELECT f.rule_id, f.line, f.snippet, fi.path FROM findings f"
-                       " JOIN files fi ON fi.id = f.file_id")
+                       " JOIN files fi ON fi.id = f.file_id WHERE f.rule_id = 'hardcoded-secret'")
     assert finding["rule_id"] == "hardcoded-secret"
     assert finding["path"] == "sample_app/settings.py"
     assert finding["line"] == 5

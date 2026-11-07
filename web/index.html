@@ -200,6 +200,11 @@
                 </p>
               </div>
               <div class="toolbar findings-filters" role="toolbar" aria-label="Filter findings">
+                <div class="segmented" role="group" aria-label="Category">
+                  <button type="button" tabindex="-1" data-fp="cat-security">Security<span class="mono num seg-count" style="color: transparent" aria-hidden="true">00</span></button>
+                  <button type="button" tabindex="-1" data-fp="cat-quality">Bug / Quality<span class="mono num seg-count" style="color: transparent" aria-hidden="true">00</span></button>
+                  <button type="button" tabindex="-1" data-fp="cat-all">All<span class="mono num seg-count" style="color: transparent" aria-hidden="true">00</span></button>
+                </div>
                 <span class="filter"
                   ><label>Severity</label
                   ><select class="select select-severity" tabindex="-1" data-fp="severity">
@@ -227,6 +232,7 @@
                   ><input class="input input-small mono" placeholder="e.g. src/" spellcheck="false" tabindex="-1" data-fp="path"
                 /></span>
                 <label class="check"><input type="checkbox" tabindex="-1" data-fp="hide-tests" />Hide test and example code</label>
+                <label class="check"><input type="checkbox" tabindex="-1" data-fp="hide-placeholders" />Hide probable placeholders</label>
               </div>
               <div class="panel-message" aria-busy="true">
                 <div class="skeleton" style="width: 70%"></div>
@@ -343,6 +349,11 @@
             if (q.get("language")) one(fb, "language").value = q.get("language");
             if (q.get("path")) one(fb, "path").value = q.get("path");
             one(fb, "hide-tests").checked = q.get("tests") === "hide";
+            one(fb, "hide-placeholders").checked = q.get("placeholders") === "hide";
+            var cat = q.get("category") === "quality" || q.get("category") === "all" ? q.get("category") : "security";
+            ["security", "quality", "all"].forEach(function (c) {
+              one(fb, "cat-" + c).setAttribute("aria-pressed", String(cat === c));
+            });
             shell.appendChild(fb);
           }
           var main = document.createElement("main");

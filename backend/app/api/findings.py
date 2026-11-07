@@ -6,7 +6,7 @@ from typing import Literal
 from fastapi import APIRouter, HTTPException, Query
 
 from app.db import pool
-from app.detect.rules import RULES
+from app.detect.rules import CATEGORIES, RULE_IDS_BY_CATEGORY, RULES
 
 router = APIRouter()
 
@@ -20,6 +20,7 @@ def rules() -> list[dict]:
             "id": r.id,
             "language": r.language,
             "severity": r.severity,
+            "category": r.category,
             "title": r.title,
             "checks": r.looks_for,
             "why": r.why,
@@ -56,6 +57,8 @@ def findings(
     language: Literal["python", "javascript", "typescript"] | None = None,
     path_prefix: str | None = None,
     in_test: bool | None = None,
+    category: Literal["security", "quality"] | None = None,
+    placeholder: bool | None = None,
     limit: int = Query(50, ge=1, le=200),
     offset: int = Query(0, ge=0, le=1_000_000),  # larger overflows SQL: a 500
 ) -> dict:
@@ -69,6 +72,12 @@ def findings(
         if value is not None:
             where.append(f"{column} = %s")
             args.append(value)
+    if category is not None:
+        where.append("f.rule_id = ANY(%s)")
+        args.append(RULE_IDS_BY_CATEGORY[category])
+    if placeholder is not None:
+        where.append("f.placeholder = %s")
+        args.append(placeholder)
     if path_prefix:
         where.append("starts_with(fi.path, %s)")
         args.append(path_prefix)
@@ -84,13 +93,15 @@ def findings(
         items = conn.execute(
             "SELECT f.id, f.rule_id, f.severity, f.message, f.file_id, fi.path, fi.language,"
             " f.line, CASE WHEN s.kind = 'module' THEN NULL ELSE s.name END AS symbol,"
-            " f.snippet, f.in_test, coalesce(f.symbol_id, m.id) AS node_id"
+            " f.snippet, f.in_test, f.in_docs, f.placeholder, f.template_value,"
+            " coalesce(f.symbol_id, m.id) AS node_id"
             " FROM findings f JOIN files fi ON fi.id = f.file_id"
             " LEFT JOIN symbols s ON s.id = f.symbol_id"
             " LEFT JOIN symbols m ON m.file_id = f.file_id AND m.kind = 'module'"
             f" WHERE {where_sql}"
-            # Severity by rank, not alphabetically; byte order for paths so it is predictable.
-            f" ORDER BY {SEVERITY_RANK}, fi.path COLLATE \"C\", f.line, f.id"
+            # Probable placeholders last; then severity by rank, not alphabetically; byte order
+            # for paths so it is predictable.
+            f" ORDER BY f.placeholder, {SEVERITY_RANK}, fi.path COLLATE \"C\", f.line, f.id"
             " LIMIT %s OFFSET %s",
             [*args, limit, offset],
         ).fetchall()
@@ -103,7 +114,24 @@ def findings(
             " GROUP BY 1 ORDER BY 1",
             (snapshot_id,),
         ).fetchall()
+        flags = conn.execute(
+            "SELECT count(*) FILTER (WHERE placeholder) AS placeholders,"
+            " count(*) FILTER (WHERE in_docs) AS documentation,"
+            " count(*) FILTER (WHERE template_value) AS template_values FROM findings"
+            " WHERE snapshot_id = %s",
+            (snapshot_id,),
+        ).fetchone()
+        note = conn.execute(
+            "SELECT quality_note FROM jobs WHERE snapshot_id = %s ORDER BY id DESC LIMIT 1",
+            (snapshot_id,),
+        ).fetchone()
 
+    for item in items:
+        item["category"] = RULES[item["rule_id"]].category if item["rule_id"] in RULES else None
+    by_category = dict.fromkeys(CATEGORIES, 0)
+    for r in by_rule:
+        if r["rule_id"] in RULES:
+            by_category[RULES[r["rule_id"]].category] += r["n"]
     severities = {"high": 0, "medium": 0, "low": 0}
     severities.update({r["severity"]: r["n"] for r in by_severity})
     return {
@@ -117,5 +145,11 @@ def findings(
             "total": sum(severities.values()),
             "by_severity": severities,
             "by_rule": {r["rule_id"]: r["n"] for r in by_rule},
+            "by_category": by_category,
+            "placeholders": flags["placeholders"],
+            "documentation": flags["documentation"],
+            "template_values": flags["template_values"],
         },
+        # Things the list cannot promise, in words (for example Ruff did not finish).
+        "notes": [note["quality_note"]] if note and note["quality_note"] else [],
     }

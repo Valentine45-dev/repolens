@@ -5,6 +5,7 @@ import { Link, useOutletContext, useSearchParams } from "react-router-dom";
 import {
   getFindings,
   getRules,
+  type Category,
   type Finding,
   type FindingsPage,
   type Rule,
@@ -21,7 +22,9 @@ import { exploreHref, useSetParams } from "../links";
 const PAGE = 50;
 const SECRET_RULE = "hardcoded-secret";
 
-// Spec §5.6. Filters live in the URL: ?severity=&rule=&language=&path=&tests=hide&page=&finding=
+// Spec §5.6. Filters live in the URL:
+// ?category=quality|all (Security when absent)&severity=&rule=&language=&path=&tests=hide
+// &placeholders=hide&page=&finding=
 export function Findings() {
   const { snapshotId, status } = useOutletContext<AnalysisContext>();
   const ready = status !== undefined;
@@ -32,6 +35,10 @@ export function Findings() {
   const language = params.get("language") ?? undefined;
   const path = params.get("path") ?? "";
   const hideTests = params.get("tests") === "hide";
+  const hidePlaceholders = params.get("placeholders") === "hide";
+  const categoryParam = params.get("category");
+  const category: Category | "all" =
+    categoryParam === "quality" || categoryParam === "all" ? categoryParam : "security";
   const page = Math.max(Number(params.get("page") ?? 0) || 0, 0);
   const selectedId = params.get("finding") ? Number(params.get("finding")) : null;
 
@@ -41,6 +48,8 @@ export function Findings() {
     language,
     path_prefix: path || undefined,
     in_test: hideTests ? false : undefined,
+    category: category === "all" ? undefined : category,
+    placeholder: hidePlaceholders ? false : undefined,
     limit: PAGE,
     offset: page * PAGE,
   };
@@ -59,7 +68,9 @@ export function Findings() {
     setParams({ [key]: value, page: null, finding: null });
   const selected = findings.data?.items.find((f) => f.id === selectedId) ?? null;
   const counts = findings.data?.counts;
-  const filtered = Boolean(severity || rule || language || path || hideTests);
+  const filtered = Boolean(
+    severity || rule || language || path || hideTests || hidePlaceholders || category !== "all",
+  );
 
   return (
     <div className="findings">
@@ -78,6 +89,25 @@ export function Findings() {
         </div>
 
         <div className="toolbar findings-filters" role="toolbar" aria-label="Filter findings">
+          <div className="segmented" role="group" aria-label="Category">
+            {(
+              [
+                ["security", "Security", counts?.by_category.security],
+                ["quality", "Bug / Quality", counts?.by_category.quality],
+                ["all", "All", counts?.total],
+              ] as const
+            ).map(([value, label, n]) => (
+              <button
+                key={value}
+                type="button"
+                aria-pressed={category === value}
+                onClick={() => setFilter("category", value === "security" ? null : value)}
+              >
+                {label}
+                <span className="mono num seg-count">{n}</span>
+              </button>
+            ))}
+          </div>
           <FilterSelect
             label="Severity"
             kind="severity"
@@ -93,10 +123,12 @@ export function Findings() {
             kind="rule"
             value={rule ?? ""}
             onChange={(v) => setFilter("rule", v || null)}
-            options={Object.entries(counts?.by_rule ?? {}).map(([id, n]) => ({
-              value: id,
-              label: `${ruleById.get(id)?.title ?? id} (${n})`,
-            }))}
+            options={Object.entries(counts?.by_rule ?? {})
+              .filter(([id]) => category === "all" || ruleById.get(id)?.category === category)
+              .map(([id, n]) => ({
+                value: id,
+                label: `${ruleById.get(id)?.title ?? id} (${n})`,
+              }))}
           />
           <FilterSelect
             label="Language"
@@ -117,7 +149,27 @@ export function Findings() {
             />
             Hide test and example code
           </label>
+          <label className="check" data-disabled={counts && counts.placeholders === 0 ? "" : undefined}>
+            <input
+              type="checkbox"
+              checked={hidePlaceholders}
+              disabled={counts !== undefined && counts.placeholders === 0}
+              onChange={(e) => setFilter("placeholders", e.target.checked ? "hide" : null)}
+            />
+            Hide probable placeholders
+          </label>
         </div>
+        {category !== "security" ? (
+          <p className="caption">
+            Bug / Quality findings are code-quality checks (Ruff and an import check), not
+            security results. Test and example code is not checked.
+          </p>
+        ) : null}
+        {findings.data?.notes.map((note) => (
+          <p key={note} className="note">
+            {note}
+          </p>
+        ))}
 
         <FindingsList
           query={findings}
@@ -283,6 +335,8 @@ function FindingsList({
                   {f.message}
                 </button>
                 {f.in_test ? <span className="tag finding-tag">test or example</span> : null}
+                {f.in_docs ? <span className="tag finding-tag">documentation</span> : null}
+                {f.placeholder ? <span className="tag finding-tag">probably placeholder</span> : null}
               </td>
               <td className="mono location-col">
                 <PathText path={f.path} />
@@ -299,7 +353,7 @@ function FindingsList({
   );
 }
 
-function FindingPanel({
+export function FindingPanel({
   snapshotId,
   finding,
   rule,
@@ -358,6 +412,20 @@ function FindingPanel({
       <div className="panel-body finding-body">
         {finding.in_test ? (
           <p className="note">In test or example code, so it is less likely to matter in production.</p>
+        ) : null}
+        {finding.in_docs ? (
+          <p className="note">In documentation, so it is probably an example.</p>
+        ) : null}
+        {finding.placeholder ? (
+          <p className="note">
+            The value looks like a placeholder, in a file that does not run (documentation, or an
+            example or template file), so this is listed last. Check it before dismissing it.
+          </p>
+        ) : null}
+        {finding.template_value ? (
+          <p className="note">
+            Looks like a template value; if deployed as-is, it&apos;s a publicly known key.
+          </p>
         ) : null}
         {rule ? (
           <dl className="finding-facts">
