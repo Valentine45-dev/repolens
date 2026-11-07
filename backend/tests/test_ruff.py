@@ -37,6 +37,12 @@ def test_only_selected_rules_run():
     assert run_ruff({"a.py": "import os\n" + "z = '" + "x" * 200 + "'\n"}) == []
 
 
+def test_bare_raise_in_a_helper_is_not_reported():
+    # PLE0704 is switched off: flask re-raises the active exception from such helpers on purpose
+    source = "def helper(e):\n    if e is None:\n        raise\n    raise e\n"
+    assert run_ruff({"a.py": source}) == []
+
+
 def test_syntax_errors_and_non_python_files_are_ignored():
     assert run_ruff({"bad.py": "def g(:\n", "notes.md": "x == 1\n", "a.js": "x == 1;"}) == []
 
@@ -72,6 +78,6 @@ def test_command_is_isolated_and_cannot_fix_or_cache(monkeypatch):
     monkeypatch.setattr(ruff_module.subprocess, "run", fake_run)
     with pytest.raises(RuffError):
         run_ruff({"a.py": "x = 1\n"})
-    for flag in ("--isolated", "--no-cache", "--no-fix", "--ignore-noqa"):
+    for flag in ("--isolated", "--no-cache", "--no-fix", "--ignore-noqa", "--ignore"):
         assert flag in seen["cmd"]
     assert not any(k.startswith("RUFF") for k in seen["env"])

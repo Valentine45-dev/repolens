@@ -138,7 +138,6 @@ RULES: dict[str, Rule] = {
 }
 RULES.update({r.id: r for r in ruff_rules(Rule)})
 
-DETECTOR_RULES = [rule_id for rule_id in RULES if rule_id != SECRET_RULE]
 CATEGORIES = ("security", "quality")
 RULE_IDS_BY_CATEGORY = {c: [r.id for r in RULES.values() if r.category == c] for c in CATEGORIES}
 

@@ -5,6 +5,10 @@ selected. Ruff reads the code as data only: `--isolated` (no repo config), `--no
 # ruff: noqa: E501
 
 RUFF_SELECT = ["F811", "F821", "F822", "F823", "B006", "B015", "B023", "PLE"]
+# PLE0704 (bare `raise` outside an except block) is not run: on flask all 3 hits were helpers that
+# deliberately re-raise the active exception when called from an except block ("Re-raise if
+# called with an active exception"), so it was wrong 3 of 3 times.
+RUFF_IGNORE = ["PLE0704"]
 
 # code: (Ruff rule name, Ruff summary with its placeholders shown as ...)
 RUFF_CODES: dict[str, tuple[str, str]] = {
@@ -33,7 +37,6 @@ RUFF_CODES: dict[str, tuple[str, str]] = {
     "PLE0604": ("invalid-all-object", "Invalid object in `__all__`, must contain only strings"),
     "PLE0605": ("invalid-all-format", "Invalid format for `__all__`, must be `tuple` or `list`"),
     "PLE0643": ("potential-index-error", "Expression is likely to raise `IndexError`"),
-    "PLE0704": ("misplaced-bare-raise", "Bare `raise` statement is not inside an exception handler"),
     "PLE1132": ("repeated-keyword-argument", "Repeated keyword argument: `…`"),
     "PLE1142": ("await-outside-async", "`await` should be used within an async function"),
     "PLE1205": ("logging-too-many-args", "Too many arguments for `logging` format string"),

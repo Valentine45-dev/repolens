@@ -8,8 +8,8 @@ import json
 import sys
 from collections import Counter
 
-ROW_NEW = {"category", "in_docs", "placeholder", "id", "file_id", "node_id"}
-COUNT_NEW = {"by_category", "placeholders", "documentation"}
+ROW_NEW = {"category", "in_docs", "placeholder", "template_value", "id", "file_id", "node_id"}
+COUNT_NEW = {"by_category", "placeholders", "documentation", "template_values"}
 
 
 def keyed(items):

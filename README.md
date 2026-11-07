@@ -8,8 +8,8 @@ it clones the repo, parses the Python and JavaScript/TypeScript files, and gives
 - **rule-based findings**, split into **Security** (for example `eval`, shell commands built from
   variables, SQL built by string concatenation, hardcoded secrets) and **Bug / Quality** (bare
   `except`, a few Ruff error checks, imports of files that do not exist), each with what the rule
-  looks for and when it is a false positive. Secrets in documentation, and values that look like
-  placeholders (`changeme`, `<your-key>`), are shown but ranked low,
+  looks for and when it is a false positive. Secrets in documentation, and placeholder-looking
+  values in documentation or example files, are shown but ranked low,
 - an **Ask panel**: structural questions ("which files import signer.py?") are answered from the
   graph without an LLM; other questions go to an LLM with retrieved code, and only citations
   that the server can match to a snippet it sent (`path:start-end`) are shown as source chips.
@@ -137,7 +137,7 @@ uv run --env-file ../.env python -m app.ingest.backfill
 
 After the findings-categories migration, analyses made before it have no Bug / Quality findings.
 `python -m app.ingest.redetect` re-runs the detect stage on their stored files (no clone, no
-embedding; hardcoded-secret findings are not touched, so `placeholder` stays off for old rows
+embedding; hardcoded-secret findings are not touched, so `placeholder` and `template_value` stay off for old rows
 until the repository is analysed again). Also with the API stopped:
 
 ```bash
@@ -307,14 +307,17 @@ are from the run before the fix.
 ## Known limitations
 
 - **Bug / Quality findings skip test and example code** and cover Python only (Ruff: `F811`,
-  `F821`, `F822`, `F823`, `B006`, `B015`, `B023` and the Pylint error rules). They run on a copy of
+  `F821`, `F822`, `F823`, `B006`, `B015`, `B023` and the Pylint error rules except `PLE0704`). They run on a copy of
   the redacted files with `--isolated --no-cache --no-fix --ignore-noqa`, so the repository
   cannot change or silence them. "Broken import" misses a directory imported through the
   `main` field of its `package.json` (the file is not read) and can flag generated or compiled
   modules it does not know by name.
 - **Placeholder detection is by wording and shape only** (`changeme`, `<your-key>`, `xxxxxx`,
-  `your-…-here`). A template-looking value used as it is (`app.secret_key = "your-secret-key-here"`)
-  is a real weak secret and is listed last, not removed.
+  `your-...-here`). In documentation and in example or template files (`*.example.*`,
+  `*.sample`, `*.template`, `*.dist`) such a value is shown as "probably placeholder": low, listed
+  last. In code and runtime config (including `docker-compose.yml`) it keeps its severity and
+  is noted as a template value, because an app deployed with it as-is uses a publicly known key.
+  Files named `.env*` and files ending in `.example` are not read at all.
 - **Syntactic rules, no taint tracking.** Constant arguments are flagged too (`eval("1 + 1")`,
   a fixed-string `shell=True`, SQL with a constant table name).
 - **Secrets passed inline are missed.** The secret check needs a named assignment

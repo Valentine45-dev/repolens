@@ -65,7 +65,8 @@ export interface Finding {
   snippet: string | null; // masked
   in_test: boolean;
   in_docs: boolean; // documentation file (.md, .rst, .txt)
-  placeholder: boolean; // hardcoded-secret whose value looks like a stand-in
+  placeholder: boolean; // a stand-in value in a file that does not run (docs, example/template)
+  template_value: boolean; // a stand-in value in code or runtime config: keeps its severity
   category: Category | null;
   node_id: number;
 }
@@ -85,6 +86,7 @@ export interface FindingsPage {
     by_category: Record<Category, number>;
     placeholders: number;
     documentation: number;
+    template_values: number;
   };
   /** Things the list cannot promise, in words (for example the quality checks did not finish). */
   notes: string[];

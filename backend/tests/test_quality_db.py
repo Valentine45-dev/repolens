@@ -9,6 +9,8 @@ pytestmark = pytest.mark.db
 FILES = {
     "src/config.py": 'API_KEY = "changeme-' + 'please"\nPASSWORD = "admin' + '123"\n',
     "docs/guide.md": 'Set `SECRET_KEY = "s3cr3t-' + 'value-xyz"` in your settings.\n',
+    "docs/setup.md": 'Use `TOKEN = "<your-' + 'token>"` here.\n',
+    "src/settings.example.py": 'SECRET_KEY = "your-secret-' + 'key-here"\n',
     "src/app.py": (
         "from .gone import thing\n"
         "try:\n    from .optional import fast\nexcept ImportError:\n    fast = None\n\n\n"
@@ -42,21 +44,29 @@ def findings(client, snapshot, **params):
 def test_secret_flags_and_severity(client, quality_repo):
     items = {i["path"] + ":" + str(i["line"]): i
              for i in findings(client, quality_repo)["items"] if i["rule_id"] == "hardcoded-secret"}
-    placeholder = items["src/config.py:1"]
-    assert (placeholder["placeholder"], placeholder["severity"], placeholder["in_docs"]) == (
-        True, "low", False)
-    assert placeholder["message"].endswith("; the value looks like a placeholder.")
+    # a stand-in value in code keeps its severity and is only noted
+    template = items["src/config.py:1"]
+    assert (template["template_value"], template["placeholder"], template["severity"]) == (
+        True, False, "high")
+    assert template["message"].endswith("; looks like a template value.")
     weak = items["src/config.py:2"]  # a weak real password is NOT a placeholder
-    assert (weak["placeholder"], weak["severity"]) == (False, "high")
+    assert (weak["placeholder"], weak["template_value"], weak["severity"]) == (False, False, "high")
+    # the same kind of value in files that do not run is demoted
+    for key in ("src/settings.example.py:1", "docs/setup.md:1"):
+        item = items[key]
+        assert (item["placeholder"], item["template_value"], item["severity"]) == (
+            True, False, "low")
+        assert item["message"].endswith("; the value looks like a placeholder.")
     docs = items["docs/guide.md:1"]
     assert (docs["in_docs"], docs["severity"], docs["in_test"], docs["placeholder"]) == (
         True, "low", False, False)
     assert docs["message"] == "Possible hardcoded secret (secret-assignment) in documentation."
+    assert items["docs/setup.md:1"]["in_docs"] and not items["src/settings.example.py:1"]["in_docs"]
     assert all(i["category"] == "security" for i in items.values())
 
 
 def test_values_are_never_stored(client, quality_repo):
-    for text in ("changeme-please", "admin123", "s3cr3t-value-xyz"):
+    for text in ("changeme-please", "admin123", "s3cr3t-value-xyz", "your-secret-key-here"):
         assert not query("SELECT 1 FROM files WHERE content LIKE %s", f"%{text}%")
         assert not query("SELECT 1 FROM findings WHERE snippet LIKE %s OR message LIKE %s",
                          f"%{text}%", f"%{text}%")
@@ -65,13 +75,13 @@ def test_values_are_never_stored(client, quality_repo):
 def test_placeholders_sort_last_and_can_be_hidden(client, quality_repo):
     all_items = findings(client, quality_repo)["items"]
     flags = [i["placeholder"] for i in all_items]
-    assert flags == sorted(flags)  # False first; the placeholder is the last row
-    assert all_items[-1]["placeholder"] is True
+    assert flags == sorted(flags)  # False first; the two demoted placeholders are the last rows
+    assert flags[-2:] == [True, True] and flags.count(True) == 2
     hidden = findings(client, quality_repo, placeholder="false")
     assert all(not i["placeholder"] for i in hidden["items"])
-    assert hidden["total"] == len(all_items) - 1
+    assert hidden["total"] == len(all_items) - 2
     counts = findings(client, quality_repo)["counts"]
-    assert (counts["placeholders"], counts["documentation"]) == (1, 1)
+    assert (counts["placeholders"], counts["documentation"], counts["template_values"]) == (2, 2, 1)
 
 
 def test_quality_findings_and_category_filter(client, quality_repo):
@@ -131,6 +141,20 @@ def test_a_ruff_failure_is_reported_in_notes_and_other_findings_stay(
     rules = {i["rule_id"] for i in result["items"]}
     assert "broken-internal-import" in rules and "hardcoded-secret" in rules
     assert not any(r.startswith("ruff-") for r in rules)
+
+
+def test_detect_replaces_rows_of_rules_no_longer_in_the_catalogue(client, quality_repo):
+    from app.ingest import pipeline
+
+    file_id = query("SELECT id FROM files WHERE snapshot_id = %s AND path = 'src/app.py'",
+                    quality_repo)[0]["id"]
+    query("INSERT INTO findings (snapshot_id, file_id, line, rule_id, severity, message)"
+          " VALUES (%s, %s, 1, 'ruff-GONE', 'low', 'stale') RETURNING id", quality_repo, file_id)
+    pipeline.store_findings(quality_repo, pipeline.parse_stored(quality_repo))
+    rules = {r["rule_id"] for r in query(
+        "SELECT rule_id FROM findings WHERE snapshot_id = %s", quality_repo)}
+    assert "ruff-GONE" not in rules
+    assert {"hardcoded-secret", "ruff-F821"} <= rules  # secrets stay, current rules are rebuilt
 
 
 def test_rules_endpoint_carries_categories(client):

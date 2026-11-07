@@ -3,6 +3,7 @@
 import pytest
 
 from app.ingest.redact import placeholder_pattern, redact
+from app.paths import is_nonrunning_path, is_template_path
 
 # Values assembled at runtime where they look like real credential formats.
 AWS_DOC = "AKIA" + "IOSFODNN7" + "EXAMPLE"
@@ -60,3 +61,26 @@ def test_redact_marks_placeholder_and_keeps_the_value_out():
     ]
     # SecretMatch carries the pattern's name, never the value.
     assert all("changeme" not in repr(m) and "admin123" not in repr(m) for m in matches)
+
+
+@pytest.mark.parametrize(
+    "path, template, nonrunning",
+    [
+        ("config.yml.example", True, True),
+        ("settings.example.py", True, True),
+        ("deploy/app.sample.yaml", True, True),
+        ("conf/app.ini.template", True, True),
+        ("local.cfg.dist", True, True),
+        (".env.example", True, True),
+        ("README.md", False, True),
+        ("docs/guide.rst", False, True),
+        ("notes.txt", False, True),
+        ("src/settings.py", False, False),
+        ("docker-compose.yml", False, False),
+        ("example.py", False, False),  # a module called example, not an example file
+        ("src/examples/run.py", False, False),  # examples/ is test code (is_test_path), not this
+    ],
+)
+def test_template_and_nonrunning_paths(path, template, nonrunning):
+    assert is_template_path(path) is template
+    assert is_nonrunning_path(path) is nonrunning

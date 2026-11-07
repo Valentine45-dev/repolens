@@ -418,8 +418,13 @@ function FindingPanel({
         ) : null}
         {finding.placeholder ? (
           <p className="note">
-            The value looks like a placeholder (a template, a changeme-style word or a repeated
-            character), so this is listed last. Check it before dismissing it.
+            The value looks like a placeholder, in a file that does not run (documentation, or an
+            example or template file), so this is listed last. Check it before dismissing it.
+          </p>
+        ) : null}
+        {finding.template_value ? (
+          <p className="note">
+            Looks like a template value; if deployed as-is, it&apos;s a publicly known key.
           </p>
         ) : null}
         {rule ? (

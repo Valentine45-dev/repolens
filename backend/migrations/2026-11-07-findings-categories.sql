@@ -5,12 +5,13 @@
 --
 -- findings.in_docs / findings.placeholder: see schema.sql. Existing hardcoded-secret findings in
 -- documentation files (.md/.rst/.txt) are marked and lowered to low here, from the stored path.
--- `placeholder` cannot be filled for old rows (the value is not stored); re-run an analysis to
+-- `placeholder` and `template_value` cannot be filled for old rows (the value is not stored); re-run an analysis to
 -- get it. Quality findings (Ruff, broken imports) appear when an analysis is re-run.
 BEGIN;
 
 ALTER TABLE findings ADD COLUMN IF NOT EXISTS in_docs BOOLEAN NOT NULL DEFAULT false;
 ALTER TABLE findings ADD COLUMN IF NOT EXISTS placeholder BOOLEAN NOT NULL DEFAULT false;
+ALTER TABLE findings ADD COLUMN IF NOT EXISTS template_value BOOLEAN NOT NULL DEFAULT false;
 ALTER TABLE jobs ADD COLUMN IF NOT EXISTS quality_note TEXT;
 
 UPDATE findings f

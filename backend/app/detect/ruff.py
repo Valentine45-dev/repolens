@@ -15,7 +15,7 @@ import tempfile
 from dataclasses import dataclass
 from pathlib import Path
 
-from app.detect.ruff_catalogue import RUFF_CODES, RUFF_SELECT
+from app.detect.ruff_catalogue import RUFF_CODES, RUFF_IGNORE, RUFF_SELECT
 from app.detect.rules import RUFF_PREFIX
 
 log = logging.getLogger(__name__)
@@ -54,7 +54,8 @@ def run_ruff(files: dict[str, str], timeout: float = TIMEOUT_S) -> list[RuffHit]
         cmd = [
             sys.executable, "-m", "ruff", "check", "--isolated", "--no-cache", "--no-fix",
             "--ignore-noqa", "--exit-zero", "--output-format", "json",
-            "--target-version", "py312", "--select", ",".join(RUFF_SELECT), ".",
+            "--target-version", "py312", "--select", ",".join(RUFF_SELECT),
+            "--ignore", ",".join(RUFF_IGNORE), ".",
         ]
         env = {k: v for k, v in os.environ.items() if not k.startswith("RUFF")}
         try:

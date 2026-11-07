@@ -93,7 +93,7 @@ def findings(
         items = conn.execute(
             "SELECT f.id, f.rule_id, f.severity, f.message, f.file_id, fi.path, fi.language,"
             " f.line, CASE WHEN s.kind = 'module' THEN NULL ELSE s.name END AS symbol,"
-            " f.snippet, f.in_test, f.in_docs, f.placeholder,"
+            " f.snippet, f.in_test, f.in_docs, f.placeholder, f.template_value,"
             " coalesce(f.symbol_id, m.id) AS node_id"
             " FROM findings f JOIN files fi ON fi.id = f.file_id"
             " LEFT JOIN symbols s ON s.id = f.symbol_id"
@@ -116,7 +116,8 @@ def findings(
         ).fetchall()
         flags = conn.execute(
             "SELECT count(*) FILTER (WHERE placeholder) AS placeholders,"
-            " count(*) FILTER (WHERE in_docs) AS documentation FROM findings"
+            " count(*) FILTER (WHERE in_docs) AS documentation,"
+            " count(*) FILTER (WHERE template_value) AS template_values FROM findings"
             " WHERE snapshot_id = %s",
             (snapshot_id,),
         ).fetchone()
@@ -147,6 +148,7 @@ def findings(
             "by_category": by_category,
             "placeholders": flags["placeholders"],
             "documentation": flags["documentation"],
+            "template_values": flags["template_values"],
         },
         # Things the list cannot promise, in words (for example Ruff did not finish).
         "notes": [note["quality_note"]] if note and note["quality_note"] else [],

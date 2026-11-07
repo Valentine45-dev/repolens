@@ -16,7 +16,7 @@ from app.db import pool
 from app.detect import detect
 from app.detect.imports import broken_imports
 from app.detect.ruff import RuffError, run_ruff
-from app.detect.rules import BROKEN_IMPORT_RULE, DETECTOR_RULES, RULES, SECRET_RULE
+from app.detect.rules import BROKEN_IMPORT_RULE, RULES, SECRET_RULE
 from app.ingest import clone
 from app.ingest.calls import resolve_calls
 from app.ingest.discover import DiscoveredFile, DiscoverResult, discover
@@ -31,7 +31,7 @@ from app.ingest.parse import (
 )
 from app.ingest.parse_js import parse_js
 from app.ingest.resolve import JsModules, PythonModules, Target, resolve_js, resolve_python
-from app.paths import is_doc_path, is_test_path
+from app.paths import is_doc_path, is_nonrunning_path, is_test_path
 from app.qa.chunks import Chunk, build_chunks, search_words
 from app.qa.embed import get_embedder
 
@@ -100,31 +100,39 @@ def store_files(snapshot_id: int, files: list[DiscoveredFile]) -> None:
                 (snapshot_id, f.path, f.language, f.loc, f.content),
             ).fetchone()["id"]
             # Placeholder keys in tests are common and rarely real: report them, but low. The
-            # same for documentation (examples) and for values that look like stand-ins.
+            # same for documentation (examples). A value that looks like a stand-in is demoted
+            # only in files that do not run (documentation, example or template files); in
+            # code and runtime config it keeps its severity and gets a note, because the app
+            # may be deployed with it as it is, and a publicly known key is no secret at all.
             in_test = is_test_path(f.path)
             in_docs = is_doc_path(f.path)
+            nonrunning = is_nonrunning_path(f.path)
             for s in f.secrets:
-                placeholder = s.placeholder is not None
+                looks_like_template = s.placeholder is not None
+                placeholder = looks_like_template and nonrunning
+                template_value = looks_like_template and not nonrunning
                 conn.execute(
                     "INSERT INTO findings (snapshot_id, file_id, line, rule_id, severity,"
-                    " message, snippet, in_test, in_docs, placeholder)"
-                    " VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)",
+                    " message, snippet, in_test, in_docs, placeholder, template_value)"
+                    " VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)",
                     (
                         snapshot_id,
                         file_id,
                         s.line,
                         SECRET_RULE,
                         "low" if (in_test or in_docs or placeholder) else "high",
-                        secret_message(s.kind, in_test, in_docs, placeholder),
+                        secret_message(s.kind, in_test, in_docs, placeholder, template_value),
                         _secret_snippet(f.content, s.line),
                         in_test,
                         in_docs,
                         placeholder,
+                        template_value,
                     ),
                 )
 
 
-def secret_message(kind: str, in_test: bool, in_docs: bool, placeholder: bool) -> str:
+def secret_message(kind: str, in_test: bool, in_docs: bool, placeholder: bool,
+                   template_value: bool = False) -> str:
     """Where the finding is and why it ranks low, in words (the migration writes the same text
     for rows it marks as documentation)."""
     where = {
@@ -133,7 +141,11 @@ def secret_message(kind: str, in_test: bool, in_docs: bool, placeholder: bool) -
         (True, True): " in test or example code and in documentation",
     }.get((in_test, in_docs), "")
     text = f"Possible hardcoded secret ({kind}){where}"
-    return text + ("; the value looks like a placeholder." if placeholder else ".")
+    if placeholder:
+        return text + "; the value looks like a placeholder."
+    if template_value:
+        return text + "; looks like a template value."
+    return text + "."
 
 
 def parse_file(path: str, language: str, content: str) -> ParsedFile:
@@ -380,8 +392,10 @@ def store_findings(snapshot_id: int, parsed: dict[str, Parsed],
 
     with pool().connection() as conn, conn.transaction():
         conn.execute(
-            "DELETE FROM findings WHERE snapshot_id = %s AND rule_id = ANY(%s)",
-            (snapshot_id, DETECTOR_RULES),
+            # Everything but the discover stage's secrets, so a rule dropped from the catalogue
+            # (e.g. ruff-PLE0704) does not leave stale rows behind in an older snapshot.
+            "DELETE FROM findings WHERE snapshot_id = %s AND rule_id <> %s",
+            (snapshot_id, SECRET_RULE),
         )
         ids = {
             (r["path"], r["qualified_name"]): (r["file_id"], r["id"])

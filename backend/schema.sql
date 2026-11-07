@@ -128,9 +128,13 @@ CREATE TABLE findings (
   snippet      TEXT,                              -- masked
   in_test      BOOLEAN NOT NULL DEFAULT false,    -- file is a test/example (app/paths.py)
   in_docs      BOOLEAN NOT NULL DEFAULT false,    -- file is documentation (.md/.rst/.txt)
-  -- hardcoded-secret only: the value looks like a stand-in (changeme, <your-key>, xxxxxx). The
-  -- value itself is never stored; rows analysed before this column existed are false.
-  placeholder  BOOLEAN NOT NULL DEFAULT false
+  -- hardcoded-secret only, when the value looks like a stand-in (changeme, <your-key>, xxxxxx);
+  -- the value itself is never stored. `placeholder`: in a file that does not run (documentation,
+  -- example or template file), so the finding is low and listed last. `template_value`: the
+  -- same kind of value in code or runtime config, which keeps its severity because the app may
+  -- run with it as it is. Rows analysed before these columns existed are false.
+  placeholder  BOOLEAN NOT NULL DEFAULT false,
+  template_value BOOLEAN NOT NULL DEFAULT false
 );
 CREATE INDEX findings_snapshot ON findings (snapshot_id, severity);
 

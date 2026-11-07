@@ -13,7 +13,7 @@ from pathlib import Path
 sys.path.insert(0, ".")
 from app.ingest.clone import fetch_commit, remove_workspace  # noqa: E402
 from app.ingest.discover import discover  # noqa: E402
-from app.paths import is_doc_path, is_test_path  # noqa: E402
+from app.paths import is_doc_path, is_nonrunning_path, is_test_path  # noqa: E402
 
 REPOS = [
     ("https://github.com/pallets/itsdangerous", "672971d"),
@@ -49,7 +49,13 @@ for url, short in REPOS:
             total += 1
             by_pattern[s.placeholder or "(not a placeholder)"] += 1
             place = "doc" if is_doc_path(f.path) else "test" if is_test_path(f.path) else "other"
-            by_pattern_split[f"{place}:{'placeholder' if s.placeholder else 'kept'}"] += 1
+            if s.placeholder is None:
+                outcome = "not a placeholder"
+            elif is_nonrunning_path(f.path):
+                outcome = "placeholder, demoted to low (docs / example file)"
+            else:
+                outcome = "template value, severity kept (code / runtime config)"
+            by_pattern_split[f"{place}: {outcome}"] += 1
     result[url.split("github.com/")[1] + "@" + short] = {
         "secret_matches": total,
         "by_pattern": dict(by_pattern),
