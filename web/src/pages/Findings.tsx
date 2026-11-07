@@ -353,7 +353,7 @@ function FindingsList({
   );
 }
 
-function FindingPanel({
+export function FindingPanel({
   snapshotId,
   finding,
   rule,
