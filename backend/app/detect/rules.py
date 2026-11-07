@@ -5,6 +5,8 @@ flag safe code (the UI says so)."""
 import re
 from dataclasses import dataclass
 
+from app.detect.ruff_catalogue import MEDIUM, RUFF_CODES, SPECIFIC
+
 
 @dataclass(frozen=True)
 class Rule:
@@ -15,6 +17,7 @@ class Rule:
     looks_for: str  # what the rule matches, in plain language
     why: str  # why it can be risky
     false_positive: str  # when a match is probably fine
+    category: str = "security"  # security | quality (shown as Security and Bug / Quality)
 
 
 @dataclass(frozen=True)
@@ -24,6 +27,28 @@ class Hit:
 
 
 SECRET_RULE = "hardcoded-secret"
+BROKEN_IMPORT_RULE = "broken-internal-import"
+RUFF_PREFIX = "ruff-"
+
+def ruff_rules(rule_cls) -> list:
+    """One catalogue entry per Ruff code we select (app/detect/ruff_catalogue.py)."""
+    rules = []
+    for code, (name, summary) in RUFF_CODES.items():
+        looks_for, why = SPECIFIC.get(code, (
+            f"Ruff rule {code} ({name}): {summary}.",
+            "Ruff lists this among the errors that usually fail or misbehave when the code runs.",
+        ))
+        rules.append(rule_cls(
+            RUFF_PREFIX + code, "python", "medium" if code in MEDIUM else "low",
+            name.replace("-", " ").capitalize(),
+            looks_for, why,
+            "the code is never run, or the name or value is supplied in a way the checker cannot "
+            "see (a star import, setattr, a generated module). Test and example code is not "
+            "checked.",
+            "quality",
+        ))
+    return rules
+
 
 RULES: dict[str, Rule] = {
     r.id: r
@@ -62,6 +87,7 @@ RULES: dict[str, Rule] = {
             "except: clauses that do not name an exception type.",
             "They also catch KeyboardInterrupt and SystemExit and can hide real errors.",
             "the handler re-raises, or it is a deliberate last-resort guard that logs the error.",
+            "quality",
         ),
         Rule(
             "js-eval", "javascript", "high", "Use of eval()",
@@ -98,10 +124,23 @@ RULES: dict[str, Rule] = {
             "the inserted part is a constant such as a table name chosen by the program, or the "
             "string is only logged and never executed.",
         ),
+        Rule(
+            BROKEN_IMPORT_RULE, "any", "medium", "Import of a file that is not in the repository",
+            "A relative import (or an import of a package this repository defines) that matches "
+            "no file in the repository.",
+            "Running that line raises an import error, or the file was renamed or deleted.",
+            "the file is generated at build time, a compiled extension, or added by tooling the "
+            "analysis does not see. Imports guarded by try/except ImportError and imports in "
+            "test or example code are skipped.",
+            "quality",
+        ),
     ]
 }
+RULES.update({r.id: r for r in ruff_rules(Rule)})
 
 DETECTOR_RULES = [rule_id for rule_id in RULES if rule_id != SECRET_RULE]
+CATEGORIES = ("security", "quality")
+RULE_IDS_BY_CATEGORY = {c: [r.id for r in RULES.values() if r.category == c] for c in CATEGORIES}
 
 # SQL-shaped text: the statement keywords in their usual order. To keep prose like
 # "select an item from the list" out, the text must either start with the statement (any case)

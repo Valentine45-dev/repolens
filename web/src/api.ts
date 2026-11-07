@@ -64,15 +64,30 @@ export interface Finding {
   symbol: string | null;
   snippet: string | null; // masked
   in_test: boolean;
+  in_docs: boolean; // documentation file (.md, .rst, .txt)
+  placeholder: boolean; // hardcoded-secret whose value looks like a stand-in
+  category: Category | null;
   node_id: number;
 }
+
+/** Security rules and Bug / Quality rules (code-quality checks). */
+export type Category = "security" | "quality";
 
 export interface FindingsPage {
   total: number;
   limit: number;
   offset: number;
   items: Finding[];
-  counts: { total: number; by_severity: Record<Severity, number>; by_rule: Record<string, number> };
+  counts: {
+    total: number;
+    by_severity: Record<Severity, number>;
+    by_rule: Record<string, number>;
+    by_category: Record<Category, number>;
+    placeholders: number;
+    documentation: number;
+  };
+  /** Things the list cannot promise, in words (for example the quality checks did not finish). */
+  notes: string[];
 }
 
 export interface FindingsFilter {
@@ -81,6 +96,8 @@ export interface FindingsFilter {
   language?: string;
   path_prefix?: string;
   in_test?: boolean;
+  category?: Category;
+  placeholder?: boolean;
   limit?: number;
   offset?: number;
 }
@@ -89,6 +106,7 @@ export interface Rule {
   id: string;
   language: string;
   severity: Severity;
+  category: Category;
   title: string;
   checks: string;
   why: string;

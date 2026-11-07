@@ -14,7 +14,9 @@ from pathlib import Path
 from app import config
 from app.db import pool
 from app.detect import detect
-from app.detect.rules import DETECTOR_RULES, RULES, SECRET_RULE
+from app.detect.imports import broken_imports
+from app.detect.ruff import RuffError, run_ruff
+from app.detect.rules import BROKEN_IMPORT_RULE, DETECTOR_RULES, RULES, SECRET_RULE
 from app.ingest import clone
 from app.ingest.calls import resolve_calls
 from app.ingest.discover import DiscoveredFile, DiscoverResult, discover
@@ -29,7 +31,7 @@ from app.ingest.parse import (
 )
 from app.ingest.parse_js import parse_js
 from app.ingest.resolve import JsModules, PythonModules, Target, resolve_js, resolve_python
-from app.paths import is_test_path
+from app.paths import is_doc_path, is_test_path
 from app.qa.chunks import Chunk, build_chunks, search_words
 from app.qa.embed import get_embedder
 
@@ -97,24 +99,41 @@ def store_files(snapshot_id: int, files: list[DiscoveredFile]) -> None:
                 " VALUES (%s, %s, %s, %s, %s) RETURNING id",
                 (snapshot_id, f.path, f.language, f.loc, f.content),
             ).fetchone()["id"]
-            # Placeholder keys in tests are common and rarely real: report them, but low.
+            # Placeholder keys in tests are common and rarely real: report them, but low. The
+            # same for documentation (examples) and for values that look like stand-ins.
             in_test = is_test_path(f.path)
+            in_docs = is_doc_path(f.path)
             for s in f.secrets:
+                placeholder = s.placeholder is not None
                 conn.execute(
                     "INSERT INTO findings (snapshot_id, file_id, line, rule_id, severity,"
-                    " message, snippet, in_test) VALUES (%s, %s, %s, %s, %s, %s, %s, %s)",
+                    " message, snippet, in_test, in_docs, placeholder)"
+                    " VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)",
                     (
                         snapshot_id,
                         file_id,
                         s.line,
                         SECRET_RULE,
-                        "low" if in_test else "high",
-                        f"Possible hardcoded secret ({s.kind})"
-                        + (" in test or example code." if in_test else "."),
+                        "low" if (in_test or in_docs or placeholder) else "high",
+                        secret_message(s.kind, in_test, in_docs, placeholder),
                         _secret_snippet(f.content, s.line),
                         in_test,
+                        in_docs,
+                        placeholder,
                     ),
                 )
+
+
+def secret_message(kind: str, in_test: bool, in_docs: bool, placeholder: bool) -> str:
+    """Where the finding is and why it ranks low, in words (the migration writes the same text
+    for rows it marks as documentation)."""
+    where = {
+        (True, False): " in test or example code",
+        (False, True): " in documentation",
+        (True, True): " in test or example code and in documentation",
+    }.get((in_test, in_docs), "")
+    text = f"Possible hardcoded secret ({kind}){where}"
+    return text + ("; the value looks like a placeholder." if placeholder else ".")
 
 
 def parse_file(path: str, language: str, content: str) -> ParsedFile:
@@ -316,23 +335,48 @@ def _innermost_symbol(symbols: list[ParsedSymbol], line: int) -> ParsedSymbol | 
     return min(containing, key=lambda s: s.end_line - s.start_line, default=None)
 
 
-def store_findings(snapshot_id: int, parsed: dict[str, Parsed]) -> int:
-    """Detect stage: rule findings for every code file. Replaces only the detector rules'
-    findings; hardcoded-secret findings belong to the discover stage."""
+def store_findings(snapshot_id: int, parsed: dict[str, Parsed],
+                   job_id: int | None = None) -> int:
+    """Detect stage: rule findings for every code file, Ruff's code-quality findings for the
+    Python files, and broken internal imports. Replaces only the detector rules' findings;
+    hardcoded-secret findings belong to the discover stage. If Ruff cannot finish, the rest is
+    stored and the job records why (`jobs.quality_note`), so an empty quality list is never read
+    as "nothing found"."""
     rows = []
+    snippets: dict[str, list[str]] = {}
     for path, p in parsed.items():
-        hits = detect_file(path, p.language, p.content, p.result)
-        if not hits:
-            continue
         # Split on "\n" only, like Tree-sitter and the redactor (splitlines() would also break
         # on form feeds and U+2028 and shift the snippet off the reported line).
-        lines = p.content.split("\n")
-        for hit in hits:
+        snippets[path] = p.content.split("\n")
+        for hit in detect_file(path, p.language, p.content, p.result):
             rule = RULES[hit.rule_id]
-            symbol = _innermost_symbol(p.result.symbols, hit.line)
-            snippet = lines[hit.line - 1].strip()[:200] if hit.line <= len(lines) else ""
-            rows.append((path, symbol.qualified_name if symbol else None, hit.line, rule.id,
-                         rule.severity, rule.title, snippet))
+            rows.append((path, hit.line, rule.id, rule.severity, rule.title))
+
+    quality_note = None
+    try:
+        # The new quality checks skip test and example code: pytest fixtures trip F811, and
+        # formatter or parser test data is full of deliberately undefined names (psf/black had
+        # 5,026 such hits in tests/data and 0 in its source).
+        for hit in run_ruff({path: p.content for path, p in parsed.items()
+                             if p.language == "python" and not is_test_path(path)}):
+            rule = RULES[hit.rule_id]
+            rows.append((hit.path, hit.line, rule.id, rule.severity, hit.message or rule.title))
+    except RuffError as e:
+        quality_note = str(e)
+        log.warning("snapshot %s: %s", snapshot_id, e)
+
+    with pool().connection() as conn:
+        tsconfig = conn.execute(
+            "SELECT content FROM files WHERE snapshot_id = %s AND path = 'tsconfig.json'",
+            (snapshot_id,),
+        ).fetchone()
+    for b in broken_imports({path: (p.language, p.result.imports) for path, p in parsed.items()},
+                            tsconfig["content"] if tsconfig else None):
+        if is_test_path(b.path):
+            continue  # test data imports things that do not exist on purpose (black: 28 of 28)
+        rule = RULES[BROKEN_IMPORT_RULE]
+        rows.append((b.path, b.line, rule.id, rule.severity,
+                     f"Import of `{b.target}` matches no file in this repository."))
 
     with pool().connection() as conn, conn.transaction():
         conn.execute(
@@ -353,16 +397,26 @@ def store_findings(snapshot_id: int, parsed: dict[str, Parsed]) -> int:
                 "SELECT path, id FROM files WHERE snapshot_id = %s", (snapshot_id,)
             )
         }
+        values = []
+        for path, line, rule_id, severity, message in rows:
+            symbol = _innermost_symbol(parsed[path].result.symbols, line)
+            lines = snippets[path]
+            snippet = lines[line - 1].strip()[:200] if 0 < line <= len(lines) else ""
+            values.append((
+                snapshot_id, file_ids[path],
+                ids.get((path, symbol.qualified_name if symbol else None), (None, None))[1],
+                line, rule_id, severity, message, snippet, is_test_path(path),
+                is_doc_path(path),
+            ))
         with conn.cursor() as cur:
             cur.executemany(
                 "INSERT INTO findings (snapshot_id, file_id, symbol_id, line, rule_id, severity,"
-                " message, snippet, in_test) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)",
-                [
-                    (snapshot_id, file_ids[path], ids.get((path, qname), (None, None))[1],
-                     line, rule_id, severity, message, snippet, is_test_path(path))
-                    for path, qname, line, rule_id, severity, message, snippet in rows
-                ],
+                " message, snippet, in_test, in_docs)"
+                " VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)",
+                values,
             )
+        if job_id is not None:
+            conn.execute("UPDATE jobs SET quality_note = %s WHERE id = %s", (quality_note, job_id))
     return len(rows)
 
 
@@ -604,7 +658,7 @@ def _run_job(job_id: int, snapshot_id: int, url: str, sha: str) -> None:
 
         stage = "detect"
         _set_job(job_id, stage, 90)
-        n_findings = store_findings(snapshot_id, parsed)
+        n_findings = store_findings(snapshot_id, parsed, job_id)
         log.info("job %s: %d findings from detectors", job_id, n_findings)
         _check_deadline(deadline)
 

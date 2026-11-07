@@ -43,7 +43,8 @@ def test_item_shape_and_node_id(client, detector_repo):
     items = get_all(client, detector_repo)
     item = next(i for i in items if i["rule_id"] == "py-eval-exec")
     assert set(item) == {"id", "rule_id", "severity", "message", "file_id", "path", "language",
-                         "line", "symbol", "snippet", "in_test", "node_id"}
+                         "line", "symbol", "snippet", "in_test", "in_docs", "placeholder",
+                       "category", "node_id"}
     assert (item["path"], item["language"], item["line"], item["symbol"]) == (
         "py_positive.py", "python", 9, "handler"
     )
@@ -145,6 +146,7 @@ def test_rules_catalogue(client):
     ids = [r["id"] for r in rules]
     assert "hardcoded-secret" in ids and "js-sql-string" in ids and "py-bare-except" in ids
     for r in rules:
-        assert set(r) == {"id", "language", "severity", "title", "checks", "why",
+        assert set(r) == {"id", "language", "severity", "category", "title", "checks", "why",
                           "false_positive"}
+        assert r["category"] in ("security", "quality")
         assert r["false_positive"].startswith("Possible false positive if ")

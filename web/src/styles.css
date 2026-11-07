@@ -845,6 +845,15 @@ a {
   cursor: pointer;
 }
 
+/* The counts inside a segmented button: a fixed room, so loading them moves nothing. */
+.segmented .seg-count {
+  display: inline-block;
+  min-width: 3ch;
+  margin-left: var(--space-1);
+  text-align: left;
+  color: var(--text-subtle);
+}
+
 .segmented button[aria-pressed="true"] {
   background: var(--bg);
   color: var(--text);

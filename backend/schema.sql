@@ -43,6 +43,9 @@ CREATE TABLE jobs (
   files_skipped      INT,
   files_beyond_limit INT,   -- past MAX_FILES; counted with discover's skip rules, not read
   hit_file_limit     BOOLEAN,
+  -- Set when the code-quality checks (Ruff) did not complete; the findings list says so. NULL
+  -- when they ran, and on old rows.
+  quality_note       TEXT,
   created_at    TIMESTAMPTZ DEFAULT now()
 );
 CREATE INDEX jobs_snapshot ON jobs (snapshot_id);
@@ -123,7 +126,11 @@ CREATE TABLE findings (
   severity     TEXT NOT NULL,                     -- low|medium|high
   message      TEXT NOT NULL,
   snippet      TEXT,                              -- masked
-  in_test      BOOLEAN NOT NULL DEFAULT false     -- file is a test/example (app/paths.py)
+  in_test      BOOLEAN NOT NULL DEFAULT false,    -- file is a test/example (app/paths.py)
+  in_docs      BOOLEAN NOT NULL DEFAULT false,    -- file is documentation (.md/.rst/.txt)
+  -- hardcoded-secret only: the value looks like a stand-in (changeme, <your-key>, xxxxxx). The
+  -- value itself is never stored; rows analysed before this column existed are false.
+  placeholder  BOOLEAN NOT NULL DEFAULT false
 );
 CREATE INDEX findings_snapshot ON findings (snapshot_id, severity);
 

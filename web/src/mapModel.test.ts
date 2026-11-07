@@ -300,12 +300,12 @@ describe("deep links", () => {
 
   it("links to the findings under a folder, matching what the map counts", () => {
     expect(findingsHref(7, { path: "src/flask", folder: true, hideTests: true })).toBe(
-      "/a/7/findings?path=src%2Fflask%2F&tests=hide",
+      "/a/7/findings?category=all&path=src%2Fflask%2F&tests=hide",
     );
     expect(findingsHref(7, { path: "a/b.py", folder: false, hideTests: false })).toBe(
-      "/a/7/findings?path=a%2Fb.py",
+      "/a/7/findings?category=all&path=a%2Fb.py",
     );
-    expect(findingsHref(7, { path: "", folder: true, hideTests: false })).toBe("/a/7/findings");
+    expect(findingsHref(7, { path: "", folder: true, hideTests: false })).toBe("/a/7/findings?category=all");
   });
 });
 

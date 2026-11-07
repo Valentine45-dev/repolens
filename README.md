@@ -5,9 +5,11 @@ it clones the repo, parses the Python and JavaScript/TypeScript files, and gives
 
 - a **file-level dependency graph** (imports, plus name-based call edges with a confidence),
 - a **code panel** for each file with "used by" and "uses" lists,
-- **rule-based findings** (for example `eval`, shell commands built from variables, SQL built by
-  string concatenation, hardcoded secrets), each with what the rule looks for and when it is a
-  false positive,
+- **rule-based findings**, split into **Security** (for example `eval`, shell commands built from
+  variables, SQL built by string concatenation, hardcoded secrets) and **Bug / Quality** (bare
+  `except`, a few Ruff error checks, imports of files that do not exist), each with what the rule
+  looks for and when it is a false positive. Secrets in documentation, and values that look like
+  placeholders (`changeme`, `<your-key>`), are shown but ranked low,
 - an **Ask panel**: structural questions ("which files import signer.py?") are answered from the
   graph without an LLM; other questions go to an LLM with retrieved code, and only citations
   that the server can match to a snippet it sent (`path:start-end`) are shown as source chips.
@@ -117,6 +119,10 @@ docker compose exec -T db psql -U repolens -d repolens < backend/migrations/2026
 docker compose exec -T db psql -U repolens -d repolens < backend/migrations/2026-11-05-import-scope.sql
 ```
 
+```bash
+docker compose exec -T db psql -U repolens -d repolens < backend/migrations/2026-11-07-findings-categories.sql
+```
+
 (In PowerShell, pipe the file instead: `Get-Content backend/migrations/<file> | docker compose
 exec -T db psql -U repolens -d repolens`.)
 
@@ -127,6 +133,16 @@ not known for them. Run it with the API stopped:
 ```bash
 cd backend
 uv run --env-file ../.env python -m app.ingest.backfill
+```
+
+After the findings-categories migration, analyses made before it have no Bug / Quality findings.
+`python -m app.ingest.redetect` re-runs the detect stage on their stored files (no clone, no
+embedding; hardcoded-secret findings are not touched, so `placeholder` stays off for old rows
+until the repository is analysed again). Also with the API stopped:
+
+```bash
+cd backend
+uv run --env-file ../.env python -m app.ingest.redetect
 ```
 
 Run only one API against a database at a time: on startup the API marks every running
@@ -290,6 +306,15 @@ are from the run before the fix.
 
 ## Known limitations
 
+- **Bug / Quality findings skip test and example code** and cover Python only (Ruff: `F811`,
+  `F821`, `F822`, `F823`, `B006`, `B015`, `B023` and the Pylint error rules). They run on a copy of
+  the redacted files with `--isolated --no-cache --no-fix --ignore-noqa`, so the repository
+  cannot change or silence them. "Broken import" misses a directory imported through the
+  `main` field of its `package.json` (the file is not read) and can flag generated or compiled
+  modules it does not know by name.
+- **Placeholder detection is by wording and shape only** (`changeme`, `<your-key>`, `xxxxxx`,
+  `your-…-here`). A template-looking value used as it is (`app.secret_key = "your-secret-key-here"`)
+  is a real weak secret and is listed last, not removed.
 - **Syntactic rules, no taint tracking.** Constant arguments are flagged too (`eval("1 + 1")`,
   a fixed-string `shell=True`, SQL with a constant table name).
 - **Secrets passed inline are missed.** The secret check needs a named assignment
