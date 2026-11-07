@@ -68,7 +68,7 @@ check each row's cause.
   callees and files per band are in the tables.
 
 ## Limits
-- One labeller who also wrote the resolver; no second judge has labelled yet (`sheet-blank-judge2.csv`
+- One labeller, who is the project's author; no second judge has labelled yet (`sheet-blank-judge2.csv`
   is built, 30 rows, not labelled), so there is no agreement figure.
 - The band was hidden but the shape of a row can hint at it.
 - Only edges RepoLens drew were judged: this is precision, not recall.
