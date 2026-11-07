@@ -431,19 +431,22 @@ function NeighbourList({
             {g.imports ? chips(g.imports) : null}
             {g.imports && g.calls.length ? " · " : null}
             {g.calls.length ? "calls " : null}
-            {g.calls.map((c, i) => (
-              <span key={i}>
-                {i ? ", " : null}
-                <span className="mono">{c.name}</span>
-                {c.guess ? (
-                  <span className="guess-note" title="Best guess: matched by name only">
-                    {" "}
-                    (guess)
+            {g.calls.length ? (
+              <span className="neighbour-calls">
+                {g.calls.map((c, i) => (
+                  <span key={i} className="neighbour-call">
+                    <span className="mono">{c.name}</span>
+                    {c.guess ? (
+                      <span className="guess-note" title="Best guess: matched by name only">
+                        {" "}
+                        (guess)
+                      </span>
+                    ) : null}
+                    {chips(c)}
                   </span>
-                ) : null}
-                {chips(c)}
+                ))}
               </span>
-            ))}
+            ) : null}
             {g.kind === "unresolved" ? " · no matching file in this repository" : null}
           </p>
         </li>

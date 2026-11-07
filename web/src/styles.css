@@ -2350,3 +2350,27 @@ a {
 .result-rows li > .site-chips {
   margin: 2px 0 0 12px;
 }
+
+/* One call per item, no separating commas (a comma could wrap onto a line of its own) */
+.neighbour-calls {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 4px var(--space-3);
+}
+
+.neighbour-call {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+}
+
+.site-chip[data-guess] {
+  border-style: dashed;
+  color: var(--text-subtle);
+}
+
+.site-chip-more {
+  font-family: var(--font-sans);
+  color: var(--text-muted);
+}
