@@ -1,0 +1,454 @@
+{
+  "run": {
+    "commit_sha": "6588b8ab6f60fae0274bf6b87f5d11d41608e5a1",
+    "dirty": false,
+    "run_at": "2026-11-07T13:07:46+00:00",
+    "machine": "LAPTOP-4C2E555R",
+    "cpu": "Intel(R) Pentium(R) Silver N5030 CPU @ 1.10GHz",
+    "cpu_threads": 4,
+    "ram_gb": 7.8,
+    "os": "Windows 11 (10.0.22631)",
+    "python": "3.12.16",
+    "packages": {
+      "torch": "2.14.1+cpu",
+      "sentence-transformers": "6.2.0",
+      "transformers": "5.21.0",
+      "tree-sitter": "0.25.2",
+      "anthropic": "2.3.0"
+    },
+    "max_analysis_s": 600,
+    "tool_pins": {
+      "bandit": "bandit==1.9.4",
+      "semgrep": "semgrep==1.182.1"
+    },
+    "notes": "",
+    "embedder": "sentence-transformers",
+    "embed_model": "sentence-transformers/all-MiniLM-L6-v2",
+    "embed_revision": "1110a243fdf4706b3f48f1d95db1a4f5529b4d41",
+    "llm_used": false,
+    "llm": {
+      "provider": "anthropic",
+      "model": null,
+      "effort": "low",
+      "thinking": "between_tools",
+      "max_tokens": 4000,
+      "prompt_version": "2026-10-28.2"
+    },
+    "retrieval": {
+      "top_k": 8,
+      "graph_expansion": true,
+      "expand_max": 8,
+      "context_tokens": 6000
+    }
+  },
+  "labelled_sha256": {
+    "main": "672a3559991f218486d05eea9ffe12c2e4700120f44028f65851078c4bd19c34",
+    "express": "c2da4542b42f34857a87c65418c68ee55e6b30a39591e44ab68be9b90b0995ee"
+  },
+  "measures": "precision of drawn call edges only, not recall",
+  "main": {
+    "sheet": "sheet-labelled.csv",
+    "rows": 90,
+    "per_band": {
+      "1.0": {
+        "rows": 30,
+        "correct": 30,
+        "incorrect": 0,
+        "unsure": 0,
+        "primary_unsure_excluded": {
+          "correct": 30,
+          "n": 30,
+          "precision": 1.0,
+          "wilson95": [
+            0.89,
+            1.0
+          ]
+        },
+        "unsure_as_incorrect": {
+          "correct": 30,
+          "n": 30,
+          "precision": 1.0,
+          "wilson95": [
+            0.89,
+            1.0
+          ]
+        },
+        "unsure_as_correct": {
+          "correct": 30,
+          "n": 30,
+          "precision": 1.0,
+          "wilson95": [
+            0.89,
+            1.0
+          ]
+        },
+        "distinct_callees": 28,
+        "distinct_caller_files": 14,
+        "distinct_callee_files": 14
+      },
+      "0.9": {
+        "rows": 30,
+        "correct": 30,
+        "incorrect": 0,
+        "unsure": 0,
+        "primary_unsure_excluded": {
+          "correct": 30,
+          "n": 30,
+          "precision": 1.0,
+          "wilson95": [
+            0.89,
+            1.0
+          ]
+        },
+        "unsure_as_incorrect": {
+          "correct": 30,
+          "n": 30,
+          "precision": 1.0,
+          "wilson95": [
+            0.89,
+            1.0
+          ]
+        },
+        "unsure_as_correct": {
+          "correct": 30,
+          "n": 30,
+          "precision": 1.0,
+          "wilson95": [
+            0.89,
+            1.0
+          ]
+        },
+        "distinct_callees": 26,
+        "distinct_caller_files": 15,
+        "distinct_callee_files": 15
+      },
+      "0.5": {
+        "rows": 30,
+        "correct": 21,
+        "incorrect": 9,
+        "unsure": 0,
+        "primary_unsure_excluded": {
+          "correct": 21,
+          "n": 30,
+          "precision": 0.7,
+          "wilson95": [
+            0.52,
+            0.83
+          ]
+        },
+        "unsure_as_incorrect": {
+          "correct": 21,
+          "n": 30,
+          "precision": 0.7,
+          "wilson95": [
+            0.52,
+            0.83
+          ]
+        },
+        "unsure_as_correct": {
+          "correct": 21,
+          "n": 30,
+          "precision": 0.7,
+          "wilson95": [
+            0.52,
+            0.83
+          ]
+        },
+        "distinct_callees": 24,
+        "distinct_caller_files": 18,
+        "distinct_callee_files": 17
+      }
+    },
+    "per_repo_band": {
+      "black 0.9": {
+        "rows": 14,
+        "correct": 14,
+        "incorrect": 0,
+        "unsure": 0
+      },
+      "black 0.5": {
+        "rows": 10,
+        "correct": 7,
+        "incorrect": 3,
+        "unsure": 0
+      },
+      "flask 1.0": {
+        "rows": 15,
+        "correct": 15,
+        "incorrect": 0,
+        "unsure": 0
+      },
+      "flask 0.9": {
+        "rows": 15,
+        "correct": 15,
+        "incorrect": 0,
+        "unsure": 0
+      },
+      "flask 0.5": {
+        "rows": 11,
+        "correct": 8,
+        "incorrect": 3,
+        "unsure": 0
+      },
+      "pygoat 1.0": {
+        "rows": 15,
+        "correct": 15,
+        "incorrect": 0,
+        "unsure": 0
+      },
+      "pygoat 0.9": {
+        "rows": 1,
+        "correct": 1,
+        "incorrect": 0,
+        "unsure": 0
+      },
+      "pygoat 0.5": {
+        "rows": 9,
+        "correct": 6,
+        "incorrect": 3,
+        "unsure": 0
+      }
+    },
+    "unsure_rows": [],
+    "unsure_without_note": [],
+    "incorrect_rows": [
+      {
+        "id": "r-yvlnz",
+        "repo": "flask",
+        "band": "0.5",
+        "call site": "src/flask/templating.py:158",
+        "callee": "src.flask.globals.ProxyMixin._get_current_object",
+        "note": "callee is a type-checking stub in globals.py; at runtime this calls werkzeug LocalProxy._get_current_object"
+      },
+      {
+        "id": "r-pgczd",
+        "repo": "pygoat",
+        "band": "0.5",
+        "call site": "dockerized_labs/broken_auth_lab/app.py:49",
+        "callee": "challenge.views.DoItFast.get",
+        "note": ""
+      },
+      {
+        "id": "r-ugpfg",
+        "repo": "pygoat",
+        "band": "0.5",
+        "call site": "challenge/views.py:672",
+        "callee": "challenge.views.DoItFast.delete",
+        "note": ""
+      },
+      {
+        "id": "r-rgera",
+        "repo": "black",
+        "band": "0.5",
+        "call site": "src/blib2to3/pgen2/driver.py:169",
+        "callee": "src.blib2to3.pgen2.parse.Parser.pop",
+        "note": ""
+      },
+      {
+        "id": "r-lgdjd",
+        "repo": "flask",
+        "band": "0.5",
+        "call site": "src/flask/templating.py:93",
+        "callee": "src.flask.templating.DispatchingJinjaLoader.get_source",
+        "note": ""
+      },
+      {
+        "id": "r-hoxkk",
+        "repo": "black",
+        "band": "0.5",
+        "call site": "scripts/make_width_table.py:61",
+        "callee": "src.black.cache.Cache.write",
+        "note": ""
+      },
+      {
+        "id": "r-wxhcq",
+        "repo": "pygoat",
+        "band": "0.5",
+        "call site": "challenge/labs/security_headers_lab/app.py:216",
+        "callee": "challenge.views.DoItFast.get",
+        "note": ""
+      },
+      {
+        "id": "r-qckxu",
+        "repo": "flask",
+        "band": "0.5",
+        "call site": "src/flask/testing.py:219",
+        "callee": "src.flask.ctx.AppContext.from_environ",
+        "note": ""
+      },
+      {
+        "id": "r-vlfkd",
+        "repo": "black",
+        "band": "0.5",
+        "call site": "src/black/trans.py:1513",
+        "callee": "src.blib2to3.pgen2.parse.Parser.pop",
+        "note": ""
+      }
+    ],
+    "express_in_test_or_example": {
+      "1.0": {
+        "in_test": 0,
+        "rows": 30
+      },
+      "0.9": {
+        "in_test": 0,
+        "rows": 30
+      },
+      "0.5": {
+        "in_test": 0,
+        "rows": 30
+      }
+    }
+  },
+  "express": {
+    "sheet": "sheet-labelled-express.csv",
+    "rows": 24,
+    "per_band": {
+      "1.0": {
+        "rows": 8,
+        "correct": 8,
+        "incorrect": 0,
+        "unsure": 0,
+        "primary_unsure_excluded": {
+          "correct": 8,
+          "n": 8,
+          "precision": 1.0,
+          "wilson95": [
+            0.68,
+            1.0
+          ]
+        },
+        "unsure_as_incorrect": {
+          "correct": 8,
+          "n": 8,
+          "precision": 1.0,
+          "wilson95": [
+            0.68,
+            1.0
+          ]
+        },
+        "unsure_as_correct": {
+          "correct": 8,
+          "n": 8,
+          "precision": 1.0,
+          "wilson95": [
+            0.68,
+            1.0
+          ]
+        },
+        "distinct_callees": 8,
+        "distinct_caller_files": 8,
+        "distinct_callee_files": 8
+      },
+      "0.9": {
+        "rows": 8,
+        "correct": 8,
+        "incorrect": 0,
+        "unsure": 0,
+        "primary_unsure_excluded": {
+          "correct": 8,
+          "n": 8,
+          "precision": 1.0,
+          "wilson95": [
+            0.68,
+            1.0
+          ]
+        },
+        "unsure_as_incorrect": {
+          "correct": 8,
+          "n": 8,
+          "precision": 1.0,
+          "wilson95": [
+            0.68,
+            1.0
+          ]
+        },
+        "unsure_as_correct": {
+          "correct": 8,
+          "n": 8,
+          "precision": 1.0,
+          "wilson95": [
+            0.68,
+            1.0
+          ]
+        },
+        "distinct_callees": 7,
+        "distinct_caller_files": 3,
+        "distinct_callee_files": 3
+      },
+      "0.5": {
+        "rows": 8,
+        "correct": 8,
+        "incorrect": 0,
+        "unsure": 0,
+        "primary_unsure_excluded": {
+          "correct": 8,
+          "n": 8,
+          "precision": 1.0,
+          "wilson95": [
+            0.68,
+            1.0
+          ]
+        },
+        "unsure_as_incorrect": {
+          "correct": 8,
+          "n": 8,
+          "precision": 1.0,
+          "wilson95": [
+            0.68,
+            1.0
+          ]
+        },
+        "unsure_as_correct": {
+          "correct": 8,
+          "n": 8,
+          "precision": 1.0,
+          "wilson95": [
+            0.68,
+            1.0
+          ]
+        },
+        "distinct_callees": 7,
+        "distinct_caller_files": 8,
+        "distinct_callee_files": 3
+      }
+    },
+    "per_repo_band": {
+      "express 1.0": {
+        "rows": 8,
+        "correct": 8,
+        "incorrect": 0,
+        "unsure": 0
+      },
+      "express 0.9": {
+        "rows": 8,
+        "correct": 8,
+        "incorrect": 0,
+        "unsure": 0
+      },
+      "express 0.5": {
+        "rows": 8,
+        "correct": 8,
+        "incorrect": 0,
+        "unsure": 0
+      }
+    },
+    "unsure_rows": [],
+    "unsure_without_note": [],
+    "incorrect_rows": [],
+    "express_in_test_or_example": {
+      "1.0": {
+        "in_test": 8,
+        "rows": 8
+      },
+      "0.9": {
+        "in_test": 0,
+        "rows": 8
+      },
+      "0.5": {
+        "in_test": 8,
+        "rows": 8
+      }
+    }
+  }
+}

@@ -5,9 +5,18 @@ DIFF ask 3 What does the first file import?
 DIFF ask 3 Which files import os?
 DIFF ask 4 What does the first file import?
 
-Reading: old2.json = main's code on the rebuilt DB; new.json = feat/edge-lines on the same DB.
-The 5 differences are the only LLM answers in the capture (two questions that the router sent to
-the AI route; 18 real calls in all over three captures). Every graph answer and every neighbour
-and map response is identical. Against old.json (main's code on the DB before the rebuild) 6
-neighbour responses also differed in `confidence`: ties between edges reaching the same symbol
-were broken by physical row order, which the rebuild changed (see PROGRESS.md).
+Reading (corrected 7 Nov: the first version of this note named only one cause).
+The 5 differences listed above compare old2.json (main's code run on the rebuilt DB) with new.json
+(feat/edge-lines on the same DB). All 5 are LLM answers. A second comparison, old.json (main's
+code on the DB before the rebuild) against new.json, differs in 11 of 5,219 responses, from two
+causes:
+  1. 5 LLM answers (18 real calls over three captures; two capture questions went to the AI
+     route). Same 5 as above. Not a code difference.
+  2. 6 neighbour responses, `/symbols/{id}/dependents?min_confidence=0.0` for the module symbols
+     src.flask.app, src.flask.cli, src.flask.helpers, src.flask.testing, src.black.cache and
+     src.black.nodes. The set of items is the same; `confidence` differs on items several edges
+     reach at different confidences. The query keeps the first row of an unordered tie, and the
+     rebuild changed physical row order. Proof it is order, not code: with main's code on the
+     rebuilt DB (old2.json) these 6 match feat/edge-lines.
+Every graph answer (78), every graph and map response, and the other 5,198 neighbour responses
+are identical in both comparisons. Follow-up in PROGRESS.md: make the tie order deterministic.

@@ -1,0 +1,8 @@
+{
+  "note": "SHA-256 of the labelled sheets, recorded and pushed BEFORE key.json was opened. Both match the hashes the owner gave in chat. Labelled by the owner alone, no AI and no RepoLens, from the sheet and the repo source on GitHub at the pinned commits (about 2 hours).",
+  "files_location": "C:/projects/repolens-eval-assets/call-calibration",
+  "sheet_labelled_sha256": "672a3559991f218486d05eea9ffe12c2e4700120f44028f65851078c4bd19c34",
+  "sheet_labelled_express_sha256": "c2da4542b42f34857a87c65418c68ee55e6b30a39591e44ab68be9b90b0995ee",
+  "blank_sheets_and_key_sha256": "see call_calibration_setup-20261107T095252Z-f0af11f.json",
+  "key_opened": false
+}
