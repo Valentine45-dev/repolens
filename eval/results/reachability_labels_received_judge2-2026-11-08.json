@@ -5,7 +5,7 @@
  "stated_sha256_matches": true,
  "judge": "J2",
  "instructions_record": "J2 started with the earlier instructions (\"is it a real security issue\"); the updated wording (\"should a reviewer act on it?\") was sent partway through. Which rows were labelled before the change is not recorded.",
- "ai_use": "not stated: the message left the template field unfilled; to be filled in by the owner",
+ "ai_use": "none (self-reported by the owner on J2's behalf, 8 Nov 2026; corrects the earlier 'not stated')",
  "checks": {
   "header_identical_to_blank_judge2_sheet": true,
   "rows": 54,
@@ -35,5 +35,6 @@
   }
  },
  "rows_with_a_note": 54,
- "notes_committed": false
+ "notes_committed": false,
+ "judge_identity": "code only (J2)"
 }
