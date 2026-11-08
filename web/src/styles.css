@@ -1,14 +1,18 @@
-/* Tokens: docs/repolens-ui-ux-spec.md §8.2 (light theme only in this build). Components use
-   these variables and never hardcode colors. */
+/* Tokens: docs/repolens-ui-ux-spec.md §8.2 and DESIGN.md. Light is the design reference; dark
+   overrides the colour tokens under :root[data-theme="dark"] (set before first paint by the script
+   in index.html). Components use these variables and never hardcode colors. */
 :root {
   --bg: #ffffff;
   --surface: #fafafa;
   --surface-2: #f4f4f5;
   --border: #e4e4e7;
   --border-strong: #d4d4d8;
+  /* The boundary of a field or button: 3:1 on Paper (WCAG 1.4.11), where the border is what marks
+     the control out. Graph nodes and chips keep border-strong: their text identifies them. */
+  --control-border: #8a8a93;
   --text: #0a0a0a;
   --text-muted: #52525b;
-  --text-subtle: #71717a;
+  --text-subtle: #6b6b74; /* 5.3:1 on Paper, 4.8:1 on Sunk Grey (was #71717a, 4.4:1 there) */
 
   --primary: #0a0a0a;
   --primary-hover: #27272a;
@@ -32,12 +36,17 @@
     Roboto, sans-serif;
   --font-mono: "JetBrains Mono", ui-monospace, "SFMono-Regular", Consolas, "Liberation Mono",
     monospace;
-  --text-xs: 0.75rem; /* 12 */
+  /* Type scale. Text inside graph nodes keeps its own 10px sizes: the node boxes are layout
+     constants (mapLayout.ts) and a bigger size would truncate more. */
+  --text-2xs: 0.6875rem; /* 11: tags, counts, panel fact labels, edge counts */
+  --text-xs: 0.75rem; /* 12: captions, data mono, code */
+  --text-mono-sm: 0.8125rem; /* 13: mono inside prose rows, inputs */
   --text-sm: 0.875rem; /* 14, body */
   --text-md: 1rem; /* 16 */
   --text-lg: 1.25rem; /* 20 */
   --text-xl: 1.75rem; /* 28 */
 
+  --space-0-5: 2px; /* inside a control only (segmented track, hairline gaps) */
   --space-1: 4px;
   --space-2: 8px;
   --space-3: 12px;
@@ -48,7 +57,11 @@
 
   --radius-control: 6px;
   --radius-panel: 10px;
+  --radius-small: 4px; /* tags, edge counts, graph nodes, skeleton bars */
   --control-h: 40px;
+  --control-h-sm: 32px; /* small buttons, selects, segmented controls, icon buttons */
+  --chip-h: 24px; /* file:line chips */
+  --tag-h: 20px;
   --topbar-h: 52px;
   --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
 
@@ -245,12 +258,12 @@ a {
 .button-secondary {
   background: var(--bg);
   color: var(--text);
-  border-color: var(--border-strong);
+  border-color: var(--control-border);
 }
 
 .button-secondary:hover:not(:disabled) {
   background: var(--surface-2);
-  border-color: var(--border-strong);
+  border-color: var(--control-border);
 }
 
 .field {
@@ -263,13 +276,13 @@ a {
   width: 100%;
   height: var(--control-h);
   padding: 0 36px 0 var(--space-3);
-  border: 1px solid var(--border-strong);
+  border: 1px solid var(--control-border);
   border-radius: var(--radius-control);
   background: var(--bg);
   color: var(--text);
   font: inherit;
   font-family: var(--font-mono);
-  font-size: 0.8125rem;
+  font-size: var(--text-mono-sm);
   transition: border-color 150ms var(--ease-out);
 }
 
@@ -278,7 +291,7 @@ a {
 }
 
 .input:hover {
-  border-color: var(--text-subtle);
+  border-color: var(--text-muted);
 }
 
 .input:focus-visible {
@@ -408,7 +421,7 @@ a {
 .status {
   display: inline-flex;
   align-items: center;
-  gap: 6px;
+  gap: var(--space-2);
   font-weight: 500;
   color: var(--text-muted);
 }
@@ -565,7 +578,7 @@ a {
 
 .skeleton {
   height: 14px;
-  border-radius: 4px;
+  border-radius: var(--radius-small);
   background: var(--surface-2);
 }
 
@@ -622,7 +635,7 @@ a {
 /* --- Shared small controls --- */
 
 .button-small {
-  height: 30px;
+  height: var(--control-h-sm);
   padding: 0 var(--space-3);
   font-size: var(--text-xs);
 }
@@ -631,8 +644,8 @@ a {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 30px;
-  height: 30px;
+  width: var(--control-h-sm);
+  height: var(--control-h-sm);
   flex: none;
   border: 1px solid transparent;
   border-radius: var(--radius-control);
@@ -659,12 +672,12 @@ a {
 .tag {
   display: inline-flex;
   align-items: center;
-  height: 18px;
-  padding: 0 6px;
+  height: var(--tag-h);
+  padding: 0 var(--space-2);
   border: 1px dashed var(--node-external);
-  border-radius: 4px;
+  border-radius: var(--radius-small);
   color: var(--text-muted);
-  font-size: 11px;
+  font-size: var(--text-2xs);
   white-space: nowrap;
 }
 
@@ -741,12 +754,12 @@ a {
 }
 
 .count {
-  padding: 0 6px;
-  border-radius: 9px;
+  padding: 0 var(--space-2);
+  border-radius: 999px;
   background: var(--surface-2);
   color: var(--text-muted);
-  font-size: 11px;
-  line-height: 18px;
+  font-size: var(--text-2xs);
+  line-height: var(--tag-h);
 }
 
 .analysis-ask {
@@ -826,17 +839,17 @@ a {
 
 .segmented {
   display: inline-flex;
-  padding: 2px;
-  border: 1px solid var(--border-strong);
+  padding: var(--space-0-5);
+  border: 1px solid var(--control-border);
   border-radius: var(--radius-control);
   background: var(--surface);
 }
 
 .segmented button {
-  height: 26px;
+  height: calc(var(--control-h-sm) - 2 * var(--space-0-5) - 2px); /* 32px outside the track */
   padding: 0 var(--space-3);
   border: 0;
-  border-radius: 4px;
+  border-radius: var(--radius-small);
   background: transparent;
   color: var(--text-muted);
   font: inherit;
@@ -1117,7 +1130,7 @@ a {
 
 .breadcrumbs-up {
   text-decoration: none;
-  border-color: var(--border-strong);
+  border-color: var(--control-border);
 }
 
 .breadcrumbs-up[aria-disabled="true"] {
@@ -1286,12 +1299,12 @@ a {
 
 .edge-label {
   position: absolute;
-  padding: 0 4px;
+  padding: 0 var(--space-1);
   border: 1px solid var(--border);
-  border-radius: 3px;
+  border-radius: var(--radius-small);
   background: var(--bg);
   color: var(--text-muted);
-  font-size: 11px;
+  font-size: var(--text-2xs);
   line-height: 16px;
   pointer-events: all; /* hovering the count shows the same tooltip as the line */
   cursor: default;
@@ -1312,7 +1325,7 @@ a {
   max-width: 320px;
   padding: var(--space-2) var(--space-3);
   border: 1px solid var(--border-strong);
-  border-radius: 4px;
+  border-radius: var(--radius-small);
   background: var(--bg);
   color: var(--text);
   font-size: var(--text-xs);
@@ -1408,7 +1421,7 @@ a {
   border: 0;
   background: none;
   color: var(--text);
-  font-size: 0.8125rem;
+  font-size: var(--text-mono-sm);
   text-align: left;
   text-decoration: underline;
   text-decoration-color: var(--border-strong);
@@ -1463,7 +1476,7 @@ a {
 .panel-title-dir {
   overflow: hidden;
   color: var(--text-subtle);
-  font-size: 11px;
+  font-size: var(--text-2xs);
   font-weight: 400;
   text-align: left;
   text-overflow: ellipsis;
@@ -1494,7 +1507,7 @@ a {
 
 .panel-facts dt {
   color: var(--text-subtle);
-  font-size: 11px;
+  font-size: var(--text-2xs);
 }
 
 .panel-facts dd {
@@ -1552,7 +1565,7 @@ a {
   display: flex;
   min-width: max-content;
   font-family: var(--font-mono);
-  font-size: 12px;
+  font-size: var(--text-xs);
   line-height: 1.6;
 }
 
@@ -1619,7 +1632,7 @@ a {
 .severity {
   display: inline-flex;
   align-items: center;
-  gap: 6px;
+  gap: var(--space-2);
   font-weight: 500;
   white-space: nowrap;
 }
@@ -1676,9 +1689,9 @@ a {
 
 .select,
 .input-small {
-  height: 30px;
+  height: var(--control-h-sm);
   padding: 0 var(--space-2);
-  border: 1px solid var(--border-strong);
+  border: 1px solid var(--control-border);
   border-radius: var(--radius-control);
   background: var(--bg);
   color: var(--text);
@@ -1739,7 +1752,7 @@ a {
 }
 
 .location-col {
-  font-size: 0.8125rem;
+  font-size: var(--text-mono-sm);
   overflow-wrap: break-word; /* paths wrap after "/" (PathText); never mid-name unless one is too long */
 }
 
@@ -1777,7 +1790,7 @@ a {
 }
 
 .finding-facts dd {
-  margin: 2px 0 var(--space-3);
+  margin: var(--space-0-5) 0 var(--space-3);
 }
 
 .finding-snippet {
@@ -1790,7 +1803,7 @@ a {
   border: 1px solid var(--border);
   border-radius: var(--radius-control);
   background: var(--surface);
-  font-size: 12px;
+  font-size: var(--text-xs);
   white-space: pre-wrap;
   overflow-wrap: anywhere;
 }
@@ -1993,11 +2006,11 @@ a {
 }
 
 .markdown code {
-  padding: 0 3px;
-  border-radius: 3px;
+  padding: 0 var(--space-1);
+  border-radius: var(--radius-small);
   background: var(--surface-2);
   font-family: var(--font-mono);
-  font-size: 0.8125rem;
+  font-size: var(--text-mono-sm);
   overflow-wrap: anywhere;
 }
 
@@ -2006,7 +2019,7 @@ a {
   padding: var(--space-2) var(--space-3);
   border-radius: var(--radius-control);
   background: var(--surface);
-  font-size: 12px;
+  font-size: var(--text-xs);
   overflow-x: auto;
 }
 
@@ -2066,7 +2079,7 @@ a {
 }
 
 .result-primary {
-  font-size: 0.8125rem;
+  font-size: var(--text-mono-sm);
   overflow-wrap: break-word; /* wraps at the <wbr> after each "/" first */
 }
 
@@ -2117,15 +2130,15 @@ a {
 .citation {
   display: inline-flex;
   align-items: center;
-  gap: 6px;
+  gap: var(--space-2);
   min-height: 28px;
-  padding: 2px var(--space-2);
+  padding: var(--space-0-5) var(--space-2);
   border: 1px solid var(--border-strong);
   border-radius: var(--radius-control);
   background: var(--bg);
   color: var(--text);
   font-family: var(--font-mono);
-  font-size: 12px;
+  font-size: var(--text-xs);
   text-decoration: none;
   overflow-wrap: break-word;
   transition: border-color 150ms var(--ease-out), background-color 150ms var(--ease-out);
@@ -2199,12 +2212,12 @@ a {
 }
 
 .neighbour-path {
-  font-size: 0.8125rem;
+  font-size: var(--text-mono-sm);
   overflow-wrap: anywhere;
 }
 
 .neighbour-what {
-  margin-top: 2px;
+  margin-top: var(--space-0-5);
 }
 
 .guess-note {
@@ -2328,22 +2341,22 @@ a {
   display: inline-flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: 4px;
-  margin-left: 6px;
+  gap: var(--space-1);
+  margin-left: var(--space-2);
   vertical-align: middle;
 }
 
 .site-chip {
   display: inline-flex;
   align-items: center;
-  min-height: 22px;
-  padding: 0 6px;
+  min-height: var(--chip-h);
+  padding: 0 var(--space-2);
   border: 1px solid var(--border-strong);
   border-radius: var(--radius-control);
   background: var(--bg);
   color: var(--text);
   font-family: var(--font-mono);
-  font-size: 12px;
+  font-size: var(--text-xs);
   line-height: 1;
   text-decoration: none;
   cursor: pointer;
@@ -2361,7 +2374,7 @@ a {
 }
 
 .result-rows li > .site-chips {
-  margin: 2px 0 0 12px;
+  margin: var(--space-0-5) 0 0 var(--space-3);
 }
 
 /* One call per item, no separating commas (a comma could wrap onto a line of its own) */
@@ -2369,7 +2382,7 @@ a {
   display: inline-flex;
   flex-wrap: wrap;
   align-items: baseline;
-  gap: 4px var(--space-3);
+  gap: var(--space-1) var(--space-3);
 }
 
 .neighbour-call {
@@ -2403,12 +2416,12 @@ a {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: 4px;
+  gap: var(--space-1);
 }
 
 .reach-arrow {
   color: var(--text-subtle);
-  font-size: 12px;
+  font-size: var(--text-xs);
 }
 
 .reach-entry {

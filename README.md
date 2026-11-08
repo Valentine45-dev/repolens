@@ -104,6 +104,18 @@ npx vite preview --port 5173 --strictPort
 (Not `npm run preview -- --port 5173`: Windows PowerShell 5.1 drops the bare `--`, so Vite
 gets `5173` as a folder name and stops with "dist does not exist".)
 
+To see loading states (skeletons, "Opening…"), slow the API down in the dev or preview server
+only. Off unless set; it lives in `web/devApiDelay.ts`, in the Node server, so it never reaches
+the browser bundle, and the normal build and preview add no delay. Set it for one command only:
+
+```powershell
+cd web
+$env:REPOLENS_DEV_API_DELAY_MS = "1500"; npx vite preview --port 5173 --strictPort; Remove-Item Env:REPOLENS_DEV_API_DELAY_MS
+```
+
+`REPOLENS_DEV_API_DELAY_MATCH` (a regular expression on the path, e.g. `/reach`) limits it to some
+requests.
+
 An older database volume needs the migrations in
 [`backend/migrations/`](backend/migrations/), run after stopping any API on older code (a
 fresh volume needs none). All are idempotent and can run in any order:
