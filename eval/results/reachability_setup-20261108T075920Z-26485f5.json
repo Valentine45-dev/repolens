@@ -1,0 +1,391 @@
+{
+  "run": {
+    "commit_sha": "26485f5daaeb111237d0f8e25000deed5f504ca2",
+    "dirty": false,
+    "run_at": "2026-11-08T07:59:20+00:00",
+    "machine": "LAPTOP-4C2E555R",
+    "cpu": "Intel(R) Pentium(R) Silver N5030 CPU @ 1.10GHz",
+    "cpu_threads": 4,
+    "ram_gb": 7.8,
+    "os": "Windows 11 (10.0.22631)",
+    "python": "3.12.16",
+    "packages": {
+      "torch": "2.14.1+cpu",
+      "sentence-transformers": "6.2.0",
+      "transformers": "5.21.0",
+      "tree-sitter": "0.25.2",
+      "anthropic": "2.3.0"
+    },
+    "max_analysis_s": 600,
+    "tool_pins": {
+      "bandit": "bandit==1.9.4",
+      "semgrep": "semgrep==1.182.1"
+    },
+    "notes": "",
+    "embedder": "sentence-transformers",
+    "embed_model": "sentence-transformers/all-MiniLM-L6-v2",
+    "embed_revision": "1110a243fdf4706b3f48f1d95db1a4f5529b4d41",
+    "llm_used": false,
+    "llm": {
+      "provider": "anthropic",
+      "model": "claude-sonnet-5-5",
+      "effort": "low",
+      "thinking": "between_tools",
+      "max_tokens": 4000,
+      "prompt_version": "2026-10-28.2"
+    },
+    "retrieval": {
+      "top_k": 8,
+      "graph_expansion": true,
+      "expand_max": 8,
+      "context_tokens": 6000
+    }
+  },
+  "guard": {
+    "frozen_tier_commit": "cfd4835dc50b5497a189ca34ca410df19767bc52",
+    "prereg_commit": "958a3628640ed849751dbcd1c024cf744751ab01",
+    "head": "26485f5daaeb111237d0f8e25000deed5f504ca2"
+  },
+  "seed": 20261108,
+  "pool_cap": 60,
+  "judge2_share": 0.2,
+  "bandit": {
+    "pin": "bandit==1.9.4",
+    "skip": "B101,B404",
+    "count_run": null
+  },
+  "repos": {
+    "benoitc/gunicorn": {
+      "sha": "d93a59d2039bc01ce266a9995059779eb6048468",
+      "snapshot_id": 11,
+      "bandit_total": 48,
+      "matches_counting_run": true,
+      "bandit_parse_errors": 0,
+      "bandit_list": {
+        "n": 48,
+        "tier": {
+          "guess": 4,
+          "none": 26,
+          "solid": 18
+        },
+        "entry_class": {
+          "app": 17,
+          "None": 26,
+          "public-api": 5
+        },
+        "tier_x_entry_class": {
+          "guess|app": 4,
+          "none|None": 26,
+          "solid|app": 13,
+          "solid|public-api": 5
+        }
+      },
+      "bandit_pool": {
+        "size": 48,
+        "sampled": false,
+        "n": 48,
+        "tier": {
+          "guess": 4,
+          "none": 26,
+          "solid": 18
+        },
+        "entry_class": {
+          "app": 17,
+          "None": 26,
+          "public-api": 5
+        },
+        "tier_x_entry_class": {
+          "guess|app": 4,
+          "none|None": 26,
+          "solid|app": 13,
+          "solid|public-api": 5
+        }
+      },
+      "repolens_list": {
+        "n": 0,
+        "tier": {},
+        "entry_class": {},
+        "tier_x_entry_class": {}
+      },
+      "repolens_pool": {
+        "size": 0,
+        "sampled": false,
+        "n": 0,
+        "tier": {},
+        "entry_class": {},
+        "tier_x_entry_class": {}
+      },
+      "repolens_js_ts_findings_left_out": 0,
+      "sheet_rows": 48,
+      "rows_shared_by_both_tools": 0,
+      "judge2_rows": 10
+    },
+    "certbot/certbot": {
+      "sha": "138defe9c7c68ceb29a66cbd5f3a346567139211",
+      "snapshot_id": 12,
+      "bandit_total": 73,
+      "matches_counting_run": true,
+      "bandit_parse_errors": 0,
+      "bandit_list": {
+        "n": 73,
+        "tier": {
+          "none": 25,
+          "guess": 5,
+          "solid": 43
+        },
+        "entry_class": {
+          "None": 25,
+          "app": 48
+        },
+        "tier_x_entry_class": {
+          "none|None": 25,
+          "guess|app": 5,
+          "solid|app": 43
+        }
+      },
+      "bandit_pool": {
+        "size": 60,
+        "sampled": true,
+        "n": 60,
+        "tier": {
+          "none": 21,
+          "guess": 3,
+          "solid": 36
+        },
+        "entry_class": {
+          "None": 21,
+          "app": 39
+        },
+        "tier_x_entry_class": {
+          "none|None": 21,
+          "guess|app": 3,
+          "solid|app": 36
+        }
+      },
+      "repolens_list": {
+        "n": 7,
+        "tier": {
+          "solid": 6,
+          "none": 1
+        },
+        "entry_class": {
+          "app": 6,
+          "None": 1
+        },
+        "tier_x_entry_class": {
+          "solid|app": 6,
+          "none|None": 1
+        }
+      },
+      "repolens_pool": {
+        "size": 7,
+        "sampled": false,
+        "n": 7,
+        "tier": {
+          "solid": 6,
+          "none": 1
+        },
+        "entry_class": {
+          "app": 6,
+          "None": 1
+        },
+        "tier_x_entry_class": {
+          "solid|app": 6,
+          "none|None": 1
+        }
+      },
+      "repolens_js_ts_findings_left_out": 0,
+      "sheet_rows": 65,
+      "rows_shared_by_both_tools": 2,
+      "judge2_rows": 13
+    },
+    "getredash/redash": {
+      "sha": "09740eaf6359af4ac4f932b620f28add2299142e",
+      "snapshot_id": 13,
+      "bandit_total": 48,
+      "matches_counting_run": true,
+      "bandit_parse_errors": 0,
+      "bandit_list": {
+        "n": 48,
+        "tier": {
+          "solid": 8,
+          "none": 40
+        },
+        "entry_class": {
+          "app": 5,
+          "public-api": 3,
+          "None": 40
+        },
+        "tier_x_entry_class": {
+          "solid|app": 5,
+          "solid|public-api": 3,
+          "none|None": 40
+        }
+      },
+      "bandit_pool": {
+        "size": 48,
+        "sampled": false,
+        "n": 48,
+        "tier": {
+          "solid": 8,
+          "none": 40
+        },
+        "entry_class": {
+          "app": 5,
+          "public-api": 3,
+          "None": 40
+        },
+        "tier_x_entry_class": {
+          "solid|app": 5,
+          "solid|public-api": 3,
+          "none|None": 40
+        }
+      },
+      "repolens_list": {
+        "n": 19,
+        "tier": {
+          "not_checked": 8,
+          "solid": 2,
+          "none": 9
+        },
+        "entry_class": {
+          "None": 17,
+          "public-api": 1,
+          "app": 1
+        },
+        "tier_x_entry_class": {
+          "not_checked|None": 8,
+          "solid|public-api": 1,
+          "none|None": 9,
+          "solid|app": 1
+        }
+      },
+      "repolens_pool": {
+        "size": 19,
+        "sampled": false,
+        "n": 19,
+        "tier": {
+          "not_checked": 8,
+          "solid": 2,
+          "none": 9
+        },
+        "entry_class": {
+          "None": 17,
+          "public-api": 1,
+          "app": 1
+        },
+        "tier_x_entry_class": {
+          "not_checked|None": 8,
+          "solid|public-api": 1,
+          "none|None": 9,
+          "solid|app": 1
+        }
+      },
+      "repolens_js_ts_findings_left_out": 8,
+      "sheet_rows": 57,
+      "rows_shared_by_both_tools": 10,
+      "judge2_rows": 12
+    },
+    "ipython/ipython": {
+      "sha": "cf63afd11e2fca4eb4645e9d5b4a712f3549f632",
+      "snapshot_id": 14,
+      "bandit_total": 143,
+      "matches_counting_run": true,
+      "bandit_parse_errors": 0,
+      "bandit_list": {
+        "n": 143,
+        "tier": {
+          "solid": 40,
+          "none": 97,
+          "guess": 6
+        },
+        "entry_class": {
+          "app": 45,
+          "None": 97,
+          "public-api": 1
+        },
+        "tier_x_entry_class": {
+          "solid|app": 39,
+          "none|None": 97,
+          "guess|app": 6,
+          "solid|public-api": 1
+        }
+      },
+      "bandit_pool": {
+        "size": 60,
+        "sampled": true,
+        "n": 60,
+        "tier": {
+          "solid": 19,
+          "none": 39,
+          "guess": 2
+        },
+        "entry_class": {
+          "app": 20,
+          "None": 39,
+          "public-api": 1
+        },
+        "tier_x_entry_class": {
+          "solid|app": 18,
+          "none|None": 39,
+          "guess|app": 2,
+          "solid|public-api": 1
+        }
+      },
+      "repolens_list": {
+        "n": 42,
+        "tier": {
+          "none": 37,
+          "solid": 2,
+          "guess": 3
+        },
+        "entry_class": {
+          "None": 37,
+          "app": 5
+        },
+        "tier_x_entry_class": {
+          "none|None": 37,
+          "solid|app": 2,
+          "guess|app": 3
+        }
+      },
+      "repolens_pool": {
+        "size": 42,
+        "sampled": false,
+        "n": 42,
+        "tier": {
+          "none": 37,
+          "solid": 2,
+          "guess": 3
+        },
+        "entry_class": {
+          "None": 37,
+          "app": 5
+        },
+        "tier_x_entry_class": {
+          "none|None": 37,
+          "solid|app": 2,
+          "guess|app": 3
+        }
+      },
+      "repolens_js_ts_findings_left_out": 0,
+      "sheet_rows": 91,
+      "rows_shared_by_both_tools": 11,
+      "judge2_rows": 19
+    }
+  },
+  "sheet_rows_total": 261,
+  "judge2_rows_total": 54,
+  "choices_not_spelled_out_in_the_preregistration": [
+    "RepoLens secondary pool = Security-category findings in Python files and in non-code files; JS/TS findings left out (Python-only study); sample stream f'{SEED}-{repo}-repolens'",
+    "judge-2 rows = ceil(20%) of each repo's sheet rows (Bandit and RepoLens rows together), random.Random(f'{SEED}-judge2-{repo}') over rows sorted by (path, line, category)",
+    "sheet columns: id, repo, path, line, 'flagged for' (neutral category), code (3 lines of context, stored redacted text, blind_sheet.mask()), label, note"
+  ],
+  "files_sha256": {
+    "sheet-blank.csv": "e0f4fb931f332cee6e906a2f28e5c267893d0725c0e4008864e605d6473cbc97",
+    "sheet-blank-judge2.csv": "be32edde89a13c5c4d8aac9d11f9c2c6bb0db9ab57476d4dc7cfacc5886775a5",
+    "key.json": "08de39070dc798043181452103f694b1c3218412810e4e8a5774e4e01aa653b6"
+  },
+  "files_location": "C:\\projects\\repolens-eval-assets\\reachability",
+  "labels_received": false
+}
