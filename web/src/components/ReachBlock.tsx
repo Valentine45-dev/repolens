@@ -152,9 +152,8 @@ export function ReachBlock({ snapshotId, view }: { snapshotId: number; view: Rea
           </div>
           {tier === "guess" && entry ? (
             <p className="caption reach-guess-note">
-              Starts at <Label text={entry.label} />. Dashed steps are guesses: a call matched by
-              name only, a special method Python calls implicitly (such as __enter__ or
-              __deepcopy__), or a function defined inside code that is reached.
+              Starts at <Label text={entry.label} />. Dashed steps are the guesses (a special method
+              is one such as __enter__ or __deepcopy__).
             </p>
           ) : null}
         </>

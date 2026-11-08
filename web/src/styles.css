@@ -69,6 +69,57 @@
   color-scheme: light;
 }
 
+/* Dark: the same roles, contrast checked like light (DESIGN.md lists every ratio). Ink becomes a
+   light grey and Paper a near-black; state colours are lifted so they hold 4.5:1 on the dark ground.
+   Only colours change: sizes, spacing and the graph's layout are the same in both themes. */
+:root[data-theme="dark"] {
+  --bg: #111113;
+  --surface: #18181b;
+  --surface-2: #232327;
+  --border: #2c2c31;
+  --border-strong: #3f3f46;
+  --control-border: #63636c;
+  --text: #f4f4f5;
+  --text-muted: #b4b4bc;
+  --text-subtle: #94949e;
+
+  --primary: #f4f4f5;
+  --primary-hover: #d4d4d8;
+  --primary-text: #111113;
+  --focus-ring: #f4f4f5;
+
+  --danger: #f97066;
+  --warning: #f5a524;
+  --info: #7cacf8;
+  --success: #4ccf8a;
+
+  --node-python: #7fb2e5;
+  --node-js: #e0b04a;
+  --node-other: #b4b4bc;
+  --node-external: #94949e;
+  --edge: #7c7c86;
+  --highlight: #3b3214;
+
+  color-scheme: dark;
+}
+
+/* The theme toggle eases colours only, for 200ms, and only while this class is on (theme.ts adds
+   it for the switch and never under reduced motion), so pan, zoom and hover are never slowed. */
+@media (prefers-reduced-motion: no-preference) {
+  .theme-switching,
+  .theme-switching *,
+  .theme-switching *::before,
+  .theme-switching *::after {
+    transition:
+      background-color 200ms var(--ease-out),
+      color 200ms var(--ease-out),
+      border-color 200ms var(--ease-out),
+      outline-color 200ms var(--ease-out),
+      fill 200ms var(--ease-out),
+      stroke 200ms var(--ease-out) !important;
+  }
+}
+
 *,
 *::before,
 *::after {
@@ -169,6 +220,17 @@ a {
   width: 20px;
   height: 20px;
   flex: none;
+}
+
+.topbar-end {
+  display: flex;
+  align-items: center;
+  margin-left: auto;
+}
+
+/* Light / dark (theme.ts). A plain icon button; the pressed state is the theme. */
+.theme-toggle {
+  color: var(--text-muted);
 }
 
 .topbar-link {
@@ -970,7 +1032,14 @@ a {
 /* React Flow, restyled from tokens */
 .react-flow {
   --xy-background-color: var(--bg);
+  --xy-attribution-background-color: color-mix(in srgb, var(--bg) 70%, transparent);
+  --xy-edge-label-background-color: var(--bg);
+  --xy-edge-label-color: var(--text-muted);
   font-family: var(--font-sans);
+}
+
+.react-flow__attribution a {
+  color: var(--text-subtle);
 }
 
 .graph-node {

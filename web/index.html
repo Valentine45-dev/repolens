@@ -3,7 +3,19 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta name="color-scheme" content="light" />
+    <meta name="color-scheme" content="light dark" />
+    <!-- Theme before anything paints (no flash): a stored pick, else the system setting. Same rule
+         as web/src/theme.ts (theme.dom.test.ts runs this script). -->
+    <script>
+      (function () {
+        var stored = null;
+        try { stored = window.localStorage.getItem("repolens.theme"); } catch (e) {}
+        var dark = stored === "dark" || (stored !== "light" && !!window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches);
+        var root = document.documentElement;
+        root.setAttribute("data-theme", dark ? "dark" : "light");
+        root.style.colorScheme = dark ? "dark" : "light";
+      })();
+    </script>
     <!-- .ico for browsers without SVG favicons; modern browsers pick the SVG -->
     <link rel="icon" href="/favicon.ico" sizes="32x32" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
@@ -27,9 +39,17 @@
     <template id="fp-topbar">
       <header class="topbar">
         <a class="wordmark" href="/" aria-label="RepoLens home"
-          ><img src="/logo-mark.svg" alt="" width="20" height="20" class="wordmark-mark" />RepoLens</a
+          ><svg viewBox="0 0 64 64" width="20" height="20" fill="none" stroke="currentColor" class="wordmark-mark" aria-hidden="true">
+            <path d="M19 33 L27 19 L35 33 Z" stroke-width="2.4" stroke-linejoin="round" />
+            <circle cx="27" cy="19" r="3.6" fill="currentColor" stroke="none" />
+            <circle cx="19" cy="33" r="3.6" fill="currentColor" stroke="none" />
+            <circle cx="35" cy="33" r="3.6" fill="currentColor" stroke="none" />
+            <circle cx="27" cy="27" r="19" stroke-width="5" />
+            <path d="M41 41 L56 56" stroke-width="7" stroke-linecap="round" /></svg
+          >RepoLens</a
         >
         <nav aria-label="Main"><a class="topbar-link" href="/" data-fp="home-link">New analysis</a></nav>
+        <div class="topbar-end"><span class="icon-button theme-toggle" aria-hidden="true"></span></div>
       </header>
     </template>
 
