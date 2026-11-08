@@ -1276,8 +1276,8 @@
   - **ELK: later, if needed.** Not added. `elkjs` (~1.4 MB, a web worker) would route edges around nodes; worth it only if a dense view still reads badly
     (black `src/black` has 22 edges through other nodes and 5 crossings, down from 43 and 75). Needs the owner's OK first.
   - **Polish for later:**
-    1. The legend strip keeps an empty reserved row under it when there is no caption (it stops the map moving when a caption arrives). A calmer way: (Done on `feat/ui-polish`: the row is drawn only when it has something to say.)
-       reserve the room without the visible grey band, or show the caption elsewhere.
+    1. The legend strip keeps an empty reserved row under it when there is no caption (it stops the map moving when a caption arrives). A calmer way:
+       reserve the room without the visible grey band, or show the caption elsewhere. (Done on `feat/ui-polish`: the row is drawn only when it has something to say.)
     2. The disabled "Show all edges" has no hint. Add a tooltip: "All connections are already shown." (Done on `feat/ui-polish`.)
   - **State left running:** Docker `db`, the API on 8000 and `vite preview` on 5173 (the new build) were started for this work.
 
