@@ -22,7 +22,9 @@ type IconName =
   | "collapse"
   | "folder"
   | "up"
-  | "cycle";
+  | "cycle"
+  | "sun"
+  | "moon";
 
 const PATHS: Record<IconName, ReactNode> = {
   check: <path d="M3.5 8.5l3 3 6-7" />,
@@ -76,6 +78,14 @@ const PATHS: Record<IconName, ReactNode> = {
   cycle: (
     <path d="M3.5 8a4.5 4.5 0 0 1 7.7-3.2M12 2.5v2.6H9.4M12.5 8a4.5 4.5 0 0 1-7.7 3.2M4 13.5v-2.6h2.6" />
   ),
+  // Theme toggle: the sun is shown in light, the moon in dark.
+  sun: (
+    <>
+      <circle cx="8" cy="8" r="2.75" />
+      <path d="M8 1.5v1.25M8 13.25v1.25M1.5 8h1.25M13.25 8h1.25M3.4 3.4l.9.9M11.7 11.7l.9.9M3.4 12.6l.9-.9M11.7 4.3l.9-.9" />
+    </>
+  ),
+  moon: <path d="M13.25 9.6A5.5 5.5 0 0 1 6.4 2.75a5.5 5.5 0 1 0 6.85 6.85z" />,
 };
 
 export function Icon({ name, size = 16, label }: { name: IconName; size?: number; label?: string }) {

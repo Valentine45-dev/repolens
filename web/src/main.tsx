@@ -17,6 +17,7 @@ import { Findings } from "./pages/Findings";
 import { Home } from "./pages/Home";
 import { NotFound } from "./pages/NotFound";
 import { Progress } from "./pages/Progress";
+import { initTheme } from "./theme";
 
 // React Flow is most of the bundle; only the graph page needs it.
 const Explore = lazy(() => import("./pages/Explore").then((m) => ({ default: m.Explore })));
@@ -66,6 +67,8 @@ function App() {
     </>
   );
 }
+
+initTheme();
 
 createRoot(document.getElementById("root")!).render(
   <StrictMode>

@@ -17,6 +17,10 @@ import { degrees } from "../graphModel";
 import { exploreHref, useSetParams } from "../links";
 import { SiteChips } from "./SiteChips";
 import { scrollToStart } from "../scroll";
+import { useScrollEdges } from "../scrollEdges";
+import { useDelayedFlag } from "../useDelayedFlag";
+import { useEscapeToClose } from "../escapeStack";
+import { CloseButton } from "./CloseButton";
 import { Icon } from "./Icon";
 import { Markdown } from "./Markdown";
 import { PathText } from "./PathText";
@@ -79,10 +83,14 @@ export function AskDrawer({
   snapshotId,
   status,
   onClose,
+  hidden = false,
 }: {
   snapshotId: number;
   status: SnapshotStatus;
   onClose: () => void;
+  /** Behind the file or finding tab: kept mounted (the conversation and draft stay), out of sight
+   * and out of the tab order. */
+  hidden?: boolean;
 }) {
   const titleId = useId();
   const inputId = useId();
@@ -95,6 +103,7 @@ export function AskDrawer({
   const inputRef = useRef<HTMLTextAreaElement>(null);
   const lastTurnRef = useRef<HTMLLIElement>(null);
   const bodyRef = useRef<HTMLDivElement>(null);
+  const edges = useScrollEdges(bodyRef);
   const { features } = status;
   const name = repoName(status.url);
 
@@ -137,13 +146,8 @@ export function AskDrawer({
     if (prefill === null) inputRef.current?.focus();
   }, []);
 
-  useEffect(() => {
-    const onKey = (e: KeyboardEvent) => {
-      if (e.key === "Escape" && document.activeElement?.closest("#ask-drawer")) onClose();
-    };
-    window.addEventListener("keydown", onKey);
-    return () => window.removeEventListener("keydown", onKey);
-  }, [onClose]);
+  const drawerRef = useRef<HTMLElement>(null);
+  useEscapeToClose(drawerRef, onClose);
 
   const ask = useMutation({
     mutationFn: ({ question, fileId }: { id: string; question: string; fileId?: number }) =>
@@ -179,7 +183,16 @@ export function AskDrawer({
   }
 
   return (
-    <aside id="ask-drawer" className="drawer" data-wide={wide || undefined} aria-labelledby={titleId}>
+    <aside
+      id="ask-drawer"
+      ref={drawerRef}
+      className="drawer"
+      data-wide={wide || undefined}
+      aria-labelledby={titleId}
+      data-behind={hidden || undefined}
+      aria-hidden={hidden || undefined}
+      inert={hidden}
+    >
       <header className="panel-header drawer-header">
         <div className="panel-heading drawer-heading">
           <h2 id={titleId} className="panel-title drawer-title">
@@ -210,11 +223,12 @@ export function AskDrawer({
         >
           <Icon name={wide ? "collapse" : "expand"} />
         </button>
-        <button type="button" className="icon-button" onClick={onClose} aria-label="Close Ask (Esc)">
-          <Icon name="x" />
-        </button>
+        <CloseButton what="Ask" onClose={onClose} />
       </header>
 
+      {/* Only this list scrolls; the header and the question box stay put. A soft fade at an edge
+          says there is more that way (useScrollEdges), drawn over the list, never read out. */}
+      <div className="drawer-scroll" data-more-above={edges.top || undefined} data-more-below={edges.bottom || undefined}>
       <div className="drawer-body" ref={bodyRef}>
         <DrawerBanner snapshotId={snapshotId} status={status} />
 
@@ -242,16 +256,16 @@ export function AskDrawer({
                       <Icon name="x" size={14} /> {turn.error}
                     </p>
                   ) : (
-                    <p className="turn-note thinking">
-                      <Icon name="spinner" size={14} /> Looking through the code… this can take
-                      up to 40 seconds.
-                    </p>
+                    <ThinkingNote />
                   )}
                 </div>
               </li>
             ))}
           </ol>
         )}
+      </div>
+        <span className="scroll-fade scroll-fade-top" aria-hidden="true" />
+        <span className="scroll-fade scroll-fade-bottom" aria-hidden="true" />
       </div>
 
       <form className="ask-form" onSubmit={submit}>
@@ -662,6 +676,18 @@ const chunkCount = new Intl.NumberFormat("en-US");
 // The one place that says why AI answers are off or limited (spec 12.1: say what happened and
 // what to do next), with "Retry preparing search" when that is the fix. Graph questions always
 // work, so the banner says so; each failed AI turn below then needs only one line.
+/** While a question is answered. Graph answers come back in well under a second, so the long
+ * wait is only mentioned once it is actually long. */
+export function ThinkingNote() {
+  const slow = useDelayedFlag(true, 1500, 0);
+  return (
+    <p className="turn-note thinking">
+      <Icon name="spinner" size={14} />{" "}
+      {slow ? "Looking through the code… this can take up to 40 seconds." : "Working on it…"}
+    </p>
+  );
+}
+
 function DrawerBanner({ snapshotId, status }: { snapshotId: number; status: SnapshotStatus }) {
   const queryClient = useQueryClient();
   const { features } = status;

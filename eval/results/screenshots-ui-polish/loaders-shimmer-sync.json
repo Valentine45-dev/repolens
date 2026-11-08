@@ -1,0 +1,282 @@
+[
+  {
+    "theme": "light",
+    "size": "1366x768",
+    "case": "L01-explorer-first-load",
+    "shimmer": {
+      "bars": 50,
+      "minPhase": 0,
+      "maxPhase": 0
+    }
+  },
+  {
+    "theme": "light",
+    "size": "1366x768",
+    "case": "L02-file-panel-code-loading",
+    "shimmer": {
+      "bars": 105,
+      "minPhase": 456,
+      "maxPhase": 456
+    }
+  },
+  {
+    "theme": "light",
+    "size": "1366x768",
+    "case": "L03-findings-link-loading",
+    "shimmer": {
+      "bars": 31,
+      "minPhase": 1003,
+      "maxPhase": 1003
+    }
+  },
+  {
+    "theme": "light",
+    "size": "1366x768",
+    "case": "L04-reachability-loading",
+    "shimmer": {
+      "bars": 6,
+      "minPhase": 1440,
+      "maxPhase": 1440
+    }
+  },
+  {
+    "theme": "light",
+    "size": "1366x768",
+    "case": "L05-opening-a-folder",
+    "shimmer": {
+      "bars": 1,
+      "minPhase": 965,
+      "maxPhase": 965
+    }
+  },
+  {
+    "theme": "light",
+    "size": "1366x768",
+    "case": "L06-home-recent-status",
+    "shimmer": {
+      "bars": 2,
+      "minPhase": 845,
+      "maxPhase": 845
+    }
+  },
+  {
+    "theme": "light",
+    "size": "1366x768",
+    "case": "L07-ask-working",
+    "shimmer": {
+      "bars": 0,
+      "minPhase": null,
+      "maxPhase": null
+    }
+  },
+  {
+    "theme": "light",
+    "size": "1920x1080",
+    "case": "L01-explorer-first-load",
+    "shimmer": {
+      "bars": 50,
+      "minPhase": 61,
+      "maxPhase": 61
+    }
+  },
+  {
+    "theme": "light",
+    "size": "1920x1080",
+    "case": "L02-file-panel-code-loading",
+    "shimmer": {
+      "bars": 55,
+      "minPhase": 0,
+      "maxPhase": 650
+    }
+  },
+  {
+    "theme": "light",
+    "size": "1920x1080",
+    "case": "L03-findings-link-loading",
+    "shimmer": {
+      "bars": 31,
+      "minPhase": 192,
+      "maxPhase": 192
+    }
+  },
+  {
+    "theme": "light",
+    "size": "1920x1080",
+    "case": "L04-reachability-loading",
+    "shimmer": {
+      "bars": 6,
+      "minPhase": 947,
+      "maxPhase": 947
+    }
+  },
+  {
+    "theme": "light",
+    "size": "1920x1080",
+    "case": "L05-opening-a-folder",
+    "shimmer": {
+      "bars": 1,
+      "minPhase": 831,
+      "maxPhase": 831
+    }
+  },
+  {
+    "theme": "light",
+    "size": "1920x1080",
+    "case": "L06-home-recent-status",
+    "shimmer": {
+      "bars": 2,
+      "minPhase": 987,
+      "maxPhase": 987
+    }
+  },
+  {
+    "theme": "light",
+    "size": "1920x1080",
+    "case": "L07-ask-working",
+    "shimmer": {
+      "bars": 0,
+      "minPhase": null,
+      "maxPhase": null
+    }
+  },
+  {
+    "theme": "dark",
+    "size": "1366x768",
+    "case": "L01-explorer-first-load",
+    "shimmer": {
+      "bars": 50,
+      "minPhase": 1256,
+      "maxPhase": 1256
+    }
+  },
+  {
+    "theme": "dark",
+    "size": "1366x768",
+    "case": "L02-file-panel-code-loading",
+    "shimmer": {
+      "bars": 0,
+      "minPhase": null,
+      "maxPhase": null
+    }
+  },
+  {
+    "theme": "dark",
+    "size": "1366x768",
+    "case": "L03-findings-link-loading",
+    "shimmer": {
+      "bars": 31,
+      "minPhase": 122,
+      "maxPhase": 122
+    }
+  },
+  {
+    "theme": "dark",
+    "size": "1366x768",
+    "case": "L04-reachability-loading",
+    "shimmer": {
+      "bars": 6,
+      "minPhase": 1090,
+      "maxPhase": 1090
+    }
+  },
+  {
+    "theme": "dark",
+    "size": "1366x768",
+    "case": "L05-opening-a-folder",
+    "shimmer": {
+      "bars": 1,
+      "minPhase": 1118,
+      "maxPhase": 1118
+    }
+  },
+  {
+    "theme": "dark",
+    "size": "1366x768",
+    "case": "L06-home-recent-status",
+    "shimmer": {
+      "bars": 2,
+      "minPhase": 962,
+      "maxPhase": 962
+    }
+  },
+  {
+    "theme": "dark",
+    "size": "1366x768",
+    "case": "L07-ask-working",
+    "shimmer": {
+      "bars": 0,
+      "minPhase": null,
+      "maxPhase": null
+    }
+  },
+  {
+    "theme": "dark",
+    "size": "1920x1080",
+    "case": "L01-explorer-first-load",
+    "shimmer": {
+      "bars": 50,
+      "minPhase": 1152,
+      "maxPhase": 1152
+    }
+  },
+  {
+    "theme": "dark",
+    "size": "1920x1080",
+    "case": "L02-file-panel-code-loading",
+    "shimmer": {
+      "bars": 55,
+      "minPhase": 504,
+      "maxPhase": 504
+    }
+  },
+  {
+    "theme": "dark",
+    "size": "1920x1080",
+    "case": "L03-findings-link-loading",
+    "shimmer": {
+      "bars": 31,
+      "minPhase": 7,
+      "maxPhase": 7
+    }
+  },
+  {
+    "theme": "dark",
+    "size": "1920x1080",
+    "case": "L04-reachability-loading",
+    "shimmer": {
+      "bars": 6,
+      "minPhase": 1225,
+      "maxPhase": 1225
+    }
+  },
+  {
+    "theme": "dark",
+    "size": "1920x1080",
+    "case": "L05-opening-a-folder",
+    "shimmer": {
+      "bars": 1,
+      "minPhase": 1079,
+      "maxPhase": 1079
+    }
+  },
+  {
+    "theme": "dark",
+    "size": "1920x1080",
+    "case": "L06-home-recent-status",
+    "shimmer": {
+      "bars": 2,
+      "minPhase": 1153,
+      "maxPhase": 1153
+    }
+  },
+  {
+    "theme": "dark",
+    "size": "1920x1080",
+    "case": "L07-ask-working",
+    "shimmer": {
+      "bars": 0,
+      "minPhase": null,
+      "maxPhase": null
+    }
+  }
+]

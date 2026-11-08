@@ -5,6 +5,7 @@ import { Link, useLocation, useNavigate } from "react-router-dom";
 import { ApiError, getStatus, isFinished, repoName, submitRepo, type SnapshotStatus } from "../api";
 import { Icon } from "../components/Icon";
 import { age, loadRecent, rememberAnalysis } from "../recent";
+import { useDocumentTitle } from "../documentTitle";
 
 // Same shape the API accepts (app/ingest/clone.py normalize_repo_url).
 const GITHUB_URL = /^https:\/\/github\.com\/[A-Za-z0-9-]+\/[A-Za-z0-9._-]+?(\.git)?\/?$/;
@@ -28,6 +29,7 @@ function validate(value: string): string | null {
 }
 
 export function Home() {
+  useDocumentTitle([]);
   const navigate = useNavigate();
   const location = useLocation();
   const inputRef = useRef<HTMLInputElement>(null);
@@ -206,7 +208,11 @@ function StatusLabel({
 }) {
   if (removed) return <span className="status">Removed</span>;
   if (missing) return <span className="status">Unavailable</span>;
-  if (!status) return <span className="skeleton" style={{ width: 56 }} aria-label="Loading status" />;
+  if (!status) {
+    return (
+      <span className="skeleton" style={{ display: "inline-block", width: 56 }} aria-busy="true" aria-label="Loading status" />
+    );
+  }
   if (status === "done") {
     return (
       <span className="status" data-state="done">

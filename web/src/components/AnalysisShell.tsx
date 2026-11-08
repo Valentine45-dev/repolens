@@ -12,11 +12,15 @@ import {
 } from "../api";
 import { useSetParams } from "../links";
 import { loadRecent } from "../recent";
+import { useRightTab } from "../rightTab";
+import { useMediaQuery } from "../useMediaQuery";
 import { AskDrawer } from "./AskDrawer";
 import { ConnectionNotice, isReconnecting } from "./ConnectionNotice";
 
 export interface AnalysisContext {
   snapshotId: number;
+  /** Ask and a file or finding panel share one right column, as tabs (Ask open, 901-1599px). */
+  tabbed: boolean;
   /** Undefined until the status has loaded: the page draws its chrome at once and waits for this
    * before it asks for data (an analysis that is not done redirects away). */
   status: SnapshotStatus | undefined;
@@ -32,6 +36,17 @@ export function AnalysisShell() {
   const askOpen = params.get("ask") === "1";
   const setParams = useSetParams();
   const askButtonRef = useRef<HTMLButtonElement>(null);
+
+  // Below 1600px three docked columns leave the map or list too narrow, so with Ask open a file or
+  // finding panel shares Ask's column as a tab (under 901px both overlay, as before). Which tab is
+  // in front is view state only: both stay in the URL and both stay mounted.
+  const panelParam = params.get("node") ?? params.get("finding");
+  const panelOpen = panelParam !== null;
+  const midWidth = useMediaQuery("(min-width: 901px) and (max-width: 1599px)");
+  const tabbed = askOpen && panelOpen && midWidth;
+  const askPrefill = params.get("askq");
+  const [rightTab, setRightTab] = useRightTab(panelParam, askOpen, askPrefill);
+  const panelKind = params.get("finding") !== null ? "Finding" : "File";
 
   const status = useQuery({
     queryKey: ["status", snapshotId],
@@ -81,7 +96,7 @@ export function AnalysisShell() {
               <span className="repo-sha mono">@ {known.commitSha.slice(0, 7)}</span>
             </h1>
           ) : (
-            <div className="skeleton" style={{ width: 240, height: 24 }} />
+            <div className="skeleton" style={{ width: 240, height: 24 }} aria-busy="true" aria-label="Loading the analysis" />
           )}
           {isReconnecting(status) ? <ConnectionNotice /> : null}
         </div>
@@ -115,7 +130,12 @@ export function AnalysisShell() {
       {limitNotice ? <p className="analysis-notice caption">{limitNotice}</p> : null}
       {/* data-ask lets a file or finding panel overlay the main column while Ask is open on
           screens too narrow for three docked columns (styles.css). */}
-      <div className="analysis-body" data-ask={askOpen || undefined}>
+      <div
+        className="analysis-body"
+        data-ask={askOpen || undefined}
+        data-tabbed={tabbed || undefined}
+        data-right-tab={tabbed ? rightTab : undefined}
+      >
         <div className="analysis-main">
           {status.error && !status.data ? (
             <div className="canvas-message" role="alert">
@@ -125,11 +145,33 @@ export function AnalysisShell() {
               </button>
             </div>
           ) : (
-            <Outlet context={{ snapshotId, status: status.data } satisfies AnalysisContext} />
+            <Outlet context={{ snapshotId, tabbed, status: status.data } satisfies AnalysisContext} />
           )}
         </div>
+        {tabbed ? (
+          <div className="right-tabs" role="tablist" aria-label="Side panels">
+            {(
+              [
+                ["panel", panelKind],
+                ["ask", "Ask"],
+              ] as const
+            ).map(([tab, label]) => (
+              <button
+                key={tab}
+                type="button"
+                role="tab"
+                className="tab"
+                aria-selected={rightTab === tab}
+                onClick={() => setRightTab(tab)}
+              >
+                {label}
+              </button>
+            ))}
+          </div>
+        ) : null}
         {askOpen && status.data ? (
           <AskDrawer
+            hidden={tabbed && rightTab !== "ask"}
             snapshotId={snapshotId}
             status={status.data}
             onClose={() => {

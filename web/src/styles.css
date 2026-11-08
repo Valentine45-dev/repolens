@@ -1,14 +1,18 @@
-/* Tokens: docs/repolens-ui-ux-spec.md §8.2 (light theme only in this build). Components use
-   these variables and never hardcode colors. */
+/* Tokens: docs/repolens-ui-ux-spec.md §8.2 and DESIGN.md. Light is the design reference; dark
+   overrides the colour tokens under :root[data-theme="dark"] (set before first paint by the script
+   in index.html). Components use these variables and never hardcode colors. */
 :root {
   --bg: #ffffff;
   --surface: #fafafa;
   --surface-2: #f4f4f5;
   --border: #e4e4e7;
   --border-strong: #d4d4d8;
+  /* The boundary of a field or button: 3:1 on Paper (WCAG 1.4.11), where the border is what marks
+     the control out. Graph nodes and chips keep border-strong: their text identifies them. */
+  --control-border: #8a8a93;
   --text: #0a0a0a;
   --text-muted: #52525b;
-  --text-subtle: #71717a;
+  --text-subtle: #6b6b74; /* 5.3:1 on Paper, 4.8:1 on Sunk Grey (was #71717a, 4.4:1 there) */
 
   --primary: #0a0a0a;
   --primary-hover: #27272a;
@@ -26,18 +30,25 @@
   --node-external: #71717a; /* was #a1a1aa (2.6:1 on white); this holds 4.8:1 */
   --edge: #8a8a93; /* graph edges: 3.4:1 on white, above the 3:1 floor for UI graphics */
   --highlight: #fdf3d3; /* cited or flagged code lines; text on it stays above 15:1 */
+  /* The band that sweeps over loading skeletons: a little lighter than Sunk Grey. */
+  --shimmer: color-mix(in srgb, var(--bg) 75%, transparent);
 
   /* §8.3 type, §8.4 spacing and shape */
   --font-sans: "Inter Variable", Inter, ui-sans-serif, system-ui, -apple-system, "Segoe UI",
     Roboto, sans-serif;
   --font-mono: "JetBrains Mono", ui-monospace, "SFMono-Regular", Consolas, "Liberation Mono",
     monospace;
-  --text-xs: 0.75rem; /* 12 */
+  /* Type scale. Text inside graph nodes keeps its own 10px sizes: the node boxes are layout
+     constants (mapLayout.ts) and a bigger size would truncate more. */
+  --text-2xs: 0.6875rem; /* 11: tags, counts, panel fact labels, edge counts */
+  --text-xs: 0.75rem; /* 12: captions, data mono, code */
+  --text-mono-sm: 0.8125rem; /* 13: mono inside prose rows, inputs */
   --text-sm: 0.875rem; /* 14, body */
   --text-md: 1rem; /* 16 */
   --text-lg: 1.25rem; /* 20 */
   --text-xl: 1.75rem; /* 28 */
 
+  --space-0-5: 2px; /* inside a control only (segmented track, hairline gaps) */
   --space-1: 4px;
   --space-2: 8px;
   --space-3: 12px;
@@ -48,11 +59,69 @@
 
   --radius-control: 6px;
   --radius-panel: 10px;
+  --radius-small: 4px; /* tags, edge counts, graph nodes, skeleton bars */
   --control-h: 40px;
+  --control-h-sm: 32px; /* small buttons, selects, segmented controls, icon buttons */
+  --chip-h: 24px; /* file:line chips */
+  --tag-h: 20px;
   --topbar-h: 52px;
+  --right-tabs-h: 40px;
   --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
 
   color-scheme: light;
+}
+
+/* Dark: the same roles, contrast checked like light (DESIGN.md lists every ratio). Ink becomes a
+   light grey and Paper a near-black; state colours are lifted so they hold 4.5:1 on the dark ground.
+   Only colours change: sizes, spacing and the graph's layout are the same in both themes. */
+:root[data-theme="dark"] {
+  --bg: #111113;
+  --surface: #18181b;
+  --surface-2: #232327;
+  --border: #2c2c31;
+  --border-strong: #3f3f46;
+  --control-border: #63636c;
+  --text: #f4f4f5;
+  --text-muted: #b4b4bc;
+  --text-subtle: #94949e;
+
+  --primary: #f4f4f5;
+  --primary-hover: #d4d4d8;
+  --primary-text: #111113;
+  --focus-ring: #f4f4f5;
+
+  --danger: #f97066;
+  --warning: #f5a524;
+  --info: #7cacf8;
+  --success: #4ccf8a;
+
+  --node-python: #7fb2e5;
+  --node-js: #e0b04a;
+  --node-other: #b4b4bc;
+  --node-external: #94949e;
+  --edge: #7c7c86;
+  --highlight: #3b3214;
+  /* A faint light band on the dark skeleton grey (never white: no flash). */
+  --shimmer: color-mix(in srgb, var(--text) 7%, transparent);
+
+  color-scheme: dark;
+}
+
+/* The theme toggle eases colours only, for 200ms, and only while this class is on (theme.ts adds
+   it for the switch and never under reduced motion), so pan, zoom and hover are never slowed. */
+@media (prefers-reduced-motion: no-preference) {
+  .theme-switching,
+  .theme-switching *,
+  .theme-switching *::before,
+  .theme-switching *::after {
+    transition:
+      background-color 200ms var(--ease-out),
+      color 200ms var(--ease-out),
+      border-color 200ms var(--ease-out),
+      outline-color 200ms var(--ease-out),
+      fill 200ms var(--ease-out),
+      stroke 200ms var(--ease-out) !important;
+  }
 }
 
 *,
@@ -157,6 +226,17 @@ a {
   flex: none;
 }
 
+.topbar-end {
+  display: flex;
+  align-items: center;
+  margin-left: auto;
+}
+
+/* Light / dark (theme.ts). A plain icon button; the pressed state is the theme. */
+.theme-toggle {
+  color: var(--text-muted);
+}
+
 .topbar-link {
   color: var(--text-muted);
   text-decoration: none;
@@ -245,12 +325,12 @@ a {
 .button-secondary {
   background: var(--bg);
   color: var(--text);
-  border-color: var(--border-strong);
+  border-color: var(--control-border);
 }
 
 .button-secondary:hover:not(:disabled) {
   background: var(--surface-2);
-  border-color: var(--border-strong);
+  border-color: var(--control-border);
 }
 
 .field {
@@ -263,13 +343,13 @@ a {
   width: 100%;
   height: var(--control-h);
   padding: 0 36px 0 var(--space-3);
-  border: 1px solid var(--border-strong);
+  border: 1px solid var(--control-border);
   border-radius: var(--radius-control);
   background: var(--bg);
   color: var(--text);
   font: inherit;
   font-family: var(--font-mono);
-  font-size: 0.8125rem;
+  font-size: var(--text-mono-sm);
   transition: border-color 150ms var(--ease-out);
 }
 
@@ -278,7 +358,7 @@ a {
 }
 
 .input:hover {
-  border-color: var(--text-subtle);
+  border-color: var(--text-muted);
 }
 
 .input:focus-visible {
@@ -408,7 +488,7 @@ a {
 .status {
   display: inline-flex;
   align-items: center;
-  gap: 6px;
+  gap: var(--space-2);
   font-weight: 500;
   color: var(--text-muted);
 }
@@ -564,9 +644,31 @@ a {
 }
 
 .skeleton {
+  position: relative;
+  overflow: hidden;
   height: 14px;
-  border-radius: 4px;
+  border-radius: var(--radius-small);
   background: var(--surface-2);
+}
+
+/* One shimmer for every skeleton: a soft band moved by transform on a pseudo-element (cheap: no
+   repaint of the bar, no background-position animation), 1.5s per sweep. Every bar's animation
+   is given the same start time (the script in index.html), so all bars on screen sweep together.
+   Decorative only: a pseudo-element with no content is not read out. */
+.skeleton::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(90deg, transparent, var(--shimmer), transparent);
+  transform: translateX(-100%);
+  animation: skeleton-shimmer 1.5s linear infinite;
+  pointer-events: none;
+}
+
+@keyframes skeleton-shimmer {
+  to {
+    transform: translateX(100%);
+  }
 }
 
 .graph-skeleton {
@@ -622,7 +724,7 @@ a {
 /* --- Shared small controls --- */
 
 .button-small {
-  height: 30px;
+  height: var(--control-h-sm);
   padding: 0 var(--space-3);
   font-size: var(--text-xs);
 }
@@ -631,8 +733,8 @@ a {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 30px;
-  height: 30px;
+  width: var(--control-h-sm);
+  height: var(--control-h-sm);
   flex: none;
   border: 1px solid transparent;
   border-radius: var(--radius-control);
@@ -659,12 +761,12 @@ a {
 .tag {
   display: inline-flex;
   align-items: center;
-  height: 18px;
-  padding: 0 6px;
+  height: var(--tag-h);
+  padding: 0 var(--space-2);
   border: 1px dashed var(--node-external);
-  border-radius: 4px;
+  border-radius: var(--radius-small);
   color: var(--text-muted);
-  font-size: 11px;
+  font-size: var(--text-2xs);
   white-space: nowrap;
 }
 
@@ -741,12 +843,12 @@ a {
 }
 
 .count {
-  padding: 0 6px;
-  border-radius: 9px;
+  padding: 0 var(--space-2);
+  border-radius: 999px;
   background: var(--surface-2);
   color: var(--text-muted);
-  font-size: 11px;
-  line-height: 18px;
+  font-size: var(--text-2xs);
+  line-height: var(--tag-h);
 }
 
 .analysis-ask {
@@ -826,17 +928,17 @@ a {
 
 .segmented {
   display: inline-flex;
-  padding: 2px;
-  border: 1px solid var(--border-strong);
+  padding: var(--space-0-5);
+  border: 1px solid var(--control-border);
   border-radius: var(--radius-control);
   background: var(--surface);
 }
 
 .segmented button {
-  height: 26px;
+  height: calc(var(--control-h-sm) - 2 * var(--space-0-5) - 2px); /* 32px outside the track */
   padding: 0 var(--space-3);
   border: 0;
-  border-radius: 4px;
+  border-radius: var(--radius-small);
   background: transparent;
   color: var(--text-muted);
   font: inherit;
@@ -920,10 +1022,88 @@ a {
   background: var(--bg);
 }
 
+/* The next folder or setting is loading: the old picture stays, dimmed and not clickable, with
+   one line saying what is happening (shown after 200ms, held at least 400ms: useDelayedFlag). */
+.canvas-flow,
+.file-list {
+  transition: opacity 150ms var(--ease-out);
+}
+
+.canvas[data-pending] .canvas-flow,
+.canvas[data-pending] .file-list {
+  opacity: 0.45;
+  pointer-events: none;
+}
+
+.canvas-pending {
+  position: absolute;
+  top: var(--space-3);
+  left: 50%;
+  z-index: 6;
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  margin: 0;
+  padding: var(--space-1) var(--space-3);
+  border: 1px solid var(--border-strong);
+  border-radius: 999px;
+  background: var(--bg);
+  color: var(--text);
+  font-size: var(--text-xs);
+  font-weight: 500;
+  transform: translateX(-50%);
+  white-space: nowrap;
+}
+
+/* First visit to the map: how to read it (MapHint). Bottom left, so it covers the least. */
+.map-hint {
+  position: absolute;
+  left: var(--space-4);
+  bottom: var(--space-4);
+  z-index: 6;
+  max-width: 360px;
+  padding: var(--space-3) var(--space-4) var(--space-4);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-panel);
+  background: var(--bg);
+  font-size: var(--text-xs);
+  color: var(--text-muted);
+}
+
+.map-hint-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2);
+  margin-right: calc(-1 * var(--space-2));
+}
+
+.map-hint-title {
+  font-size: var(--text-sm);
+  font-weight: 600;
+  color: var(--text);
+}
+
+.map-hint ul {
+  margin: var(--space-1) 0 var(--space-3);
+  padding-left: var(--space-4);
+}
+
+.map-hint li + li {
+  margin-top: var(--space-1);
+}
+
 /* React Flow, restyled from tokens */
 .react-flow {
   --xy-background-color: var(--bg);
+  --xy-attribution-background-color: color-mix(in srgb, var(--bg) 70%, transparent);
+  --xy-edge-label-background-color: var(--bg);
+  --xy-edge-label-color: var(--text-muted);
   font-family: var(--font-sans);
+}
+
+.react-flow__attribution a {
+  color: var(--text-subtle);
 }
 
 .graph-node {
@@ -1018,11 +1198,12 @@ a {
   opacity: 0.15;
 }
 
-/* A strip under the toolbar, not over the canvas, so it never hides a node. */
+/* A strip under the toolbar, not over the canvas, so it never hides a node. Line 1: the key and
+   the view's counts; line 2 (only when there is something to say): what is left out. */
 .legend {
   display: flex;
-  flex-wrap: wrap;
-  gap: var(--space-1) var(--space-6);
+  flex-direction: column;
+  gap: var(--space-1);
   padding: var(--space-2) var(--space-6);
   border-bottom: 1px solid var(--border);
   background: var(--surface);
@@ -1030,8 +1211,15 @@ a {
   color: var(--text-muted);
 }
 
-.legend-row {
+.legend-key {
   display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-1) var(--space-6);
+}
+
+.legend-row {
+  display: inline-flex;
   align-items: center;
   gap: var(--space-2);
 }
@@ -1050,27 +1238,48 @@ a {
 }
 
 .legend-cycle {
-  display: inline-flex;
-  align-items: center;
-  gap: var(--space-2);
   color: var(--text);
   font-weight: 500;
-  vertical-align: bottom;
 }
 
-/* What the canvas leaves out, said in words (the edge-density rule). */
-.legend-note {
-  flex-basis: 100%;
-  min-height: 18px; /* a row's height even when empty: captions arriving never move the map */
+/* The view's counts ("25 files · 58 test or example files hidden here"), right-aligned. */
+.legend-facts {
+  margin-left: auto;
+  color: var(--text-subtle);
+}
+
+.legend-status {
   margin: 0;
   color: var(--text-muted);
+}
+
+/* "Show: Tests & examples · Guessed calls · All edges" */
+.toolbar-group {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2) var(--space-4);
+}
+
+.toolbar-group-label {
+  color: var(--text-subtle);
+  font-size: var(--text-xs);
+  font-weight: 500;
 }
 
 /* Folder-first map: breadcrumbs, nodes, edge labels. Tokens only; the one emphasis colour is Ink. */
 .crumb-row {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
+  gap: var(--space-1) var(--space-6);
   padding: var(--space-2) var(--space-6) 0;
+}
+
+/* What this view holds ("25 files · 58 test or example files hidden here"), beside where you are. */
+.crumb-facts {
+  margin: 0 0 0 auto;
+  text-align: right;
 }
 
 .breadcrumbs {
@@ -1117,7 +1326,7 @@ a {
 
 .breadcrumbs-up {
   text-decoration: none;
-  border-color: var(--border-strong);
+  border-color: var(--control-border);
 }
 
 .breadcrumbs-up[aria-disabled="true"] {
@@ -1286,12 +1495,12 @@ a {
 
 .edge-label {
   position: absolute;
-  padding: 0 4px;
+  padding: 0 var(--space-1);
   border: 1px solid var(--border);
-  border-radius: 3px;
+  border-radius: var(--radius-small);
   background: var(--bg);
   color: var(--text-muted);
-  font-size: 11px;
+  font-size: var(--text-2xs);
   line-height: 16px;
   pointer-events: all; /* hovering the count shows the same tooltip as the line */
   cursor: default;
@@ -1312,7 +1521,7 @@ a {
   max-width: 320px;
   padding: var(--space-2) var(--space-3);
   border: 1px solid var(--border-strong);
-  border-radius: 4px;
+  border-radius: var(--radius-small);
   background: var(--bg);
   color: var(--text);
   font-size: var(--text-xs);
@@ -1408,7 +1617,7 @@ a {
   border: 0;
   background: none;
   color: var(--text);
-  font-size: 0.8125rem;
+  font-size: var(--text-mono-sm);
   text-align: left;
   text-decoration: underline;
   text-decoration-color: var(--border-strong);
@@ -1463,7 +1672,7 @@ a {
 .panel-title-dir {
   overflow: hidden;
   color: var(--text-subtle);
-  font-size: 11px;
+  font-size: var(--text-2xs);
   font-weight: 400;
   text-align: left;
   text-overflow: ellipsis;
@@ -1494,7 +1703,7 @@ a {
 
 .panel-facts dt {
   color: var(--text-subtle);
-  font-size: 11px;
+  font-size: var(--text-2xs);
 }
 
 .panel-facts dd {
@@ -1552,7 +1761,7 @@ a {
   display: flex;
   min-width: max-content;
   font-family: var(--font-mono);
-  font-size: 12px;
+  font-size: var(--text-xs);
   line-height: 1.6;
 }
 
@@ -1601,6 +1810,35 @@ a {
   position: relative; /* above the highlight; the sticky gutter already is */
 }
 
+/* The code view while the file loads: the same gutter and line height, grey bars for lines. */
+.code-skeleton .code-gutter,
+.code-skeleton .code-text {
+  padding-top: var(--space-3);
+  padding-bottom: var(--space-3);
+}
+
+.code-skeleton-line {
+  display: flex;
+  align-items: center;
+  height: 1.6em;
+}
+
+.code-skeleton-line .skeleton {
+  height: 0.75em;
+}
+
+/* Holds the gutter at the width of the file's last line number, out of sight. */
+.code-skeleton-width {
+  height: 0;
+  overflow: hidden;
+  visibility: hidden;
+}
+
+/* The panel body clips the frame instead of scrolling it. */
+.panel-body:has(> .code-skeleton) {
+  overflow: hidden;
+}
+
 /* Short screens (a 1366x768 laptop leaves ~650px under the browser's own toolbars): the toolbar,
    legend and breadcrumbs already take ~230px, so the panel's header gives a little back. */
 @media (max-height: 760px) {
@@ -1619,7 +1857,7 @@ a {
 .severity {
   display: inline-flex;
   align-items: center;
-  gap: 6px;
+  gap: var(--space-2);
   font-weight: 500;
   white-space: nowrap;
 }
@@ -1667,6 +1905,16 @@ a {
   padding-bottom: var(--space-3);
 }
 
+/* Captions and notes under the filters line up with the heading, with a little air between them. */
+.findings-caption {
+  margin: var(--space-2) 0 0;
+  padding: 0 var(--space-6);
+}
+
+.findings-caption:last-of-type {
+  margin-bottom: var(--space-2);
+}
+
 .filter {
   display: inline-flex;
   align-items: center;
@@ -1676,9 +1924,9 @@ a {
 
 .select,
 .input-small {
-  height: 30px;
+  height: var(--control-h-sm);
   padding: 0 var(--space-2);
-  border: 1px solid var(--border-strong);
+  border: 1px solid var(--control-border);
   border-radius: var(--radius-control);
   background: var(--bg);
   color: var(--text);
@@ -1738,8 +1986,43 @@ a {
   width: 1%;
 }
 
+/* A row opens its finding with a mouse anywhere on it; the location reads as the link it acts as. */
+.finding-row {
+  cursor: pointer;
+}
+
+.finding-row:hover td {
+  background: var(--surface);
+}
+
+.location-link {
+  text-decoration: underline;
+  text-decoration-color: var(--border-strong);
+  text-underline-offset: 3px;
+}
+
+.finding-row:hover .location-link {
+  text-decoration-color: var(--text);
+}
+
+.empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--space-3);
+}
+
+.empty-state .button {
+  margin-top: 0;
+}
+
+/* Messages in the findings list line up with the heading and filters (24px). */
+.findings-main .panel-message {
+  padding: var(--space-4) var(--space-6);
+}
+
 .location-col {
-  font-size: 0.8125rem;
+  font-size: var(--text-mono-sm);
   overflow-wrap: break-word; /* paths wrap after "/" (PathText); never mid-name unless one is too long */
 }
 
@@ -1777,7 +2060,7 @@ a {
 }
 
 .finding-facts dd {
-  margin: 2px 0 var(--space-3);
+  margin: var(--space-0-5) 0 var(--space-3);
 }
 
 .finding-snippet {
@@ -1790,7 +2073,7 @@ a {
   border: 1px solid var(--border);
   border-radius: var(--radius-control);
   background: var(--surface);
-  font-size: 12px;
+  font-size: var(--text-xs);
   white-space: pre-wrap;
   overflow-wrap: anywhere;
 }
@@ -1836,12 +2119,50 @@ a {
   white-space: nowrap;
 }
 
+/* The one scroll area of the Ask panel and the edge fades over it. */
+.drawer-scroll {
+  position: relative;
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-height: 0;
+}
+
 .drawer-body {
   position: relative; /* the "You asked:" labels are absolute; without this they escape the scroller and make the page scrollable */
   flex: 1;
   min-height: 0;
   overflow: auto;
+  overscroll-behavior: contain;
   padding: 0 var(--space-4) var(--space-4);
+}
+
+/* A soft fade into the panel's own ground (Paper in either theme) where the list continues past
+   its edge; nothing when it does not. Fades in over 150ms; instant under reduced motion (the
+   global rule). Never takes the pointer. */
+.scroll-fade {
+  position: absolute;
+  left: 0;
+  right: 0;
+  height: var(--space-6);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 150ms var(--ease-out);
+}
+
+.scroll-fade-top {
+  top: 0;
+  background: linear-gradient(to bottom, var(--bg), transparent);
+}
+
+.scroll-fade-bottom {
+  bottom: 0;
+  background: linear-gradient(to top, var(--bg), transparent);
+}
+
+.drawer-scroll[data-more-above] .scroll-fade-top,
+.drawer-scroll[data-more-below] .scroll-fade-bottom {
+  opacity: 1;
 }
 
 .drawer-banner {
@@ -1993,11 +2314,11 @@ a {
 }
 
 .markdown code {
-  padding: 0 3px;
-  border-radius: 3px;
+  padding: 0 var(--space-1);
+  border-radius: var(--radius-small);
   background: var(--surface-2);
   font-family: var(--font-mono);
-  font-size: 0.8125rem;
+  font-size: var(--text-mono-sm);
   overflow-wrap: anywhere;
 }
 
@@ -2006,7 +2327,7 @@ a {
   padding: var(--space-2) var(--space-3);
   border-radius: var(--radius-control);
   background: var(--surface);
-  font-size: 12px;
+  font-size: var(--text-xs);
   overflow-x: auto;
 }
 
@@ -2066,7 +2387,7 @@ a {
 }
 
 .result-primary {
-  font-size: 0.8125rem;
+  font-size: var(--text-mono-sm);
   overflow-wrap: break-word; /* wraps at the <wbr> after each "/" first */
 }
 
@@ -2117,15 +2438,15 @@ a {
 .citation {
   display: inline-flex;
   align-items: center;
-  gap: 6px;
+  gap: var(--space-2);
   min-height: 28px;
-  padding: 2px var(--space-2);
+  padding: var(--space-0-5) var(--space-2);
   border: 1px solid var(--border-strong);
   border-radius: var(--radius-control);
   background: var(--bg);
   color: var(--text);
   font-family: var(--font-mono);
-  font-size: 12px;
+  font-size: var(--text-xs);
   text-decoration: none;
   overflow-wrap: break-word;
   transition: border-color 150ms var(--ease-out), background-color 150ms var(--ease-out);
@@ -2199,12 +2520,12 @@ a {
 }
 
 .neighbour-path {
-  font-size: 0.8125rem;
+  font-size: var(--text-mono-sm);
   overflow-wrap: anywhere;
 }
 
 .neighbour-what {
-  margin-top: 2px;
+  margin-top: var(--space-0-5);
 }
 
 .guess-note {
@@ -2250,15 +2571,60 @@ a {
 }
 
 /* Ask open beside a file or finding panel: three docked columns leave the list or canvas too
-   narrow below 1600px, so the panel overlays the main column from the right instead (the same
-   overlay as under 900px). Explore passes the same condition to the graph for centring. */
-@media (max-width: 1599px) {
-  .analysis-body[data-ask] .panel {
-    position: absolute;
-    inset: 0 0 0 auto;
-    z-index: 10;
-    width: min(100%, 480px);
+   narrow below 1600px, so the two share Ask's column as tabs (AnalysisShell). The panel is laid
+   over that column under the tab strip; the one behind stays mounted (Ask keeps its conversation)
+   but is out of sight. The map or list keeps its full width. */
+.right-tabs {
+  position: absolute;
+  top: 0;
+  right: 0;
+  z-index: 11;
+  display: flex;
+  align-items: flex-end;
+  gap: var(--space-4);
+  width: min(480px, 40vw);
+  height: var(--right-tabs-h);
+  padding: 0 var(--space-4);
+  border-left: 1px solid var(--border);
+  border-bottom: 1px solid var(--border);
+  background: var(--bg);
+}
+
+@media (min-width: 901px) and (max-width: 1599px) {
+  .analysis-body[data-tabbed] .analysis-main,
+  .analysis-body[data-tabbed] .explore,
+  .analysis-body[data-tabbed] .explore-body,
+  .analysis-body[data-tabbed] .findings {
+    position: static; /* so the panel is placed against the whole body, over Ask's column */
   }
+
+  .analysis-body[data-tabbed] .panel {
+    position: absolute;
+    top: var(--right-tabs-h);
+    right: 0;
+    bottom: 0;
+    z-index: 10;
+    width: min(480px, 40vw);
+    max-height: none;
+  }
+
+  .analysis-body[data-tabbed] .drawer,
+  .analysis-body[data-tabbed] .drawer[data-wide] {
+    width: min(480px, 40vw);
+    margin-top: var(--right-tabs-h);
+  }
+
+  .analysis-body[data-tabbed] .drawer-size {
+    display: none; /* the column is shared; it does not widen */
+  }
+
+  .analysis-body[data-right-tab="ask"] .panel {
+    display: none;
+  }
+}
+
+.drawer[data-behind] {
+  visibility: hidden; /* keeps its column, so the map does not grow under the panel */
 }
 
 @media (max-width: 560px) {
@@ -2283,6 +2649,7 @@ a {
   .analysis-notice,
   .findings-head,
   .pager,
+  .findings-caption,
   .toolbar,
   .legend {
     padding-left: var(--space-4);
@@ -2318,6 +2685,12 @@ a {
     transition-duration: 0.01ms !important;
   }
 
+  /* Static grey blocks: no sweep at all. */
+  .skeleton::after {
+    display: none;
+    animation: none;
+  }
+
   .spin {
     animation-duration: 2.4s;
   }
@@ -2328,22 +2701,22 @@ a {
   display: inline-flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: 4px;
-  margin-left: 6px;
+  gap: var(--space-1);
+  margin-left: var(--space-2);
   vertical-align: middle;
 }
 
 .site-chip {
   display: inline-flex;
   align-items: center;
-  min-height: 22px;
-  padding: 0 6px;
+  min-height: var(--chip-h);
+  padding: 0 var(--space-2);
   border: 1px solid var(--border-strong);
   border-radius: var(--radius-control);
   background: var(--bg);
   color: var(--text);
   font-family: var(--font-mono);
-  font-size: 12px;
+  font-size: var(--text-xs);
   line-height: 1;
   text-decoration: none;
   cursor: pointer;
@@ -2361,7 +2734,7 @@ a {
 }
 
 .result-rows li > .site-chips {
-  margin: 2px 0 0 12px;
+  margin: var(--space-0-5) 0 0 var(--space-3);
 }
 
 /* One call per item, no separating commas (a comma could wrap onto a line of its own) */
@@ -2369,7 +2742,7 @@ a {
   display: inline-flex;
   flex-wrap: wrap;
   align-items: baseline;
-  gap: 4px var(--space-3);
+  gap: var(--space-1) var(--space-3);
 }
 
 .neighbour-call {
@@ -2403,12 +2776,12 @@ a {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: 4px;
+  gap: var(--space-1);
 }
 
 .reach-arrow {
   color: var(--text-subtle);
-  font-size: 12px;
+  font-size: var(--text-xs);
 }
 
 .reach-entry {

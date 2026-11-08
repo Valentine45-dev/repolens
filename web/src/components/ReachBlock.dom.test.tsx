@@ -87,7 +87,9 @@ describe("ReachBlock", () => {
     expect(chips()[1].hasAttribute("data-guess")).toBe(true);
     expect(chips()[1].getAttribute("title")).toContain("a call matched by name only");
     expect(chips()[2].hasAttribute("data-guess")).toBe(false);
-    expect(text()).toContain("Dashed steps are guesses");
+    expect(text()).toContain("Dashed steps are the guesses");
+    // The kinds of guess are named once, in the sentence above, not again in the caption.
+    expect(text().match(/a call matched by name/g)).toHaveLength(1);
   });
 
   it("a structural guess is explained as a special method or a nested function, not as a call", () => {

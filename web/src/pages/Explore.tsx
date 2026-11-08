@@ -10,15 +10,16 @@ import { ConnectionNotice, isReconnecting } from "../components/ConnectionNotice
 import { FileList } from "../components/FileList";
 import { CrumbSkeleton, GraphSkeleton, ListSkeleton } from "../components/GraphSkeleton";
 import { FIT_OPTIONS, firstViewHub, GraphView } from "../components/GraphView";
-import { Icon } from "../components/Icon";
+import { ALL_EDGES_SHOWN_TITLE, ExploreLegend, SHOW_ALL_EDGES_TITLE, ShowGroup } from "../components/ExploreLegend";
+import { MapHint } from "../components/MapHint";
 import { MapView } from "../components/MapView";
 import { NodePanel } from "../components/NodePanel";
 import { applyCap, degrees, layoutGraph, RENDER_CAP } from "../graphModel";
+import { densityText, statusText } from "../legendText";
+import { useDocumentTitle } from "../documentTitle";
 import { parseLines, useSetParams, type LineRange } from "../links";
 import { layoutMap } from "../mapLayout";
 import {
-  CYCLE_CAPTION,
-  densityCaption,
   edgeBudgetFor,
   restingEdges,
   emptyViewMessage,
@@ -36,7 +37,9 @@ import {
   type ViewLevel,
   viewNote,
 } from "../mapModel";
+import { useDelayedFlag } from "../useDelayedFlag";
 import { useMediaQuery } from "../useMediaQuery";
+import { Icon } from "../components/Icon";
 
 // State lives in the URL (spec §3.6): ?level=folder|file|symbol|flat&root=<path>&tests=1&guesses=1
 // &edges=all&view=list&node=<file id>&lines=12-15. The analysis header, tabs and Ask drawer come
@@ -60,11 +63,9 @@ function ExploreInner() {
   // Spec §10: under 768px the graph is not readable, so phones get the list only.
   const phone = useMediaQuery("(max-width: 767px)");
   const listView = phone || params.get("view") === "list";
-  // Matches the CSS: the node panel overlays the canvas below 900px, and below 1600px while the
-  // Ask drawer is open (three docked columns leave the canvas too narrow).
-  const narrow = useMediaQuery("(max-width: 900px)");
-  const askSqueeze = useMediaQuery("(max-width: 1599px)") && params.get("ask") === "1";
-  const panelOverlay = narrow || askSqueeze;
+  // Matches the CSS: the node panel overlays the canvas below 901px. Between 901 and 1599px with
+  // Ask open it shares Ask's column as a tab (AnalysisShell), so the canvas keeps its width.
+  const panelOverlay = useMediaQuery("(max-width: 900px)");
   const selectedId = params.get("node") ? Number(params.get("node")) : null;
   const linesParam = params.get("lines");
   const highlight = useMemo(() => parseLines(linesParam), [linesParam]);
@@ -207,19 +208,32 @@ function ExploreInner() {
   const hasData = listView || flatMode ? Boolean(graph.data) : Boolean(view);
   const updating = graph.isPlaceholderData || (!listView && !flatMode && map.isPlaceholderData);
   const repo = status ? (repoName(status.url).split("/").pop() ?? "") : "";
+  // Where you are: the file of a function view, the folder of a map view, the selected file.
+  const place = listView ? "List" : request?.level === "flat" ? "Flat" : request?.root || null;
+  useDocumentTitle([selected?.path ?? place, "Explorer", status ? repoName(status.url) : null]);
   const mapMode = !listView && !flatMode;
-  const caption = selection ? densityCaption(selection, showAllEdges) : null;
+  // The old picture stays while the next one loads (keepPreviousData). Say so on the canvas itself
+  // after 200ms (a fast load shows nothing), dim it and stop clicks on it, and show where you are
+  // going in the breadcrumbs at once.
+  const pendingRoot = mapMode && view && request && map.isPlaceholderData && request.root !== view.root
+    ? request.root
+    : null;
+  const pending = useDelayedFlag(updating);
+  const legendStatus = statusText(selection ? densityText(selection, showAllEdges) : null, zoomedIn);
   const canShowAll = showAllEdges || (selection !== null && selection.mode !== "all");
 
   return (
     <div className="explore">
       {mapMode && !phone ? (
-        view ? (
+        view && pendingRoot === null ? (
           <div className="crumb-row">
             <Breadcrumbs view={view} repo={repo} search={location.search} />
+            <p className="crumb-facts caption" aria-live="polite">
+              {updating ? "Updating…" : mapNote(view)}
+            </p>
           </div>
         ) : (
-          <CrumbSkeleton root={urlView.root} />
+          <CrumbSkeleton root={pendingRoot ?? urlView.root} repo={view ? repo : undefined} />
         )
       ) : null}
       <div className="toolbar" role="toolbar" aria-label="Graph options">
@@ -263,35 +277,6 @@ function ExploreInner() {
             ))}
           </div>
         ) : null}
-        <label className="check" title="Tests, and example code under examples/">
-          <input
-            type="checkbox"
-            checked={showTests}
-            onChange={(e) => setParam("tests", e.target.checked ? "1" : null)}
-          />
-          Show tests &amp; examples
-        </label>
-        <label className="check">
-          <input
-            type="checkbox"
-            checked={showGuesses}
-            onChange={(e) => setParam("guesses", e.target.checked ? "1" : null)}
-          />
-          Show guessed calls
-        </label>
-        {mapMode ? (
-          // Always there, so the toolbar never changes shape when the view arrives; it is only
-          // available when the map leaves edges out.
-          <label className="check" title="Draw every connection, not only the strongest" data-disabled={!canShowAll || undefined}>
-            <input
-              type="checkbox"
-              checked={showAllEdges}
-              disabled={!canShowAll}
-              onChange={(e) => setParam("edges", e.target.checked ? "all" : null)}
-            />
-            Show all edges
-          </label>
-        ) : null}
         {!listView ? (
           <button
             type="button"
@@ -304,36 +289,91 @@ function ExploreInner() {
             Fit
           </button>
         ) : null}
-        <p className="toolbar-note caption" aria-live="polite">
-          {updating ? (
-            "Updating…"
-          ) : listView || flatMode ? (
-            graph.data ? (
+        <ShowGroup>
+          <label className="check" title="Tests, and example code under examples/">
+            <input
+              type="checkbox"
+              checked={showTests}
+              onChange={(e) => setParam("tests", e.target.checked ? "1" : null)}
+            />
+            Tests &amp; examples
+          </label>
+          <label className="check" title="Calls matched by name only">
+            <input
+              type="checkbox"
+              checked={showGuesses}
+              onChange={(e) => setParam("guesses", e.target.checked ? "1" : null)}
+            />
+            Guessed calls
+          </label>
+          {mapMode ? (
+            // Always there, so the toolbar never changes shape when the view arrives; it is only
+            // available when the map leaves edges out, and says so when it is not.
+            <label
+              className="check"
+              title={canShowAll ? SHOW_ALL_EDGES_TITLE : ALL_EDGES_SHOWN_TITLE}
+              data-disabled={!canShowAll || undefined}
+            >
+              <input
+                type="checkbox"
+                checked={showAllEdges}
+                disabled={!canShowAll}
+                aria-describedby={canShowAll ? undefined : "all-edges-hint"}
+                onChange={(e) => setParam("edges", e.target.checked ? "all" : null)}
+              />
+              All edges
+              {canShowAll ? null : (
+                <span id="all-edges-hint" className="visually-hidden">
+                  {ALL_EDGES_SHOWN_TITLE}
+                </span>
+              )}
+            </label>
+          ) : null}
+        </ShowGroup>
+        {listView ? (
+          <p className="toolbar-note caption" aria-live="polite">
+            {updating ? (
+              "Updating…"
+            ) : graph.data ? (
               graphNote(graph.data, capped, listView)
             ) : (
               <span className="skeleton toolbar-note-skeleton" aria-hidden="true" />
-            )
-          ) : view ? (
-            mapNote(view)
-          ) : (
-            <span className="skeleton toolbar-note-skeleton" aria-hidden="true" />
-          )}
-        </p>
+            )}
+          </p>
+        ) : null}
       </div>
 
       {mapMode && (!view || view.nodes.length > 0) ? (
-        <MapLegend
+        <ExploreLegend
+          kind="map"
           showGuesses={showGuesses}
           cycle={view ? viewHasCycle(view) : false}
-          caption={caption}
-          zoomedIn={zoomedIn}
+          status={view ? legendStatus : null}
         />
       ) : flatMode && (!graph.data || graph.data.nodes.length > 0) ? (
-        <Legend showGuesses={showGuesses} />
+        <ExploreLegend
+          kind="flat"
+          showGuesses={showGuesses}
+          facts={
+            updating ? "Updating…" : graph.data ? graphNote(graph.data, capped, false) : <FactsSkeleton />
+          }
+        />
       ) : null}
 
       <div className="explore-body">
-        <div className="canvas">
+        <div className="canvas" data-pending={pending || undefined}>
+          {pending && hasData ? (
+            <p className="canvas-pending" role="status">
+              <Icon name="spinner" size={14} />
+              {pendingRoot !== null ? (
+                <span>
+                  Opening <span className="mono">{pendingRoot || repo}</span>…
+                </span>
+              ) : (
+                <span>Updating…</span>
+              )}
+            </p>
+          ) : null}
           {hardError && !hasData ? (
             <div className="canvas-message" role="alert">
               <p>{hardError.message}</p>
@@ -421,6 +461,7 @@ function ExploreInner() {
                   onClear={closePanel}
                   onZoomedIn={setZoomedIn}
                 />
+                <MapHint />
                 {selected && !isDrawn(view, selected.path) ? (
                   <p className="canvas-hint caption">
                     <span className="mono">{selected.path}</span> is not drawn in this view.{" "}
@@ -519,70 +560,6 @@ function EmptyView({
   );
 }
 
-function Legend({ showGuesses }: { showGuesses: boolean }) {
-  return (
-    <div className="legend" aria-label="Legend">
-      <div className="legend-row">
-        <svg width="28" height="8" aria-hidden="true">
-          <line x1="0" y1="4" x2="28" y2="4" className="legend-line" />
-        </svg>
-        Import or call (arrow points to the file used)
-      </div>
-      <div className="legend-row" data-muted={!showGuesses || undefined}>
-        <svg width="28" height="8" aria-hidden="true">
-          <line x1="0" y1="4" x2="28" y2="4" className="legend-line" strokeDasharray="5 4" />
-        </svg>
-        <span>
-          Dashed: a best guess. Dynamic code makes some calls hard to resolve.
-          {showGuesses ? null : " Hidden; turn on “Show guessed calls”."}
-        </span>
-      </div>
-    </div>
-  );
-}
-
-function MapLegend({
-  showGuesses,
-  cycle,
-  caption,
-  zoomedIn,
-}: {
-  showGuesses: boolean;
-  cycle: boolean;
-  caption: string | null;
-  zoomedIn: boolean;
-}) {
-  return (
-    <div className="legend" aria-label="Legend">
-      <div className="legend-row">
-        <svg width="28" height="8" aria-hidden="true">
-          <line x1="0" y1="4" x2="28" y2="4" className="legend-line" />
-        </svg>
-        Import or call. The number counts connections; thicker means more.
-      </div>
-      <div className="legend-row" data-muted={!showGuesses || undefined}>
-        <svg width="28" height="8" aria-hidden="true">
-          <line x1="0" y1="4" x2="28" y2="4" className="legend-line" strokeDasharray="5 4" />
-        </svg>
-        <span>
-          Dashed: mostly best guesses. Dynamic code makes some calls hard to resolve.
-          {showGuesses ? null : " Hidden; turn on “Show guessed calls”."}
-        </span>
-      </div>
-      {/* One row that is always there (it holds nothing for a small graph), so a caption arriving
-          with the data never pushes the map down. */}
-      <p className="legend-note">
-        {cycle ? (
-          <span className="legend-cycle">
-            <Icon name="cycle" size={14} />
-            {CYCLE_CAPTION}
-          </span>
-        ) : null}
-        {cycle && caption ? " · " : null}
-        {caption}
-        {(cycle || caption) && zoomedIn ? " · " : null}
-        {zoomedIn ? "Zoomed in so names stay readable; drag to move, Fit shows everything." : null}
-      </p>
-    </div>
-  );
+function FactsSkeleton() {
+  return <span className="skeleton toolbar-note-skeleton" aria-hidden="true" />;
 }

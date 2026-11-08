@@ -12,7 +12,8 @@ import {
 import { GUESS_BELOW, languageLabel } from "../graphModel";
 import type { LineRange } from "../links";
 import { scrollToCenter } from "../scroll";
-import { Icon } from "./Icon";
+import { CloseButton } from "./CloseButton";
+import { useEscapeToClose } from "../escapeStack";
 import { PanelTitle } from "./PanelTitle";
 import { SeverityBadge } from "./Severity";
 import { SiteChips } from "./SiteChips";
@@ -65,14 +66,8 @@ export function NodePanel({
     titleRef.current?.focus();
   }, [node.id]);
 
-  useEffect(() => {
-    function onKey(e: KeyboardEvent) {
-      // Esc inside the Ask drawer closes only the drawer (it has its own handler).
-      if (e.key === "Escape" && !document.activeElement?.closest("#ask-drawer")) onClose();
-    }
-    window.addEventListener("keydown", onKey);
-    return () => window.removeEventListener("keydown", onKey);
-  }, [onClose]);
+  const panelRef = useRef<HTMLElement>(null);
+  useEscapeToClose(panelRef, onClose);
 
   // A line chip in Used by / Uses: show that line in the code, in this file or in the other one.
   function openSite(fileId: number, line: number) {
@@ -101,7 +96,7 @@ export function NodePanel({
   });
 
   return (
-    <aside className="panel" aria-labelledby={titleId}>
+    <aside className="panel" aria-labelledby={titleId} ref={panelRef}>
       <header className="panel-header">
         <div className="panel-heading">
           <PanelTitle id={titleId} path={node.path} titleRef={titleRef} />
@@ -126,15 +121,7 @@ export function NodePanel({
         >
           Ask about this
         </button>
-        <button
-          type="button"
-          className="icon-button"
-          onClick={onClose}
-          aria-label="Close panel (Esc)"
-          title="Close (Esc)"
-        >
-          <Icon name="x" />
-        </button>
+        <CloseButton what="file panel" onClose={onClose} />
       </header>
 
       <dl className="panel-facts">
@@ -183,7 +170,7 @@ export function NodePanel({
           file.data ? (
             <CodeView key={node.id} content={file.data.content} highlight={highlight} />
           ) : (
-            <PanelState query={file} />
+            <PanelState query={file} codeLines={node.loc} />
           )
         ) : tab === "usedBy" ? (
           usedBy.data ? (
@@ -229,7 +216,15 @@ function countFiles(items: Neighbour[]): number {
   return new Set(items.filter((i) => i.symbol.file_id !== null).map((i) => i.symbol.file_id)).size;
 }
 
-function PanelState({ query }: { query: { error: Error | null; refetch: () => unknown } }) {
+function PanelState({
+  query,
+  codeLines,
+}: {
+  query: { error: Error | null; refetch: () => unknown };
+  /** Draw the code view's frame instead of rows: the file's real line count is known before its
+   * text arrives, so the gutter has its final width and the lines fill the whole code area. */
+  codeLines?: number;
+}) {
   if (query.error) {
     return (
       <div className="panel-message" role="alert">
@@ -240,13 +235,43 @@ function PanelState({ query }: { query: { error: Error | null; refetch: () => un
       </div>
     );
   }
+  if (codeLines !== undefined) {
+    // Enough lines to fill a tall panel (the area clips the rest); never more than the file has.
+    const n = Math.max(1, Math.min(codeLines, CODE_SKELETON_MAX));
+    const widths = Array.from({ length: n }, (_, i) => CODE_SKELETON[i % CODE_SKELETON.length]);
+    return (
+      <div className="code code-skeleton" aria-busy="true">
+        <span className="visually-hidden">Loading the file…</span>
+        <div className="code-gutter" aria-hidden="true">
+          {widths.map((_, i) => (
+            <div key={i}>{i + 1}</div>
+          ))}
+          {/* the widest number the file will show, so the gutter does not widen on arrival */}
+          <div className="code-skeleton-width">{codeLines}</div>
+        </div>
+        <div className="code-text" aria-hidden="true">
+          {widths.map((w, i) => (
+            <div key={i} className="code-skeleton-line">
+              {w ? <span className="skeleton" style={{ width: `${w}ch` }} /> : null}
+            </div>
+          ))}
+        </div>
+      </div>
+    );
+  }
   return (
     <div className="panel-message" aria-busy="true">
-      <div className="skeleton" style={{ width: "70%" }} />
-      <div className="skeleton" style={{ width: "50%", marginTop: 8 }} />
+      {[70, 50, 62].map((w, i) => (
+        <div key={i} className="skeleton" style={{ width: `${w}%`, marginTop: i ? 12 : 0 }} />
+      ))}
     </div>
   );
 }
+
+// Line lengths (in characters) of the placeholder code; 0 is a blank line.
+const CODE_SKELETON = [28, 0, 18, 22, 14, 0, 0, 34, 40, 26, 0, 30, 44, 20, 0, 36, 24, 0, 16, 38, 42, 30, 0];
+// 1080px of panel at the code's 19.2px line height is about 50 lines; 80 covers taller screens.
+const CODE_SKELETON_MAX = 80;
 
 function CodeView({ content, highlight }: { content: string; highlight: LineRange | null }) {
   const lines = useMemo(() => {

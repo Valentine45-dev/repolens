@@ -76,10 +76,19 @@ function Chip({ snapshotId, step }: { snapshotId: number; step: ReachStep }) {
 export function ReachBlock({ snapshotId, view }: { snapshotId: number; view: ReachView }) {
   const [expanded, setExpanded] = useState(false);
   if (view.status === "loading") {
+    // The shape of the answer (a sentence, a row of chips, a caption), so the rule text below it
+    // does not jump down when it arrives.
     return (
-      <p className="caption" role="status">
-        Working out reachability…
-      </p>
+      <div className="reach" role="status" aria-busy="true">
+        <span className="visually-hidden">Working out reachability…</span>
+        <span className="skeleton" style={{ display: "block", width: "85%" }} aria-hidden="true" />
+        <span className="reach-path" aria-hidden="true">
+          {[64, 48, 88, 72].map((w, i) => (
+            <span key={i} className="skeleton" style={{ width: w, height: "var(--chip-h)" }} />
+          ))}
+        </span>
+        <span className="skeleton" style={{ display: "block", width: "70%", height: 12 }} aria-hidden="true" />
+      </div>
     );
   }
   if (view.status === "error") {
@@ -143,9 +152,8 @@ export function ReachBlock({ snapshotId, view }: { snapshotId: number; view: Rea
           </div>
           {tier === "guess" && entry ? (
             <p className="caption reach-guess-note">
-              Starts at <Label text={entry.label} />. Dashed steps are guesses: a call matched by
-              name only, a special method Python calls implicitly (such as __enter__ or
-              __deepcopy__), or a function defined inside code that is reached.
+              Starts at <Label text={entry.label} />. Dashed steps are the guesses (a special method
+              is one such as __enter__ or __deepcopy__).
             </p>
           ) : null}
         </>

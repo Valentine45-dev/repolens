@@ -6,6 +6,7 @@ import {
   getFindingReach,
   getFindings,
   getRules,
+  repoName,
   type Category,
   type Finding,
   type FindingsPage,
@@ -13,16 +14,22 @@ import {
   type Severity,
 } from "../api";
 import type { AnalysisContext } from "../components/AnalysisShell";
+import { useDocumentTitle } from "../documentTitle";
 import { Icon } from "../components/Icon";
 import { PathText } from "../components/PathText";
 import { REACH_TAG, ReachBlock, type ReachView } from "../components/ReachBlock";
 import { SeverityBadge } from "../components/Severity";
 import { languageLabel } from "../graphModel";
+import { CloseButton } from "../components/CloseButton";
+import { useEscapeToClose } from "../escapeStack";
 import { findingsCountLabel } from "../findingsCount";
 import { exploreHref, useSetParams } from "../links";
 
 const PAGE = 50;
 const SECRET_RULE = "hardcoded-secret";
+const NO_PLACEHOLDERS = "This analysis has no probable placeholders.";
+const MISS_NOTE = "These checks can still miss issues.";
+const SKELETON_ROWS = [[62, 70], [48, 55], [70, 64], [55, 72], [66, 50], [44, 68], [58, 60], [50, 66]];
 
 // Spec §5.6. Filters live in the URL:
 // ?category=quality|all (Security when absent)&severity=&rule=&language=&path=&tests=hide
@@ -85,6 +92,11 @@ export function Findings() {
   const setFilter = (key: string, value: string | null) =>
     setParams({ [key]: value, page: null, finding: null });
   const selected = findings.data?.items.find((f) => f.id === selectedId) ?? null;
+  useDocumentTitle([
+    selected ? `${selected.path}:${selected.line}` : null,
+    "Findings",
+    status ? repoName(status.url) : null,
+  ]);
   const counts = findings.data?.counts;
   const filtered = Boolean(
     severity || rule || language || path || hideTests || hidePlaceholders || category !== "all",
@@ -168,31 +180,41 @@ export function Findings() {
             />
             Hide test and example code
           </label>
-          <label className="check" data-disabled={counts && counts.placeholders === 0 ? "" : undefined}>
+          <label
+            className="check"
+            data-disabled={counts && counts.placeholders === 0 ? "" : undefined}
+            title={counts && counts.placeholders === 0 ? NO_PLACEHOLDERS : undefined}
+          >
             <input
               type="checkbox"
               checked={hidePlaceholders}
               disabled={counts !== undefined && counts.placeholders === 0}
+              aria-describedby={counts && counts.placeholders === 0 ? "no-placeholders-hint" : undefined}
               onChange={(e) => setFilter("placeholders", e.target.checked ? "hide" : null)}
             />
             Hide probable placeholders
+            {counts && counts.placeholders === 0 ? (
+              <span id="no-placeholders-hint" className="visually-hidden">
+                {NO_PLACEHOLDERS}
+              </span>
+            ) : null}
           </label>
         </div>
         {category !== "security" ? (
-          <p className="caption">
+          <p className="caption findings-caption">
             Bug / Quality findings are code-quality checks (Ruff and an import check), not
             security results. Test and example code is not checked.
           </p>
         ) : null}
         {byReach ? (
-          <p className="caption">
+          <p className="caption findings-caption">
             Ordered by whether a detected entry point reaches the code, then by severity. Entry
             points are detected by pattern and can be missed; this is not a verdict on whether the
             code runs.
           </p>
         ) : null}
         {findings.data?.notes.map((note) => (
-          <p key={note} className="note">
+          <p key={note} className="note findings-caption">
             {note}
           </p>
         ))}
@@ -200,6 +222,21 @@ export function Findings() {
         <FindingsList
           query={findings}
           filtered={filtered}
+          emptyAction={
+            severity || rule || language || path || hideTests || hidePlaceholders
+              ? {
+                  label: "Clear filters",
+                  run: () =>
+                    setParams({
+                      severity: null, rule: null, language: null, path: null, tests: null,
+                      placeholders: null, page: null, finding: null,
+                    }),
+                }
+              : category !== "all"
+                ? { label: "Show all categories", run: () => setFilter("category", "all") }
+                : null
+          }
+          categoryLabel={category === "security" ? "Security" : category === "quality" ? "Bug / Quality" : null}
           showReach={byReach}
           selectedId={selectedId}
           onSelect={(id) => setParams({ finding: String(id) }, false)}
@@ -239,6 +276,10 @@ export function Findings() {
           reach={reachView}
           onClose={() => setParams({ finding: null }, false)}
         />
+      ) : selectedId !== null && !findings.data ? (
+        // A link to a finding: the panel's frame is there at once, so the list does not narrow
+        // (and its filters re-wrap) when the data arrives.
+        <FindingPanelSkeleton onClose={() => setParams({ finding: null }, false)} />
       ) : null}
     </div>
   );
@@ -315,15 +356,19 @@ function PathFilter({ value, onChange }: { value: string; onChange: (value: stri
   );
 }
 
-function FindingsList({
+export function FindingsList({
   query,
   filtered,
+  emptyAction,
+  categoryLabel,
   showReach,
   selectedId,
   onSelect,
 }: {
   query: UseQueryResult<FindingsPage>;
   filtered: boolean;
+  emptyAction: { label: string; run: () => void } | null;
+  categoryLabel: string | null;
   showReach: boolean;
   selectedId: number | null;
   onSelect: (id: number) => void;
@@ -339,22 +384,56 @@ function FindingsList({
     );
   }
   if (!query.data) {
+    // The table's own header and rows (40px each), so the list fills in place.
     return (
-      <div className="panel-message" aria-busy="true">
-        {[70, 55, 62].map((w, i) => (
-          <div key={i} className="skeleton" style={{ width: `${w}%`, marginTop: i ? 12 : 0 }} />
-        ))}
+      <div className="findings-table" aria-busy="true">
+        <span className="visually-hidden">Loading findings…</span>
+        <table className="table" aria-hidden="true">
+          <thead>
+            <tr>
+              <th scope="col">Severity</th>
+              <th scope="col">Finding</th>
+              <th scope="col">Location</th>
+            </tr>
+          </thead>
+          <tbody>
+            {SKELETON_ROWS.map(([a, b], i) => (
+              <tr key={i}>
+                <td className="severity-col">
+                  <span className="skeleton" style={{ display: "block", width: 48 }} />
+                </td>
+                <td>
+                  <span className="skeleton" style={{ display: "block", width: `${a}%` }} />
+                </td>
+                <td className="location-col">
+                  <span className="skeleton" style={{ display: "block", width: `${b}%` }} />
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
       </div>
     );
   }
   if (query.data.items.length === 0) {
-    // Never a verdict (spec §5.6): no rows is not "safe".
-    return (
-      <p className="panel-message">
-        {filtered
+    // Never a verdict (spec §5.6): no rows says what was looked at and that checks can miss things.
+    const what =
+      filtered && emptyAction?.label === "Show all categories" && categoryLabel
+        ? `No ${categoryLabel} findings.`
+        : filtered
           ? "No findings match these filters."
-          : "No findings from our current rules. This does not guarantee the code is safe."}
-      </p>
+          : "No findings from these checks.";
+    return (
+      <div className="panel-message empty-state" role="status">
+        <p>
+          {what} {MISS_NOTE}
+        </p>
+        {emptyAction ? (
+          <button type="button" className="button button-secondary button-small" onClick={emptyAction.run}>
+            {emptyAction.label}
+          </button>
+        ) : null}
+      </div>
     );
   }
   return (
@@ -369,7 +448,16 @@ function FindingsList({
         </thead>
         <tbody>
           {query.data.items.map((f) => (
-            <tr key={f.id} aria-selected={f.id === selectedId}>
+            <tr
+              key={f.id}
+              className="finding-row"
+              aria-selected={f.id === selectedId}
+              // The whole row opens the finding with a mouse; the message button is the one
+              // keyboard and screen-reader target, so there is one tab stop per row.
+              onClick={(e) => {
+                if (!(e.target as Element).closest("button, a, input, select")) onSelect(f.id);
+              }}
+            >
               <td className="severity-col">
                 <SeverityBadge severity={f.severity} />
               </td>
@@ -385,8 +473,10 @@ function FindingsList({
                 ) : null}
               </td>
               <td className="mono location-col">
-                <PathText path={f.path} />
-                <span className="nowrap">:{f.line}</span>
+                <span className="location-link">
+                  <PathText path={f.path} />
+                  <span className="nowrap">:{f.line}</span>
+                </span>
                 {f.rule_id === SECRET_RULE ? (
                   <span className="caption nowrap"> (value hidden)</span>
                 ) : null}
@@ -396,6 +486,28 @@ function FindingsList({
         </tbody>
       </table>
     </div>
+  );
+}
+
+/** The finding panel's frame while the list (which holds the finding) loads: the real close
+ * button, grey bars where the severity, title and location will be. */
+function FindingPanelSkeleton({ onClose }: { onClose: () => void }) {
+  return (
+    <aside className="panel" aria-busy="true" aria-label="Loading finding">
+      <header className="panel-header">
+        <div className="panel-heading">
+          <span className="skeleton" style={{ display: "block", width: 56 }} />
+          <span className="skeleton" style={{ display: "block", width: "80%", height: 20, marginTop: 8 }} />
+          <span className="skeleton" style={{ display: "block", width: "55%", height: 12, marginTop: 8 }} />
+        </div>
+        <CloseButton what="finding panel" onClose={onClose} />
+      </header>
+      <div className="panel-body finding-body" aria-hidden="true">
+        {[90, 70, 84, 60].map((w, i) => (
+          <span key={i} className="skeleton" style={{ display: "block", width: `${w}%` }} />
+        ))}
+      </div>
+    </aside>
   );
 }
 
@@ -422,14 +534,8 @@ export function FindingPanel({
     titleRef.current?.focus();
     setCopied(false);
   }, [finding.id]);
-  useEffect(() => {
-    const onKey = (e: KeyboardEvent) => {
-      // Esc inside the Ask drawer closes only the drawer (it has its own handler).
-      if (e.key === "Escape" && !document.activeElement?.closest("#ask-drawer")) onClose();
-    };
-    window.addEventListener("keydown", onKey);
-    return () => window.removeEventListener("keydown", onKey);
-  }, [onClose]);
+  const panelRef = useRef<HTMLElement>(null);
+  useEscapeToClose(panelRef, onClose);
 
   async function copy() {
     try {
@@ -441,7 +547,7 @@ export function FindingPanel({
   }
 
   return (
-    <aside className="panel" aria-labelledby={titleId}>
+    <aside className="panel" aria-labelledby={titleId} ref={panelRef}>
       <header className="panel-header">
         <div className="panel-heading">
           <SeverityBadge severity={finding.severity} />
@@ -453,9 +559,7 @@ export function FindingPanel({
             {finding.symbol ? ` · ${finding.symbol}` : null}
           </p>
         </div>
-        <button type="button" className="icon-button" onClick={onClose} aria-label="Close panel (Esc)">
-          <Icon name="x" />
-        </button>
+        <CloseButton what="finding panel" onClose={onClose} />
       </header>
       <div className="panel-body finding-body">
         {finding.in_test ? (

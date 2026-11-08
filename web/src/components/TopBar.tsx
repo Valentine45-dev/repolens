@@ -1,13 +1,16 @@
 import { Link, useLocation } from "react-router-dom";
 
-// Only links to pages that exist: no Recent dropdown (the list lives on Home), no About page and
-// no theme toggle in this build.
+import { LogoMark } from "./LogoMark";
+import { ThemeToggle } from "./ThemeToggle";
+
+// Only links to pages that exist: no Recent dropdown (the list lives on Home), no About page. The
+// theme toggle sits at the far right.
 export function TopBar() {
   const { pathname } = useLocation();
   return (
     <header className="topbar">
       <Link to="/" className="wordmark" aria-label="RepoLens home">
-        <img src="/logo-mark.svg" alt="" width={20} height={20} className="wordmark-mark" />
+        <LogoMark />
         RepoLens
       </Link>
       <nav aria-label="Main">
@@ -20,6 +23,9 @@ export function TopBar() {
           New analysis
         </Link>
       </nav>
+      <div className="topbar-end">
+        <ThemeToggle />
+      </div>
     </header>
   );
 }

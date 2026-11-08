@@ -3,7 +3,31 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta name="color-scheme" content="light" />
+    <meta name="color-scheme" content="light dark" />
+    <!-- Theme before anything paints (no flash): a stored pick, else the system setting. Same rule
+         as web/src/theme.ts (theme.dom.test.ts runs this script). -->
+    <script>
+      (function () {
+        var stored = null;
+        try { stored = window.localStorage.getItem("repolens.theme"); } catch (e) {}
+        var dark = stored === "dark" || (stored !== "light" && !!window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches);
+        var root = document.documentElement;
+        root.setAttribute("data-theme", dark ? "dark" : "light");
+        root.style.colorScheme = dark ? "dark" : "light";
+      })();
+      // Skeleton shimmer in step: each bar's animation starts when the bar appears, so give every
+      // one the same start time; then all bars on screen sweep together (styles.css .skeleton).
+      document.addEventListener(
+        "animationstart",
+        function (e) {
+          if (e.animationName !== "skeleton-shimmer" || !document.getAnimations) return;
+          document.getAnimations().forEach(function (a) {
+            if (a.animationName === "skeleton-shimmer" && a.startTime !== 0) a.startTime = 0;
+          });
+        },
+        true,
+      );
+    </script>
     <!-- .ico for browsers without SVG favicons; modern browsers pick the SVG -->
     <link rel="icon" href="/favicon.ico" sizes="32x32" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
@@ -27,9 +51,17 @@
     <template id="fp-topbar">
       <header class="topbar">
         <a class="wordmark" href="/" aria-label="RepoLens home"
-          ><img src="/logo-mark.svg" alt="" width="20" height="20" class="wordmark-mark" />RepoLens</a
+          ><svg viewBox="0 0 64 64" width="20" height="20" fill="none" stroke="currentColor" class="wordmark-mark" aria-hidden="true">
+            <path d="M19 33 L27 19 L35 33 Z" stroke-width="2.4" stroke-linejoin="round" />
+            <circle cx="27" cy="19" r="3.6" fill="currentColor" stroke="none" />
+            <circle cx="19" cy="33" r="3.6" fill="currentColor" stroke="none" />
+            <circle cx="35" cy="33" r="3.6" fill="currentColor" stroke="none" />
+            <circle cx="27" cy="27" r="19" stroke-width="5" />
+            <path d="M41 41 L56 56" stroke-width="7" stroke-linecap="round" /></svg
+          >RepoLens</a
         >
         <nav aria-label="Main"><a class="topbar-link" href="/" data-fp="home-link">New analysis</a></nav>
+        <div class="topbar-end"><span class="icon-button theme-toggle" aria-hidden="true"></span></div>
       </header>
     </template>
 
@@ -143,6 +175,7 @@
                   <li><span class="skeleton" style="width: 64px; height: 14px"></span></li>
                 </ol>
               </nav>
+              <p class="crumb-facts caption"><span class="skeleton toolbar-note-skeleton"></span></p>
             </div>
             <div class="toolbar" role="toolbar" aria-label="Graph options">
               <div class="segmented" role="group" aria-label="View">
@@ -154,24 +187,29 @@
                 <button type="button" aria-pressed="false" data-level="file" tabindex="-1">Files</button>
                 <button type="button" aria-pressed="false" data-level="flat" tabindex="-1">Flat</button>
               </div>
-              <label class="check"><input type="checkbox" data-fp="tests" tabindex="-1" />Show tests &amp; examples</label>
-              <label class="check"><input type="checkbox" data-fp="guesses" tabindex="-1" />Show guessed calls</label>
-              <label class="check" data-disabled data-fp="alledges"><input type="checkbox" disabled tabindex="-1" />Show all edges</label>
               <button type="button" class="button button-secondary button-small" data-fp="fit" tabindex="-1">Fit</button>
-              <p class="toolbar-note caption"><span class="skeleton toolbar-note-skeleton"></span></p>
+              <div class="toolbar-group" role="group" aria-labelledby="explore-show-label">
+                <span id="explore-show-label" class="toolbar-group-label">Show</span>
+                <label class="check"><input type="checkbox" data-fp="tests" tabindex="-1" />Tests &amp; examples</label>
+                <label class="check"><input type="checkbox" data-fp="guesses" tabindex="-1" />Guessed calls</label>
+                <label class="check" data-disabled data-fp="alledges"><input type="checkbox" disabled tabindex="-1" />All edges</label>
+              </div>
+              <p class="toolbar-note caption" data-fp="listnote"><span class="skeleton toolbar-note-skeleton"></span></p>
             </div>
             <div class="legend" aria-label="Legend" data-fp="legend">
-              <div class="legend-row">
-                <svg width="28" height="8" aria-hidden="true"><line x1="0" y1="4" x2="28" y2="4" class="legend-line" /></svg>
-                Import or call. The number counts connections; thicker means more.
+              <div class="legend-key">
+                <span class="legend-row">
+                  <svg width="28" height="8" aria-hidden="true"><line x1="0" y1="4" x2="28" y2="4" class="legend-line" /></svg>
+                  <span data-fp="legend-solid">Import or call, arrow to the one used · number = how many · thicker = more</span>
+                </span>
+                <span class="legend-row" data-muted="true" data-fp="legend-guess">
+                  <svg width="28" height="8" aria-hidden="true">
+                    <line x1="0" y1="4" x2="28" y2="4" class="legend-line" stroke-dasharray="5 4" />
+                  </svg>
+                  <span data-fp="legend-dashed">Mostly guesses (hidden; turn on “Guessed calls”)</span>
+                </span>
+                <span class="legend-facts" data-fp="legend-facts"><span class="skeleton toolbar-note-skeleton"></span></span>
               </div>
-              <div class="legend-row" data-muted="true" data-fp="legend-guess">
-                <svg width="28" height="8" aria-hidden="true">
-                  <line x1="0" y1="4" x2="28" y2="4" class="legend-line" stroke-dasharray="5 4" />
-                </svg>
-                <span>Dashed: mostly best guesses. Dynamic code makes some calls hard to resolve.<span data-fp="legend-hint"> Hidden; turn on “Show guessed calls”.</span></span>
-              </div>
-              <p class="legend-note"></p>
             </div>
             <div class="explore-body">
               <div class="canvas"><div class="graph-skeleton" data-fp="canvas"><div class="graph-skeleton-grid"></div></div></div>
@@ -241,12 +279,32 @@
                 <label class="check"><input type="checkbox" tabindex="-1" data-fp="hide-tests" />Hide test and example code</label>
                 <label class="check"><input type="checkbox" tabindex="-1" data-fp="hide-placeholders" />Hide probable placeholders</label>
               </div>
-              <div class="panel-message" aria-busy="true">
-                <div class="skeleton" style="width: 70%"></div>
-                <div class="skeleton" style="width: 55%; margin-top: 12px"></div>
-                <div class="skeleton" style="width: 62%; margin-top: 12px"></div>
+              <div class="findings-table" aria-busy="true">
+                <table class="table">
+                  <thead><tr><th scope="col">Severity</th><th scope="col">Finding</th><th scope="col">Location</th></tr></thead>
+                  <tbody>
+                    <tr><td class="severity-col"><span class="skeleton" style="display: block; width: 48px"></span></td><td><span class="skeleton" style="display: block; width: 62%"></span></td><td class="location-col"><span class="skeleton" style="display: block; width: 70%"></span></td></tr>
+                    <tr><td class="severity-col"><span class="skeleton" style="display: block; width: 48px"></span></td><td><span class="skeleton" style="display: block; width: 48%"></span></td><td class="location-col"><span class="skeleton" style="display: block; width: 55%"></span></td></tr>
+                    <tr><td class="severity-col"><span class="skeleton" style="display: block; width: 48px"></span></td><td><span class="skeleton" style="display: block; width: 70%"></span></td><td class="location-col"><span class="skeleton" style="display: block; width: 64%"></span></td></tr>
+                    <tr><td class="severity-col"><span class="skeleton" style="display: block; width: 48px"></span></td><td><span class="skeleton" style="display: block; width: 55%"></span></td><td class="location-col"><span class="skeleton" style="display: block; width: 72%"></span></td></tr>
+                    <tr><td class="severity-col"><span class="skeleton" style="display: block; width: 48px"></span></td><td><span class="skeleton" style="display: block; width: 66%"></span></td><td class="location-col"><span class="skeleton" style="display: block; width: 50%"></span></td></tr>
+                    <tr><td class="severity-col"><span class="skeleton" style="display: block; width: 48px"></span></td><td><span class="skeleton" style="display: block; width: 44%"></span></td><td class="location-col"><span class="skeleton" style="display: block; width: 68%"></span></td></tr>
+                    <tr><td class="severity-col"><span class="skeleton" style="display: block; width: 48px"></span></td><td><span class="skeleton" style="display: block; width: 58%"></span></td><td class="location-col"><span class="skeleton" style="display: block; width: 60%"></span></td></tr>
+                    <tr><td class="severity-col"><span class="skeleton" style="display: block; width: 48px"></span></td><td><span class="skeleton" style="display: block; width: 50%"></span></td><td class="location-col"><span class="skeleton" style="display: block; width: 66%"></span></td></tr>
+                  </tbody>
+                </table>
               </div>
             </div>
+            <aside class="panel" data-fp="finding-panel">
+              <header class="panel-header">
+                <div class="panel-heading">
+                  <span class="skeleton" style="display: block; width: 56px"></span>
+                  <span class="skeleton" style="display: block; width: 80%; height: 20px; margin-top: 8px"></span>
+                  <span class="skeleton" style="display: block; width: 55%; height: 12px; margin-top: 8px"></span>
+                </div>
+                <span class="icon-button" aria-hidden="true"></span>
+              </header>
+            </aside>
           </div>
         </div>
       </div>
@@ -343,7 +401,15 @@
                   ol.appendChild(li);
                 });
               }
-              if (q.get("guesses") === "1") { one(body, "legend-guess").removeAttribute("data-muted"); one(body, "legend-hint").remove(); }
+              one(body, "listnote").remove();
+              if (level === "flat") crumbs.remove(); // the flat graph has no breadcrumb row
+              if (level !== "flat") one(body, "legend-facts").remove(); // a map says its counts in the crumb row
+              // Same words as web/src/legendText.ts (firstPaint.test.ts checks them).
+              var flat = level === "flat";
+              var guesses = q.get("guesses") === "1";
+              if (flat) one(body, "legend-solid").textContent = "Import or call, arrow to the file used";
+              one(body, "legend-dashed").textContent = (flat ? "Guess" : "Mostly guesses") + (guesses ? " (calls matched by name only)" : " (hidden; turn on “Guessed calls”)");
+              if (guesses) one(body, "legend-guess").removeAttribute("data-muted");
               var grid = body.querySelector(".graph-skeleton-grid");
               for (var i = 0; i < 24; i++) grid.appendChild($("fp-card"));
             }
@@ -361,6 +427,7 @@
             ["security", "quality", "all"].forEach(function (c) {
               one(fb, "cat-" + c).setAttribute("aria-pressed", String(cat === c));
             });
+            if (!q.get("finding")) one(fb, "finding-panel").remove(); // a link to a finding opens its panel
             shell.appendChild(fb);
           }
           var main = document.createElement("main");
