@@ -69,6 +69,30 @@ export interface Finding {
   template_value: boolean; // a stand-in value in code or runtime config: keeps its severity
   category: Category | null;
   node_id: number;
+  /** Only when the list is ordered by reachability; otherwise null. */
+  reach_tier?: ReachTier | null;
+}
+
+/** solid: an entry point reaches the code through imports and confident calls. guess: only through
+ * a guessed step. not_checked: the file is not analysed code. none: no path found (not "unused"). */
+export type ReachTier = "solid" | "guess" | "not_checked" | "none";
+
+export interface ReachStep {
+  symbol_id: number;
+  symbol_kind: string;
+  name: string;
+  file_id: number;
+  path: string | null;
+  start_line: number;
+  end_line: number;
+  via: string | null; // how this step was reached: imports | calls | contains | package; null = the entry
+  guess: boolean;
+}
+
+export interface FindingReach {
+  tier: ReachTier;
+  entry: { kind: string; label: string; detail: string } | null;
+  path: ReachStep[];
 }
 
 /** Security rules and Bug / Quality rules (code-quality checks). */
@@ -100,6 +124,7 @@ export interface FindingsFilter {
   in_test?: boolean;
   category?: Category;
   placeholder?: boolean;
+  sort?: "reachability";
   limit?: number;
   offset?: number;
 }
@@ -448,6 +473,14 @@ export function getFindings(
     if (value !== undefined && value !== "") params.set(key, String(value));
   }
   return request(`/snapshots/${snapshotId}/findings?${params}`, { signal });
+}
+
+export function getFindingReach(
+  snapshotId: number,
+  findingId: number,
+  signal?: AbortSignal,
+): Promise<FindingReach> {
+  return request(`/snapshots/${snapshotId}/findings/${findingId}/reach`, { signal });
 }
 
 export function getRules(signal?: AbortSignal): Promise<Rule[]> {
