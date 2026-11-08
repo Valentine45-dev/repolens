@@ -6,6 +6,7 @@ import {
   getFindingReach,
   getFindings,
   getRules,
+  repoName,
   type Category,
   type Finding,
   type FindingsPage,
@@ -13,11 +14,14 @@ import {
   type Severity,
 } from "../api";
 import type { AnalysisContext } from "../components/AnalysisShell";
+import { useDocumentTitle } from "../documentTitle";
 import { Icon } from "../components/Icon";
 import { PathText } from "../components/PathText";
 import { REACH_TAG, ReachBlock, type ReachView } from "../components/ReachBlock";
 import { SeverityBadge } from "../components/Severity";
 import { languageLabel } from "../graphModel";
+import { CloseButton } from "../components/CloseButton";
+import { useEscapeToClose } from "../escapeStack";
 import { findingsCountLabel } from "../findingsCount";
 import { exploreHref, useSetParams } from "../links";
 
@@ -88,6 +92,11 @@ export function Findings() {
   const setFilter = (key: string, value: string | null) =>
     setParams({ [key]: value, page: null, finding: null });
   const selected = findings.data?.items.find((f) => f.id === selectedId) ?? null;
+  useDocumentTitle([
+    selected ? `${selected.path}:${selected.line}` : null,
+    "Findings",
+    status ? repoName(status.url) : null,
+  ]);
   const counts = findings.data?.counts;
   const filtered = Boolean(
     severity || rule || language || path || hideTests || hidePlaceholders || category !== "all",
@@ -491,9 +500,7 @@ function FindingPanelSkeleton({ onClose }: { onClose: () => void }) {
           <span className="skeleton" style={{ display: "block", width: "80%", height: 20, marginTop: 8 }} />
           <span className="skeleton" style={{ display: "block", width: "55%", height: 12, marginTop: 8 }} />
         </div>
-        <button type="button" className="icon-button" onClick={onClose} aria-label="Close panel (Esc)" title="Close (Esc)">
-          <Icon name="x" />
-        </button>
+        <CloseButton what="finding panel" onClose={onClose} />
       </header>
       <div className="panel-body finding-body" aria-hidden="true">
         {[90, 70, 84, 60].map((w, i) => (
@@ -527,14 +534,8 @@ export function FindingPanel({
     titleRef.current?.focus();
     setCopied(false);
   }, [finding.id]);
-  useEffect(() => {
-    const onKey = (e: KeyboardEvent) => {
-      // Esc inside the Ask drawer closes only the drawer (it has its own handler).
-      if (e.key === "Escape" && !document.activeElement?.closest("#ask-drawer")) onClose();
-    };
-    window.addEventListener("keydown", onKey);
-    return () => window.removeEventListener("keydown", onKey);
-  }, [onClose]);
+  const panelRef = useRef<HTMLElement>(null);
+  useEscapeToClose(panelRef, onClose);
 
   async function copy() {
     try {
@@ -546,7 +547,7 @@ export function FindingPanel({
   }
 
   return (
-    <aside className="panel" aria-labelledby={titleId}>
+    <aside className="panel" aria-labelledby={titleId} ref={panelRef}>
       <header className="panel-header">
         <div className="panel-heading">
           <SeverityBadge severity={finding.severity} />
@@ -558,9 +559,7 @@ export function FindingPanel({
             {finding.symbol ? ` · ${finding.symbol}` : null}
           </p>
         </div>
-        <button type="button" className="icon-button" onClick={onClose} aria-label="Close panel (Esc)">
-          <Icon name="x" />
-        </button>
+        <CloseButton what="finding panel" onClose={onClose} />
       </header>
       <div className="panel-body finding-body">
         {finding.in_test ? (

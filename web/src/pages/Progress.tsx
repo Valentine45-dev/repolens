@@ -7,6 +7,7 @@ import { ConnectionNotice, isReconnecting } from "../components/ConnectionNotice
 import { Icon } from "../components/Icon";
 import { stageProgress } from "../progress";
 import { rememberAnalysis } from "../recent";
+import { useDocumentTitle } from "../documentTitle";
 
 // The pipeline's real stages, in order (app/ingest/pipeline.py run_job). Search for questions
 // does not exist yet, so it is not listed.
@@ -74,6 +75,7 @@ export function Progress() {
     enabled: valid,
     refetchInterval: (q) => (q.state.error || isFinished(q.state.data?.status) ? false : 1000),
   });
+  useDocumentTitle(["Analysis", query.data ? repoName(query.data.url) : null]);
   const slow = useSlowStage(query.data);
   const reconnecting = isReconnecting(query);
 

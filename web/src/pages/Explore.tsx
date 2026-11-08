@@ -15,6 +15,7 @@ import { MapView } from "../components/MapView";
 import { NodePanel } from "../components/NodePanel";
 import { applyCap, degrees, layoutGraph, RENDER_CAP } from "../graphModel";
 import { densityText, statusText } from "../legendText";
+import { useDocumentTitle } from "../documentTitle";
 import { parseLines, useSetParams, type LineRange } from "../links";
 import { layoutMap } from "../mapLayout";
 import {
@@ -206,6 +207,9 @@ function ExploreInner() {
   const hasData = listView || flatMode ? Boolean(graph.data) : Boolean(view);
   const updating = graph.isPlaceholderData || (!listView && !flatMode && map.isPlaceholderData);
   const repo = status ? (repoName(status.url).split("/").pop() ?? "") : "";
+  // Where you are: the file of a function view, the folder of a map view, the selected file.
+  const place = listView ? "List" : request?.level === "flat" ? "Flat" : request?.root || null;
+  useDocumentTitle([selected?.path ?? place, "Explorer", status ? repoName(status.url) : null]);
   const mapMode = !listView && !flatMode;
   // The old picture stays while the next one loads (keepPreviousData). Say so on the canvas itself
   // after 200ms (a fast load shows nothing), dim it and stop clicks on it, and show where you are

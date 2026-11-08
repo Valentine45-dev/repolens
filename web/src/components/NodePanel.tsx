@@ -12,7 +12,8 @@ import {
 import { GUESS_BELOW, languageLabel } from "../graphModel";
 import type { LineRange } from "../links";
 import { scrollToCenter } from "../scroll";
-import { Icon } from "./Icon";
+import { CloseButton } from "./CloseButton";
+import { useEscapeToClose } from "../escapeStack";
 import { PanelTitle } from "./PanelTitle";
 import { SeverityBadge } from "./Severity";
 import { SiteChips } from "./SiteChips";
@@ -65,14 +66,8 @@ export function NodePanel({
     titleRef.current?.focus();
   }, [node.id]);
 
-  useEffect(() => {
-    function onKey(e: KeyboardEvent) {
-      // Esc inside the Ask drawer closes only the drawer (it has its own handler).
-      if (e.key === "Escape" && !document.activeElement?.closest("#ask-drawer")) onClose();
-    }
-    window.addEventListener("keydown", onKey);
-    return () => window.removeEventListener("keydown", onKey);
-  }, [onClose]);
+  const panelRef = useRef<HTMLElement>(null);
+  useEscapeToClose(panelRef, onClose);
 
   // A line chip in Used by / Uses: show that line in the code, in this file or in the other one.
   function openSite(fileId: number, line: number) {
@@ -101,7 +96,7 @@ export function NodePanel({
   });
 
   return (
-    <aside className="panel" aria-labelledby={titleId}>
+    <aside className="panel" aria-labelledby={titleId} ref={panelRef}>
       <header className="panel-header">
         <div className="panel-heading">
           <PanelTitle id={titleId} path={node.path} titleRef={titleRef} />
@@ -126,15 +121,7 @@ export function NodePanel({
         >
           Ask about this
         </button>
-        <button
-          type="button"
-          className="icon-button"
-          onClick={onClose}
-          aria-label="Close panel (Esc)"
-          title="Close (Esc)"
-        >
-          <Icon name="x" />
-        </button>
+        <CloseButton what="file panel" onClose={onClose} />
       </header>
 
       <dl className="panel-facts">

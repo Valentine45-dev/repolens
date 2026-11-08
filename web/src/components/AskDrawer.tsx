@@ -18,6 +18,8 @@ import { exploreHref, useSetParams } from "../links";
 import { SiteChips } from "./SiteChips";
 import { scrollToStart } from "../scroll";
 import { useDelayedFlag } from "../useDelayedFlag";
+import { useEscapeToClose } from "../escapeStack";
+import { CloseButton } from "./CloseButton";
 import { Icon } from "./Icon";
 import { Markdown } from "./Markdown";
 import { PathText } from "./PathText";
@@ -142,13 +144,8 @@ export function AskDrawer({
     if (prefill === null) inputRef.current?.focus();
   }, []);
 
-  useEffect(() => {
-    const onKey = (e: KeyboardEvent) => {
-      if (e.key === "Escape" && document.activeElement?.closest("#ask-drawer")) onClose();
-    };
-    window.addEventListener("keydown", onKey);
-    return () => window.removeEventListener("keydown", onKey);
-  }, [onClose]);
+  const drawerRef = useRef<HTMLElement>(null);
+  useEscapeToClose(drawerRef, onClose);
 
   const ask = useMutation({
     mutationFn: ({ question, fileId }: { id: string; question: string; fileId?: number }) =>
@@ -186,6 +183,7 @@ export function AskDrawer({
   return (
     <aside
       id="ask-drawer"
+      ref={drawerRef}
       className="drawer"
       data-wide={wide || undefined}
       aria-labelledby={titleId}
@@ -223,9 +221,7 @@ export function AskDrawer({
         >
           <Icon name={wide ? "collapse" : "expand"} />
         </button>
-        <button type="button" className="icon-button" onClick={onClose} aria-label="Close Ask (Esc)">
-          <Icon name="x" />
-        </button>
+        <CloseButton what="Ask" onClose={onClose} />
       </header>
 
       <div className="drawer-body" ref={bodyRef}>
