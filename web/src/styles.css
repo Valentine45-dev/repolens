@@ -1704,6 +1704,10 @@ a {
   width: 132px;
 }
 
+.select-order {
+  width: 132px;
+}
+
 .select:focus-visible,
 .input-small:focus-visible {
   outline: 2px solid var(--focus-ring);
@@ -2382,4 +2386,35 @@ a {
 .site-chip-more {
   font-family: var(--font-sans);
   color: var(--text-muted);
+}
+
+/* Reachability in the finding panel: a sentence and a path of chips (the chips are .site-chip) */
+.reach {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.reach-line {
+  margin: 0;
+}
+
+.reach-path {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px;
+}
+
+.reach-arrow {
+  color: var(--text-subtle);
+  font-size: 12px;
+}
+
+.reach-entry {
+  font-weight: 500;
+}
+
+.reach-guess-note {
+  margin: 0;
 }

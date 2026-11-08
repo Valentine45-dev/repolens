@@ -3,6 +3,7 @@ import { useEffect, useId, useRef, useState } from "react";
 import { Link, useOutletContext, useSearchParams } from "react-router-dom";
 
 import {
+  getFindingReach,
   getFindings,
   getRules,
   type Category,
@@ -14,6 +15,7 @@ import {
 import type { AnalysisContext } from "../components/AnalysisShell";
 import { Icon } from "../components/Icon";
 import { PathText } from "../components/PathText";
+import { REACH_TAG, ReachBlock, type ReachView } from "../components/ReachBlock";
 import { SeverityBadge } from "../components/Severity";
 import { languageLabel } from "../graphModel";
 import { findingsCountLabel } from "../findingsCount";
@@ -36,6 +38,7 @@ export function Findings() {
   const path = params.get("path") ?? "";
   const hideTests = params.get("tests") === "hide";
   const hidePlaceholders = params.get("placeholders") === "hide";
+  const byReach = params.get("order") === "reachability";
   const categoryParam = params.get("category");
   const category: Category | "all" =
     categoryParam === "quality" || categoryParam === "all" ? categoryParam : "security";
@@ -50,6 +53,7 @@ export function Findings() {
     in_test: hideTests ? false : undefined,
     category: category === "all" ? undefined : category,
     placeholder: hidePlaceholders ? false : undefined,
+    sort: byReach ? ("reachability" as const) : undefined,
     limit: PAGE,
     offset: page * PAGE,
   };
@@ -60,6 +64,20 @@ export function Findings() {
     placeholderData: keepPreviousData,
     staleTime: Infinity,
   });
+  const reachQuery = useQuery({
+    queryKey: ["finding-reach", snapshotId, selectedId],
+    queryFn: ({ signal }) => getFindingReach(snapshotId, selectedId as number, signal),
+    enabled: ready && selectedId !== null,
+    staleTime: Infinity,
+  });
+  const reachView: ReachView | undefined =
+    selectedId === null
+      ? undefined
+      : reachQuery.data
+        ? { status: "ready", data: reachQuery.data }
+        : reachQuery.isError
+          ? { status: "error" }
+          : { status: "loading" };
   const rules = useQuery({ queryKey: ["rules"], queryFn: ({ signal }) => getRules(signal), staleTime: Infinity });
   const ruleById = new Map((rules.data ?? []).map((r) => [r.id, r]));
 
@@ -141,6 +159,7 @@ export function Findings() {
             }))}
           />
           <PathFilter value={path} onChange={(v) => setFilter("path", v || null)} />
+          <OrderSelect value={byReach ? "reachability" : ""} onChange={(v) => setFilter("order", v || null)} />
           <label className="check">
             <input
               type="checkbox"
@@ -165,6 +184,13 @@ export function Findings() {
             security results. Test and example code is not checked.
           </p>
         ) : null}
+        {byReach ? (
+          <p className="caption">
+            Ordered by whether a detected entry point reaches the code, then by severity. Entry
+            points are detected by pattern and can be missed; this is not a verdict on whether the
+            code runs.
+          </p>
+        ) : null}
         {findings.data?.notes.map((note) => (
           <p key={note} className="note">
             {note}
@@ -174,6 +200,7 @@ export function Findings() {
         <FindingsList
           query={findings}
           filtered={filtered}
+          showReach={byReach}
           selectedId={selectedId}
           onSelect={(id) => setParams({ finding: String(id) }, false)}
         />
@@ -209,6 +236,7 @@ export function Findings() {
           snapshotId={snapshotId}
           finding={selected}
           rule={ruleById.get(selected.rule_id)}
+          reach={reachView}
           onClose={() => setParams({ finding: null }, false)}
         />
       ) : null}
@@ -240,6 +268,19 @@ function FilterSelect({
             {o.label}
           </option>
         ))}
+      </select>
+    </span>
+  );
+}
+
+function OrderSelect({ value, onChange }: { value: string; onChange: (value: string) => void }) {
+  const id = useId();
+  return (
+    <span className="filter">
+      <label htmlFor={id}>Order</label>
+      <select id={id} className="select select-order" value={value} onChange={(e) => onChange(e.target.value)}>
+        <option value="">Default</option>
+        <option value="reachability">Reachability</option>
       </select>
     </span>
   );
@@ -277,11 +318,13 @@ function PathFilter({ value, onChange }: { value: string; onChange: (value: stri
 function FindingsList({
   query,
   filtered,
+  showReach,
   selectedId,
   onSelect,
 }: {
   query: UseQueryResult<FindingsPage>;
   filtered: boolean;
+  showReach: boolean;
   selectedId: number | null;
   onSelect: (id: number) => void;
 }) {
@@ -337,6 +380,9 @@ function FindingsList({
                 {f.in_test ? <span className="tag finding-tag">test or example</span> : null}
                 {f.in_docs ? <span className="tag finding-tag">documentation</span> : null}
                 {f.placeholder ? <span className="tag finding-tag">probably placeholder</span> : null}
+                {showReach && f.reach_tier ? (
+                  <span className="tag finding-tag">{REACH_TAG[f.reach_tier]}</span>
+                ) : null}
               </td>
               <td className="mono location-col">
                 <PathText path={f.path} />
@@ -357,11 +403,13 @@ export function FindingPanel({
   snapshotId,
   finding,
   rule,
+  reach,
   onClose,
 }: {
   snapshotId: number;
   finding: Finding;
   rule: Rule | undefined;
+  reach?: ReachView;
   onClose: () => void;
 }) {
   const titleId = useId();
@@ -427,6 +475,7 @@ export function FindingPanel({
             Looks like a template value; if deployed as-is, it&apos;s a publicly known key.
           </p>
         ) : null}
+        {reach ? <ReachBlock snapshotId={snapshotId} view={reach} /> : null}
         {rule ? (
           <dl className="finding-facts">
             <dt>What this rule looks for</dt>
