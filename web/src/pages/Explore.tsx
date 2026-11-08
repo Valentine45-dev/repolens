@@ -10,15 +10,14 @@ import { ConnectionNotice, isReconnecting } from "../components/ConnectionNotice
 import { FileList } from "../components/FileList";
 import { CrumbSkeleton, GraphSkeleton, ListSkeleton } from "../components/GraphSkeleton";
 import { FIT_OPTIONS, firstViewHub, GraphView } from "../components/GraphView";
-import { Icon } from "../components/Icon";
+import { ALL_EDGES_SHOWN_TITLE, ExploreLegend, SHOW_ALL_EDGES_TITLE, ShowGroup } from "../components/ExploreLegend";
 import { MapView } from "../components/MapView";
 import { NodePanel } from "../components/NodePanel";
 import { applyCap, degrees, layoutGraph, RENDER_CAP } from "../graphModel";
+import { densityText, statusText } from "../legendText";
 import { parseLines, useSetParams, type LineRange } from "../links";
 import { layoutMap } from "../mapLayout";
 import {
-  CYCLE_CAPTION,
-  densityCaption,
   edgeBudgetFor,
   restingEdges,
   emptyViewMessage,
@@ -208,7 +207,7 @@ function ExploreInner() {
   const updating = graph.isPlaceholderData || (!listView && !flatMode && map.isPlaceholderData);
   const repo = status ? (repoName(status.url).split("/").pop() ?? "") : "";
   const mapMode = !listView && !flatMode;
-  const caption = selection ? densityCaption(selection, showAllEdges) : null;
+  const legendStatus = statusText(selection ? densityText(selection, showAllEdges) : null, zoomedIn);
   const canShowAll = showAllEdges || (selection !== null && selection.mode !== "all");
 
   return (
@@ -217,6 +216,9 @@ function ExploreInner() {
         view ? (
           <div className="crumb-row">
             <Breadcrumbs view={view} repo={repo} search={location.search} />
+            <p className="crumb-facts caption" aria-live="polite">
+              {updating ? "Updating…" : mapNote(view)}
+            </p>
           </div>
         ) : (
           <CrumbSkeleton root={urlView.root} />
@@ -263,35 +265,6 @@ function ExploreInner() {
             ))}
           </div>
         ) : null}
-        <label className="check" title="Tests, and example code under examples/">
-          <input
-            type="checkbox"
-            checked={showTests}
-            onChange={(e) => setParam("tests", e.target.checked ? "1" : null)}
-          />
-          Show tests &amp; examples
-        </label>
-        <label className="check">
-          <input
-            type="checkbox"
-            checked={showGuesses}
-            onChange={(e) => setParam("guesses", e.target.checked ? "1" : null)}
-          />
-          Show guessed calls
-        </label>
-        {mapMode ? (
-          // Always there, so the toolbar never changes shape when the view arrives; it is only
-          // available when the map leaves edges out.
-          <label className="check" title="Draw every connection, not only the strongest" data-disabled={!canShowAll || undefined}>
-            <input
-              type="checkbox"
-              checked={showAllEdges}
-              disabled={!canShowAll}
-              onChange={(e) => setParam("edges", e.target.checked ? "all" : null)}
-            />
-            Show all edges
-          </label>
-        ) : null}
         {!listView ? (
           <button
             type="button"
@@ -304,32 +277,75 @@ function ExploreInner() {
             Fit
           </button>
         ) : null}
-        <p className="toolbar-note caption" aria-live="polite">
-          {updating ? (
-            "Updating…"
-          ) : listView || flatMode ? (
-            graph.data ? (
+        <ShowGroup>
+          <label className="check" title="Tests, and example code under examples/">
+            <input
+              type="checkbox"
+              checked={showTests}
+              onChange={(e) => setParam("tests", e.target.checked ? "1" : null)}
+            />
+            Tests &amp; examples
+          </label>
+          <label className="check" title="Calls matched by name only">
+            <input
+              type="checkbox"
+              checked={showGuesses}
+              onChange={(e) => setParam("guesses", e.target.checked ? "1" : null)}
+            />
+            Guessed calls
+          </label>
+          {mapMode ? (
+            // Always there, so the toolbar never changes shape when the view arrives; it is only
+            // available when the map leaves edges out, and says so when it is not.
+            <label
+              className="check"
+              title={canShowAll ? SHOW_ALL_EDGES_TITLE : ALL_EDGES_SHOWN_TITLE}
+              data-disabled={!canShowAll || undefined}
+            >
+              <input
+                type="checkbox"
+                checked={showAllEdges}
+                disabled={!canShowAll}
+                aria-describedby={canShowAll ? undefined : "all-edges-hint"}
+                onChange={(e) => setParam("edges", e.target.checked ? "all" : null)}
+              />
+              All edges
+              {canShowAll ? null : (
+                <span id="all-edges-hint" className="visually-hidden">
+                  {ALL_EDGES_SHOWN_TITLE}
+                </span>
+              )}
+            </label>
+          ) : null}
+        </ShowGroup>
+        {listView ? (
+          <p className="toolbar-note caption" aria-live="polite">
+            {updating ? (
+              "Updating…"
+            ) : graph.data ? (
               graphNote(graph.data, capped, listView)
             ) : (
               <span className="skeleton toolbar-note-skeleton" aria-hidden="true" />
-            )
-          ) : view ? (
-            mapNote(view)
-          ) : (
-            <span className="skeleton toolbar-note-skeleton" aria-hidden="true" />
-          )}
-        </p>
+            )}
+          </p>
+        ) : null}
       </div>
 
       {mapMode && (!view || view.nodes.length > 0) ? (
-        <MapLegend
+        <ExploreLegend
+          kind="map"
           showGuesses={showGuesses}
           cycle={view ? viewHasCycle(view) : false}
-          caption={caption}
-          zoomedIn={zoomedIn}
+          status={view ? legendStatus : null}
         />
       ) : flatMode && (!graph.data || graph.data.nodes.length > 0) ? (
-        <Legend showGuesses={showGuesses} />
+        <ExploreLegend
+          kind="flat"
+          showGuesses={showGuesses}
+          facts={
+            updating ? "Updating…" : graph.data ? graphNote(graph.data, capped, false) : <FactsSkeleton />
+          }
+        />
       ) : null}
 
       <div className="explore-body">
@@ -519,70 +535,6 @@ function EmptyView({
   );
 }
 
-function Legend({ showGuesses }: { showGuesses: boolean }) {
-  return (
-    <div className="legend" aria-label="Legend">
-      <div className="legend-row">
-        <svg width="28" height="8" aria-hidden="true">
-          <line x1="0" y1="4" x2="28" y2="4" className="legend-line" />
-        </svg>
-        Import or call (arrow points to the file used)
-      </div>
-      <div className="legend-row" data-muted={!showGuesses || undefined}>
-        <svg width="28" height="8" aria-hidden="true">
-          <line x1="0" y1="4" x2="28" y2="4" className="legend-line" strokeDasharray="5 4" />
-        </svg>
-        <span>
-          Dashed: a best guess. Dynamic code makes some calls hard to resolve.
-          {showGuesses ? null : " Hidden; turn on “Show guessed calls”."}
-        </span>
-      </div>
-    </div>
-  );
-}
-
-function MapLegend({
-  showGuesses,
-  cycle,
-  caption,
-  zoomedIn,
-}: {
-  showGuesses: boolean;
-  cycle: boolean;
-  caption: string | null;
-  zoomedIn: boolean;
-}) {
-  return (
-    <div className="legend" aria-label="Legend">
-      <div className="legend-row">
-        <svg width="28" height="8" aria-hidden="true">
-          <line x1="0" y1="4" x2="28" y2="4" className="legend-line" />
-        </svg>
-        Import or call. The number counts connections; thicker means more.
-      </div>
-      <div className="legend-row" data-muted={!showGuesses || undefined}>
-        <svg width="28" height="8" aria-hidden="true">
-          <line x1="0" y1="4" x2="28" y2="4" className="legend-line" strokeDasharray="5 4" />
-        </svg>
-        <span>
-          Dashed: mostly best guesses. Dynamic code makes some calls hard to resolve.
-          {showGuesses ? null : " Hidden; turn on “Show guessed calls”."}
-        </span>
-      </div>
-      {/* One row that is always there (it holds nothing for a small graph), so a caption arriving
-          with the data never pushes the map down. */}
-      <p className="legend-note">
-        {cycle ? (
-          <span className="legend-cycle">
-            <Icon name="cycle" size={14} />
-            {CYCLE_CAPTION}
-          </span>
-        ) : null}
-        {cycle && caption ? " · " : null}
-        {caption}
-        {(cycle || caption) && zoomedIn ? " · " : null}
-        {zoomedIn ? "Zoomed in so names stay readable; drag to move, Fit shows everything." : null}
-      </p>
-    </div>
-  );
+function FactsSkeleton() {
+  return <span className="skeleton toolbar-note-skeleton" aria-hidden="true" />;
 }

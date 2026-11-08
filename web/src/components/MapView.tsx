@@ -257,7 +257,7 @@ const MapNodeView = memo(function MapNodeView({ data }: NodeProps<MapFlowNode>) 
       {data.hiddenEdges > 0 ? (
         <div
           className="map-node-hidden"
-          title="These connections are not drawn until you hover this node, or turn on Show all edges."
+          title="These connections are not drawn until you hover this node, or turn on “All edges”."
         >
           {plural(data.hiddenEdges, "connection")} not drawn
         </div>

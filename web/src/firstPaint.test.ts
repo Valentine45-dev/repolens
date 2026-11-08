@@ -3,6 +3,8 @@
 // every class it uses must exist in the stylesheet.
 import { describe, expect, it } from "vitest";
 
+import { dashedText, FLAT_SOLID, MAP_SOLID } from "./legendText";
+
 // @ts-expect-error node:fs has no type declarations here; the tests run in Node
 const { readFileSync } = await import("node:fs");
 const read = (rel: string): string => readFileSync(new URL(rel, import.meta.url), "utf8");
@@ -64,10 +66,23 @@ describe("first paint templates", () => {
 
   it("reserves room for what arrives with the data, so nothing moves", () => {
     const explore = template("fp-explore");
-    expect(explore).toContain("Show all edges"); // always there; only available when edges are left out
-    expect(explore).toContain('<p class="legend-note"></p>'); // the captions' row
+    expect(explore).toContain("All edges"); // always there; only available when edges are left out
     expect(template("fp-analysis-head")).toContain('class="count mono num"'); // the Findings badge
     expect(css).toContain("scrollbar-gutter: stable");
+  });
+
+  it("the Explorer legend uses the app's own words (legendText.ts)", () => {
+    const explore = template("fp-explore");
+    expect(explore).toContain(MAP_SOLID);
+    expect(explore).toContain(dashedText("map", false));
+    // The script swaps in the flat and shown-guesses wording; those strings are in the page too.
+    expect(html).toContain(`"${FLAT_SOLID}"`);
+    expect(html).toContain('" (calls matched by name only)"');
+    expect(dashedText("map", true)).toBe("Mostly guesses (calls matched by name only)");
+    expect(dashedText("flat", false)).toBe("Guess (hidden; turn on “Guessed calls”)");
+    for (const label of ["Tests &amp; examples", "Guessed calls", "All edges", ">Show<"]) {
+      expect(explore).toContain(label);
+    }
   });
 
   it("the findings selects have the fixed widths the real page uses", () => {

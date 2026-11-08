@@ -23,6 +23,7 @@ import { exploreHref, useSetParams } from "../links";
 
 const PAGE = 50;
 const SECRET_RULE = "hardcoded-secret";
+const NO_PLACEHOLDERS = "This analysis has no probable placeholders.";
 
 // Spec §5.6. Filters live in the URL:
 // ?category=quality|all (Security when absent)&severity=&rule=&language=&path=&tests=hide
@@ -168,14 +169,24 @@ export function Findings() {
             />
             Hide test and example code
           </label>
-          <label className="check" data-disabled={counts && counts.placeholders === 0 ? "" : undefined}>
+          <label
+            className="check"
+            data-disabled={counts && counts.placeholders === 0 ? "" : undefined}
+            title={counts && counts.placeholders === 0 ? NO_PLACEHOLDERS : undefined}
+          >
             <input
               type="checkbox"
               checked={hidePlaceholders}
               disabled={counts !== undefined && counts.placeholders === 0}
+              aria-describedby={counts && counts.placeholders === 0 ? "no-placeholders-hint" : undefined}
               onChange={(e) => setFilter("placeholders", e.target.checked ? "hide" : null)}
             />
             Hide probable placeholders
+            {counts && counts.placeholders === 0 ? (
+              <span id="no-placeholders-hint" className="visually-hidden">
+                {NO_PLACEHOLDERS}
+              </span>
+            ) : null}
           </label>
         </div>
         {category !== "security" ? (
