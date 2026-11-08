@@ -79,10 +79,14 @@ export function AskDrawer({
   snapshotId,
   status,
   onClose,
+  hidden = false,
 }: {
   snapshotId: number;
   status: SnapshotStatus;
   onClose: () => void;
+  /** Behind the file or finding tab: kept mounted (the conversation and draft stay), out of sight
+   * and out of the tab order. */
+  hidden?: boolean;
 }) {
   const titleId = useId();
   const inputId = useId();
@@ -179,7 +183,15 @@ export function AskDrawer({
   }
 
   return (
-    <aside id="ask-drawer" className="drawer" data-wide={wide || undefined} aria-labelledby={titleId}>
+    <aside
+      id="ask-drawer"
+      className="drawer"
+      data-wide={wide || undefined}
+      aria-labelledby={titleId}
+      data-behind={hidden || undefined}
+      aria-hidden={hidden || undefined}
+      inert={hidden}
+    >
       <header className="panel-header drawer-header">
         <div className="panel-heading drawer-heading">
           <h2 id={titleId} className="panel-title drawer-title">

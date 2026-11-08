@@ -63,6 +63,7 @@
   --chip-h: 24px; /* file:line chips */
   --tag-h: 20px;
   --topbar-h: 52px;
+  --right-tabs-h: 40px;
   --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
 
   color-scheme: light;
@@ -2292,15 +2293,60 @@ a {
 }
 
 /* Ask open beside a file or finding panel: three docked columns leave the list or canvas too
-   narrow below 1600px, so the panel overlays the main column from the right instead (the same
-   overlay as under 900px). Explore passes the same condition to the graph for centring. */
-@media (max-width: 1599px) {
-  .analysis-body[data-ask] .panel {
-    position: absolute;
-    inset: 0 0 0 auto;
-    z-index: 10;
-    width: min(100%, 480px);
+   narrow below 1600px, so the two share Ask's column as tabs (AnalysisShell). The panel is laid
+   over that column under the tab strip; the one behind stays mounted (Ask keeps its conversation)
+   but is out of sight. The map or list keeps its full width. */
+.right-tabs {
+  position: absolute;
+  top: 0;
+  right: 0;
+  z-index: 11;
+  display: flex;
+  align-items: flex-end;
+  gap: var(--space-4);
+  width: min(480px, 40vw);
+  height: var(--right-tabs-h);
+  padding: 0 var(--space-4);
+  border-left: 1px solid var(--border);
+  border-bottom: 1px solid var(--border);
+  background: var(--bg);
+}
+
+@media (min-width: 901px) and (max-width: 1599px) {
+  .analysis-body[data-tabbed] .analysis-main,
+  .analysis-body[data-tabbed] .explore,
+  .analysis-body[data-tabbed] .explore-body,
+  .analysis-body[data-tabbed] .findings {
+    position: static; /* so the panel is placed against the whole body, over Ask's column */
   }
+
+  .analysis-body[data-tabbed] .panel {
+    position: absolute;
+    top: var(--right-tabs-h);
+    right: 0;
+    bottom: 0;
+    z-index: 10;
+    width: min(480px, 40vw);
+    max-height: none;
+  }
+
+  .analysis-body[data-tabbed] .drawer,
+  .analysis-body[data-tabbed] .drawer[data-wide] {
+    width: min(480px, 40vw);
+    margin-top: var(--right-tabs-h);
+  }
+
+  .analysis-body[data-tabbed] .drawer-size {
+    display: none; /* the column is shared; it does not widen */
+  }
+
+  .analysis-body[data-right-tab="ask"] .panel {
+    display: none;
+  }
+}
+
+.drawer[data-behind] {
+  visibility: hidden; /* keeps its column, so the map does not grow under the panel */
 }
 
 @media (max-width: 560px) {

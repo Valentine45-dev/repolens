@@ -59,11 +59,9 @@ function ExploreInner() {
   // Spec §10: under 768px the graph is not readable, so phones get the list only.
   const phone = useMediaQuery("(max-width: 767px)");
   const listView = phone || params.get("view") === "list";
-  // Matches the CSS: the node panel overlays the canvas below 900px, and below 1600px while the
-  // Ask drawer is open (three docked columns leave the canvas too narrow).
-  const narrow = useMediaQuery("(max-width: 900px)");
-  const askSqueeze = useMediaQuery("(max-width: 1599px)") && params.get("ask") === "1";
-  const panelOverlay = narrow || askSqueeze;
+  // Matches the CSS: the node panel overlays the canvas below 901px. Between 901 and 1599px with
+  // Ask open it shares Ask's column as a tab (AnalysisShell), so the canvas keeps its width.
+  const panelOverlay = useMediaQuery("(max-width: 900px)");
   const selectedId = params.get("node") ? Number(params.get("node")) : null;
   const linesParam = params.get("lines");
   const highlight = useMemo(() => parseLines(linesParam), [linesParam]);
