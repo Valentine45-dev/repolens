@@ -2119,12 +2119,50 @@ a {
   white-space: nowrap;
 }
 
+/* The one scroll area of the Ask panel and the edge fades over it. */
+.drawer-scroll {
+  position: relative;
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-height: 0;
+}
+
 .drawer-body {
   position: relative; /* the "You asked:" labels are absolute; without this they escape the scroller and make the page scrollable */
   flex: 1;
   min-height: 0;
   overflow: auto;
+  overscroll-behavior: contain;
   padding: 0 var(--space-4) var(--space-4);
+}
+
+/* A soft fade into the panel's own ground (Paper in either theme) where the list continues past
+   its edge; nothing when it does not. Fades in over 150ms; instant under reduced motion (the
+   global rule). Never takes the pointer. */
+.scroll-fade {
+  position: absolute;
+  left: 0;
+  right: 0;
+  height: var(--space-6);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 150ms var(--ease-out);
+}
+
+.scroll-fade-top {
+  top: 0;
+  background: linear-gradient(to bottom, var(--bg), transparent);
+}
+
+.scroll-fade-bottom {
+  bottom: 0;
+  background: linear-gradient(to top, var(--bg), transparent);
+}
+
+.drawer-scroll[data-more-above] .scroll-fade-top,
+.drawer-scroll[data-more-below] .scroll-fade-bottom {
+  opacity: 1;
 }
 
 .drawer-banner {

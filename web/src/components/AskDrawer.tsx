@@ -17,6 +17,7 @@ import { degrees } from "../graphModel";
 import { exploreHref, useSetParams } from "../links";
 import { SiteChips } from "./SiteChips";
 import { scrollToStart } from "../scroll";
+import { useScrollEdges } from "../scrollEdges";
 import { useDelayedFlag } from "../useDelayedFlag";
 import { useEscapeToClose } from "../escapeStack";
 import { CloseButton } from "./CloseButton";
@@ -102,6 +103,7 @@ export function AskDrawer({
   const inputRef = useRef<HTMLTextAreaElement>(null);
   const lastTurnRef = useRef<HTMLLIElement>(null);
   const bodyRef = useRef<HTMLDivElement>(null);
+  const edges = useScrollEdges(bodyRef);
   const { features } = status;
   const name = repoName(status.url);
 
@@ -224,6 +226,9 @@ export function AskDrawer({
         <CloseButton what="Ask" onClose={onClose} />
       </header>
 
+      {/* Only this list scrolls; the header and the question box stay put. A soft fade at an edge
+          says there is more that way (useScrollEdges), drawn over the list, never read out. */}
+      <div className="drawer-scroll" data-more-above={edges.top || undefined} data-more-below={edges.bottom || undefined}>
       <div className="drawer-body" ref={bodyRef}>
         <DrawerBanner snapshotId={snapshotId} status={status} />
 
@@ -258,6 +263,9 @@ export function AskDrawer({
             ))}
           </ol>
         )}
+      </div>
+        <span className="scroll-fade scroll-fade-top" aria-hidden="true" />
+        <span className="scroll-fade scroll-fade-bottom" aria-hidden="true" />
       </div>
 
       <form className="ask-form" onSubmit={submit}>
