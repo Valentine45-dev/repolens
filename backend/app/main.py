@@ -5,7 +5,7 @@ from fastapi import FastAPI
 from starlette.middleware.trustedhost import TrustedHostMiddleware
 
 from app import config, db
-from app.api import ask, findings, graph, repos, snapshots
+from app.api import ask, findings, graph, reach, repos, snapshots
 from app.qa.embed import get_embedder
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(name)s: %(message)s")
@@ -45,6 +45,7 @@ app.include_router(repos.router)
 app.include_router(snapshots.router)
 app.include_router(graph.router)
 app.include_router(findings.router)
+app.include_router(reach.router)
 app.include_router(ask.router)
 
 

@@ -44,7 +44,7 @@ def test_item_shape_and_node_id(client, detector_repo):
     item = next(i for i in items if i["rule_id"] == "py-eval-exec")
     assert set(item) == {"id", "rule_id", "severity", "message", "file_id", "path", "language",
                          "line", "symbol", "snippet", "in_test", "in_docs", "placeholder",
-                         "template_value", "category", "node_id"}
+                         "template_value", "category", "node_id", "reach_tier"}
     assert (item["path"], item["language"], item["line"], item["symbol"]) == (
         "py_positive.py", "python", 9, "handler"
     )

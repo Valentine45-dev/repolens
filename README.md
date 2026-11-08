@@ -10,6 +10,11 @@ it clones the repo, parses the Python and JavaScript/TypeScript files, and gives
   `except`, a few Ruff error checks, imports of files that do not exist), each with what the rule
   looks for and when it is a false positive. Secrets in documentation, and placeholder-looking
   values in documentation or example files, are shown but ranked low,
+- **reachability** for each finding: whether a detected entry point (console script, `__main__`
+  block, route handler, public API) has a path to the code it is in, shown as a path of clickable
+  steps in the finding panel and as an optional "Order: Reachability" (the default order is
+  unchanged). Entry points are found by pattern and can be missed; "no path found" does not mean
+  the code is unused (`docs/reachability-design.md`),
 - an **Ask panel**: structural questions ("which files import signer.py?") are answered from the
   graph without an LLM; other questions go to an LLM with retrieved code, and only citations
   that the server can match to a snippet it sent (`path:start-end`) are shown as source chips.
@@ -305,6 +310,12 @@ are from the run before the fix.
   24 px minimum of WCAG 2.2 (2.5.8).
 
 ## Known limitations
+
+- **Reachability is a heuristic.** Entry points are detected by pattern (the list is in
+  `docs/reachability-design.md`) and calls are matched by name, so code reached only through
+  callbacks, plugins loaded by name or dynamic dispatch shows "no path found". It is weakest on
+  JavaScript (Express attaches methods by assignment). `python -m app.reach.report` prints the
+  entry points and tiers of an analysed snapshot.
 
 - **Bug / Quality findings skip test and example code** and cover Python only (Ruff: `F811`,
   `F821`, `F822`, `F823`, `B006`, `B015`, `B023` and the Pylint error rules except `PLE0704`). They run on a copy of

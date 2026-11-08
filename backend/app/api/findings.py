@@ -1,12 +1,17 @@
 """Findings and the rule catalogue. Findings are rule-based and can miss issues or flag safe code;
 the UI says so. This API never turns "no rows" into "safe": an unfinished analysis is a 409."""
 
+import logging
 from typing import Literal
 
 from fastapi import APIRouter, HTTPException, Query
 
 from app.db import pool
 from app.detect.rules import CATEGORIES, RULE_IDS_BY_CATEGORY, RULES
+from app.reach.graph import TIER_RANK
+from app.reach.load import get_reach
+
+log = logging.getLogger(__name__)
 
 router = APIRouter()
 
@@ -49,6 +54,41 @@ def _require_detected(conn, snapshot_id: int) -> None:
         )
 
 
+def _reachability_page(conn, snapshot_id, select, where_sql, args, limit, offset):
+    """The page of findings in reachability order: placeholders last, then the tier (solid path,
+    then guess path and not checked, then no path found), then the usual severity, path, line, id.
+    The tier is worked out in Python (app/reach), so the order is built from the filtered rows'
+    keys and only the requested page is read in full. Falls back to the usual order if the
+    reachability picture cannot be built."""
+    try:
+        reach = get_reach(snapshot_id)
+    except Exception:  # noqa: BLE001 - any failure must leave the list usable
+        log.exception("reachability failed for snapshot %s", snapshot_id)
+        reach = None
+    if reach is None:
+        rows = conn.execute(
+            f"{select} WHERE {where_sql} ORDER BY f.placeholder, {SEVERITY_RANK},"
+            ' fi.path COLLATE "C", f.line, f.id LIMIT %s OFFSET %s', [*args, limit, offset]
+        ).fetchall()
+        for row in rows:
+            row["reach_tier"] = None
+        return rows, True
+    keys = conn.execute(
+        f"SELECT f.id, f.file_id, f.line, f.placeholder, {SEVERITY_RANK} AS sev, fi.path"
+        f" FROM findings f JOIN files fi ON fi.id = f.file_id WHERE {where_sql}", args
+    ).fetchall()
+    tiers = {k["id"]: reach.tier(k["file_id"], k["line"]) for k in keys}
+    keys.sort(key=lambda k: (k["placeholder"], TIER_RANK[tiers[k["id"]]], k["sev"],
+                             k["path"].encode(), k["line"] or 0, k["id"]))
+    ids = [k["id"] for k in keys[offset:offset + limit]]
+    rows = {r["id"]: r for r in conn.execute(
+        f"{select} WHERE f.id = ANY(%s)", [ids]).fetchall()}
+    page = [rows[i] for i in ids if i in rows]
+    for row in page:
+        row["reach_tier"] = tiers[row["id"]]
+    return page, False
+
+
 @router.get("/snapshots/{snapshot_id}/findings")
 def findings(
     snapshot_id: int,
@@ -59,6 +99,7 @@ def findings(
     in_test: bool | None = None,
     category: Literal["security", "quality"] | None = None,
     placeholder: bool | None = None,
+    sort: Literal["default", "reachability"] = "default",
     limit: int = Query(50, ge=1, le=200),
     offset: int = Query(0, ge=0, le=1_000_000),  # larger overflows SQL: a 500
 ) -> dict:
@@ -90,7 +131,7 @@ def findings(
             f" WHERE {where_sql}",
             args,
         ).fetchone()["n"]
-        items = conn.execute(
+        select = (
             "SELECT f.id, f.rule_id, f.severity, f.message, f.file_id, fi.path, fi.language,"
             " f.line, CASE WHEN s.kind = 'module' THEN NULL ELSE s.name END AS symbol,"
             " f.snippet, f.in_test, f.in_docs, f.placeholder, f.template_value,"
@@ -98,13 +139,21 @@ def findings(
             " FROM findings f JOIN files fi ON fi.id = f.file_id"
             " LEFT JOIN symbols s ON s.id = f.symbol_id"
             " LEFT JOIN symbols m ON m.file_id = f.file_id AND m.kind = 'module'"
-            f" WHERE {where_sql}"
-            # Probable placeholders last; then severity by rank, not alphabetically; byte order
-            # for paths so it is predictable.
-            f" ORDER BY f.placeholder, {SEVERITY_RANK}, fi.path COLLATE \"C\", f.line, f.id"
-            " LIMIT %s OFFSET %s",
-            [*args, limit, offset],
-        ).fetchall()
+        )
+        # Probable placeholders last; then severity by rank, not alphabetically; byte order
+        # for paths so it is predictable.
+        default_order = (f"f.placeholder, {SEVERITY_RANK}, fi.path COLLATE \"C\", f.line, f.id")
+        if sort == "reachability":
+            items, reach_failed = _reachability_page(
+                conn, snapshot_id, select, where_sql, args, limit, offset)
+        else:
+            items = conn.execute(
+                f"{select} WHERE {where_sql} ORDER BY {default_order} LIMIT %s OFFSET %s",
+                [*args, limit, offset],
+            ).fetchall()
+            reach_failed = False
+            for item in items:
+                item["reach_tier"] = None
         by_severity = conn.execute(
             "SELECT severity, count(*) AS n FROM findings WHERE snapshot_id = %s GROUP BY 1",
             (snapshot_id,),
@@ -151,5 +200,7 @@ def findings(
             "template_values": flags["template_values"],
         },
         # Things the list cannot promise, in words (for example Ruff did not finish).
-        "notes": [note["quality_note"]] if note and note["quality_note"] else [],
+        "notes": ([note["quality_note"]] if note and note["quality_note"] else [])
+        + (["Reachability could not be worked out for this analysis, so the list is in the usual"
+             " order."] if reach_failed else []),
     }

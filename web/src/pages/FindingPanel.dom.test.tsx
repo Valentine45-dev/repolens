@@ -5,6 +5,7 @@ import { MemoryRouter } from "react-router-dom";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 
 import type { Finding } from "../api";
+import type { ReachView } from "../components/ReachBlock";
 import { FindingPanel } from "./Findings";
 
 (globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
@@ -42,11 +43,11 @@ afterEach(() => {
   host.remove();
 });
 
-function show(finding: Finding) {
+function show(finding: Finding, reach?: ReachView) {
   act(() =>
     root.render(
       <MemoryRouter>
-        <FindingPanel snapshotId={2} finding={finding} rule={undefined} onClose={() => {}} />
+        <FindingPanel snapshotId={2} finding={finding} rule={undefined} reach={reach} onClose={() => {}} />
       </MemoryRouter>,
     ),
   );
@@ -82,5 +83,16 @@ describe("FindingPanel notes", () => {
     show({ ...SECRET, placeholder: true, severity: "low", path: "docs/setup.md", in_docs: true });
     expect(notes().some((n) => /does not run/.test(n ?? ""))).toBe(true);
     expect(notes()).not.toContain(TEMPLATE_NOTE);
+  });
+
+  it("shows reachability under the notes when it is given, and nothing when it is not", () => {
+    show(SECRET);
+    expect(host.querySelector(".reach")).toBeNull();
+    show(SECRET, { status: "ready", data: { tier: "none", entry: null, path: [] } });
+    expect(host.querySelector(".reach")?.textContent).toContain(
+      "No path found from a detected entry point",
+    );
+    show(SECRET, { status: "loading" });
+    expect(host.textContent).toContain("Working out reachability");
   });
 });
