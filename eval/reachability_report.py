@@ -12,6 +12,18 @@ ROOT = Path(__file__).resolve().parent.parent
 RES = ROOT / "eval" / "results"
 
 
+def wilson(k: int, n: int):
+    """Same formula as eval/reachability_score.py (95%)."""
+    if n == 0:
+        return None
+    z = 1.959964
+    p = k / n
+    d = 1 + z * z / n
+    centre = (p + z * z / (2 * n)) / d
+    half = z * (p * (1 - p) / n + z * z / (4 * n * n)) ** 0.5 / d
+    return [round(max(0.0, centre - half), 4), round(min(1.0, centre + half), 4)]
+
+
 def f3(x) -> str:
     return "n/a" if x is None else f"{x:.3f}"
 
@@ -112,6 +124,19 @@ def main() -> None:
     w("\nNo AP where there is no real finding (R = 0). Pooled AP (mean over repos with R > 0): "
       f"Bandit {f3(p['bandit_order']['mean_ap'])}, reachability {f3(p['reach_order']['mean_ap'])}, from {p['bandit_order']['repos_with_ap']} repo.\n")
 
+    w("## Bandit set precision (descriptive)\n")
+    w("Real / labelled Bandit pool, with a Wilson 95% interval. Findings in one file are correlated, so the intervals are optimistic; "
+      "certbot and ipython are 60-row samples of longer lists.\n")
+    rows = []
+    for r in repos:
+        v = p["per_repo"][r]
+        rows.append([r, v["rows"], v["real"], f"{v['real'] / v['rows']:.3f}", ci(wilson(v["real"], v["rows"]))])
+    pool_rows = sum(v["rows"] for v in p["per_repo"].values())
+    pool_real = sum(v["real"] for v in p["per_repo"].values())
+    rows.append(["**all four repos**", pool_rows, pool_real, f"{pool_real / pool_rows:.3f}", ci(wilson(pool_real, pool_rows))])
+    w(table(["repo", "labelled Bandit pool", "real", "set precision", "Wilson 95%"], rows))
+    w("")
+
     w("## Test and interval\n")
     w(f"- Tier-shuffle randomisation (units shuffled within each repo, {t['shuffles']} shuffles, seed {d['seed']}): "
       f"AP statistic {signed(t['ap']['observed'])}, {t['ap']['at_least_as_large']} of {t['shuffles']} shuffles at least as large "
@@ -146,11 +171,11 @@ def main() -> None:
         cells = tables["per_repo_by_tier"][r]
         rows.append([r] + [f"{cells[k]['n']} / {cells[k]['real']}" if k in cells else "0 / 0" for k in ("solid", "guess", "none")])
     w(table(["repo", "solid", "guess", "no path found"], rows))
-    w("\n**Real share per Bandit rule (not pre-registered; added to explain the result)**\n")
-    rules = {k: v for k, v in tables["by_rule_not_pre_registered"].items() if v["real"] > 0 or v["n"] >= 25}
-    w(table(["rule", "n", "real"], [[k, v["n"], v["real"]] for k, v in rules.items()])
-      + f"\n\nEvery rule not listed has fewer than 25 findings and none real. {len(by_rule)} rules appear in all; "
-      f"B113 holds {by_rule['B113']['real']} of the {real_total} real findings.\n")
+    w("\n**Real share per Bandit rule (descriptive; not pre-registered, added to explain the result)**\n")
+    w(table(["rule", "n", "real", "real share", "Wilson 95%"],
+            [[k, v["n"], v["real"], f"{v['real_share']:.3f}", ci(v["wilson"])] for k, v in by_rule.items()])
+      + f"\n\n{len(by_rule)} rules appear in all; B113 holds {by_rule['B113']['real']} of the {real_total} real findings. "
+      "The Bandit pools of all four repos together, n = " + str(sum(v["n"] for v in by_rule.values())) + ".\n")
 
     w("## Secondary: RepoLens's own security findings, current order vs tier order (exploratory)\n")
     rows = []

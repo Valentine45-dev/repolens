@@ -28,6 +28,18 @@ Scored once from `reachability_scored-20261108T143659Z-32d1988.json`. Pre-regist
 
 No AP where there is no real finding (R = 0). Pooled AP (mean over repos with R > 0): Bandit 0.564, reachability 0.547, from 1 repo.
 
+## Bandit set precision (descriptive)
+
+Real / labelled Bandit pool, with a Wilson 95% interval. Findings in one file are correlated, so the intervals are optimistic; certbot and ipython are 60-row samples of longer lists.
+
+| repo | labelled Bandit pool | real | set precision | Wilson 95% |
+|---|---|---|---|---|
+| benoitc/gunicorn | 48 | 0 | 0.000 | 0.00 to 0.07 |
+| certbot/certbot | 60 | 0 | 0.000 | 0.00 to 0.06 |
+| getredash/redash | 48 | 27 | 0.562 | 0.42 to 0.69 |
+| ipython/ipython | 60 | 0 | 0.000 | 0.00 to 0.06 |
+| **all four repos** | 216 | 27 | 0.125 | 0.09 to 0.18 |
+
 ## Test and interval
 
 - Tier-shuffle randomisation (units shuffled within each repo, 10000 shuffles, seed 20261108): AP statistic -0.017, 8314 of 10000 shuffles at least as large (one-sided p = 0.8314; two-sided 0.7615).
@@ -77,15 +89,37 @@ No AP where there is no real finding (R = 0). Pooled AP (mean over repos with R 
 | getredash/redash | 8 / 3 | 0 / 0 | 40 / 24 |
 | ipython/ipython | 19 / 0 | 2 / 0 | 39 / 0 |
 
-**Real share per Bandit rule (not pre-registered; added to explain the result)**
+**Real share per Bandit rule (descriptive; not pre-registered, added to explain the result)**
 
-| rule | n | real |
-|---|---|---|
-| B110 | 44 | 0 |
-| B113 | 28 | 27 |
-| B603 | 36 | 0 |
+| rule | n | real | real share | Wilson 95% |
+|---|---|---|---|---|
+| B102 | 8 | 0 | 0.000 | 0.00 to 0.32 |
+| B103 | 3 | 0 | 0.000 | 0.00 to 0.56 |
+| B104 | 3 | 0 | 0.000 | 0.00 to 0.56 |
+| B105 | 14 | 0 | 0.000 | 0.00 to 0.22 |
+| B108 | 6 | 0 | 0.000 | 0.00 to 0.39 |
+| B110 | 44 | 0 | 0.000 | 0.00 to 0.08 |
+| B113 | 28 | 27 | 0.964 | 0.82 to 0.99 |
+| B202 | 1 | 0 | 0.000 | 0.00 to 0.79 |
+| B301 | 1 | 0 | 0.000 | 0.00 to 0.79 |
+| B303 | 2 | 0 | 0.000 | 0.00 to 0.66 |
+| B307 | 5 | 0 | 0.000 | 0.00 to 0.43 |
+| B310 | 4 | 0 | 0.000 | 0.00 to 0.49 |
+| B311 | 7 | 0 | 0.000 | 0.00 to 0.35 |
+| B318 | 1 | 0 | 0.000 | 0.00 to 0.79 |
+| B324 | 3 | 0 | 0.000 | 0.00 to 0.56 |
+| B403 | 1 | 0 | 0.000 | 0.00 to 0.79 |
+| B408 | 1 | 0 | 0.000 | 0.00 to 0.79 |
+| B501 | 6 | 0 | 0.000 | 0.00 to 0.39 |
+| B602 | 5 | 0 | 0.000 | 0.00 to 0.43 |
+| B603 | 36 | 0 | 0.000 | 0.00 to 0.10 |
+| B604 | 15 | 0 | 0.000 | 0.00 to 0.20 |
+| B605 | 4 | 0 | 0.000 | 0.00 to 0.49 |
+| B606 | 1 | 0 | 0.000 | 0.00 to 0.79 |
+| B607 | 11 | 0 | 0.000 | 0.00 to 0.26 |
+| B608 | 6 | 0 | 0.000 | 0.00 to 0.39 |
 
-Every rule not listed has fewer than 25 findings and none real. 25 rules appear in all; B113 holds 27 of the 27 real findings.
+25 rules appear in all; B113 holds 27 of the 27 real findings. The Bandit pools of all four repos together, n = 216.
 
 ## Secondary: RepoLens's own security findings, current order vs tier order (exploratory)
 
