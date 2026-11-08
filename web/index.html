@@ -253,6 +253,16 @@
                 <div class="skeleton" style="width: 62%; margin-top: 12px"></div>
               </div>
             </div>
+            <aside class="panel" data-fp="finding-panel">
+              <header class="panel-header">
+                <div class="panel-heading">
+                  <span class="skeleton" style="display: block; width: 56px"></span>
+                  <span class="skeleton" style="display: block; width: 80%; height: 20px; margin-top: 8px"></span>
+                  <span class="skeleton" style="display: block; width: 55%; height: 12px; margin-top: 8px"></span>
+                </div>
+                <span class="icon-button" aria-hidden="true"></span>
+              </header>
+            </aside>
           </div>
         </div>
       </div>
@@ -375,6 +385,7 @@
             ["security", "quality", "all"].forEach(function (c) {
               one(fb, "cat-" + c).setAttribute("aria-pressed", String(cat === c));
             });
+            if (!q.get("finding")) one(fb, "finding-panel").remove(); // a link to a finding opens its panel
             shell.appendChild(fb);
           }
           var main = document.createElement("main");

@@ -24,6 +24,7 @@ import { exploreHref, useSetParams } from "../links";
 const PAGE = 50;
 const SECRET_RULE = "hardcoded-secret";
 const NO_PLACEHOLDERS = "This analysis has no probable placeholders.";
+const MISS_NOTE = "These checks can still miss issues.";
 
 // Spec §5.6. Filters live in the URL:
 // ?category=quality|all (Security when absent)&severity=&rule=&language=&path=&tests=hide
@@ -211,6 +212,21 @@ export function Findings() {
         <FindingsList
           query={findings}
           filtered={filtered}
+          emptyAction={
+            severity || rule || language || path || hideTests || hidePlaceholders
+              ? {
+                  label: "Clear filters",
+                  run: () =>
+                    setParams({
+                      severity: null, rule: null, language: null, path: null, tests: null,
+                      placeholders: null, page: null, finding: null,
+                    }),
+                }
+              : category !== "all"
+                ? { label: "Show all categories", run: () => setFilter("category", "all") }
+                : null
+          }
+          categoryLabel={category === "security" ? "Security" : category === "quality" ? "Bug / Quality" : null}
           showReach={byReach}
           selectedId={selectedId}
           onSelect={(id) => setParams({ finding: String(id) }, false)}
@@ -250,6 +266,10 @@ export function Findings() {
           reach={reachView}
           onClose={() => setParams({ finding: null }, false)}
         />
+      ) : selectedId !== null && !findings.data ? (
+        // A link to a finding: the panel's frame is there at once, so the list does not narrow
+        // (and its filters re-wrap) when the data arrives.
+        <FindingPanelSkeleton onClose={() => setParams({ finding: null }, false)} />
       ) : null}
     </div>
   );
@@ -326,15 +346,19 @@ function PathFilter({ value, onChange }: { value: string; onChange: (value: stri
   );
 }
 
-function FindingsList({
+export function FindingsList({
   query,
   filtered,
+  emptyAction,
+  categoryLabel,
   showReach,
   selectedId,
   onSelect,
 }: {
   query: UseQueryResult<FindingsPage>;
   filtered: boolean;
+  emptyAction: { label: string; run: () => void } | null;
+  categoryLabel: string | null;
   showReach: boolean;
   selectedId: number | null;
   onSelect: (id: number) => void;
@@ -359,13 +383,24 @@ function FindingsList({
     );
   }
   if (query.data.items.length === 0) {
-    // Never a verdict (spec §5.6): no rows is not "safe".
-    return (
-      <p className="panel-message">
-        {filtered
+    // Never a verdict (spec §5.6): no rows says what was looked at and that checks can miss things.
+    const what =
+      filtered && emptyAction?.label === "Show all categories" && categoryLabel
+        ? `No ${categoryLabel} findings.`
+        : filtered
           ? "No findings match these filters."
-          : "No findings from our current rules. This does not guarantee the code is safe."}
-      </p>
+          : "No findings from these checks.";
+    return (
+      <div className="panel-message empty-state" role="status">
+        <p>
+          {what} {MISS_NOTE}
+        </p>
+        {emptyAction ? (
+          <button type="button" className="button button-secondary button-small" onClick={emptyAction.run}>
+            {emptyAction.label}
+          </button>
+        ) : null}
+      </div>
     );
   }
   return (
@@ -380,7 +415,16 @@ function FindingsList({
         </thead>
         <tbody>
           {query.data.items.map((f) => (
-            <tr key={f.id} aria-selected={f.id === selectedId}>
+            <tr
+              key={f.id}
+              className="finding-row"
+              aria-selected={f.id === selectedId}
+              // The whole row opens the finding with a mouse; the message button is the one
+              // keyboard and screen-reader target, so there is one tab stop per row.
+              onClick={(e) => {
+                if (!(e.target as Element).closest("button, a, input, select")) onSelect(f.id);
+              }}
+            >
               <td className="severity-col">
                 <SeverityBadge severity={f.severity} />
               </td>
@@ -396,8 +440,10 @@ function FindingsList({
                 ) : null}
               </td>
               <td className="mono location-col">
-                <PathText path={f.path} />
-                <span className="nowrap">:{f.line}</span>
+                <span className="location-link">
+                  <PathText path={f.path} />
+                  <span className="nowrap">:{f.line}</span>
+                </span>
                 {f.rule_id === SECRET_RULE ? (
                   <span className="caption nowrap"> (value hidden)</span>
                 ) : null}
@@ -407,6 +453,30 @@ function FindingsList({
         </tbody>
       </table>
     </div>
+  );
+}
+
+/** The finding panel's frame while the list (which holds the finding) loads: the real close
+ * button, grey bars where the severity, title and location will be. */
+function FindingPanelSkeleton({ onClose }: { onClose: () => void }) {
+  return (
+    <aside className="panel" aria-busy="true" aria-label="Loading finding">
+      <header className="panel-header">
+        <div className="panel-heading">
+          <span className="skeleton" style={{ display: "block", width: 56 }} />
+          <span className="skeleton" style={{ display: "block", width: "80%", height: 20, marginTop: 8 }} />
+          <span className="skeleton" style={{ display: "block", width: "55%", height: 12, marginTop: 8 }} />
+        </div>
+        <button type="button" className="icon-button" onClick={onClose} aria-label="Close panel (Esc)" title="Close (Esc)">
+          <Icon name="x" />
+        </button>
+      </header>
+      <div className="panel-body finding-body" aria-hidden="true">
+        {[90, 70, 84, 60].map((w, i) => (
+          <span key={i} className="skeleton" style={{ display: "block", width: `${w}%` }} />
+        ))}
+      </div>
+    </aside>
   );
 }
 

@@ -1781,6 +1781,36 @@ a {
   width: 1%;
 }
 
+/* A row opens its finding with a mouse anywhere on it; the location reads as the link it acts as. */
+.finding-row {
+  cursor: pointer;
+}
+
+.finding-row:hover td {
+  background: var(--surface);
+}
+
+.location-link {
+  text-decoration: underline;
+  text-decoration-color: var(--border-strong);
+  text-underline-offset: 3px;
+}
+
+.finding-row:hover .location-link {
+  text-decoration-color: var(--text);
+}
+
+.empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--space-3);
+}
+
+.empty-state .button {
+  margin-top: 0;
+}
+
 .location-col {
   font-size: var(--text-mono-sm);
   overflow-wrap: break-word; /* paths wrap after "/" (PathText); never mid-name unless one is too long */
