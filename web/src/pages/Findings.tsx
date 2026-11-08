@@ -201,20 +201,20 @@ export function Findings() {
           </label>
         </div>
         {category !== "security" ? (
-          <p className="caption">
+          <p className="caption findings-caption">
             Bug / Quality findings are code-quality checks (Ruff and an import check), not
             security results. Test and example code is not checked.
           </p>
         ) : null}
         {byReach ? (
-          <p className="caption">
+          <p className="caption findings-caption">
             Ordered by whether a detected entry point reaches the code, then by severity. Entry
             points are detected by pattern and can be missed; this is not a verdict on whether the
             code runs.
           </p>
         ) : null}
         {findings.data?.notes.map((note) => (
-          <p key={note} className="note">
+          <p key={note} className="note findings-caption">
             {note}
           </p>
         ))}

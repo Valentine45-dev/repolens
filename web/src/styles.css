@@ -1905,6 +1905,16 @@ a {
   padding-bottom: var(--space-3);
 }
 
+/* Captions and notes under the filters line up with the heading, with a little air between them. */
+.findings-caption {
+  margin: var(--space-2) 0 0;
+  padding: 0 var(--space-6);
+}
+
+.findings-caption:last-of-type {
+  margin-bottom: var(--space-2);
+}
+
 .filter {
   display: inline-flex;
   align-items: center;
@@ -2004,6 +2014,11 @@ a {
 
 .empty-state .button {
   margin-top: 0;
+}
+
+/* Messages in the findings list line up with the heading and filters (24px). */
+.findings-main .panel-message {
+  padding: var(--space-4) var(--space-6);
 }
 
 .location-col {
@@ -2596,6 +2611,7 @@ a {
   .analysis-notice,
   .findings-head,
   .pager,
+  .findings-caption,
   .toolbar,
   .legend {
     padding-left: var(--space-4);
