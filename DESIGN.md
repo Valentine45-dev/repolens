@@ -9,8 +9,9 @@ colors:
   panel-sunk: "#f4f4f5"
   rule: "#e4e4e7"
   rule-strong: "#d4d4d8"
+  control-border: "#8a8a93"
   text-muted: "#52525b"
-  text-subtle: "#71717a"
+  text-subtle: "#6b6b74"
   success: "#067647"
   danger: "#b42318"
   warning: "#b54708"
@@ -20,6 +21,27 @@ colors:
   node-external: "#71717a"
   edge: "#8a8a93"
   highlight: "#fdf3d3"
+colors-dark:
+  ink: "#f4f4f5"
+  ink-hover: "#d4d4d8"
+  paper: "#111113"
+  panel: "#18181b"
+  panel-sunk: "#232327"
+  rule: "#2c2c31"
+  rule-strong: "#3f3f46"
+  control-border: "#63636c"
+  text-muted: "#b4b4bc"
+  text-subtle: "#94949e"
+  success: "#4ccf8a"
+  danger: "#f97066"
+  warning: "#f5a524"
+  info: "#7cacf8"
+  node-python: "#7fb2e5"
+  node-js: "#e0b04a"
+  node-other: "#b4b4bc"
+  node-external: "#94949e"
+  edge: "#7c7c86"
+  highlight: "#3b3214"
 typography:
   headline:
     fontFamily: "Inter Variable, Inter, ui-sans-serif, system-ui, sans-serif"
@@ -53,6 +75,10 @@ typography:
     fontSize: "0.875rem"
     fontWeight: 500
     lineHeight: 1.5
+  micro:
+    fontFamily: "Inter Variable, Inter, ui-sans-serif, system-ui, sans-serif"
+    fontSize: "0.6875rem"
+    fontWeight: 400
   caption:
     fontFamily: "Inter Variable, Inter, ui-sans-serif, system-ui, sans-serif"
     fontSize: "0.75rem"
@@ -64,10 +90,17 @@ typography:
     fontWeight: 400
     fontFeature: "\"tnum\""
 rounded:
+  small: "4px"
   control: "6px"
   panel: "10px"
   pill: "999px"
+sizes:
+  tag: "20px"
+  chip: "24px"
+  control-small: "32px"
+  control: "40px"
 spacing:
+  space-0-5: "2px"
   space-1: "4px"
   space-2: "8px"
   space-3: "12px"
@@ -136,7 +169,7 @@ components:
 
 **Creative North Star: "The Quiet Instrument"**
 
-RepoLens looks like a measuring tool laid on a white bench: black ink on white paper, hairline rules, and nothing that does not report something real. One narrow left-aligned column (640px of content) carries each screen; it starts well down the page so the single primary action sits in calm space rather than under a hero. The world is pinned by `docs/repolens-ui-ux-spec.md` §8 and shipped in light only; there is no dark theme and no theme toggle by project rule.
+RepoLens looks like a measuring tool laid on a white bench: black ink on white paper, hairline rules, and nothing that does not report something real. One narrow left-aligned column (640px of content) carries each screen; it starts well down the page so the single primary action sits in calm space rather than under a hero. The world is pinned by `docs/repolens-ui-ux-spec.md` §8. Light is the design reference; a dark theme carries the same roles (see "Dark theme" below).
 
 Two voices share the page. Inter speaks in sentences (headlines, explanations, labels). JetBrains Mono speaks in facts: every repository name, commit SHA, path, URL and number. A reader can tell at a glance which text is prose and which text is data copied from the analysis. Colour is withheld until state demands it: green appears only when something finished, red only when something failed, amber only when something is slow.
 
@@ -164,7 +197,8 @@ A monochrome zinc palette where black does the work of an accent and three seman
 - **Hairline** (`rule`): every 1px divider, list border, ledger rule, top-bar bottom edge, callout border.
 - **Strong Hairline** (`rule-strong`): control borders (input, secondary button) and the scrollbar thumb.
 - **Graphite** (`text-muted`): ledes, status lines, nav links at rest, notes.
-- **Ash** (`text-subtle`): captions, placeholders, pending ledger rows, meta in lists, the SHA beside a repo name, input hover border. Holds 4.5:1 on Paper.
+- **Ash** (`text-subtle`): captions, placeholders, pending ledger rows, meta in lists, the SHA beside a repo name. #6b6b74 since the UI polish: 5.3:1 on Paper and 4.8:1 on Sunk Grey (the old #71717a was 4.4:1 there).
+- **Control Border** (`control-border`): the border of fields, selects, segmented controls, secondary buttons and the Up button, 3.4:1 on Paper (WCAG 1.4.11; Strong Hairline is 1.5:1). Graph nodes and chips keep Strong Hairline: their text identifies them.
 
 ### Semantic (state only)
 - **Done Green** (`success`): check icons on finished stages, "Ready" status, the valid-URL check, success callout titles.
@@ -178,7 +212,29 @@ A monochrome zinc palette where black does the work of an accent and three seman
 
 - **Highlight** (`highlight`): the band behind cited or flagged code lines in the code view (a citation chip or "Open in Explorer" from a finding). Ink text on it stays above 15:1. It marks a location, not a state, so it is not Slow Amber.
 
-`--info` is declared in the stylesheet but no shipped surface uses it yet.
+`--info` colours the Low severity (icon and word, never colour alone).
+
+### Dark theme
+Same roles, other values (frontmatter `colors-dark`). Ink becomes a light grey and Paper a near-black; state colours are lifted to hold 4.5:1 on the dark ground. Only colours change: sizes, spacing and the graph's layout are identical. A script at the top of `index.html` sets `data-theme` on `<html>` before anything paints (a stored pick, else `prefers-color-scheme`), and `web/src/theme.ts` follows the system until the user picks with the top-bar toggle (`aria-pressed`, name "Dark theme"; remembered in `localStorage` as `repolens.theme`). Switching eases colours only, for 200ms, through a class that is on just for the switch; none under reduced motion.
+
+Contrast (WCAG 2.x; text 4.5:1, UI parts and graph strokes 3:1), light / dark:
+
+| Pair | Light | Dark |
+|---|---|---|
+| text on Paper / Bench / Sunk | 19.8 / 19.0 / 18.0 | 17.2 / 16.1 / 14.3 |
+| muted on Paper / Bench / Sunk | 7.7 / 7.4 / 7.0 | 9.2 / 8.6 / 7.6 |
+| subtle on Paper / Bench / Sunk | 5.3 / 5.1 / 4.8 | 6.3 / 5.9 / 5.2 |
+| primary button label | 19.8 | 17.2 |
+| danger / warning / info / success on Paper | 6.6 / 5.4 / 6.0 / 5.7 | 6.8 / 9.2 / 8.2 / 9.5 |
+| lang mark text on python / js / other | 6.9 / 4.9 / 7.7 | 8.4 / 9.4 / 9.2 |
+| code text on the highlight band | 17.9 | 11.6 |
+| edge (solid and dashed) on the canvas | 3.4 | 4.6 |
+| legend line on Bench | 3.3 | 4.3 |
+| active / cycle edge, cycle border, focus ring | 19.8 | 17.2 |
+| control border on Paper | 3.4 | 3.2 |
+| external tag border | 4.8 | 6.3 |
+
+Node and chip borders (Strong Hairline, 1.5 / 1.8) and the folder fill against the canvas (1.04 / 1.06) are below 3:1 in both themes by design: a node is identified by its text, icon and word, not its outline. Dimmed nodes (28%) and edges (15%) are de-emphasis on purpose.
 
 ### Named Rules
 **The Ink Is The Accent Rule.** Black is the only emphasis colour. There is no brand hue; a new surface that wants attention uses Ink, weight, or position, never a new colour.
@@ -200,7 +256,8 @@ A monochrome zinc palette where black does the work of an accent and three seman
 - **Body** (400, 14px, 1.5): the base size for everything else, including ledger rows.
 - **Label** (500, 14px): buttons, nav links, active ledger rows, status words, list names. Section titles use the same size at 600.
 - **Caption** (400, 12px): limits beneath the URL field, field messages, list meta, "this browser".
-- **Data Mono** (JetBrains Mono 400, 12px, tabular figures): ledger values and example chips. Inline mono inside prose runs at 0.93em; the URL input runs mono at 13px.
+- **Micro** (400, 11px, `--text-2xs`): tags, count badges, edge counts, panel fact labels. Inside graph nodes the 10px and 11px sizes stay as they are: the node boxes are layout constants.
+- **Data Mono** (JetBrains Mono 400, 12px, tabular figures): ledger values and example chips. Inline mono inside prose runs at 0.93em; mono rows and the URL input run at 13px (`--text-mono-sm`).
 
 ### Named Rules
 **The Facts Are Mono Rule.** Every repository name, commit SHA, URL, path and progress number is set in JetBrains Mono; prose never is. Numbers that change in place use tabular figures.
@@ -211,10 +268,10 @@ A monochrome zinc palette where black does the work of an accent and three seman
 
 A single centred column, `max-width: 688px` (640px content plus 24px gutters), left-aligned inside. Top padding is `clamp(32px, 14vh, 128px)` so the first action lands about a fifth down the viewport; bottom padding 48px. The sticky top bar is 52px tall with 24px side padding and a 1px Hairline bottom edge.
 
-Spacing runs on a 4px grid using the seven steps in the frontmatter: 8px between a control and its neighbour, 12px from headline to lede and inside list rows, 24px before example chips and after the ledger, 32px from lede to the URL row and from status line to ledger, 48px between page sections.
+Spacing runs on a 4px grid using the steps in the frontmatter (2px only inside a control): 8px between a control and its neighbour, 12px from headline to lede and inside list rows, 24px before example chips and after the ledger, 32px from lede to the URL row and from status line to ledger, 48px between page sections.
 
 Three breakpoints:
-- **1600px (Ask open):** while the Ask drawer is open below it, the node panel and the finding panel overlay the main column from the right (`min(100%, 480px)`) instead of docking as a third column, so the canvas or findings table keeps its width.
+- **1600px (Ask open):** from 901 to 1599px with Ask open, a file or finding panel shares Ask's column as tabs ("File | Ask" or "Finding | Ask", a 40px tab strip at the top of that column) instead of overlaying the map or list, which keep their full width. Both stay mounted (Ask keeps its conversation behind the tab, out of sight and `inert`); which tab is in front is view state, not URL state. From 1600px three columns dock.
 - **900px (Explorer):** below it the node panel stops docking beside the canvas and overlays it from the right as a drawer (`min(100%, 480px)`); the selected file is re-centred in the part of the canvas the panel leaves free.
 - **767px (Explorer, spec §10):** phones get the list view only. The Graph/List control is replaced by the caption "The graph view needs a larger screen."; the URL keeps its `view` value.
 - **560px (all screens):** gutters drop to 16px, the URL field and Analyze button stack with the button full width, recent-analysis rows collapse from name-plus-meta to a single column, the node panel's four facts become two columns, and the file list hides its Language, External and Unresolved columns (the panel still shows those counts). File paths wrap only after a "/".
@@ -224,7 +281,7 @@ Three breakpoints:
 
 ## Elevation & Depth
 
-The system is flat. No element carries a `box-shadow`. Depth is conveyed by 1px Hairline rules (dividers, list borders, the top bar's bottom edge) and by a single tonal step from Paper to Bench Grey for callouts and hovered rows. Focus is shown with a 2px Ink outline at 2px offset (0 offset on inputs, where the border also turns Ink).
+The system is flat. No element carries a `box-shadow`. Depth is conveyed by 1px Hairline rules (dividers, list borders, the top bar's bottom edge) and by a single tonal step from Paper to Bench Grey for callouts and hovered rows. Focus is shown with a 2px Ink outline at 2px offset (0 offset on inputs, where the border also turns Ink); graph nodes take the same ring.
 
 ### Named Rules
 **The Rule Not Shadow Rule.** Separation is a 1px line or a one-step tonal shift. If a surface seems to need a shadow, give it a Hairline border instead.
@@ -239,9 +296,9 @@ Icons are authored inline SVG on a 16px grid, one 1.5 stroke, round caps and joi
 
 ### Buttons
 Quiet and solid; one black button per screen.
-- **Shape:** gently rounded (6px), 40px tall, 16px side padding, 500 weight, icon gap 8px.
+- **Shape:** gently rounded (6px), 40px tall (small: 32px), 16px side padding, 500 weight, icon gap 8px.
 - **Primary:** Ink fill and border, Paper text. Hover lifts to Ink Lifted over 150ms on the shared ease-out curve.
-- **Secondary:** Paper fill, Strong Hairline border, Ink text; hover fills Sunk Grey. Used for "Try again" and "Retry analysis" inside callouts.
+- **Secondary:** Paper fill, Control Border, Ink text; hover fills Sunk Grey. Used for "Try again" and "Retry analysis" inside callouts.
 - **Pending / Disabled:** 60% opacity, default cursor; pending swaps in a spinner icon and a present-participle label ("Starting").
 
 ### Chips
@@ -250,8 +307,8 @@ Quiet and solid; one black button per screen.
 - **Site chips** (`.site-chip`, `SiteChips.tsx`): where an import or call happens, as `file:line` (the file's base name; the full path is the hover title). Radius-control corners (not a pill), 22px tall, Data Mono 12px, Paper fill, strong border; hover fills Sunk Grey. At most three per import or call, then "+N more" as a caption. A chip opens the code at that line, highlighted (Used by / Uses in the node panel, graph answers in Ask); with no way to open the file (a test file the graph hides) it is plain grey text. An analysis that predates sites shows no chips: no line is better than a wrong one. "+N more" is a button in the same chip style (`aria-expanded`) that lists the rest of the row's lines, and "Show fewer" folds them again; a site under 0.9 confidence has a dashed border and subdued text (best guess). A row lists at most 20 lines, the most the server stores per edge, and says "N more not listed" beyond that. Calls in a row are items in a wrapping flex group, with no separating commas. In the symbol view the call lines live in the edge tooltip ("Called at views.py:12, 40 (+2 more)"), not as chips.
 
 ### Inputs / Fields
-- **Style:** 40px, 6px radius, Strong Hairline border, Paper fill, mono 13px text, Ash placeholder; 36px right padding reserves room for an inline status icon.
-- **Hover / Focus:** hover darkens the border to Ash; focus sets a 2px Ink outline at 0 offset and an Ink border.
+- **Style:** 40px, 6px radius, Control Border, Paper fill, mono 13px text, Ash placeholder; 36px right padding reserves room for an inline status icon.
+- **Hover / Focus:** hover darkens the border to Graphite; focus sets a 2px Ink outline at 0 offset and an Ink border.
 - **Valid:** a Done Green check sits inside the right edge.
 - **Error:** border and focus outline turn Failed Red; the caption beneath becomes the error message in Failed Red with `role="alert"`.
 
@@ -265,7 +322,9 @@ Quiet and solid; one black button per screen.
 - **Tone:** error tints the border with 35% Failed Red and colours the 600-weight title red; success colours the title green. Actions sit in a wrapped row 16px below.
 
 ### Navigation
-- **Top bar:** wordmark left, links right of it at 24px gap. Links are Label weight in Graphite; hover goes Ink; the current page goes Ink with a 1px Ink underline (border-bottom). Only links to pages that exist.
+- **Top bar:** wordmark left (the logo mark is inline SVG in `currentColor`, so it follows the theme), links right of it at 24px gap, the theme toggle (a 32px icon button, sun or moon) at the far right. Links are Label weight in Graphite; hover goes Ink; the current page goes Ink with a 1px Ink underline (border-bottom). Only links to pages that exist.
+- **Browser tab title:** where you are, most specific first: "challenge · Explorer · adeyosemanputra/pygoat — RepoLens", "src/flask/cli.py:1022 · Findings · pallets/flask — RepoLens".
+- **Side panels:** file panel, finding panel and Ask share one close button (`CloseButton`: x, "Close (Esc)" on hover, a name per panel). Esc closes the panel that holds focus, else the most recently opened one that can be seen; one per press (`escapeStack.ts`).
 
 - **File-limit notice:** one 12px Graphite line under the analysis header, Hairline bottom border, on every analysis tab, shown only when the file limit cut the analysis short. It says how many files were analysed and that the rest were not. Neutral: it reports coverage, not a state or a verdict.
 
@@ -275,9 +334,10 @@ A ruled vertical list: a 20px icon column, the stage label, and a right-aligned 
 ### Explorer
 - **File node:** 200×44 Paper rectangle, 1px Strong Hairline, 4px radius. A 22px language mark (`py`/`js`/`ts`, mono 10px on its graph colour) then the file name (mono 12/500) over its folder (mono 10, Ash, truncated from the left so the end of the path stays visible). Selected: Ink border plus 2px Ink outline. Focus mode dims everything outside the selected file's neighbours to 28%.
 - **Edges:** Edge Grey, 1.25px, closed arrowhead pointing at the file being used; Ink at 1.75px when touching the selection; dashed (5 4) when the link is only a best guess (confidence under 0.9). Native tooltip says what the edge is.
-- **Legend:** a Bench Grey strip between the toolbar and the canvas (graph view only), Hairline bottom border, 12px text: solid line, then dashed line with the spec's microcopy. It never floats over the canvas, so it can never hide a node.
+- **Legend:** a Bench Grey strip between the toolbar and the canvas (graph view only), Hairline bottom border, 12px text, two lines at most. Line 1 is the key: "Import or call, arrow to the one used · number = how many · thicker = more", then the dashed sample "Mostly guesses (hidden; turn on “Guessed calls”)" or "(calls matched by name only)" (the flat graph says "Guess": one edge is one guess), and "Circular imports (top-level imports only)" only when the view has one. Line 2 exists only when edges are left out or the first view is zoomed in: "Showing the 8 strongest of 95 connections (3 or more each). Hover or select a node to see all of its connections. … Fit shows the whole map." (wording in `legendText.ts`, from the real selection). It never floats over the canvas, so it can never hide a node.
+- **First visit:** a "How to read this map" card (three lines, "Got it" and a close button) at the bottom left of the canvas, shown until closed once (`repolens.mapHintSeen`).
 - **First view:** fits the whole graph when that needs zoom 0.6 or closer; otherwise it opens on the most connected file and its neighbours at zoom 0.8, and a caption over the canvas names that file ("Fit shows all files") until the user picks a file or presses Fit. Fit always shows everything. A selected file is centred in the canvas area the panel leaves free. Enter or Space on a focused file node opens it, like a click.
-- **Toolbar:** segmented Graph/List control (Bench Grey track, Paper pressed segment), a second segmented control for the level of detail (Folders / Files / Flat), native checkboxes with Ink accent for "Show tests & examples" (it hides `examples/` with the tests) and "Show guessed calls", "Show all edges" (only when the map leaves edges out), a small secondary Fit button, and a right-aligned caption carrying what is in view and what is hidden ("N test or example files hidden here").
+- **Toolbar:** one row beside the Ask panel at 1366px: segmented Graph/List control (Bench Grey track, Paper pressed segment, 32px), a second segmented control for the level of detail (Folders / Files / Flat), a small secondary Fit button, then a "Show" group of native checkboxes with Ink accent: "Tests & examples" (it hides `examples/` with the tests), "Guessed calls", "All edges" (dimmed when the map leaves nothing out; its hover text and description then say "All connections are already shown."). What is in view and what is hidden ("25 files · 58 test or example files hidden here") sits at the right of the breadcrumb row; List view keeps it at the right of the toolbar. While the next folder loads, the old map dims, stops taking clicks and shows "Opening `folder`…"; the breadcrumbs already show the target.
 - **Node panel:** docked right, `min(480px, 42vw)`, Hairline left border (an overlay under 900px). Path in mono, a four-fact row (Used by, Uses, External imports, Unresolved imports), underline tabs (Code, Used by, Uses), and a code view with a sticky Bench Grey line-number gutter. Neighbours are grouped by file; external and unresolved entries carry a small tag (dashed External Grey for external). The title is the folder over the file name, each on one line cut with an ellipsis (the folder from the left, so the part next to the file stays); a name is never broken mid-word, and the full path is the hover text and accessible name. The panel never grows past the canvas area (`max-height: 100%`): the code area takes what is left and scrolls both ways inside it. The line-number gutter is sticky on the left with an opaque Bench Grey background and sits above the code and the highlight band.
 - **List view:** a full-width table with a sticky Bench Grey header, 36px rows, mono numbers right-aligned; the selected row takes Sunk Grey.
 
@@ -312,7 +372,7 @@ The default map: folder, then file, then function. Never more than 60 nodes (the
 - **Scope line:** above the input after "Ask about this": a file icon, "This question includes" in Ash, the path in mono, and an x to remove it. It applies to the next question only.
 
 ### Loading
-Skeleton bars in Sunk Grey at 4px radius, sized to the text they replace. Where a surface has a shape, the skeleton keeps it, and it is the real surface wherever the page already knows the answer: the Explorer draws its breadcrumb row (real Up button, real folder names from the address, only the repo name grey), toolbar, legend and notes row at once and only the repo name and counts are grey; the map placeholder is plain rows of grey cards at the real node size and gap (208×76, 14px), not a drawn graph; List view shows nine 36px ruled rows. `index.html` ships one page-shaped template per kind of page (home, Explorer, Findings) built from the real markup and class names, so every placeholder sits where its element will be: home is its real text (the recent list from this browser, only the status grey), an analysis started in this browser shows its real title, and the rest of the screen's room is reserved (the Findings count badge, the filter widths, the scrollbar gutter, the caption row). The three first-screen fonts are preloaded. Measured with `eval/layout_shift.mjs`: layout shift 0 on home and Findings, 0.0001 on the Explorer, every landmark within 0.5px of its placeholder. The words ("Laying out…", "Loading files…") stay for screen readers only. Skeletons are still: no shimmer.
+Skeleton bars in Sunk Grey at 4px radius, sized to the text they replace, with one shared shimmer: a soft band (`--shimmer`, lighter than Sunk Grey; a faint light band in dark) moved by `transform` on a pseudo-element, 1.5s per sweep, every bar on the same start time so they sweep together; static under reduced motion. Containers carry `aria-busy`. Loaders shown over content that is already there (the "Opening `folder`…" pill over the dimmed map) appear after 200ms and stay at least 400ms (`useDelayedFlag`), so a fast load shows nothing and a slow one does not blink; layout-keeping skeletons show at once. The file panel's code area fills with placeholder lines at the code's line height and a gutter already as wide as the file's last line number; the Findings list loads as its own table (header and eight 40px rows); a link to a finding draws the panel frame at once; the reachability block keeps its shape. Ask says "Working on it…" and only after 1.5s "this can take up to 40 seconds". `REPOLENS_DEV_API_DELAY_MS` (dev and preview server only, README) slows the API to see all of this. Where a surface has a shape, the skeleton keeps it, and it is the real surface wherever the page already knows the answer: the Explorer draws its breadcrumb row (real Up button, real folder names from the address, only the repo name grey), toolbar, legend and notes row at once and only the repo name and counts are grey; the map placeholder is plain rows of grey cards at the real node size and gap (208×76, 14px), not a drawn graph; List view shows nine 36px ruled rows. `index.html` ships one page-shaped template per kind of page (home, Explorer, Findings) built from the real markup and class names, so every placeholder sits where its element will be: home is its real text (the recent list from this browser, only the status grey), an analysis started in this browser shows its real title, and the rest of the screen's room is reserved (the Findings count badge, the filter widths, the scrollbar gutter, the caption row). The three first-screen fonts are preloaded. Measured with `eval/layout_shift.mjs`: layout shift 0 on home and Findings, 0.0001 on the Explorer, every landmark within 0.5px of its placeholder. The words ("Laying out…", "Loading files…") stay for screen readers only. Skeletons are still: no shimmer.
 
 ## Do's and Don'ts
 
@@ -322,13 +382,13 @@ Skeleton bars in Sunk Grey at 4px radius, sized to the text they replace. Where 
 - **Do** separate with 1px Hairline rules and the Paper-to-Bench-Grey tonal step.
 - **Do** pair every state colour with an icon or word saying the same thing.
 - **Do** use the authored 16px line icons (1.5 stroke, `currentColor`) and add new glyphs in the same grid and stroke.
-- **Do** animate only colour and background, 150ms on `cubic-bezier(0.16, 1, 0.3, 1)`, and honour reduced motion.
+- **Do** animate only colour and background, 150ms on `cubic-bezier(0.16, 1, 0.3, 1)` (the theme switch: 200ms, colours only; the skeleton shimmer: transform only), and honour reduced motion.
 - **Do** show a number only where the backend reports real progress.
 
 ### Don't:
 - **Don't** add `box-shadow` to any surface.
 - **Don't** introduce a brand hue or use Done Green, Failed Red or Slow Amber for decoration.
 - **Don't** hardcode colours in components; every colour comes from a CSS variable on `:root`.
-- **Don't** add a dark theme or theme toggle; this build is light only.
+- **Don't** give a colour a value for one theme only; every token has a light and a dark value, and light stays the reference.
 - **Don't** show placeholder data, fake progress bars, or navigation for features that do not exist.
 - **Don't** show "Safe", "All clear" or "0 issues" as a verdict.

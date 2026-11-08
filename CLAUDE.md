@@ -47,12 +47,12 @@ Later: container hardening, blast radius, path trace, follow-ups.
 
 ## Not planned (ask first)
 - **Only if asked:** Overview insight cards, `llm_traces` (design section 20.6), frontend CI (lint, type-check, build), hosted demo.
-- **Not planned:** Postgres job queue / heartbeat / requeue, SSE, answer cache, full golden-test framework (the smoke eval and the held-out evaluation are in scope), auth/unlock page, zip upload, dark mode, command palette, Dependencies tab.
+- **Not planned:** Postgres job queue / heartbeat / requeue, SSE, answer cache, full golden-test framework (the smoke eval and the held-out evaluation are in scope), auth/unlock page, zip upload, command palette, Dependencies tab.
 - If something seems necessary, ask first.
 
 ## Stack
 - Backend: Python, FastAPI, **`uv` only** (never pip/poetry), psycopg 3, Postgres 16 + pgvector
-- Frontend: React + TypeScript + Vite, React Flow for the graph, TanStack Query; white/black minimal theme with CSS-variable tokens
+- Frontend: React + TypeScript + Vite, React Flow for the graph, TanStack Query; white/black minimal theme with CSS-variable tokens, light and dark
 - Runtime: `docker compose up` → `db` (pgvector/pgvector:pg16), `api`, `web`
 - Schema: plain `backend/schema.sql` mounted into `/docker-entrypoint-initdb.d/` (no Alembic). A schema change also gets an idempotent script in `backend/migrations/`, because existing volumes do not re-run `schema.sql`. Use the tables from design section 6: repos, snapshots, jobs, `snapshot_status` view, files, symbols, edges, findings, chunks. Skip `llm_traces` and `answer_cache`. Set `vector(N)` to the chosen embedding model's dimension.
 - LLM: behind an `LLMProvider` interface; provider, model and key from env (`LLM_PROVIDER`, `LLM_MODEL`, `LLM_API_KEY`). Current models reject `temperature`, `top_p` and `top_k`, so do not send them; reproducibility comes from a fixed model, effort, thinking setting and `PROMPT_VERSION`, which every eval run records. Never hardcode the model name.
@@ -110,7 +110,7 @@ Judge by pass criteria, not exact wording.
 - Push feature branches freely after each commit; only ask before merging into main.
 
 ## UI rules
-- Follow `DESIGN.md` for tokens and components and `docs/repolens-ui-ux-spec.md` for behaviour. Light theme by default; all colors from CSS-variable tokens.
+- Follow `DESIGN.md` for tokens and components and `docs/repolens-ui-ux-spec.md` for behaviour. Light and dark; light remains the design reference. The theme follows the system until the user picks one (top-bar toggle, remembered in this browser). All colors from CSS-variable tokens, with a dark value for every one.
 - Never show "Safe", "All clear", or "0 issues" as a verdict. The AI explains findings; it never decides whether code is safe.
 - Finding labels must match real detector rules. No placeholder or invented data (no stars, commits, PR counts, fake charts).
 - Every AI answer shows clickable citation chips; graph answers are labeled "From the graph".
