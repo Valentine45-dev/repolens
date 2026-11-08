@@ -9,7 +9,8 @@ FILES = {
     "pyproject.toml": (
         '[project]\nname = "demo"\n\n[project.scripts]\ndemo = "demo.cli:main"\n'
     ),
-    "demo/__init__.py": "from .core import run\n",
+    "demo/__init__.py": "from .core import run\nfrom .tools import api_only\n",
+    "demo/tools.py": "def api_only(cmd):\n    return eval(cmd)\n",
     "demo/core.py": (
         "def run(cmd):\n"
         "    return helper(cmd)\n\n\n"
@@ -31,6 +32,8 @@ FILES = {
     "demo/handlers.py": (
         "class Handler:\n"
         "    def process(self, cmd):\n"
+        "        return eval(cmd)\n\n"
+        "    def never_called(self, cmd):\n"
         "        return eval(cmd)\n\n\n"
         "def pick():\n"
         "    return Handler()\n"
@@ -73,6 +76,31 @@ def test_tiers_of_the_demo_repo(client, reach_repo):
     assert tiers[("demo/handlers.py", 3)] == "guess"  # thing.process(): receiver unknown, by name
     assert tiers[("demo/unused.py", 2)] == "none"
     assert tiers[("docs/guide.md", 1)] == "not_checked"  # documentation is not analysed code
+    # an ordinary method of a class that is reached, which nothing calls: no structural edge
+    assert tiers[("demo/handlers.py", 6)] == "none"
+    assert tiers[("demo/tools.py", 2)] == "solid"  # exported by the package's __init__
+
+
+def test_entry_class_is_recorded_per_finding_and_does_not_change_the_order(client, reach_repo):
+    items = listing(client, reach_repo, sort="reachability")["items"]
+    by_place = {(i["path"], i["line"]): i for i in items}
+    assert by_place[("demo/core.py", 6)]["reach_entry_class"] == "app"  # a console script
+    assert by_place[("demo/handlers.py", 3)]["reach_entry_class"] == "app"
+    assert by_place[("demo/tools.py", 2)]["reach_entry_class"] == "public-api"  # only the API
+    assert by_place[("demo/unused.py", 2)]["reach_entry_class"] is None
+    assert by_place[("docs/guide.md", 1)]["reach_entry_class"] is None
+    tools_id = by_place[("demo/tools.py", 2)]["id"]
+    detail = client.get(f"/snapshots/{reach_repo}/findings/{tools_id}/reach").json()
+    assert (detail["tier"], detail["entry_class"], detail["entry"]["kind"]) == (
+        "solid", "public-api", "public-api")
+    # the order key has no entry class in it: solid app and solid public-api findings are
+    # ordered by severity, path and line like any two solid findings
+    solid = [i for i in items if i["reach_tier"] == "solid"]
+    assert {i["reach_entry_class"] for i in solid} == {"app", "public-api"}
+    severity = {"high": 0, "medium": 1, "low": 2}
+    expected = sorted(solid, key=lambda i: (
+        severity[i["severity"]], i["path"].encode(), i["line"], i["id"]))
+    assert [i["id"] for i in solid] == [i["id"] for i in expected]
 
 
 def test_reachability_order_is_placeholders_last_then_tier_then_the_usual(client, reach_repo):

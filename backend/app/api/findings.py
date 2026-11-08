@@ -72,6 +72,7 @@ def _reachability_page(conn, snapshot_id, select, where_sql, args, limit, offset
         ).fetchall()
         for row in rows:
             row["reach_tier"] = None
+            row["reach_entry_class"] = None
         return rows, True
     keys = conn.execute(
         f"SELECT f.id, f.file_id, f.line, f.placeholder, {SEVERITY_RANK} AS sev, fi.path"
@@ -84,8 +85,11 @@ def _reachability_page(conn, snapshot_id, select, where_sql, args, limit, offset
     rows = {r["id"]: r for r in conn.execute(
         f"{select} WHERE f.id = ANY(%s)", [ids]).fetchall()}
     page = [rows[i] for i in ids if i in rows]
+    classes = {k["id"]: reach.entry_class(k["file_id"], k["line"])
+               for k in keys[offset:offset + limit]}
     for row in page:
         row["reach_tier"] = tiers[row["id"]]
+        row["reach_entry_class"] = classes[row["id"]]
     return page, False
 
 
@@ -154,6 +158,7 @@ def findings(
             reach_failed = False
             for item in items:
                 item["reach_tier"] = None
+                item["reach_entry_class"] = None
         by_severity = conn.execute(
             "SELECT severity, count(*) AS n FROM findings WHERE snapshot_id = %s GROUP BY 1",
             (snapshot_id,),

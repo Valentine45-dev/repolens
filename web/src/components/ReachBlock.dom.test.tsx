@@ -75,17 +75,31 @@ describe("ReachBlock", () => {
     expect(chips()[1].textContent).toBe("core.py");
   });
 
-  it("guess: says it is only through guessed calls and dashes the guessed steps", () => {
+  it("guess: says it is only through guessed steps and dashes them, with the reason in the title", () => {
     show({
       tier: "guess",
       entry: ENTRY,
       path: [step(1, "main"), step(2, "pick", { guess: true }), step(3, "process")],
     });
-    expect(text()).toContain("Reachable only through guessed calls");
+    expect(text()).toContain(
+      "Reachable only through guessed steps (a call matched by name, a special method Python calls implicitly, or a function defined inside code that is reached)",
+    );
     expect(chips()[1].hasAttribute("data-guess")).toBe(true);
     expect(chips()[1].getAttribute("title")).toContain("a call matched by name only");
     expect(chips()[2].hasAttribute("data-guess")).toBe(false);
     expect(text()).toContain("Dashed steps are guesses");
+  });
+
+  it("a structural guess is explained as a special method or a nested function, not as a call", () => {
+    show({
+      tier: "guess",
+      entry: ENTRY,
+      path: [step(1, "main"), step(2, "__enter__", { symbol_kind: "method", via: "contains", guess: true })],
+    });
+    const title = chips()[1].getAttribute("title") ?? "";
+    expect(title).toContain("a special method Python calls implicitly");
+    expect(title).not.toContain("a call matched by name");
+    expect(text()).toContain("__enter__ or __deepcopy__");
   });
 
   it("not checked and no path found use the agreed words and show no path", () => {

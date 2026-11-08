@@ -14,7 +14,8 @@ export type ReachView =
  * only means this analysis found none. */
 export const REACH_TEXT: Record<ReachTier, string> = {
   solid: "Reachable from",
-  guess: "Reachable only through guessed calls",
+  guess:
+    "Reachable only through guessed steps (a call matched by name, a special method Python calls implicitly, or a function defined inside code that is reached)",
   not_checked: "Not in analysed code, so reachability was not checked",
   none: "No path found from a detected entry point",
 };
@@ -46,7 +47,8 @@ function stepName(step: ReachStep): string {
 
 const VIA_NOTE: Record<string, string> = {
   calls: "a call matched by name only",
-  contains: "defined inside code that is reached; nothing was seen calling it",
+  contains:
+    "a special method Python calls implicitly, or a function defined inside code that is reached; no call to it was seen",
   imports: "an import inside a function that is reached",
 };
 
@@ -142,7 +144,8 @@ export function ReachBlock({ snapshotId, view }: { snapshotId: number; view: Rea
           {tier === "guess" && entry ? (
             <p className="caption reach-guess-note">
               Starts at <Label text={entry.label} />. Dashed steps are guesses: a call matched by
-              name only, or code defined inside code that is reached.
+              name only, a special method Python calls implicitly (such as __enter__ or
+              __deepcopy__), or a function defined inside code that is reached.
             </p>
           ) : null}
         </>

@@ -35,12 +35,13 @@ def finding_reach(snapshot_id: int, finding_id: int) -> dict:
             "SELECT id, path FROM files WHERE snapshot_id = %s", (snapshot_id,))}
     reach = get_reach(snapshot_id)
     tier = reach.tier(row["file_id"], row["line"])
-    result = {"tier": tier, "entry": None, "path": []}
+    result = {"tier": tier, "entry_class": None, "entry": None, "path": []}
     if tier in (NOT_CHECKED, NONE):
         return result
     symbol_id = reach.symbol_at(row["file_id"], row["line"])
     steps = reach.path_to(symbol_id)
     seed = reach.seed_for(symbol_id)
+    result["entry_class"] = reach.entry_class_of_symbol(symbol_id)
     result["entry"] = {"kind": seed.kind, "label": seed.label, "detail": seed.detail}
     result["path"] = [{**_node(reach, paths, st.symbol_id), "via": st.via, "guess": st.guess}
                       for st in steps]
