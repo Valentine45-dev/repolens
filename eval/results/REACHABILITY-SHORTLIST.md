@@ -82,3 +82,9 @@ keep rule files out of git (only the hash, as in `eval/semgrep_rules.json`), and
 Alphabetical, counted in this order, first four that qualify are accepted: `benoitc/gunicorn`, `celery/celery`, `certbot/certbot`, `getredash/redash`, `ipython/ipython`, `mitmproxy/mitmproxy`, `OctoPrint/OctoPrint`, `paramiko/paramiko`, `psf/requests`, `pytest-dev/pytest`, `ranger/ranger`, `scrapy/scrapy`, `sphinx-doc/sphinx`, `sqlmapproject/sqlmap`, `tornadoweb/tornado`, `urllib3/urllib3`, `yt-dlp/yt-dlp`.
 Sizes and licences were looked up above only for celery, redash, ipython, mitmproxy, OctoPrint, pytest, ranger, sphinx, sqlmap and yt-dlp; the others (gunicorn, certbot, paramiko, requests, scrapy, tornado, urllib3) have not been looked at at all.
 The counting run applies the size limit (at most 2,000 code files) and the 40-finding rule.
+
+## Licences of the accepted repos, read 8 Nov 2026 (LICENSE text via the GitHub API, `gh api repos/<repo>/license`; no clone)
+- **benoitc/gunicorn:** `LICENSE` is the MIT permission notice, copyright 2009-2026 Benoit Chesneau and 2009-2015 Paul J. Davis. The API reports NOASSERTION only because the file has no SPDX header.
+- **certbot/certbot:** `LICENSE.txt` says Certbot is licensed under Apache License 2.0 (copyright Electronic Frontier Foundation and others) and that the nginx plugin incorporates `nginxparser` code (2014 Fatih Erikli) under MIT; the full Apache 2.0 text follows.
+- Also from the API: getredash/redash BSD-2-Clause, ipython/ipython BSD-3-Clause.
+- The study reads these repos and keeps counts and, later, short code excerpts in a labelling sheet; nothing is redistributed. All four licences permit reading and quoting with the notice.
