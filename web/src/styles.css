@@ -1029,6 +1029,44 @@ a {
   white-space: nowrap;
 }
 
+/* First visit to the map: how to read it (MapHint). Bottom left, so it covers the least. */
+.map-hint {
+  position: absolute;
+  left: var(--space-4);
+  bottom: var(--space-4);
+  z-index: 6;
+  max-width: 360px;
+  padding: var(--space-3) var(--space-4) var(--space-4);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-panel);
+  background: var(--bg);
+  font-size: var(--text-xs);
+  color: var(--text-muted);
+}
+
+.map-hint-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2);
+  margin-right: calc(-1 * var(--space-2));
+}
+
+.map-hint-title {
+  font-size: var(--text-sm);
+  font-weight: 600;
+  color: var(--text);
+}
+
+.map-hint ul {
+  margin: var(--space-1) 0 var(--space-3);
+  padding-left: var(--space-4);
+}
+
+.map-hint li + li {
+  margin-top: var(--space-1);
+}
+
 /* React Flow, restyled from tokens */
 .react-flow {
   --xy-background-color: var(--bg);

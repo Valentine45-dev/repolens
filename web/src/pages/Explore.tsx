@@ -11,6 +11,7 @@ import { FileList } from "../components/FileList";
 import { CrumbSkeleton, GraphSkeleton, ListSkeleton } from "../components/GraphSkeleton";
 import { FIT_OPTIONS, firstViewHub, GraphView } from "../components/GraphView";
 import { ALL_EDGES_SHOWN_TITLE, ExploreLegend, SHOW_ALL_EDGES_TITLE, ShowGroup } from "../components/ExploreLegend";
+import { MapHint } from "../components/MapHint";
 import { MapView } from "../components/MapView";
 import { NodePanel } from "../components/NodePanel";
 import { applyCap, degrees, layoutGraph, RENDER_CAP } from "../graphModel";
@@ -460,6 +461,7 @@ function ExploreInner() {
                   onClear={closePanel}
                   onZoomedIn={setZoomedIn}
                 />
+                <MapHint />
                 {selected && !isDrawn(view, selected.path) ? (
                   <p className="canvas-hint caption">
                     <span className="mono">{selected.path}</span> is not drawn in this view.{" "}
