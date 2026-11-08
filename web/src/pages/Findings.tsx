@@ -25,6 +25,7 @@ const PAGE = 50;
 const SECRET_RULE = "hardcoded-secret";
 const NO_PLACEHOLDERS = "This analysis has no probable placeholders.";
 const MISS_NOTE = "These checks can still miss issues.";
+const SKELETON_ROWS = [[62, 70], [48, 55], [70, 64], [55, 72], [66, 50], [44, 68], [58, 60], [50, 66]];
 
 // Spec §5.6. Filters live in the URL:
 // ?category=quality|all (Security when absent)&severity=&rule=&language=&path=&tests=hide
@@ -374,11 +375,34 @@ export function FindingsList({
     );
   }
   if (!query.data) {
+    // The table's own header and rows (40px each), so the list fills in place.
     return (
-      <div className="panel-message" aria-busy="true">
-        {[70, 55, 62].map((w, i) => (
-          <div key={i} className="skeleton" style={{ width: `${w}%`, marginTop: i ? 12 : 0 }} />
-        ))}
+      <div className="findings-table" aria-busy="true">
+        <span className="visually-hidden">Loading findings…</span>
+        <table className="table" aria-hidden="true">
+          <thead>
+            <tr>
+              <th scope="col">Severity</th>
+              <th scope="col">Finding</th>
+              <th scope="col">Location</th>
+            </tr>
+          </thead>
+          <tbody>
+            {SKELETON_ROWS.map(([a, b], i) => (
+              <tr key={i}>
+                <td className="severity-col">
+                  <span className="skeleton" style={{ display: "block", width: 48 }} />
+                </td>
+                <td>
+                  <span className="skeleton" style={{ display: "block", width: `${a}%` }} />
+                </td>
+                <td className="location-col">
+                  <span className="skeleton" style={{ display: "block", width: `${b}%` }} />
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
       </div>
     );
   }

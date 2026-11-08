@@ -17,6 +17,7 @@ import { degrees } from "../graphModel";
 import { exploreHref, useSetParams } from "../links";
 import { SiteChips } from "./SiteChips";
 import { scrollToStart } from "../scroll";
+import { useDelayedFlag } from "../useDelayedFlag";
 import { Icon } from "./Icon";
 import { Markdown } from "./Markdown";
 import { PathText } from "./PathText";
@@ -254,10 +255,7 @@ export function AskDrawer({
                       <Icon name="x" size={14} /> {turn.error}
                     </p>
                   ) : (
-                    <p className="turn-note thinking">
-                      <Icon name="spinner" size={14} /> Looking through the code… this can take
-                      up to 40 seconds.
-                    </p>
+                    <ThinkingNote />
                   )}
                 </div>
               </li>
@@ -674,6 +672,18 @@ const chunkCount = new Intl.NumberFormat("en-US");
 // The one place that says why AI answers are off or limited (spec 12.1: say what happened and
 // what to do next), with "Retry preparing search" when that is the fix. Graph questions always
 // work, so the banner says so; each failed AI turn below then needs only one line.
+/** While a question is answered. Graph answers come back in well under a second, so the long
+ * wait is only mentioned once it is actually long. */
+export function ThinkingNote() {
+  const slow = useDelayedFlag(true, 1500, 0);
+  return (
+    <p className="turn-note thinking">
+      <Icon name="spinner" size={14} />{" "}
+      {slow ? "Looking through the code… this can take up to 40 seconds." : "Working on it…"}
+    </p>
+  );
+}
+
 function DrawerBanner({ snapshotId, status }: { snapshotId: number; status: SnapshotStatus }) {
   const queryClient = useQueryClient();
   const { features } = status;

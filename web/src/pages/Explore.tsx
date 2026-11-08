@@ -35,7 +35,9 @@ import {
   type ViewLevel,
   viewNote,
 } from "../mapModel";
+import { useDelayedFlag } from "../useDelayedFlag";
 import { useMediaQuery } from "../useMediaQuery";
+import { Icon } from "../components/Icon";
 
 // State lives in the URL (spec §3.6): ?level=folder|file|symbol|flat&root=<path>&tests=1&guesses=1
 // &edges=all&view=list&node=<file id>&lines=12-15. The analysis header, tabs and Ask drawer come
@@ -205,13 +207,20 @@ function ExploreInner() {
   const updating = graph.isPlaceholderData || (!listView && !flatMode && map.isPlaceholderData);
   const repo = status ? (repoName(status.url).split("/").pop() ?? "") : "";
   const mapMode = !listView && !flatMode;
+  // The old picture stays while the next one loads (keepPreviousData). Say so on the canvas itself
+  // after 200ms (a fast load shows nothing), dim it and stop clicks on it, and show where you are
+  // going in the breadcrumbs at once.
+  const pendingRoot = mapMode && view && request && map.isPlaceholderData && request.root !== view.root
+    ? request.root
+    : null;
+  const pending = useDelayedFlag(updating);
   const legendStatus = statusText(selection ? densityText(selection, showAllEdges) : null, zoomedIn);
   const canShowAll = showAllEdges || (selection !== null && selection.mode !== "all");
 
   return (
     <div className="explore">
       {mapMode && !phone ? (
-        view ? (
+        view && pendingRoot === null ? (
           <div className="crumb-row">
             <Breadcrumbs view={view} repo={repo} search={location.search} />
             <p className="crumb-facts caption" aria-live="polite">
@@ -219,7 +228,7 @@ function ExploreInner() {
             </p>
           </div>
         ) : (
-          <CrumbSkeleton root={urlView.root} />
+          <CrumbSkeleton root={pendingRoot ?? urlView.root} repo={view ? repo : undefined} />
         )
       ) : null}
       <div className="toolbar" role="toolbar" aria-label="Graph options">
@@ -347,7 +356,19 @@ function ExploreInner() {
       ) : null}
 
       <div className="explore-body">
-        <div className="canvas">
+        <div className="canvas" data-pending={pending || undefined}>
+          {pending && hasData ? (
+            <p className="canvas-pending" role="status">
+              <Icon name="spinner" size={14} />
+              {pendingRoot !== null ? (
+                <span>
+                  Opening <span className="mono">{pendingRoot || repo}</span>…
+                </span>
+              ) : (
+                <span>Updating…</span>
+              )}
+            </p>
+          ) : null}
           {hardError && !hasData ? (
             <div className="canvas-message" role="alert">
               <p>{hardError.message}</p>

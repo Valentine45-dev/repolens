@@ -41,7 +41,7 @@ export function ListSkeleton() {
 
 /** The breadcrumb row before the view has arrived: the real Up button (disabled) and the real
  * folder names from the address; only the repo name is grey. */
-export function CrumbSkeleton({ root }: { root: string }) {
+export function CrumbSkeleton({ root, repo }: { root: string; repo?: string }) {
   const parts = root ? root.split("/") : [];
   return (
     <div className="crumb-row">
@@ -51,7 +51,11 @@ export function CrumbSkeleton({ root }: { root: string }) {
         </span>
         <ol>
           <li>
-            <span className="skeleton" style={{ width: 64, height: 14 }} aria-hidden="true" />
+            {repo ? (
+              <span className="mono">{repo}</span>
+            ) : (
+              <span className="skeleton" style={{ width: 64, height: 14 }} aria-hidden="true" />
+            )}
           </li>
           {parts.map((part, i) => (
             <li key={i}>
