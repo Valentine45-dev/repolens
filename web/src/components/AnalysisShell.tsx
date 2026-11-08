@@ -96,7 +96,7 @@ export function AnalysisShell() {
               <span className="repo-sha mono">@ {known.commitSha.slice(0, 7)}</span>
             </h1>
           ) : (
-            <div className="skeleton" style={{ width: 240, height: 24 }} />
+            <div className="skeleton" style={{ width: 240, height: 24 }} aria-busy="true" aria-label="Loading the analysis" />
           )}
           {isReconnecting(status) ? <ConnectionNotice /> : null}
         </div>

@@ -67,7 +67,7 @@ export function CrumbSkeleton({ root, repo }: { root: string; repo?: string }) {
           ))}
         </ol>
       </nav>
-      <p className="crumb-facts caption">
+      <p className="crumb-facts caption" aria-busy="true">
         <span className="skeleton toolbar-note-skeleton" aria-hidden="true" />
       </p>
     </div>

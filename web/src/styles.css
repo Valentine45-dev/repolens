@@ -30,6 +30,8 @@
   --node-external: #71717a; /* was #a1a1aa (2.6:1 on white); this holds 4.8:1 */
   --edge: #8a8a93; /* graph edges: 3.4:1 on white, above the 3:1 floor for UI graphics */
   --highlight: #fdf3d3; /* cited or flagged code lines; text on it stays above 15:1 */
+  /* The band that sweeps over loading skeletons: a little lighter than Sunk Grey. */
+  --shimmer: color-mix(in srgb, var(--bg) 75%, transparent);
 
   /* §8.3 type, §8.4 spacing and shape */
   --font-sans: "Inter Variable", Inter, ui-sans-serif, system-ui, -apple-system, "Segoe UI",
@@ -99,6 +101,8 @@
   --node-external: #94949e;
   --edge: #7c7c86;
   --highlight: #3b3214;
+  /* A faint light band on the dark skeleton grey (never white: no flash). */
+  --shimmer: color-mix(in srgb, var(--text) 7%, transparent);
 
   color-scheme: dark;
 }
@@ -640,9 +644,31 @@ a {
 }
 
 .skeleton {
+  position: relative;
+  overflow: hidden;
   height: 14px;
   border-radius: var(--radius-small);
   background: var(--surface-2);
+}
+
+/* One shimmer for every skeleton: a soft band moved by transform on a pseudo-element (cheap: no
+   repaint of the bar, no background-position animation), 1.5s per sweep. Every bar's animation
+   is given the same start time (the script in index.html), so all bars on screen sweep together.
+   Decorative only: a pseudo-element with no content is not read out. */
+.skeleton::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(90deg, transparent, var(--shimmer), transparent);
+  transform: translateX(-100%);
+  animation: skeleton-shimmer 1.5s linear infinite;
+  pointer-events: none;
+}
+
+@keyframes skeleton-shimmer {
+  to {
+    transform: translateX(100%);
+  }
 }
 
 .graph-skeleton {
@@ -2603,6 +2629,12 @@ a {
   *::before,
   *::after {
     transition-duration: 0.01ms !important;
+  }
+
+  /* Static grey blocks: no sweep at all. */
+  .skeleton::after {
+    display: none;
+    animation: none;
   }
 
   .spin {

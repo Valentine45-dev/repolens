@@ -15,6 +15,18 @@
         root.setAttribute("data-theme", dark ? "dark" : "light");
         root.style.colorScheme = dark ? "dark" : "light";
       })();
+      // Skeleton shimmer in step: each bar's animation starts when the bar appears, so give every
+      // one the same start time; then all bars on screen sweep together (styles.css .skeleton).
+      document.addEventListener(
+        "animationstart",
+        function (e) {
+          if (e.animationName !== "skeleton-shimmer" || !document.getAnimations) return;
+          document.getAnimations().forEach(function (a) {
+            if (a.animationName === "skeleton-shimmer" && a.startTime !== 0) a.startTime = 0;
+          });
+        },
+        true,
+      );
     </script>
     <!-- .ico for browsers without SVG favicons; modern browsers pick the SVG -->
     <link rel="icon" href="/favicon.ico" sizes="32x32" />

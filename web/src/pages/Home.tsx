@@ -208,7 +208,11 @@ function StatusLabel({
 }) {
   if (removed) return <span className="status">Removed</span>;
   if (missing) return <span className="status">Unavailable</span>;
-  if (!status) return <span className="skeleton" style={{ width: 56 }} aria-label="Loading status" />;
+  if (!status) {
+    return (
+      <span className="skeleton" style={{ display: "inline-block", width: 56 }} aria-busy="true" aria-label="Loading status" />
+    );
+  }
   if (status === "done") {
     return (
       <span className="status" data-state="done">
