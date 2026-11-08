@@ -1,0 +1,22 @@
+[
+  {
+    "theme": "dark",
+    "size": "1366x768",
+    "case": "L02-file-panel-code-loading",
+    "shimmer": {
+      "bars": 55,
+      "minPhase": 435,
+      "maxPhase": 435
+    }
+  },
+  {
+    "theme": "light",
+    "size": "1920x1080",
+    "case": "L02-file-panel-code-loading",
+    "shimmer": {
+      "bars": 0,
+      "minPhase": null,
+      "maxPhase": null
+    }
+  }
+]
