@@ -55,6 +55,12 @@ def main() -> None:
     tables = d["descriptive_tables"]
     sec = d["secondary_repolens_exploratory"]
     repos = sorted(p["per_repo"])
+    agree_files = sorted(glob.glob(str(RES / "reachability_agreement-*.json")))
+    ag = json.load(open(agree_files[-1], encoding="utf-8")) if agree_files else None
+    j2_files = sorted(glob.glob(str(RES / "reachability_labels_received_judge2-*.json")))
+    j2 = json.load(open(j2_files[-1], encoding="utf-8")) if j2_files else None
+    judge_sentence = (" alone; the second judge's sheet has not been received." if ag is None else
+                      "; a second judge (J2) labelled a 54-row subset (section below).")
 
     out = []
     w = out.append
@@ -62,7 +68,7 @@ def main() -> None:
     w(f"Scored once from `{Path(scored_path).name}`. Pre-registration: `eval/reachability_prereg.md` with Amendment 1; "
       f"frozen tier code `{d['guard']['frozen_tier_commit'][:7]}`; the labelled sheet's SHA-256 "
       f"`{d['labelled_sheet_sha256'][:16]}...` was committed before the key was opened. Labels by J1 (the project "
-      "owner, who built the tool) alone; the second judge's sheet has not been received. This is a small "
+      "owner, who built the tool)" + judge_sentence + " This is a small "
       "study set up and labelled by the people who built the tool: the result is for these repos, not a general rate.\n")
 
     diff = p["difference"]
@@ -98,7 +104,20 @@ def main() -> None:
       f"no path found {by_tier['none']['real']}/{by_tier['none']['n']} real ({by_tier['none']['real_share']:.3f}), solid "
       f"{by_tier['solid']['real']}/{by_tier['solid']['n']} ({by_tier['solid']['real_share']:.3f}), guess "
       f"{by_tier['guess']['real']}/{by_tier['guess']['n']}. That is the opposite of the premise of the ordering; all of the "
-      f"{by_tier['none']['real']} no-path real findings are redash's. It is a table, not a test.\n")
+      f"{by_tier['none']['real']} no-path real findings are redash's. It is a table, not a test.")
+    if ag is not None:
+        pooled_ag = ag["pooled"]
+        dis = ag["disagreements"]
+        verdict = ("judge-dependent by the pre-registered threshold" if ag["judge_dependent"]
+                   else "not judge-dependent by the pre-registered threshold")
+        same_kind = bool(dis) and all(x["repo"] == dis[0]["repo"] and x["j1"] == "real" and x["j2"] == "not real"
+                                      for x in dis)
+        shape = (f"all {len(dis)} are {dis[0]['repo']} rows that J1 labelled real and J2 not real" if same_kind
+                 else f"{len(dis)} rows differ")
+        w(f"- **Second judge:** on the {ag['rows']} shared rows the two judges agree on {pooled_ag['agree']} "
+          f"({pooled_ag['percent_agreement'] * 100:.1f}%), Cohen's kappa {pooled_ag['kappa']:.3f}; {verdict} "
+          f"(kappa below {ag['kappa_flag_threshold']}). Disagreements: {shape} (section below).")
+    w("")
 
     w("## What was scored\n")
     w("- Four repos accepted by the counting rule, at pinned SHAs: " + ", ".join(
@@ -188,11 +207,53 @@ def main() -> None:
       f"mean AP difference {signed(sec['mean_ap_difference'])} over {sec['repos_with_ap']} repo; exploratory p = {sec['exploratory_permutation_p_one_sided']:.3f}. "
       "P@k only where a list has at least 2k rows (ipython). No claim rests on this.\n")
 
+    if ag is not None:
+        w("## Second judge (J2): agreement on the judge-2 subset\n")
+        w(f"{ag['rows']} rows, 20% of each repo's sheet rows (rounded up), labelled by J2 (identified by code only) on the same blind "
+          f"rows. AI use: {j2['ai_use'].split(' (')[0]} (self-reported). Instructions: J2 started with the earlier wording (\"is it a real "
+          "security issue\"); the updated wording (\"should a reviewer act on it?\") was sent partway through, and which rows came before "
+          f"the change is not recorded, so J2's labels may follow two definitions. J2's sheet SHA-256 `{ag['judge2_sheet_sha256']}` was committed before agreement was computed. "
+          f"Unsure rows: {ag['unsure_rows']}, so three-way agreement equals binary agreement.\n")
+        rows = []
+        for r in sorted(ag["per_repo"]):
+            v = ag["per_repo"][r]
+            rows.append([r, v["n"], v["agree"], f"{v['percent_agreement'] * 100:.1f}%",
+                         f3(v["kappa"]) if v["kappa"] is not None else "undefined",
+                         f"{v['j1_counts'].get('real', 0)} / {v['j2_counts'].get('real', 0)}"])
+        pp = ag["pooled"]
+        rows.append(["**all four repos**", pp["n"], pp["agree"], f"{pp['percent_agreement'] * 100:.1f}%", f3(pp["kappa"]),
+                     f"{pp['j1_counts'].get('real', 0)} / {pp['j2_counts'].get('real', 0)}"])
+        w(table(["repo", "shared rows", "agree", "percent agreement", "Cohen's kappa", "real: J1 / J2"], rows))
+        w("\nKappa is undefined where both judges used one category on every shared row (all not real): agreement is 100% there, "
+          "but chance agreement is 1. Pooled contingency table (J1 | J2): "
+          + "; ".join(f"{k} = {n}" for k, n in sorted(pp["table"].items())) + ".\n")
+        flag = ("**judge-dependent**" if ag["judge_dependent"] else "**not judge-dependent**")
+        w(f"- Pre-registered flag (pooled kappa below {ag['kappa_flag_threshold']}): pooled kappa {pp['kappa']:.3f}, so the headline is {flag}. "
+          "Only redash has a defined kappa on its own "
+          f"({f3(ag['per_repo']['getredash/redash']['kappa'])}); the flag is defined on the pooled value.")
+        w(f"- Every row J2 labelled real was also real for J1 ({ag['j2_real_rows_also_real_for_j1']} of {pp['j2_counts'].get('real', 0)}). "
+          "In the three repos with no real Bandit finding in J1's labels, J2 also found none on the shared rows. J2 was the stricter judge "
+          "on redash; this check does not test whether a more lenient judge would find real findings in the other three.")
+        w("- Not done: the pre-registration (section 10) asks for the primary table to be repeated on the J2 subset with both judges' labels "
+          "only if kappa is below 0.4; it is not.\n")
+        w("**Disagreeing rows** (J1 wrote no notes; J2's note as written, ids are sheet row ids)\n")
+        w(table(["row", "repo", "flagged for", "rule", "J1", "J2", "J2's note"],
+                [[x["id"], x["repo"], x["flagged_for"], ", ".join(x["rules"]), x["j1"], x["j2"],
+                  x["j2_note"].replace("|", "/")] for x in ag["disagreements"]]))
+        w("")
+
     w("## Limits, in addition to those pre-registered (section 11)\n")
     w("- Three of four repos have no real Bandit finding in the pool, so they cannot show an ordering effect; the comparison is a one-repo case study (redash).")
     w("- In redash nearly all real findings are one rule (B113) and most have no path from the detected entry points; the tier result there reflects the detectors' recall as well as the idea of reachability. "
       "Any fix to the detectors would be a dated deviation, scored as exploratory on the same labels, never replacing this result.")
-    w("- One labeller, the owner, with GitHub open at the pinned commits; no second judge yet, so agreement and the judge-dependent check are not available.")
+    if ag is None:
+        w("- One labeller, the owner, with GitHub open at the pinned commits; no second judge yet, so agreement and the judge-dependent check are not available.")
+    else:
+        rd = ag["per_repo"]["getredash/redash"]
+        w("- The primary labels are one labeller's, the owner's, with GitHub open at the pinned commits. The second judge covered "
+          f"{ag['rows']} of {sum(d['row_label_counts'].values())} rows, started under different wording, and was stricter on redash "
+          f"({rd['table'].get('J1 real | J2 not real', 0)} of the owner's {rd['j1_counts'].get('real', 0)} real rows on the shared redash rows "
+          "were not real for J2), so the redash result, the only one that carries the comparison, is sensitive to label strictness.")
     w("- certbot and ipython are 60-row samples of lists of 73 and 143; the pool of 60 is not the whole list.")
     w(f"- Public-API-only findings are few ({tables['by_entry_class']['public-api']['n']} in the pools), so the entry-class table says little.")
     w("- Python only; Bandit is the object being re-ranked, so this says nothing about Bandit's quality or RepoLens's rules.\n")
@@ -205,7 +266,11 @@ def main() -> None:
     w(f"Counting `{Path(sorted(glob.glob(str(RES / 'reachability_bandit_count-*.json')))[-1]).name}`; setup `{Path(sorted(glob.glob(str(RES / 'reachability_setup-*.json')))[-1]).name}`; "
       f"labels received `reachability_labels_received-20261108.json` (SHA-256 `{received['sha256']}`); scored `{Path(scored_path).name}`. "
       "The sheets and the key are outside git (`repolens-eval-assets/reachability/`). Scripts: `reachability_bandit_count.py`, `reachability_ingest.py`, "
-      "`reachability_setup.py`, `reachability_score.py`, `reachability_report.py`. No LLM was used ($0).\n")
+      "`reachability_setup.py`, `reachability_score.py`, `reachability_report.py`. No LLM was used ($0).")
+    if ag is not None:
+        w(f"\nJ2: labels received `{Path(j2_files[-1]).name}`, agreement `{Path(agree_files[-1]).name}`, script `reachability_agreement.py`.\n")
+    else:
+        w("")
     (RES / "REACHABILITY.md").write_text("\n".join(out), encoding="utf-8")
     print("wrote", RES / "REACHABILITY.md")
 

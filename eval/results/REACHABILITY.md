@@ -1,6 +1,6 @@
 # Reachability as a re-ranker of Bandit's output: results (8 Nov 2026)
 
-Scored once from `reachability_scored-20261108T143659Z-32d1988.json`. Pre-registration: `eval/reachability_prereg.md` with Amendment 1; frozen tier code `cfd4835`; the labelled sheet's SHA-256 `197fa366e35a618f...` was committed before the key was opened. Labels by J1 (the project owner, who built the tool) alone; the second judge's sheet has not been received. This is a small study set up and labelled by the people who built the tool: the result is for these repos, not a general rate.
+Scored once from `reachability_scored-20261108T143659Z-32d1988.json`. Pre-registration: `eval/reachability_prereg.md` with Amendment 1; frozen tier code `cfd4835`; the labelled sheet's SHA-256 `197fa366e35a618f...` was committed before the key was opened. Labels by J1 (the project owner, who built the tool); a second judge (J2) labelled a 54-row subset (section below). This is a small study set up and labelled by the people who built the tool: the result is for these repos, not a general rate.
 
 ## Headline
 
@@ -9,6 +9,7 @@ Scored once from `reachability_scored-20261108T143659Z-32d1988.json`. Pre-regist
 - **P@20, pooled over the four repos (80 rows per ordering):** Bandit order 12/80 = 0.150 (Wilson 0.09 to 0.24); reachability order 10/80 = 0.125 (Wilson 0.07 to 0.21). Difference -2 real findings in the top 20s (one-sided p = 0.600, a second test, not corrected). All of it comes from redash.
 - **Why the result says little about whether reachability helps in general:** 233 of 261 sheet rows were labelled not real; in the Bandit pools of gunicorn, certbot and ipython the owner judged nothing actionable. All 27 real findings in the Bandit pools are in redash, and all of them are one rule (B113, request without timeout); 24 of them have no path from the detected entry points. That is consistent with the entry-point recall gap the freeze recorded as a risk; whether it is the cause was not checked. It is what the frozen rules produce.
 - **Descriptively, real findings are more common where no path was found than where one was:** no path found 24/126 real (0.191), solid 3/81 (0.037), guess 0/9. That is the opposite of the premise of the ordering; all of the 24 no-path real findings are redash's. It is a table, not a test.
+- **Second judge:** on the 54 shared rows the two judges agree on 50 (92.6%), Cohen's kappa 0.566; not judge-dependent by the pre-registered threshold (kappa below 0.4). Disagreements: all 4 are getredash/redash rows that J1 labelled real and J2 not real (section below).
 
 ## What was scored
 
@@ -131,11 +132,38 @@ Real / labelled Bandit pool, with a Wilson 95% interval. Findings in one file ar
 
 gunicorn has no RepoLens security finding in the secondary pool. Only ipython has a real one (1 of 42); mean AP difference -0.060 over 1 repo; exploratory p = 0.649. P@k only where a list has at least 2k rows (ipython). No claim rests on this.
 
+## Second judge (J2): agreement on the judge-2 subset
+
+54 rows, 20% of each repo's sheet rows (rounded up), labelled by J2 (identified by code only) on the same blind rows. AI use: none (self-reported). Instructions: J2 started with the earlier wording ("is it a real security issue"); the updated wording ("should a reviewer act on it?") was sent partway through, and which rows came before the change is not recorded, so J2's labels may follow two definitions. J2's sheet SHA-256 `520e34288ae4ee1e0a6f8ed0ae29ead8aa4bebfaf6b21de79e3047492635af32` was committed before agreement was computed. Unsure rows: 0, so three-way agreement equals binary agreement.
+
+| repo | shared rows | agree | percent agreement | Cohen's kappa | real: J1 / J2 |
+|---|---|---|---|---|---|
+| benoitc/gunicorn | 10 | 10 | 100.0% | undefined | 0 / 0 |
+| certbot/certbot | 13 | 13 | 100.0% | undefined | 0 / 0 |
+| getredash/redash | 12 | 8 | 66.7% | 0.385 | 7 / 3 |
+| ipython/ipython | 19 | 19 | 100.0% | undefined | 0 / 0 |
+| **all four repos** | 54 | 50 | 92.6% | 0.566 | 7 / 3 |
+
+Kappa is undefined where both judges used one category on every shared row (all not real): agreement is 100% there, but chance agreement is 1. Pooled contingency table (J1 | J2): J1 not real | J2 not real = 47; J1 real | J2 not real = 4; J1 real | J2 real = 3.
+
+- Pre-registered flag (pooled kappa below 0.4): pooled kappa 0.566, so the headline is **not judge-dependent**. Only redash has a defined kappa on its own (0.385); the flag is defined on the pooled value.
+- Every row J2 labelled real was also real for J1 (3 of 3). In the three repos with no real Bandit finding in J1's labels, J2 also found none on the shared rows. J2 was the stricter judge on redash; this check does not test whether a more lenient judge would find real findings in the other three.
+- Not done: the pre-registration (section 10) asks for the primary table to be repeated on the J2 subset with both judges' labels only if kappa is below 0.4; it is not.
+
+**Disagreeing rows** (J1 wrote no notes; J2's note as written, ids are sheet row ids)
+
+| row | repo | flagged for | rule | J1 | J2 | J2's note |
+|---|---|---|---|---|---|---|
+| r-axndl | getredash/redash | request without timeout | B113 | real | not real | In _get_graphs_schema (get_schema), which runs as an RQ job bounded by SCHEMAS_REFRESH_TIMEOUT (300s). |
+| r-gkcec | getredash/redash | request without timeout | B113 | real | not real | test_connection runs as an RQ job with a 30s timeout, so a hang is bounded. |
+| r-rzvru | getredash/redash | request without timeout | B113 | real | not real | One-time fire-and-forget subscribe job in a background worker at setup; a hang affects nothing important. |
+| r-uoisp | getredash/redash | request without timeout | B113 | real | not real | In get_schema, run as an RQ job bounded by SCHEMAS_REFRESH_TIMEOUT (300s). |
+
 ## Limits, in addition to those pre-registered (section 11)
 
 - Three of four repos have no real Bandit finding in the pool, so they cannot show an ordering effect; the comparison is a one-repo case study (redash).
 - In redash nearly all real findings are one rule (B113) and most have no path from the detected entry points; the tier result there reflects the detectors' recall as well as the idea of reachability. Any fix to the detectors would be a dated deviation, scored as exploratory on the same labels, never replacing this result.
-- One labeller, the owner, with GitHub open at the pinned commits; no second judge yet, so agreement and the judge-dependent check are not available.
+- The primary labels are one labeller's, the owner's, with GitHub open at the pinned commits. The second judge covered 54 of 261 rows, started under different wording, and was stricter on redash (4 of the owner's 7 real rows on the shared redash rows were not real for J2), so the redash result, the only one that carries the comparison, is sensitive to label strictness.
 - certbot and ipython are 60-row samples of lists of 73 and 143; the pool of 60 is not the whole list.
 - Public-API-only findings are few (9 in the pools), so the entry-class table says little.
 - Python only; Bandit is the object being re-ranked, so this says nothing about Bandit's quality or RepoLens's rules.
@@ -147,3 +175,5 @@ None in the scoring. Two choices the pre-registration did not spell out, recorde
 ## Provenance
 
 Counting `reachability_bandit_count-20261107T211310Z-1dcb851.json`; setup `reachability_setup-20261108T075920Z-26485f5.json`; labels received `reachability_labels_received-20261108.json` (SHA-256 `197fa366e35a618f386dd632bf6f7b00c9098f11729bfd28138852afff9c6e7d`); scored `reachability_scored-20261108T143659Z-32d1988.json`. The sheets and the key are outside git (`repolens-eval-assets/reachability/`). Scripts: `reachability_bandit_count.py`, `reachability_ingest.py`, `reachability_setup.py`, `reachability_score.py`, `reachability_report.py`. No LLM was used ($0).
+
+J2: labels received `reachability_labels_received_judge2-2026-11-08.json`, agreement `reachability_agreement-20261108T152123Z-339c22d.json`, script `reachability_agreement.py`.
