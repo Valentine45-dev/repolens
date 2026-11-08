@@ -1,0 +1,40 @@
+{
+ "received": "2026-11-08",
+ "file": "sheet-labelled-judge2.csv (outside git, repolens-eval-assets/reachability/)",
+ "sha256": "520e34288ae4ee1e0a6f8ed0ae29ead8aa4bebfaf6b21de79e3047492635af32",
+ "stated_sha256_matches": true,
+ "judge": "J2",
+ "instructions_record": "J2 started with the earlier instructions (\"is it a real security issue\"); the updated wording (\"should a reviewer act on it?\") was sent partway through. Which rows were labelled before the change is not recorded.",
+ "ai_use": "none (self-reported by the owner on J2's behalf, 8 Nov 2026; corrects the earlier 'not stated')",
+ "checks": {
+  "header_identical_to_blank_judge2_sheet": true,
+  "rows": 54,
+  "ids_identical_and_same_order": true,
+  "ids_unique": true,
+  "non_label_cells_differing_from_blank_judge2_sheet": 0,
+  "all_ids_in_the_main_sheet": true,
+  "crlf_count_equal_to_blank": true
+ },
+ "label_counts": {
+  "not real": 51,
+  "real": 3
+ },
+ "label_counts_by_repo_from_the_sheet": {
+  "benoitc/gunicorn": {
+   "not real": 10
+  },
+  "certbot/certbot": {
+   "not real": 13
+  },
+  "getredash/redash": {
+   "not real": 9,
+   "real": 3
+  },
+  "ipython/ipython": {
+   "not real": 19
+  }
+ },
+ "rows_with_a_note": 54,
+ "notes_committed": false,
+ "judge_identity": "code only (J2)"
+}

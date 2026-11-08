@@ -1,0 +1,217 @@
+{
+  "run": {
+    "commit_sha": "339c22d90016e11050d0d12dab33147c3dd3170e",
+    "dirty": false,
+    "run_at": "2026-11-08T15:21:23+00:00",
+    "machine": "LAPTOP-4C2E555R",
+    "cpu": "Intel(R) Pentium(R) Silver N5030 CPU @ 1.10GHz",
+    "cpu_threads": 4,
+    "ram_gb": 7.8,
+    "os": "Windows 11 (10.0.22631)",
+    "python": "3.12.16",
+    "packages": {
+      "torch": "2.14.1+cpu",
+      "sentence-transformers": "6.2.0",
+      "transformers": "5.21.0",
+      "tree-sitter": "0.25.2",
+      "anthropic": "2.3.0"
+    },
+    "max_analysis_s": 600,
+    "tool_pins": {
+      "bandit": "bandit==1.9.4",
+      "semgrep": "semgrep==1.182.1"
+    },
+    "notes": "",
+    "embedder": "sentence-transformers",
+    "embed_model": "sentence-transformers/all-MiniLM-L6-v2",
+    "embed_revision": "1110a243fdf4706b3f48f1d95db1a4f5529b4d41",
+    "llm_used": false,
+    "llm": {
+      "provider": "anthropic",
+      "model": "claude-sonnet-5-5",
+      "effort": "low",
+      "thinking": "between_tools",
+      "max_tokens": 4000,
+      "prompt_version": "2026-10-28.2"
+    },
+    "retrieval": {
+      "top_k": 8,
+      "graph_expansion": true,
+      "expand_max": 8,
+      "context_tokens": 6000
+    }
+  },
+  "guard": {
+    "frozen_tier_commit": "cfd4835dc50b5497a189ca34ca410df19767bc52",
+    "prereg_commit": "958a3628640ed849751dbcd1c024cf744751ab01",
+    "head": "339c22d90016e11050d0d12dab33147c3dd3170e"
+  },
+  "judge2_sheet_sha256": "520e34288ae4ee1e0a6f8ed0ae29ead8aa4bebfaf6b21de79e3047492635af32",
+  "instructions_record": "J2 started with the earlier instructions (\"is it a real security issue\"); the updated wording (\"should a reviewer act on it?\") was sent partway through. Which rows were labelled before the change is not recorded.",
+  "ai_use": "none (self-reported by the owner on J2's behalf, 8 Nov 2026; corrects the earlier 'not stated')",
+  "rows": 54,
+  "unsure_rows": 0,
+  "three_way_equals_binary": true,
+  "pooled": {
+    "n": 54,
+    "agree": 50,
+    "percent_agreement": 0.9259,
+    "chance_agreement": 0.8292,
+    "kappa": 0.5663,
+    "kappa_note": null,
+    "j1_counts": {
+      "not real": 47,
+      "real": 7
+    },
+    "j2_counts": {
+      "not real": 51,
+      "real": 3
+    },
+    "table": {
+      "J1 not real | J2 not real": 47,
+      "J1 real | J2 not real": 4,
+      "J1 real | J2 real": 3
+    }
+  },
+  "per_repo": {
+    "benoitc/gunicorn": {
+      "n": 10,
+      "agree": 10,
+      "percent_agreement": 1.0,
+      "chance_agreement": 1.0,
+      "kappa": null,
+      "kappa_note": "undefined: chance agreement is 1",
+      "j1_counts": {
+        "not real": 10
+      },
+      "j2_counts": {
+        "not real": 10
+      },
+      "table": {
+        "J1 not real | J2 not real": 10
+      }
+    },
+    "certbot/certbot": {
+      "n": 13,
+      "agree": 13,
+      "percent_agreement": 1.0,
+      "chance_agreement": 1.0,
+      "kappa": null,
+      "kappa_note": "undefined: chance agreement is 1",
+      "j1_counts": {
+        "not real": 13
+      },
+      "j2_counts": {
+        "not real": 13
+      },
+      "table": {
+        "J1 not real | J2 not real": 13
+      }
+    },
+    "getredash/redash": {
+      "n": 12,
+      "agree": 8,
+      "percent_agreement": 0.6667,
+      "chance_agreement": 0.4583,
+      "kappa": 0.3846,
+      "kappa_note": null,
+      "j1_counts": {
+        "not real": 5,
+        "real": 7
+      },
+      "j2_counts": {
+        "not real": 9,
+        "real": 3
+      },
+      "table": {
+        "J1 not real | J2 not real": 5,
+        "J1 real | J2 not real": 4,
+        "J1 real | J2 real": 3
+      }
+    },
+    "ipython/ipython": {
+      "n": 19,
+      "agree": 19,
+      "percent_agreement": 1.0,
+      "chance_agreement": 1.0,
+      "kappa": null,
+      "kappa_note": "undefined: chance agreement is 1",
+      "j1_counts": {
+        "not real": 19
+      },
+      "j2_counts": {
+        "not real": 19
+      },
+      "table": {
+        "J1 not real | J2 not real": 19
+      }
+    }
+  },
+  "kappa_flag_threshold": 0.4,
+  "judge_dependent": false,
+  "disagreements": [
+    {
+      "id": "r-axndl",
+      "repo": "getredash/redash",
+      "j1": "real",
+      "j2": "not real",
+      "flagged_for": "request without timeout",
+      "rules": [
+        "B113"
+      ],
+      "tools": [
+        "bandit"
+      ],
+      "j2_note": "In _get_graphs_schema (get_schema), which runs as an RQ job bounded by SCHEMAS_REFRESH_TIMEOUT (300s).",
+      "j1_note": ""
+    },
+    {
+      "id": "r-gkcec",
+      "repo": "getredash/redash",
+      "j1": "real",
+      "j2": "not real",
+      "flagged_for": "request without timeout",
+      "rules": [
+        "B113"
+      ],
+      "tools": [
+        "bandit"
+      ],
+      "j2_note": "test_connection runs as an RQ job with a 30s timeout, so a hang is bounded.",
+      "j1_note": ""
+    },
+    {
+      "id": "r-rzvru",
+      "repo": "getredash/redash",
+      "j1": "real",
+      "j2": "not real",
+      "flagged_for": "request without timeout",
+      "rules": [
+        "B113"
+      ],
+      "tools": [
+        "bandit"
+      ],
+      "j2_note": "One-time fire-and-forget subscribe job in a background worker at setup; a hang affects nothing important.",
+      "j1_note": ""
+    },
+    {
+      "id": "r-uoisp",
+      "repo": "getredash/redash",
+      "j1": "real",
+      "j2": "not real",
+      "flagged_for": "request without timeout",
+      "rules": [
+        "B113"
+      ],
+      "tools": [
+        "bandit"
+      ],
+      "j2_note": "In get_schema, run as an RQ job bounded by SCHEMAS_REFRESH_TIMEOUT (300s).",
+      "j1_note": ""
+    }
+  ],
+  "j2_real_rows_also_real_for_j1": 3,
+  "primary_table_repeated_on_the_j2_subset": false,
+  "note": "The pre-registration (section 10) asks for the primary table to be repeated on the J2 subset with both judges' labels when kappa is below 0.4; not done here (not requested)."
+}
