@@ -1,0 +1,260 @@
+{
+  "run": {
+    "commit_sha": "1dcb851bdd1d27bf901ae05feeeeb5645549a2b9",
+    "dirty": false,
+    "run_at": "2026-11-07T21:13:10+00:00",
+    "machine": "LAPTOP-4C2E555R",
+    "cpu": "Intel(R) Pentium(R) Silver N5030 CPU @ 1.10GHz",
+    "cpu_threads": 4,
+    "ram_gb": 7.8,
+    "os": "Windows 11 (10.0.22631)",
+    "python": "3.12.16",
+    "packages": {
+      "torch": "2.14.1+cpu",
+      "sentence-transformers": "6.2.0",
+      "transformers": "5.21.0",
+      "tree-sitter": "0.25.2",
+      "anthropic": "2.3.0"
+    },
+    "max_analysis_s": 600,
+    "tool_pins": {
+      "bandit": "bandit==1.9.4",
+      "semgrep": "semgrep==1.182.1"
+    },
+    "notes": "",
+    "embedder": "sentence-transformers",
+    "embed_model": "sentence-transformers/all-MiniLM-L6-v2",
+    "embed_revision": "1110a243fdf4706b3f48f1d95db1a4f5529b4d41",
+    "llm_used": false,
+    "llm": {
+      "provider": "anthropic",
+      "model": "claude-sonnet-5-5",
+      "effort": "low",
+      "thinking": "between_tools",
+      "max_tokens": 4000,
+      "prompt_version": "2026-10-28.2"
+    },
+    "retrieval": {
+      "top_k": 8,
+      "graph_expansion": true,
+      "expand_max": 8,
+      "context_tokens": 6000
+    },
+    "tools": {
+      "bandit": "bandit==1.9.4",
+      "skip": "B101,B404"
+    }
+  },
+  "prereg_commit": "4f3a9cd3f9e4bbbdb3e96c8ccf4c02de8466b8e6",
+  "min_findings": 40,
+  "target": 4,
+  "pool_order": [
+    "benoitc/gunicorn",
+    "celery/celery",
+    "certbot/certbot",
+    "getredash/redash",
+    "ipython/ipython",
+    "mitmproxy/mitmproxy",
+    "OctoPrint/OctoPrint",
+    "paramiko/paramiko",
+    "psf/requests",
+    "pytest-dev/pytest",
+    "ranger/ranger",
+    "scrapy/scrapy",
+    "sphinx-doc/sphinx",
+    "sqlmapproject/sqlmap",
+    "tornadoweb/tornado",
+    "urllib3/urllib3",
+    "yt-dlp/yt-dlp"
+  ],
+  "accepted": [
+    "benoitc/gunicorn",
+    "certbot/certbot",
+    "getredash/redash",
+    "ipython/ipython"
+  ],
+  "counted_after_stop": "repos after the fourth accepted are not counted",
+  "repos": [
+    {
+      "repo": "benoitc/gunicorn",
+      "sha": "d93a59d2039bc01ce266a9995059779eb6048468",
+      "licence": "NOASSERTION",
+      "default_branch": "master",
+      "archived": false,
+      "kept_files": 597,
+      "python_files": 463,
+      "python_files_scanned": 79,
+      "bandit_parse_errors": 0,
+      "total": 48,
+      "by_test_id": {
+        "B104": 1,
+        "B105": 1,
+        "B108": 6,
+        "B110": 28,
+        "B310": 2,
+        "B311": 2,
+        "B324": 1,
+        "B603": 6,
+        "B606": 1
+      },
+      "by_severity": {
+        "LOW": 38,
+        "MEDIUM": 9,
+        "HIGH": 1
+      },
+      "by_confidence": {
+        "HIGH": 39,
+        "MEDIUM": 9
+      },
+      "files_with_findings": 24,
+      "accepted": true
+    },
+    {
+      "repo": "celery/celery",
+      "sha": "768e476b5397fb4efe6439fdd818e47cd5c3a90a",
+      "licence": "NOASSERTION",
+      "default_branch": "main",
+      "archived": false,
+      "kept_files": 803,
+      "python_files": 453,
+      "python_files_scanned": 215,
+      "bandit_parse_errors": 0,
+      "total": 30,
+      "by_test_id": {
+        "B102": 1,
+        "B108": 7,
+        "B110": 10,
+        "B301": 1,
+        "B311": 1,
+        "B403": 7,
+        "B603": 1,
+        "B606": 2
+      },
+      "by_severity": {
+        "LOW": 21,
+        "MEDIUM": 9
+      },
+      "by_confidence": {
+        "HIGH": 21,
+        "MEDIUM": 9
+      },
+      "files_with_findings": 18,
+      "accepted": false
+    },
+    {
+      "repo": "certbot/certbot",
+      "sha": "138defe9c7c68ceb29a66cbd5f3a346567139211",
+      "licence": "NOASSERTION",
+      "default_branch": "main",
+      "archived": false,
+      "kept_files": 598,
+      "python_files": 366,
+      "python_files_scanned": 219,
+      "bandit_parse_errors": 0,
+      "total": 73,
+      "by_test_id": {
+        "B103": 3,
+        "B104": 1,
+        "B105": 5,
+        "B110": 1,
+        "B202": 1,
+        "B303": 2,
+        "B307": 1,
+        "B311": 5,
+        "B324": 2,
+        "B501": 7,
+        "B602": 4,
+        "B603": 31,
+        "B607": 10
+      },
+      "by_severity": {
+        "HIGH": 14,
+        "LOW": 52,
+        "MEDIUM": 7
+      },
+      "by_confidence": {
+        "HIGH": 67,
+        "MEDIUM": 6
+      },
+      "files_with_findings": 30,
+      "accepted": true
+    },
+    {
+      "repo": "getredash/redash",
+      "sha": "09740eaf6359af4ac4f932b620f28add2299142e",
+      "licence": "BSD-2-Clause",
+      "default_branch": "master",
+      "archived": false,
+      "kept_files": 1198,
+      "python_files": 309,
+      "python_files_scanned": 200,
+      "bandit_parse_errors": 0,
+      "total": 48,
+      "by_test_id": {
+        "B102": 2,
+        "B104": 1,
+        "B105": 5,
+        "B110": 4,
+        "B113": 28,
+        "B324": 1,
+        "B602": 1,
+        "B608": 6
+      },
+      "by_severity": {
+        "MEDIUM": 37,
+        "LOW": 9,
+        "HIGH": 2
+      },
+      "by_confidence": {
+        "MEDIUM": 6,
+        "LOW": 34,
+        "HIGH": 8
+      },
+      "files_with_findings": 31,
+      "accepted": true
+    },
+    {
+      "repo": "ipython/ipython",
+      "sha": "cf63afd11e2fca4eb4645e9d5b4a712f3549f632",
+      "licence": "BSD-3-Clause",
+      "default_branch": "main",
+      "archived": false,
+      "kept_files": 434,
+      "python_files": 330,
+      "python_files_scanned": 176,
+      "bandit_parse_errors": 0,
+      "total": 143,
+      "by_test_id": {
+        "B102": 16,
+        "B105": 6,
+        "B110": 24,
+        "B113": 1,
+        "B301": 2,
+        "B307": 16,
+        "B310": 5,
+        "B311": 3,
+        "B318": 1,
+        "B403": 2,
+        "B408": 1,
+        "B602": 6,
+        "B603": 11,
+        "B604": 29,
+        "B605": 7,
+        "B607": 12,
+        "B608": 1
+      },
+      "by_severity": {
+        "MEDIUM": 71,
+        "LOW": 63,
+        "HIGH": 9
+      },
+      "by_confidence": {
+        "LOW": 31,
+        "HIGH": 106,
+        "MEDIUM": 6
+      },
+      "files_with_findings": 58,
+      "accepted": true
+    }
+  ]
+}

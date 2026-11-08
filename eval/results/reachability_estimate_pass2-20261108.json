@@ -1,0 +1,414 @@
+{
+ "adeyosemanputra/pygoat": {
+  "py_eval_exec": {
+   "files_returned_by_search": 1,
+   "files_with_regex_hit": 1,
+   "occurrences_in_fragments": 1
+  },
+  "py_subprocess_shell": {
+   "files_returned_by_search": 2,
+   "files_with_regex_hit": 1,
+   "occurrences_in_fragments": 1
+  },
+  "py_sql_string": {
+   "files_returned_by_search": 1,
+   "files_with_regex_hit": 0,
+   "occurrences_in_fragments": 0
+  },
+  "secret_assign": {
+   "files_returned_by_search": 6,
+   "files_with_regex_hit": 1,
+   "occurrences_in_fragments": 1
+  }
+ },
+ "pallets/flask": {
+  "py_eval_exec": {
+   "files_returned_by_search": 3,
+   "files_with_regex_hit": 1,
+   "occurrences_in_fragments": 1
+  },
+  "py_subprocess_shell": {
+   "files_returned_by_search": 0,
+   "files_with_regex_hit": 0,
+   "occurrences_in_fragments": 0
+  },
+  "py_sql_string": {
+   "files_returned_by_search": 2,
+   "files_with_regex_hit": 0,
+   "occurrences_in_fragments": 0
+  },
+  "secret_assign": {
+   "files_returned_by_search": 0,
+   "files_with_regex_hit": 0,
+   "occurrences_in_fragments": 0
+  }
+ },
+ "psf/black": {
+  "py_eval_exec": {
+   "files_returned_by_search": 1,
+   "files_with_regex_hit": 0,
+   "occurrences_in_fragments": 0
+  },
+  "py_subprocess_shell": {
+   "files_returned_by_search": 0,
+   "files_with_regex_hit": 0,
+   "occurrences_in_fragments": 0
+  },
+  "py_sql_string": {
+   "files_returned_by_search": 0,
+   "files_with_regex_hit": 0,
+   "occurrences_in_fragments": 0
+  },
+  "secret_assign": {
+   "files_returned_by_search": 0,
+   "files_with_regex_hit": 0,
+   "occurrences_in_fragments": 0
+  }
+ },
+ "expressjs/express": {
+  "js_eval": {
+   "files_returned_by_search": 0,
+   "files_with_regex_hit": 0,
+   "occurrences_in_fragments": 0
+  },
+  "js_new_function": {
+   "files_returned_by_search": 6,
+   "files_with_regex_hit": 0,
+   "occurrences_in_fragments": 0
+  },
+  "js_child_process": {
+   "files_returned_by_search": 1,
+   "files_with_regex_hit": 0,
+   "occurrences_in_fragments": 0
+  },
+  "js_innerhtml": {
+   "files_returned_by_search": 0,
+   "files_with_regex_hit": 0,
+   "occurrences_in_fragments": 0
+  },
+  "js_sql_string": {
+   "files_returned_by_search": 0,
+   "files_with_regex_hit": 0,
+   "occurrences_in_fragments": 0
+  },
+  "secret_assign": {
+   "files_returned_by_search": 0,
+   "files_with_regex_hit": 0,
+   "occurrences_in_fragments": 0
+  }
+ },
+ "sqlmapproject/sqlmap": {
+  "py_eval_exec": {
+   "files_returned_by_search": 36,
+   "files_with_regex_hit": 2,
+   "occurrences_in_fragments": 2
+  },
+  "py_subprocess_shell": {
+   "files_returned_by_search": 14,
+   "files_with_regex_hit": 4,
+   "occurrences_in_fragments": 4
+  },
+  "py_sql_string": {
+   "files_returned_by_search": 53,
+   "files_with_regex_hit": 2,
+   "occurrences_in_fragments": 3
+  },
+  "secret_assign": {
+   "files_returned_by_search": 9,
+   "files_with_regex_hit": 1,
+   "occurrences_in_fragments": 1
+  }
+ },
+ "ipython/ipython": {
+  "py_eval_exec": {
+   "files_returned_by_search": 19,
+   "files_with_regex_hit": 9,
+   "occurrences_in_fragments": 11
+  },
+  "py_subprocess_shell": {
+   "files_returned_by_search": 13,
+   "files_with_regex_hit": 5,
+   "occurrences_in_fragments": 5
+  },
+  "py_sql_string": {
+   "files_returned_by_search": 12,
+   "files_with_regex_hit": 0,
+   "occurrences_in_fragments": 0
+  },
+  "secret_assign": {
+   "files_returned_by_search": 0,
+   "files_with_regex_hit": 0,
+   "occurrences_in_fragments": 0
+  }
+ },
+ "celery/celery": {
+  "py_eval_exec": {
+   "files_returned_by_search": 16,
+   "files_with_regex_hit": 4,
+   "occurrences_in_fragments": 4
+  },
+  "py_subprocess_shell": {
+   "files_returned_by_search": 1,
+   "files_with_regex_hit": 0,
+   "occurrences_in_fragments": 0
+  },
+  "py_sql_string": {
+   "files_returned_by_search": 11,
+   "files_with_regex_hit": 0,
+   "occurrences_in_fragments": 0
+  },
+  "secret_assign": {
+   "files_returned_by_search": 3,
+   "files_with_regex_hit": 0,
+   "occurrences_in_fragments": 0
+  }
+ },
+ "yt-dlp/yt-dlp": {
+  "py_eval_exec": {
+   "files_returned_by_search": 8,
+   "files_with_regex_hit": 0,
+   "occurrences_in_fragments": 0
+  },
+  "py_subprocess_shell": {
+   "files_returned_by_search": 7,
+   "files_with_regex_hit": 2,
+   "occurrences_in_fragments": 2
+  },
+  "py_sql_string": {
+   "files_returned_by_search": 4,
+   "files_with_regex_hit": 0,
+   "occurrences_in_fragments": 0
+  },
+  "secret_assign": {
+   "files_returned_by_search": 9,
+   "files_with_regex_hit": 1,
+   "occurrences_in_fragments": 2
+  }
+ },
+ "OctoPrint/OctoPrint": {
+  "py_eval_exec": {
+   "files_returned_by_search": 10,
+   "files_with_regex_hit": 0,
+   "occurrences_in_fragments": 0
+  },
+  "py_subprocess_shell": {
+   "files_returned_by_search": 1,
+   "files_with_regex_hit": 0,
+   "occurrences_in_fragments": 0
+  },
+  "py_sql_string": {
+   "files_returned_by_search": 6,
+   "files_with_regex_hit": 0,
+   "occurrences_in_fragments": 0
+  },
+  "secret_assign": {
+   "files_returned_by_search": 1,
+   "files_with_regex_hit": 0,
+   "occurrences_in_fragments": 0
+  }
+ },
+ "getredash/redash": {
+  "py_eval_exec": {
+   "files_returned_by_search": 6,
+   "files_with_regex_hit": 0,
+   "occurrences_in_fragments": 0
+  },
+  "py_subprocess_shell": {
+   "files_returned_by_search": 0,
+   "files_with_regex_hit": 0,
+   "occurrences_in_fragments": 0
+  },
+  "py_sql_string": {
+   "files_returned_by_search": 47,
+   "files_with_regex_hit": 1,
+   "occurrences_in_fragments": 2
+  },
+  "secret_assign": {
+   "files_returned_by_search": 9,
+   "files_with_regex_hit": 0,
+   "occurrences_in_fragments": 0
+  }
+ },
+ "pytest-dev/pytest": {
+  "py_eval_exec": {
+   "files_returned_by_search": 25,
+   "files_with_regex_hit": 6,
+   "occurrences_in_fragments": 7
+  },
+  "py_subprocess_shell": {
+   "files_returned_by_search": 2,
+   "files_with_regex_hit": 1,
+   "occurrences_in_fragments": 1
+  },
+  "py_sql_string": {
+   "files_returned_by_search": 11,
+   "files_with_regex_hit": 0,
+   "occurrences_in_fragments": 0
+  },
+  "secret_assign": {
+   "files_returned_by_search": 0,
+   "files_with_regex_hit": 0,
+   "occurrences_in_fragments": 0
+  }
+ },
+ "juice-shop/juice-shop": {
+  "js_eval": {
+   "files_returned_by_search": 90,
+   "files_with_regex_hit": 2,
+   "occurrences_in_fragments": 2
+  },
+  "js_new_function": {
+   "files_returned_by_search": 198,
+   "files_with_regex_hit": 1,
+   "occurrences_in_fragments": 1
+  },
+  "js_child_process": {
+   "files_returned_by_search": 1,
+   "files_with_regex_hit": 0,
+   "occurrences_in_fragments": 0
+  },
+  "js_innerhtml": {
+   "files_returned_by_search": 6,
+   "files_with_regex_hit": 2,
+   "occurrences_in_fragments": 2
+  },
+  "js_sql_string": {
+   "files_returned_by_search": 200,
+   "files_with_regex_hit": 12,
+   "occurrences_in_fragments": 12
+  },
+  "secret_assign": {
+   "files_returned_by_search": 7,
+   "files_with_regex_hit": 0,
+   "occurrences_in_fragments": 0
+  }
+ },
+ "jquery/jquery": {
+  "js_eval": {
+   "files_returned_by_search": 20,
+   "files_with_regex_hit": 0,
+   "occurrences_in_fragments": 0
+  },
+  "js_new_function": {
+   "files_returned_by_search": 107,
+   "files_with_regex_hit": 0,
+   "occurrences_in_fragments": 0
+  },
+  "js_child_process": {
+   "files_returned_by_search": 10,
+   "files_with_regex_hit": 0,
+   "occurrences_in_fragments": 0
+  },
+  "js_innerhtml": {
+   "files_returned_by_search": 2,
+   "files_with_regex_hit": 1,
+   "occurrences_in_fragments": 1
+  },
+  "js_sql_string": {
+   "files_returned_by_search": 42,
+   "files_with_regex_hit": 0,
+   "occurrences_in_fragments": 0
+  },
+  "secret_assign": {
+   "files_returned_by_search": 1,
+   "files_with_regex_hit": 0,
+   "occurrences_in_fragments": 0
+  }
+ },
+ "NodeBB/NodeBB": {
+  "js_eval": {
+   "files_returned_by_search": 27,
+   "files_with_regex_hit": 0,
+   "occurrences_in_fragments": 0
+  },
+  "js_new_function": {
+   "files_returned_by_search": 814,
+   "files_with_regex_hit": 0,
+   "occurrences_in_fragments": 0
+  },
+  "js_child_process": {
+   "files_returned_by_search": 9,
+   "files_with_regex_hit": 0,
+   "occurrences_in_fragments": 0
+  },
+  "js_innerhtml": {
+   "files_returned_by_search": 6,
+   "files_with_regex_hit": 4,
+   "occurrences_in_fragments": 4
+  },
+  "js_sql_string": {
+   "files_returned_by_search": 295,
+   "files_with_regex_hit": 0,
+   "occurrences_in_fragments": 0
+  },
+  "secret_assign": {
+   "files_returned_by_search": 2,
+   "files_with_regex_hit": 0,
+   "occurrences_in_fragments": 0
+  }
+ },
+ "sequelize/sequelize": {
+  "js_eval": {
+   "files_returned_by_search": 84,
+   "files_with_regex_hit": 0,
+   "occurrences_in_fragments": 0
+  },
+  "js_new_function": {
+   "files_returned_by_search": 410,
+   "files_with_regex_hit": 0,
+   "occurrences_in_fragments": 0
+  },
+  "js_child_process": {
+   "files_returned_by_search": 3,
+   "files_with_regex_hit": 0,
+   "occurrences_in_fragments": 0
+  },
+  "js_innerhtml": {
+   "files_returned_by_search": 0,
+   "files_with_regex_hit": 0,
+   "occurrences_in_fragments": 0
+  },
+  "js_sql_string": {
+   "files_returned_by_search": 168,
+   "files_with_regex_hit": 21,
+   "occurrences_in_fragments": 27
+  },
+  "secret_assign": {
+   "files_returned_by_search": 1,
+   "files_with_regex_hit": 0,
+   "occurrences_in_fragments": 0
+  }
+ },
+ "knex/knex": {
+  "js_eval": {
+   "files_returned_by_search": 8,
+   "files_with_regex_hit": 0,
+   "occurrences_in_fragments": 0
+  },
+  "js_new_function": {
+   "files_returned_by_search": 124,
+   "files_with_regex_hit": 0,
+   "occurrences_in_fragments": 0
+  },
+  "js_child_process": {
+   "files_returned_by_search": 2,
+   "files_with_regex_hit": 0,
+   "occurrences_in_fragments": 0
+  },
+  "js_innerhtml": {
+   "files_returned_by_search": 0,
+   "files_with_regex_hit": 0,
+   "occurrences_in_fragments": 0
+  },
+  "js_sql_string": {
+   "files_returned_by_search": 63,
+   "files_with_regex_hit": 4,
+   "occurrences_in_fragments": 5
+  },
+  "secret_assign": {
+   "files_returned_by_search": 1,
+   "files_with_regex_hit": 0,
+   "occurrences_in_fragments": 0
+  }
+ }
+}

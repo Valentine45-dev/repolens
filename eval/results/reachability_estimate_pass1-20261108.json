@@ -1,0 +1,627 @@
+{
+ "adeyosemanputra/pygoat": {
+  "lang": "py",
+  "tree": {
+   "sha": "2aa4cc14f251e4a780e94e200aed6b36a5b15c21",
+   "license": "MIT",
+   "archived": false,
+   "size_kb": 19004,
+   "stars": 353,
+   "truncated": false,
+   "files_total": 463,
+   "py_files": 116,
+   "js_ts_files": 2,
+   "py_non_test": 116,
+   "js_non_test": 2
+  },
+  "code": {
+   "eval": 2,
+   "exec": 0,
+   "shell_true": 1,
+   "sql_execute": 1
+  },
+  "secrets": {
+   "password": 11,
+   "secret": 1,
+   "api_key": 1,
+   "token": 3
+  }
+ },
+ "pallets/flask": {
+  "lang": "py",
+  "tree": {
+   "sha": "49943b5a94413a530761350f04e896f76e8d620e",
+   "license": "BSD-3-Clause",
+   "archived": false,
+   "size_kb": 12227,
+   "stars": 75063,
+   "truncated": false,
+   "files_total": 236,
+   "py_files": 83,
+   "js_ts_files": 0,
+   "py_non_test": 35,
+   "js_non_test": 0
+  },
+  "code": {
+   "eval": 1,
+   "exec": 1,
+   "shell_true": 0,
+   "sql_execute": 0
+  },
+  "secrets": {
+   "password": 0,
+   "secret": 0,
+   "api_key": 0,
+   "token": 1
+  }
+ },
+ "psf/black": {
+  "lang": "py",
+  "tree": {
+   "sha": "b4f1fcae48826790b6f93ca9226d20003bce0eaa",
+   "license": "MIT",
+   "archived": false,
+   "size_kb": 9329,
+   "stars": 42125,
+   "truncated": false,
+   "files_total": 560,
+   "py_files": 423,
+   "js_ts_files": 0,
+   "py_non_test": 56,
+   "js_non_test": 0
+  },
+  "code": {
+   "eval": 2,
+   "exec": 0,
+   "shell_true": 0,
+   "sql_execute": 0
+  },
+  "secrets": {
+   "password": 0,
+   "secret": 0,
+   "api_key": 0,
+   "token": 6
+  }
+ },
+ "expressjs/express": {
+  "lang": "js",
+  "tree": {
+   "sha": "43fca52d28a422c8be48fd489cbd4f2d6152bab6",
+   "license": "MIT",
+   "archived": false,
+   "size_kb": 10074,
+   "stars": 69576,
+   "truncated": false,
+   "files_total": 216,
+   "py_files": 0,
+   "js_ts_files": 142,
+   "py_non_test": 0,
+   "js_non_test": 50
+  },
+  "code": {
+   "eval": 0,
+   "new_function": 5,
+   "exec": 1,
+   "innerHTML": 0,
+   "sql_select": 0
+  },
+  "secrets": {
+   "password": 0,
+   "secret": 1,
+   "api_key": 0,
+   "token": 0
+  }
+ },
+ "ipython/ipython": {
+  "lang": "py",
+  "tree": {
+   "sha": "cf63afd11e2fca4eb4645e9d5b4a712f3549f632",
+   "license": "BSD-3-Clause",
+   "archived": false,
+   "size_kb": 82371,
+   "stars": 16798,
+   "truncated": false,
+   "files_total": 510,
+   "py_files": 330,
+   "js_ts_files": 0,
+   "py_non_test": 183,
+   "js_non_test": 0
+  },
+  "code": {
+   "eval": 10,
+   "exec": 17,
+   "shell_true": 5,
+   "sql_execute": 2
+  },
+  "secrets": {
+   "password": 0,
+   "secret": 0,
+   "api_key": 0,
+   "token": 4
+  }
+ },
+ "sqlmapproject/sqlmap": {
+  "lang": "py",
+  "tree": {
+   "sha": "397a3bde2e2c2a07680dd9402b16cb37d3721027",
+   "license": "NOASSERTION",
+   "archived": false,
+   "size_kb": 98639,
+   "stars": 38880,
+   "truncated": false,
+   "files_total": 896,
+   "py_files": 704,
+   "js_ts_files": 0,
+   "py_non_test": 585,
+   "js_non_test": 0
+  },
+  "code": {
+   "eval": 4,
+   "exec": 12,
+   "shell_true": 5,
+   "sql_execute": 31
+  },
+  "secrets": {
+   "password": 16,
+   "secret": 5,
+   "api_key": 0,
+   "token": 19
+  }
+ },
+ "sphinx-doc/sphinx": {
+  "lang": "py",
+  "tree": {
+   "sha": "035a07c32c3241fd3356f4d827800c1f88525272",
+   "license": "NOASSERTION",
+   "archived": false,
+   "size_kb": 109919,
+   "stars": 8085,
+   "truncated": false,
+   "files_total": 2059,
+   "py_files": 775,
+   "js_ts_files": 156,
+   "py_non_test": 253,
+   "js_non_test": 142
+  },
+  "code": {
+   "eval": 2,
+   "exec": 2,
+   "shell_true": 0,
+   "sql_execute": 0
+  },
+  "secrets": {
+   "password": 0,
+   "secret": 0,
+   "api_key": 0,
+   "token": 5
+  }
+ },
+ "pytest-dev/pytest": {
+  "lang": "py",
+  "tree": {
+   "sha": "171c924acfd66d03ab51d08da2509461da6233a7",
+   "license": "MIT",
+   "archived": false,
+   "size_kb": 42295,
+   "stars": 14671,
+   "truncated": false,
+   "files_total": 641,
+   "py_files": 274,
+   "js_ts_files": 0,
+   "py_non_test": 104,
+   "js_non_test": 0
+  },
+  "code": {
+   "eval": 9,
+   "exec": 12,
+   "shell_true": 1,
+   "sql_execute": 1
+  },
+  "secrets": {
+   "password": 0,
+   "secret": 0,
+   "api_key": 0,
+   "token": 3
+  }
+ },
+ "OctoPrint/OctoPrint": {
+  "lang": "py",
+  "tree": {
+   "sha": "cf3c3e8369b98cfeea64fce53eee6fee3877861e",
+   "license": "AGPL-3.0",
+   "archived": false,
+   "size_kb": 61561,
+   "stars": 9187,
+   "truncated": false,
+   "files_total": 1085,
+   "py_files": 325,
+   "js_ts_files": 139,
+   "py_non_test": 235,
+   "js_non_test": 123
+  },
+  "code": {
+   "eval": 0,
+   "exec": 4,
+   "shell_true": 2,
+   "sql_execute": 4
+  },
+  "secrets": {
+   "password": 7,
+   "secret": 1,
+   "api_key": 1,
+   "token": 7
+  }
+ },
+ "mitmproxy/mitmproxy": {
+  "lang": "py",
+  "tree": {
+   "sha": "992052ee92d7ff4d240eafbe1afdf87c94b3f080",
+   "license": "MIT",
+   "archived": false,
+   "size_kb": 69917,
+   "stars": 46704,
+   "truncated": false,
+   "files_total": 1290,
+   "py_files": 584,
+   "js_ts_files": 227,
+   "py_non_test": 331,
+   "js_non_test": 137
+  },
+  "code": {
+   "eval": 0,
+   "exec": 0,
+   "shell_true": 0,
+   "sql_execute": 7
+  },
+  "secrets": {
+   "password": 4,
+   "secret": 2,
+   "api_key": 0,
+   "token": 4
+  }
+ },
+ "celery/celery": {
+  "lang": "py",
+  "tree": {
+   "sha": "768e476b5397fb4efe6439fdd818e47cd5c3a90a",
+   "license": "NOASSERTION",
+   "archived": false,
+   "size_kb": 38491,
+   "stars": 29136,
+   "truncated": false,
+   "files_total": 861,
+   "py_files": 453,
+   "js_ts_files": 0,
+   "py_non_test": 257,
+   "js_non_test": 0
+  },
+  "code": {
+   "eval": 2,
+   "exec": 5,
+   "shell_true": 0,
+   "sql_execute": 6
+  },
+  "secrets": {
+   "password": 14,
+   "secret": 1,
+   "api_key": 0,
+   "token": 3
+  }
+ },
+ "getredash/redash": {
+  "lang": "py",
+  "tree": {
+   "sha": "09740eaf6359af4ac4f932b620f28add2299142e",
+   "license": "BSD-2-Clause",
+   "archived": false,
+   "size_kb": 68449,
+   "stars": 28874,
+   "truncated": false,
+   "files_total": 1976,
+   "py_files": 309,
+   "js_ts_files": 655,
+   "py_non_test": 200,
+   "js_non_test": 513
+  },
+  "code": {
+   "eval": 0,
+   "exec": 1,
+   "shell_true": 0,
+   "sql_execute": 50
+  },
+  "secrets": {
+   "password": 13,
+   "secret": 1,
+   "api_key": 7,
+   "token": 10
+  }
+ },
+ "yt-dlp/yt-dlp": {
+  "lang": "py",
+  "tree": {
+   "sha": "412e7f0a4b0588fe884a02b344ac66a06538475b",
+   "license": "Unlicense",
+   "archived": false,
+   "size_kb": 65029,
+   "stars": 205994,
+   "truncated": false,
+   "files_total": 1235,
+   "py_files": 1124,
+   "js_ts_files": 3,
+   "py_non_test": 1068,
+   "js_non_test": 3
+  },
+  "code": {
+   "eval": 0,
+   "exec": 1,
+   "shell_true": 5,
+   "sql_execute": 3
+  },
+  "secrets": {
+   "password": 32,
+   "secret": 10,
+   "api_key": 18,
+   "token": 125
+  }
+ },
+ "ranger/ranger": {
+  "lang": "py",
+  "tree": {
+   "sha": "46e957af9762dd2fcaabfbef4d3c45c16edd1184",
+   "license": "GPL-3.0",
+   "archived": false,
+   "size_kb": 10871,
+   "stars": 17451,
+   "truncated": false,
+   "files_total": 165,
+   "py_files": 124,
+   "js_ts_files": 0,
+   "py_non_test": 106,
+   "js_non_test": 0
+  },
+  "code": {
+   "eval": 1,
+   "exec": 2,
+   "shell_true": 0,
+   "sql_execute": 4
+  },
+  "secrets": {
+   "password": 0,
+   "secret": 0,
+   "api_key": 0,
+   "token": 1
+  }
+ },
+ "juice-shop/juice-shop": {
+  "lang": "js",
+  "tree": {
+   "sha": "717f5efa886b0417eeecb52378b03cf10567b7e2",
+   "license": "MIT",
+   "archived": false,
+   "size_kb": 322164,
+   "stars": 14390,
+   "truncated": false,
+   "files_total": 1468,
+   "py_files": 3,
+   "js_ts_files": 652,
+   "py_non_test": 0,
+   "js_non_test": 399
+  },
+  "code": {
+   "eval": 3,
+   "new_function": 80,
+   "exec": 1,
+   "innerHTML": 6,
+   "sql_select": 197
+  },
+  "secrets": {
+   "password": 22,
+   "secret": 2,
+   "api_key": 1,
+   "token": 39
+  }
+ },
+ "jquery/jquery": {
+  "lang": "js",
+  "tree": {
+   "sha": "feaa9fcdb68cdeadf013d97d8fd40848d4618578",
+   "license": "MIT",
+   "archived": false,
+   "size_kb": 36112,
+   "stars": 59857,
+   "truncated": false,
+   "files_total": 351,
+   "py_files": 0,
+   "js_ts_files": 243,
+   "py_non_test": 0,
+   "js_non_test": 163
+  },
+  "code": {
+   "eval": 8,
+   "new_function": 32,
+   "exec": 22,
+   "innerHTML": 2,
+   "sql_select": 42
+  },
+  "secrets": {
+   "password": 0,
+   "secret": 0,
+   "api_key": 0,
+   "token": 1
+  }
+ },
+ "handlebars-lang/handlebars.js": {
+  "lang": "js",
+  "tree": {
+   "sha": "13a7a679910d2adbfe7f6fad61ce8f98426b0378",
+   "license": "MIT",
+   "archived": false,
+   "size_kb": 4680,
+   "stars": 18691,
+   "truncated": false,
+   "files_total": 144,
+   "py_files": 0,
+   "js_ts_files": 85,
+   "py_non_test": 0,
+   "js_non_test": 37
+  },
+  "code": {
+   "eval": 0,
+   "new_function": 22,
+   "exec": 1,
+   "innerHTML": 0,
+   "sql_select": 1
+  },
+  "secrets": {
+   "password": 0,
+   "secret": 1,
+   "api_key": 0,
+   "token": 0
+  }
+ },
+ "serverless/serverless": {
+  "lang": "js",
+  "tree": {
+   "sha": "e6a53f2252fb55a9812cde36d340022571a962c5",
+   "license": "NOASSERTION",
+   "archived": false,
+   "size_kb": 118957,
+   "stars": 46931,
+   "truncated": false,
+   "files_total": 2733,
+   "py_files": 55,
+   "js_ts_files": 1583,
+   "py_non_test": 3,
+   "js_non_test": 825
+  },
+  "code": {
+   "eval": 0,
+   "new_function": 730,
+   "exec": 36,
+   "innerHTML": 0,
+   "sql_select": 164
+  },
+  "secrets": {
+   "password": 3,
+   "secret": 13,
+   "api_key": 0,
+   "token": 85
+  }
+ },
+ "NodeBB/NodeBB": {
+  "lang": "js",
+  "tree": {
+   "sha": "25121d4a92a546109ba33b9ffe72da7e52b4cefe",
+   "license": "GPL-3.0",
+   "archived": false,
+   "size_kb": 114911,
+   "stars": 15245,
+   "truncated": false,
+   "files_total": 5803,
+   "py_files": 0,
+   "js_ts_files": 947,
+   "py_non_test": 0,
+   "js_non_test": 848
+  },
+  "code": {
+   "eval": 0,
+   "new_function": 370,
+   "exec": 12,
+   "innerHTML": 6,
+   "sql_select": 337
+  },
+  "secrets": {
+   "password": 23,
+   "secret": 2,
+   "api_key": 0,
+   "token": 14
+  }
+ },
+ "sequelize/sequelize": {
+  "lang": "js",
+  "tree": {
+   "sha": "53d1e8a6199fff85a8d6cd7d9bf0f3487f0cf798",
+   "license": "MIT",
+   "archived": false,
+   "size_kb": 82800,
+   "stars": 30346,
+   "truncated": false,
+   "files_total": 955,
+   "py_files": 0,
+   "js_ts_files": 765,
+   "py_non_test": 0,
+   "js_non_test": 343
+  },
+  "code": {
+   "eval": 0,
+   "new_function": 232,
+   "exec": 6,
+   "innerHTML": 0,
+   "sql_select": 176
+  },
+  "secrets": {
+   "password": 3,
+   "secret": 2,
+   "api_key": 0,
+   "token": 4
+  }
+ },
+ "shelljs/shelljs": {
+  "lang": "js",
+  "tree": {
+   "sha": "060e8ac15aa32b1311db15c5e12cd64016637932",
+   "license": "BSD-3-Clause",
+   "archived": false,
+   "size_kb": 1497,
+   "stars": 14400,
+   "truncated": false,
+   "files_total": 179,
+   "py_files": 0,
+   "js_ts_files": 88,
+   "py_non_test": 0,
+   "js_non_test": 40
+  },
+  "code": {
+   "eval": 0,
+   "new_function": 17,
+   "exec": 6,
+   "innerHTML": 0,
+   "sql_select": 1
+  },
+  "secrets": {
+   "password": 0,
+   "secret": 0,
+   "api_key": 0,
+   "token": 0
+  }
+ },
+ "knex/knex": {
+  "lang": "js",
+  "tree": {
+   "sha": "e25d54bcb707714a17f5a5744eba5c4246bb4d1d",
+   "license": "MIT",
+   "archived": false,
+   "size_kb": 19448,
+   "stars": 20339,
+   "truncated": false,
+   "files_total": 601,
+   "py_files": 0,
+   "js_ts_files": 469,
+   "py_non_test": 0,
+   "js_non_test": 196
+  },
+  "code": {
+   "eval": 0,
+   "new_function": 75,
+   "exec": 4,
+   "innerHTML": 0,
+   "sql_select": 63
+  },
+  "secrets": {
+   "password": 2,
+   "secret": 0,
+   "api_key": 0,
+   "token": 0
+  }
+ }
+}

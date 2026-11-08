@@ -1,0 +1,40 @@
+{
+ "received": "2026-11-08",
+ "file": "sheet-labelled.csv (outside git, repolens-eval-assets/reachability/)",
+ "sha256": "197fa366e35a618f386dd632bf6f7b00c9098f11729bfd28138852afff9c6e7d",
+ "stated_sha256_matches": true,
+ "judge": "J1",
+ "how_labelled_owner_statement": "all 261 rows labelled by the owner alone, no AI and no RepoLens, using only the sheet and the repos on GitHub at the pinned commits, about 6 hours",
+ "checks_before_the_key_was_opened": {
+  "header_identical": true,
+  "rows": 261,
+  "ids_identical_to_blank_sheet": true,
+  "same_row_order": true,
+  "ids_unique": true,
+  "non_label_cells_differing_from_blank_sheet": 0,
+  "crlf_count_equal_to_blank_sheet": true
+ },
+ "label_counts": {
+  "not real": 233,
+  "real": 28
+ },
+ "label_counts_by_repo_from_the_sheet": {
+  "benoitc/gunicorn": {
+   "not real": 48
+  },
+  "certbot/certbot": {
+   "not real": 65
+  },
+  "getredash/redash": {
+   "real": 27,
+   "not real": 30
+  },
+  "ipython/ipython": {
+   "not real": 90,
+   "real": 1
+  }
+ },
+ "rows_with_a_note": 0,
+ "setup_file": "eval/results/reachability_setup-20261108T075920Z-26485f5.json",
+ "key_opened": false
+}

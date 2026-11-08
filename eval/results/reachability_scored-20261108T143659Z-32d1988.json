@@ -1,0 +1,1026 @@
+{
+  "run": {
+    "commit_sha": "32d19884d5ab70a76c947e85d956628e0108a20b",
+    "dirty": false,
+    "run_at": "2026-11-08T14:36:59+00:00",
+    "machine": "LAPTOP-4C2E555R",
+    "cpu": "Intel(R) Pentium(R) Silver N5030 CPU @ 1.10GHz",
+    "cpu_threads": 4,
+    "ram_gb": 7.8,
+    "os": "Windows 11 (10.0.22631)",
+    "python": "3.12.16",
+    "packages": {
+      "torch": "2.14.1+cpu",
+      "sentence-transformers": "6.2.0",
+      "transformers": "5.21.0",
+      "tree-sitter": "0.25.2",
+      "anthropic": "2.3.0"
+    },
+    "max_analysis_s": 600,
+    "tool_pins": {
+      "bandit": "bandit==1.9.4",
+      "semgrep": "semgrep==1.182.1"
+    },
+    "notes": "",
+    "embedder": "sentence-transformers",
+    "embed_model": "sentence-transformers/all-MiniLM-L6-v2",
+    "embed_revision": "1110a243fdf4706b3f48f1d95db1a4f5529b4d41",
+    "llm_used": false,
+    "llm": {
+      "provider": "anthropic",
+      "model": "claude-sonnet-5-5",
+      "effort": "low",
+      "thinking": "between_tools",
+      "max_tokens": 4000,
+      "prompt_version": "2026-10-28.2"
+    },
+    "retrieval": {
+      "top_k": 8,
+      "graph_expansion": true,
+      "expand_max": 8,
+      "context_tokens": 6000
+    }
+  },
+  "guard": {
+    "frozen_tier_commit": "cfd4835dc50b5497a189ca34ca410df19767bc52",
+    "prereg_commit": "958a3628640ed849751dbcd1c024cf744751ab01",
+    "head": "32d19884d5ab70a76c947e85d956628e0108a20b"
+  },
+  "labelled_sheet_sha256": "197fa366e35a618f386dd632bf6f7b00c9098f11729bfd28138852afff9c6e7d",
+  "judge": "J1",
+  "second_judge": "not received",
+  "seed": 20261108,
+  "shuffles": 10000,
+  "bootstraps": 10000,
+  "pool_sizes": {
+    "benoitc/gunicorn": 48,
+    "certbot/certbot": 60,
+    "getredash/redash": 48,
+    "ipython/ipython": 60
+  },
+  "primary": {
+    "unsure_rows": 0,
+    "per_repo": {
+      "benoitc/gunicorn": {
+        "rows": 48,
+        "real": 0,
+        "not_real": 48,
+        "set_precision": 0.0,
+        "set_precision_wilson": [
+          0.0,
+          0.0741
+        ],
+        "ap_bandit": null,
+        "ap_reach": null,
+        "ap_difference": null,
+        "ap_severity_first_exploratory": null,
+        "p20_bandit": 0.0,
+        "p20_reach": 0.0,
+        "p20_severity_first_exploratory": 0.0,
+        "top20_real_bandit": 0,
+        "top20_real_reach": 0,
+        "p20_wilson_bandit": [
+          0.0,
+          0.1611
+        ],
+        "p20_wilson_reach": [
+          0.0,
+          0.1611
+        ],
+        "note": "no real findings in the pool: no AP, left out of the means"
+      },
+      "certbot/certbot": {
+        "rows": 60,
+        "real": 0,
+        "not_real": 60,
+        "set_precision": 0.0,
+        "set_precision_wilson": [
+          0.0,
+          0.0602
+        ],
+        "ap_bandit": null,
+        "ap_reach": null,
+        "ap_difference": null,
+        "ap_severity_first_exploratory": null,
+        "p20_bandit": 0.0,
+        "p20_reach": 0.0,
+        "p20_severity_first_exploratory": 0.0,
+        "top20_real_bandit": 0,
+        "top20_real_reach": 0,
+        "p20_wilson_bandit": [
+          0.0,
+          0.1611
+        ],
+        "p20_wilson_reach": [
+          0.0,
+          0.1611
+        ],
+        "note": "no real findings in the pool: no AP, left out of the means"
+      },
+      "getredash/redash": {
+        "rows": 48,
+        "real": 27,
+        "not_real": 21,
+        "set_precision": 0.5625,
+        "set_precision_wilson": [
+          0.4228,
+          0.693
+        ],
+        "ap_bandit": 0.5639183863988249,
+        "ap_reach": 0.5465962253753416,
+        "ap_difference": -0.017322161023483273,
+        "ap_severity_first_exploratory": 0.5804655325922009,
+        "p20_bandit": 0.6,
+        "p20_reach": 0.5,
+        "p20_severity_first_exploratory": 0.6,
+        "top20_real_bandit": 12,
+        "top20_real_reach": 10,
+        "p20_wilson_bandit": [
+          0.3866,
+          0.7812
+        ],
+        "p20_wilson_reach": [
+          0.2993,
+          0.7007
+        ],
+        "note": null
+      },
+      "ipython/ipython": {
+        "rows": 60,
+        "real": 0,
+        "not_real": 60,
+        "set_precision": 0.0,
+        "set_precision_wilson": [
+          0.0,
+          0.0602
+        ],
+        "ap_bandit": null,
+        "ap_reach": null,
+        "ap_difference": null,
+        "ap_severity_first_exploratory": null,
+        "p20_bandit": 0.0,
+        "p20_reach": 0.0,
+        "p20_severity_first_exploratory": 0.0,
+        "top20_real_bandit": 0,
+        "top20_real_reach": 0,
+        "p20_wilson_bandit": [
+          0.0,
+          0.1611
+        ],
+        "p20_wilson_reach": [
+          0.0,
+          0.1611
+        ],
+        "note": "no real findings in the pool: no AP, left out of the means"
+      }
+    },
+    "rows_left": {
+      "benoitc/gunicorn": 48,
+      "certbot/certbot": 60,
+      "getredash/redash": 48,
+      "ipython/ipython": 60
+    },
+    "bandit_order": {
+      "mean_ap": 0.5639183863988249,
+      "repos_with_ap": 1,
+      "pooled_p20": 0.15,
+      "p20_repos": 4,
+      "p20_real": 12,
+      "p20_n": 80,
+      "pooled_p20_wilson": [
+        0.0879,
+        0.2441
+      ]
+    },
+    "reach_order": {
+      "mean_ap": 0.5465962253753416,
+      "repos_with_ap": 1,
+      "pooled_p20": 0.125,
+      "p20_repos": 4,
+      "p20_real": 10,
+      "p20_n": 80,
+      "pooled_p20_wilson": [
+        0.0693,
+        0.215
+      ]
+    },
+    "difference": {
+      "mean_ap_difference": -0.017322161023483273,
+      "repos": 1,
+      "p20_real_difference_total": -2,
+      "pooled_p20_difference": -0.025
+    },
+    "severity_first_exploratory_difference": {
+      "mean_ap_difference": 0.01654714619337605,
+      "repos": 1,
+      "p20_real_difference_total": 0,
+      "pooled_p20_difference": 0.0
+    }
+  },
+  "permutation_test": {
+    "shuffles": 10000,
+    "ap": {
+      "observed": -0.017322161023483273,
+      "at_least_as_large": 8314,
+      "p_one_sided": 0.8314,
+      "p_two_sided": 0.7615
+    },
+    "p20": {
+      "observed": -0.025,
+      "at_least_as_large": 6004,
+      "p_one_sided": 0.6004,
+      "p_two_sided": 0.7261,
+      "note": "second test, not corrected"
+    }
+  },
+  "bootstrap_ap_difference": {
+    "pooled": [
+      -0.0947,
+      0.0759,
+      10000
+    ],
+    "per_repo": {
+      "getredash/redash": [
+        -0.0947,
+        0.0759,
+        10000
+      ]
+    }
+  },
+  "sensitivity": {
+    "unsure_as_real": {
+      "unsure_rows": 0,
+      "difference": {
+        "mean_ap_difference": -0.017322161023483273,
+        "repos": 1,
+        "p20_real_difference_total": -2,
+        "pooled_p20_difference": -0.025
+      }
+    },
+    "unsure_as_not_real": {
+      "unsure_rows": 0,
+      "difference": {
+        "mean_ap_difference": -0.017322161023483273,
+        "repos": 1,
+        "p20_real_difference_total": -2,
+        "pooled_p20_difference": -0.025
+      }
+    },
+    "b104_counted_as_real": {
+      "difference": {
+        "mean_ap_difference": 0.01683118470692031,
+        "repos": 3,
+        "p20_real_difference_total": -3,
+        "pooled_p20_difference": -0.0375
+      },
+      "per_repo": {
+        "benoitc/gunicorn": {
+          "rows": 48,
+          "real": 1,
+          "not_real": 47,
+          "set_precision": 0.0208,
+          "set_precision_wilson": [
+            0.0037,
+            0.109
+          ],
+          "ap_bandit": 0.1,
+          "ap_reach": 0.04,
+          "ap_difference": -0.060000000000000005,
+          "ap_severity_first_exploratory": 0.1,
+          "p20_bandit": 0.05,
+          "p20_reach": 0.0,
+          "p20_severity_first_exploratory": 0.05,
+          "top20_real_bandit": 1,
+          "top20_real_reach": 0,
+          "p20_wilson_bandit": [
+            0.0089,
+            0.2361
+          ],
+          "p20_wilson_reach": [
+            0.0,
+            0.1611
+          ],
+          "note": null
+        },
+        "certbot/certbot": {
+          "rows": 60,
+          "real": 1,
+          "not_real": 59,
+          "set_precision": 0.0167,
+          "set_precision_wilson": [
+            0.0029,
+            0.0886
+          ],
+          "ap_bandit": 0.058823529411764705,
+          "ap_reach": 0.16666666666666666,
+          "ap_difference": 0.10784313725490195,
+          "ap_severity_first_exploratory": 0.08333333333333333,
+          "p20_bandit": 0.05,
+          "p20_reach": 0.05,
+          "p20_severity_first_exploratory": 0.05,
+          "top20_real_bandit": 1,
+          "top20_real_reach": 1,
+          "p20_wilson_bandit": [
+            0.0089,
+            0.2361
+          ],
+          "p20_wilson_reach": [
+            0.0089,
+            0.2361
+          ],
+          "note": null
+        },
+        "getredash/redash": {
+          "rows": 48,
+          "real": 28,
+          "not_real": 20,
+          "set_precision": 0.5833,
+          "set_precision_wilson": [
+            0.4428,
+            0.7115
+          ],
+          "ap_bandit": 0.6053775595331706,
+          "ap_reach": 0.6080279763990296,
+          "ap_difference": 0.0026504168658589844,
+          "ap_severity_first_exploratory": 0.6329873094027143,
+          "p20_bandit": 0.65,
+          "p20_reach": 0.55,
+          "p20_severity_first_exploratory": 0.65,
+          "top20_real_bandit": 13,
+          "top20_real_reach": 11,
+          "p20_wilson_bandit": [
+            0.4329,
+            0.8188
+          ],
+          "p20_wilson_reach": [
+            0.3421,
+            0.7418
+          ],
+          "note": null
+        },
+        "ipython/ipython": {
+          "rows": 60,
+          "real": 0,
+          "not_real": 60,
+          "set_precision": 0.0,
+          "set_precision_wilson": [
+            0.0,
+            0.0602
+          ],
+          "ap_bandit": null,
+          "ap_reach": null,
+          "ap_difference": null,
+          "ap_severity_first_exploratory": null,
+          "p20_bandit": 0.0,
+          "p20_reach": 0.0,
+          "p20_severity_first_exploratory": 0.0,
+          "top20_real_bandit": 0,
+          "top20_real_reach": 0,
+          "p20_wilson_bandit": [
+            0.0,
+            0.1611
+          ],
+          "p20_wilson_reach": [
+            0.0,
+            0.1611
+          ],
+          "note": "no real findings in the pool: no AP, left out of the means"
+        }
+      },
+      "bandit_order": {
+        "mean_ap": 0.25473369631497844,
+        "repos_with_ap": 3,
+        "pooled_p20": 0.1875,
+        "p20_repos": 4,
+        "p20_real": 15,
+        "p20_n": 80,
+        "pooled_p20_wilson": [
+          0.1171,
+          0.2866
+        ]
+      },
+      "reach_order": {
+        "mean_ap": 0.27156488102189874,
+        "repos_with_ap": 3,
+        "pooled_p20": 0.15,
+        "p20_repos": 4,
+        "p20_real": 12,
+        "p20_n": 80,
+        "pooled_p20_wilson": [
+          0.0879,
+          0.2441
+        ]
+      },
+      "permutation_test": {
+        "shuffles": 10000,
+        "ap": {
+          "observed": 0.01683118470692031,
+          "at_least_as_large": 4782,
+          "p_one_sided": 0.4782,
+          "p_two_sided": 0.6891
+        },
+        "p20": {
+          "observed": -0.0375,
+          "at_least_as_large": 5818,
+          "p_one_sided": 0.5818,
+          "p_two_sided": 0.6986,
+          "note": "second test, not corrected"
+        }
+      }
+    }
+  },
+  "descriptive_tables": {
+    "by_tier": {
+      "guess": {
+        "n": 9,
+        "real": 0,
+        "real_share": 0.0,
+        "wilson": [
+          0.0,
+          0.2991
+        ]
+      },
+      "none": {
+        "n": 126,
+        "real": 24,
+        "real_share": 0.1905,
+        "wilson": [
+          0.1315,
+          0.2678
+        ]
+      },
+      "solid": {
+        "n": 81,
+        "real": 3,
+        "real_share": 0.037,
+        "wilson": [
+          0.0127,
+          0.1033
+        ]
+      }
+    },
+    "by_entry_class": {
+      "None": {
+        "n": 126,
+        "real": 24,
+        "real_share": 0.1905,
+        "wilson": [
+          0.1315,
+          0.2678
+        ]
+      },
+      "app": {
+        "n": 81,
+        "real": 1,
+        "real_share": 0.0123,
+        "wilson": [
+          0.0022,
+          0.0667
+        ]
+      },
+      "public-api": {
+        "n": 9,
+        "real": 2,
+        "real_share": 0.2222,
+        "wilson": [
+          0.0632,
+          0.5474
+        ]
+      }
+    },
+    "tier_x_entry_class": {
+      "guess | app": {
+        "n": 9,
+        "real": 0
+      },
+      "none | None": {
+        "n": 126,
+        "real": 24
+      },
+      "solid | app": {
+        "n": 72,
+        "real": 1
+      },
+      "solid | public-api": {
+        "n": 9,
+        "real": 2
+      }
+    },
+    "by_rule_not_pre_registered": {
+      "B102": {
+        "n": 8,
+        "real": 0,
+        "real_share": 0.0,
+        "wilson": [
+          0.0,
+          0.3244
+        ]
+      },
+      "B103": {
+        "n": 3,
+        "real": 0,
+        "real_share": 0.0,
+        "wilson": [
+          0.0,
+          0.5615
+        ]
+      },
+      "B104": {
+        "n": 3,
+        "real": 0,
+        "real_share": 0.0,
+        "wilson": [
+          0.0,
+          0.5615
+        ]
+      },
+      "B105": {
+        "n": 14,
+        "real": 0,
+        "real_share": 0.0,
+        "wilson": [
+          0.0,
+          0.2153
+        ]
+      },
+      "B108": {
+        "n": 6,
+        "real": 0,
+        "real_share": 0.0,
+        "wilson": [
+          0.0,
+          0.3903
+        ]
+      },
+      "B110": {
+        "n": 44,
+        "real": 0,
+        "real_share": 0.0,
+        "wilson": [
+          0.0,
+          0.0803
+        ]
+      },
+      "B113": {
+        "n": 28,
+        "real": 27,
+        "real_share": 0.9643,
+        "wilson": [
+          0.8229,
+          0.9937
+        ]
+      },
+      "B202": {
+        "n": 1,
+        "real": 0,
+        "real_share": 0.0,
+        "wilson": [
+          0.0,
+          0.7935
+        ]
+      },
+      "B301": {
+        "n": 1,
+        "real": 0,
+        "real_share": 0.0,
+        "wilson": [
+          0.0,
+          0.7935
+        ]
+      },
+      "B303": {
+        "n": 2,
+        "real": 0,
+        "real_share": 0.0,
+        "wilson": [
+          0.0,
+          0.6576
+        ]
+      },
+      "B307": {
+        "n": 5,
+        "real": 0,
+        "real_share": 0.0,
+        "wilson": [
+          0.0,
+          0.4345
+        ]
+      },
+      "B310": {
+        "n": 4,
+        "real": 0,
+        "real_share": 0.0,
+        "wilson": [
+          0.0,
+          0.4899
+        ]
+      },
+      "B311": {
+        "n": 7,
+        "real": 0,
+        "real_share": 0.0,
+        "wilson": [
+          0.0,
+          0.3543
+        ]
+      },
+      "B318": {
+        "n": 1,
+        "real": 0,
+        "real_share": 0.0,
+        "wilson": [
+          0.0,
+          0.7935
+        ]
+      },
+      "B324": {
+        "n": 3,
+        "real": 0,
+        "real_share": 0.0,
+        "wilson": [
+          0.0,
+          0.5615
+        ]
+      },
+      "B403": {
+        "n": 1,
+        "real": 0,
+        "real_share": 0.0,
+        "wilson": [
+          0.0,
+          0.7935
+        ]
+      },
+      "B408": {
+        "n": 1,
+        "real": 0,
+        "real_share": 0.0,
+        "wilson": [
+          0.0,
+          0.7935
+        ]
+      },
+      "B501": {
+        "n": 6,
+        "real": 0,
+        "real_share": 0.0,
+        "wilson": [
+          0.0,
+          0.3903
+        ]
+      },
+      "B602": {
+        "n": 5,
+        "real": 0,
+        "real_share": 0.0,
+        "wilson": [
+          0.0,
+          0.4345
+        ]
+      },
+      "B603": {
+        "n": 36,
+        "real": 0,
+        "real_share": 0.0,
+        "wilson": [
+          0.0,
+          0.0964
+        ]
+      },
+      "B604": {
+        "n": 15,
+        "real": 0,
+        "real_share": 0.0,
+        "wilson": [
+          0.0,
+          0.2039
+        ]
+      },
+      "B605": {
+        "n": 4,
+        "real": 0,
+        "real_share": 0.0,
+        "wilson": [
+          0.0,
+          0.4899
+        ]
+      },
+      "B606": {
+        "n": 1,
+        "real": 0,
+        "real_share": 0.0,
+        "wilson": [
+          0.0,
+          0.7935
+        ]
+      },
+      "B607": {
+        "n": 11,
+        "real": 0,
+        "real_share": 0.0,
+        "wilson": [
+          0.0,
+          0.2588
+        ]
+      },
+      "B608": {
+        "n": 6,
+        "real": 0,
+        "real_share": 0.0,
+        "wilson": [
+          0.0,
+          0.3903
+        ]
+      }
+    },
+    "per_repo_by_tier": {
+      "benoitc/gunicorn": {
+        "guess": {
+          "n": 4,
+          "real": 0,
+          "real_share": 0.0,
+          "wilson": [
+            0.0,
+            0.4899
+          ]
+        },
+        "none": {
+          "n": 26,
+          "real": 0,
+          "real_share": 0.0,
+          "wilson": [
+            0.0,
+            0.1287
+          ]
+        },
+        "solid": {
+          "n": 18,
+          "real": 0,
+          "real_share": 0.0,
+          "wilson": [
+            0.0,
+            0.1759
+          ]
+        }
+      },
+      "certbot/certbot": {
+        "guess": {
+          "n": 3,
+          "real": 0,
+          "real_share": 0.0,
+          "wilson": [
+            0.0,
+            0.5615
+          ]
+        },
+        "none": {
+          "n": 21,
+          "real": 0,
+          "real_share": 0.0,
+          "wilson": [
+            0.0,
+            0.1546
+          ]
+        },
+        "solid": {
+          "n": 36,
+          "real": 0,
+          "real_share": 0.0,
+          "wilson": [
+            0.0,
+            0.0964
+          ]
+        }
+      },
+      "getredash/redash": {
+        "none": {
+          "n": 40,
+          "real": 24,
+          "real_share": 0.6,
+          "wilson": [
+            0.446,
+            0.7365
+          ]
+        },
+        "solid": {
+          "n": 8,
+          "real": 3,
+          "real_share": 0.375,
+          "wilson": [
+            0.1368,
+            0.6943
+          ]
+        }
+      },
+      "ipython/ipython": {
+        "guess": {
+          "n": 2,
+          "real": 0,
+          "real_share": 0.0,
+          "wilson": [
+            0.0,
+            0.6576
+          ]
+        },
+        "none": {
+          "n": 39,
+          "real": 0,
+          "real_share": 0.0,
+          "wilson": [
+            0.0,
+            0.0897
+          ]
+        },
+        "solid": {
+          "n": 19,
+          "real": 0,
+          "real_share": 0.0,
+          "wilson": [
+            0.0,
+            0.1682
+          ]
+        }
+      }
+    },
+    "per_repo_by_entry_class": {
+      "benoitc/gunicorn": {
+        "None": {
+          "n": 26,
+          "real": 0,
+          "real_share": 0.0,
+          "wilson": [
+            0.0,
+            0.1287
+          ]
+        },
+        "app": {
+          "n": 17,
+          "real": 0,
+          "real_share": 0.0,
+          "wilson": [
+            0.0,
+            0.1843
+          ]
+        },
+        "public-api": {
+          "n": 5,
+          "real": 0,
+          "real_share": 0.0,
+          "wilson": [
+            0.0,
+            0.4345
+          ]
+        }
+      },
+      "certbot/certbot": {
+        "None": {
+          "n": 21,
+          "real": 0,
+          "real_share": 0.0,
+          "wilson": [
+            0.0,
+            0.1546
+          ]
+        },
+        "app": {
+          "n": 39,
+          "real": 0,
+          "real_share": 0.0,
+          "wilson": [
+            0.0,
+            0.0897
+          ]
+        }
+      },
+      "getredash/redash": {
+        "None": {
+          "n": 40,
+          "real": 24,
+          "real_share": 0.6,
+          "wilson": [
+            0.446,
+            0.7365
+          ]
+        },
+        "app": {
+          "n": 5,
+          "real": 1,
+          "real_share": 0.2,
+          "wilson": [
+            0.0362,
+            0.6245
+          ]
+        },
+        "public-api": {
+          "n": 3,
+          "real": 2,
+          "real_share": 0.6667,
+          "wilson": [
+            0.2077,
+            0.9385
+          ]
+        }
+      },
+      "ipython/ipython": {
+        "None": {
+          "n": 39,
+          "real": 0,
+          "real_share": 0.0,
+          "wilson": [
+            0.0,
+            0.0897
+          ]
+        },
+        "app": {
+          "n": 20,
+          "real": 0,
+          "real_share": 0.0,
+          "wilson": [
+            0.0,
+            0.1611
+          ]
+        },
+        "public-api": {
+          "n": 1,
+          "real": 0,
+          "real_share": 0.0,
+          "wilson": [
+            0.0,
+            0.7935
+          ]
+        }
+      }
+    }
+  },
+  "secondary_repolens_exploratory": {
+    "per_repo": {
+      "certbot/certbot": {
+        "rows": 7,
+        "real": 0,
+        "tiers": {
+          "solid": 6,
+          "none": 1
+        },
+        "set_precision": 0.0,
+        "set_precision_wilson": [
+          0.0,
+          0.3543
+        ],
+        "ap_current": null,
+        "ap_reach": null,
+        "p10_current": null,
+        "p10_reach": null,
+        "p20_current": null,
+        "p20_reach": null
+      },
+      "getredash/redash": {
+        "rows": 19,
+        "real": 0,
+        "tiers": {
+          "not_checked": 8,
+          "solid": 2,
+          "none": 9
+        },
+        "set_precision": 0.0,
+        "set_precision_wilson": [
+          0.0,
+          0.1682
+        ],
+        "ap_current": null,
+        "ap_reach": null,
+        "p10_current": null,
+        "p10_reach": null,
+        "p20_current": null,
+        "p20_reach": null
+      },
+      "ipython/ipython": {
+        "rows": 42,
+        "real": 1,
+        "tiers": {
+          "none": 37,
+          "solid": 2,
+          "guess": 3
+        },
+        "set_precision": 0.0238,
+        "set_precision_wilson": [
+          0.0042,
+          0.1232
+        ],
+        "ap_current": 0.14285714285714285,
+        "ap_reach": 0.08333333333333333,
+        "p10_current": 0.1,
+        "p10_reach": 0.0,
+        "p20_current": 0.05,
+        "p20_reach": 0.05
+      }
+    },
+    "mean_ap_difference": -0.05952380952380952,
+    "repos_with_ap": 1,
+    "exploratory_permutation_p_one_sided": 0.6493,
+    "note": "exploratory; short lists; no claim rests on it"
+  },
+  "row_label_counts": {
+    "not real": 233,
+    "real": 28
+  }
+}
