@@ -160,3 +160,39 @@ Same two orderings idea on RepoLens's list: current order `(placeholder, severit
 4. B101 and B404 excluded from the count and the labelled lists; B603, B607 and B311 kept (section 6).
 5. No second label column; one label per row.
 6. J2 is the second judge, code `J2` only, not yet confirmed; J1 labelling does not wait for J2.
+
+## 13. Amendment 1 (8 Nov 2026), committed before any evaluation repo is analysed with the reachability code
+
+Nothing in sections 1 to 12 is rewritten; this section adds to them. It is committed and pushed before the four accepted repos (gunicorn, certbot, redash, ipython) are ingested or their tiers computed.
+The counting run (section 6) is the only thing done with them so far, and it used no tier code.
+
+### 13.1 Frozen tier code
+- **Frozen tier code: merge commit `cfd4835dc50b5497a189ca34ca410df19767bc52`** (`feat/reachability` merged into `main`, CI green on the branch `8d65fe8` and on `main`).
+- The tier rules are `docs/reachability-design.md` and the code is `backend/app/reach/` at that commit. Section 3 of this file is the summary; where they differ in detail, that document at that commit decides.
+- No change to the tier code after this commit may be used for this study. A change would be written into a dated deviation below and the tiers would be recomputed, from scratch, for all repos.
+- Built and checked on the development set only (PyGoat, flask, black, express, itsdangerous). The four evaluation repos were not opened, ingested or inspected before this commit (the counting run only counted Bandit findings).
+
+### 13.2 Decision 1: one solid tier, entry class recorded (owner, 8 Nov)
+- The ranking has **one** solid tier. There is no split of solid into "app entry" and "public API only" in any sort key, primary or exploratory.
+- Each finding's **entry class** is recorded at compute time (`reach_entry_class`): `app` if the same tier is reached without the public-API entry points, `public-api` if it needs them; none when there is no path (no path found, not checked).
+  App entry kinds: `main-block`, `main-module`, `console-script`, `plugin-entry`, `route-or-command`, `url-handler`, `framework-module`, `shebang`, `package-main`. The public-API kind is `public-api` (the exports of an `__init__.py`).
+- **Section 4's descriptive table** ("real share per tier") becomes: **real share per tier, and per entry class, with a tier x entry-class cross-table**, unsure excluded, counts shown next to every share, Wilson intervals, no test. It is descriptive.
+- Dev-set facts behind the decision (8 Nov, non-test findings, RepoLens's own findings): 59 solid via an app entry, 2 solid via the public API only, 2 guess, 5 no path found, 3 not checked.
+  Too few public-API-only findings to say the split would help, and the app-entry detectors are the heuristic with lower recall, so a split would make the order depend on them.
+
+### 13.3 Decision 2: structural guesses and the tie-break (owner, 8 Nov)
+- A class reaches its constructor (`__init__`, JS `constructor`) as a solid step. It reaches its other **special (dunder) methods** (`__enter__`, `__call__`, `__deepcopy__` ...) as a **guess**, because Python calls them implicitly.
+  **An ordinary method gets no structural edge**: only a call (by a name the resolver can match) reaches it, so a method nothing calls is "no path found" even when its class is reached.
+- A function defined inside a function remains a guess (it runs if the enclosing function hands it out, as a decorator's wrapper does). It changed no dev-set finding either way.
+- **Tie-break among paths** to a symbol: fewest guessed steps, then fewest structural guesses, then fewest steps. The tier depends only on the first key; the other two decide which path is shown.
+- Section 3's "guess path" is therefore: reached only if at least one step is a guess, where a guess is a call matched by name at confidence 0.5, a special method Python calls implicitly, or a function defined inside code that is reached.
+- Effect on the dev set: no dev-set finding changed tier. Symbols moved from guess to no path found (itsdangerous 8, PyGoat 14, flask 185, black 128); solid is unchanged.
+- Wording in the UI (fixed in the same commit): "Reachable only through guessed steps (a call matched by name, a special method Python calls implicitly, or a function defined inside code that is reached)".
+
+### 13.4 Also fixed before the freeze (found by tests)
+- A file that is a single function mapped its lines to the module because the two have the same line range. A tie now prefers the non-module symbol.
+- Decorator and `__main__` detection read real code with `ast`; examples inside docstrings no longer count as entry points (flask: 18 route/command entry points, 14 of them docstrings, now 4).
+
+### 13.5 What is reported next, before any label exists
+For each of the four repos: the pinned SHA, the size of the Bandit list, the pool size, the tier shares and the entry-class shares (whole list and pool), and the hashes of the blank sheets and the key.
+No finding contents and no labels are reported. Sheets and the key are built outside git (section 8); only their SHA-256 is committed.
