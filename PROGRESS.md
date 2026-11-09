@@ -1367,7 +1367,8 @@
   - **Note (Git Bash):** a value starting with `/` in `REPOLENS_DEV_API_DELAY_MATCH` is rewritten by MSYS into a Windows path; leave out the leading slash there (PowerShell is fine).
   - **Later:** the selected file on a deep link opens at the left edge of the canvas (same on main); the first-visit card can cover a node until closed; add the web tests to CI (CLAUDE.md: frontend CI only if asked).
   - **Servers left running:** API on 8000 (key loaded), `vite preview` on 5173 with this branch's build (no delay).
-- **Theme switch as a circular reveal (`fix/theme-transition`, 9–10 Nov; not merged, waiting for the owner's real-mouse test in Firefox and Chrome).** $0 API spend.
+- **Theme switch as a circular reveal (`fix/theme-transition`, 9–10 Nov; owner's real-mouse test passed in Firefox and Chrome on 10 Nov, then merged into `main` with a merge commit).** $0 API spend.
+  - **Owner's test (10 Nov): passed** in Firefox and Chrome, served from `vite preview` on 5173 at `bd6975d`: the reveal in both directions, Enter twice switches once, the choice survives a reload, map drag and zoom normal.
   - **Diagnosis (local probe, never committed).** Setup: Explorer on redash (map, `queries.py` panel, Ask open) and Findings (All), at real size on this PC. The old `.theme-switching *` class started over 1,000 colour transitions per click.
     - **Style recalc on Explorer:** 361 ms in Chrome 139, 154 ms in Edge 156, 85 ms in Firefox 159.
     - **Click to first paint (Chrome 139):** 0.9–1.6 s.
