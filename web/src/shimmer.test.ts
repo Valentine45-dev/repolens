@@ -26,7 +26,11 @@ describe("skeleton shimmer", () => {
     expect(after).toMatch(/var\(--shimmer\)/);
     const keys = block("@keyframes skeleton-shimmer");
     expect(keys).toMatch(/transform:\s*translateX\(100%\)/);
-    expect(css).not.toMatch(/@keyframes[^{]*\{[^@]*background-position/);
+    // No keyframes anywhere move a background (each @keyframes block on its own, so a rule after
+    // one, such as the theme reveal's, is not read as part of it).
+    const names = [...css.matchAll(/@keyframes\s+([\w-]+)/g)].map((m) => m[1]);
+    expect(names).toContain("skeleton-shimmer");
+    for (const name of names) expect(block(`@keyframes ${name}`)).not.toMatch(/background-position/);
   });
 
   it("has a light and a dark band from tokens", () => {

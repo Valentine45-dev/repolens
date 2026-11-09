@@ -10,6 +10,7 @@ import {
   resolveTheme,
   REVEAL_CLASS,
   REVEAL_MS,
+  REVEAL_VARS,
   THEME_KEY,
 } from "./theme";
 
@@ -160,11 +161,11 @@ function fakeViewTransitions() {
     calls.push(call);
     return { ready: call.ready.promise, finished: call.finished.promise };
   });
-  const animate = vi.fn();
   Object.assign(document, { startViewTransition: start });
-  Object.assign(document.documentElement, { animate });
-  return { calls, start, animate };
+  return { calls, start };
 }
+const revealVar = (name: string) => document.documentElement.style.getPropertyValue(name);
+const noRevealVars = () => Object.values(REVEAL_VARS).every((name) => revealVar(name) === "");
 const flushPromises = () => new Promise((r) => setTimeout(r, 0));
 
 function toggleAt(left: number, top: number): HTMLButtonElement {
@@ -176,32 +177,47 @@ function toggleAt(left: number, top: number): HTMLButtonElement {
 describe("the circular reveal (View Transitions)", () => {
   afterEach(() => {
     delete (document as unknown as Record<string, unknown>).startViewTransition;
-    delete (document.documentElement as unknown as Record<string, unknown>).animate;
+    document.documentElement.removeAttribute("style");
   });
 
   it("grows a circle from the toggle's centre to the farthest window corner", async () => {
-    const { calls, start, animate } = fakeViewTransitions();
+    const { calls, start } = fakeViewTransitions();
     chooseTheme("dark", toggleAt(1300, 10));
     expect(start).toHaveBeenCalledTimes(1);
     expect(document.documentElement.classList.contains(REVEAL_CLASS)).toBe(true);
     expect(theme()).toBeUndefined(); // the page changes inside the update callback, not before
+
+    // The CSS animation on ::view-transition-new(root) reads these (styles.css).
+    const [x, y] = [1316, 26];
+    const r = Math.hypot(Math.max(x, window.innerWidth - x), Math.max(y, window.innerHeight - y));
+    expect(revealVar(REVEAL_VARS.x)).toBe(`${x}px`);
+    expect(revealVar(REVEAL_VARS.y)).toBe(`${y}px`);
+    expect(revealVar(REVEAL_VARS.radius)).toBe(`${r}px`);
+    expect(revealVar(REVEAL_VARS.duration)).toBe(`${REVEAL_MS}ms`);
 
     calls[0].update();
     expect(theme()).toBe("dark");
     expect(localStorage.getItem(THEME_KEY)).toBe("dark");
 
     calls[0].ready.resolve();
-    await flushPromises();
-    const [x, y] = [1316, 26];
-    const r = Math.hypot(Math.max(x, window.innerWidth - x), Math.max(y, window.innerHeight - y));
-    expect(animate).toHaveBeenCalledWith(
-      { clipPath: [`circle(0px at ${x}px ${y}px)`, `circle(${r}px at ${x}px ${y}px)`] },
-      { duration: REVEAL_MS, easing: "ease-in-out", pseudoElement: "::view-transition-new(root)" },
-    );
-
     calls[0].finished.resolve();
     await flushPromises();
     expect(document.documentElement.className).toBe("");
+    expect(noRevealVars()).toBe(true);
+  });
+
+  it("the stylesheet animates only the new image, with a circle that reads those properties", () => {
+    // @ts-expect-error process has no type declarations here; the tests run in Node
+    const css: string = readFileSync(`${process.cwd()}/src/styles.css`, "utf8");
+    const rule = (at: number) => css.slice(at).split("}")[0];
+    expect(rule(css.indexOf(":root.theme-reveal::view-transition-old(root),"))).toContain("animation: none");
+    expect(rule(css.lastIndexOf(":root.theme-reveal::view-transition-new(root) {"))).toContain(
+      "animation: theme-reveal var(--theme-reveal-ms, 450ms) ease-in-out",
+    );
+    const keyframes = css.slice(css.indexOf("@keyframes theme-reveal"));
+    expect(keyframes).toContain("circle(0 at var(--theme-reveal-x) var(--theme-reveal-y))");
+    expect(keyframes).toContain("circle(var(--theme-reveal-r) at var(--theme-reveal-x) var(--theme-reveal-y))");
+    expect(css).not.toContain("theme-switching");
   });
 
   it("swaps the variables with transitions off inside the update, so the new snapshot is settled", async () => {
@@ -258,14 +274,14 @@ describe("the circular reveal (View Transitions)", () => {
   });
 
   it("leaves no class and no guard behind when the transition is skipped or fails", async () => {
-    const { calls, start, animate } = fakeViewTransitions();
+    const { calls, start } = fakeViewTransitions();
     chooseTheme("dark", toggleAt(0, 0));
     calls[0].update();
     calls[0].ready.reject();
     calls[0].finished.reject();
     await flushPromises();
-    expect(animate).not.toHaveBeenCalled();
     expect(document.documentElement.className).toBe("");
+    expect(noRevealVars()).toBe(true);
     expect(theme()).toBe("dark");
     chooseTheme("light", toggleAt(0, 0));
     expect(start).toHaveBeenCalledTimes(2);

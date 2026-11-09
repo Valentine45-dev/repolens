@@ -116,13 +116,27 @@
   transition: none !important;
 }
 
-/* The reveal: a View Transition in which only the circle on the new page image animates (theme.ts
-   runs it with element.animate). No cross-fade; the new image sits above the old one. Never under
+/* The reveal: a View Transition in which only the new page image animates, as a circle growing from
+   the toggle's centre to the farthest window corner (theme.ts sets the centre, radius and duration
+   on <html> for the switch). No cross-fade; the new image sits above the old one. Never under
    reduced motion (theme.ts switches instantly then). */
 :root.theme-reveal::view-transition-old(root),
 :root.theme-reveal::view-transition-new(root) {
   animation: none;
   mix-blend-mode: normal;
+}
+
+:root.theme-reveal::view-transition-new(root) {
+  animation: theme-reveal var(--theme-reveal-ms, 450ms) ease-in-out both;
+}
+
+@keyframes theme-reveal {
+  from {
+    clip-path: circle(0 at var(--theme-reveal-x) var(--theme-reveal-y));
+  }
+  to {
+    clip-path: circle(var(--theme-reveal-r) at var(--theme-reveal-x) var(--theme-reveal-y));
+  }
 }
 
 *,

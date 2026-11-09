@@ -13,6 +13,13 @@ export const REVEAL_MS = 450;
 export const INSTANT_CLASS = "theme-instant";
 /** On <html> only while a reveal runs: the View Transition shows just the circle (styles.css). */
 export const REVEAL_CLASS = "theme-reveal";
+/** Set on <html> only while a reveal runs: the circle's centre, final radius and duration. */
+export const REVEAL_VARS = {
+  x: "--theme-reveal-x",
+  y: "--theme-reveal-y",
+  radius: "--theme-reveal-r",
+  duration: "--theme-reveal-ms",
+} as const;
 const DARK_QUERY = "(prefers-color-scheme: dark)";
 const REDUCED_QUERY = "(prefers-reduced-motion: reduce)";
 
@@ -98,11 +105,22 @@ export function chooseTheme(theme: Theme, origin?: Element | null): void {
   const y = box.top + box.height / 2;
   const radius = Math.hypot(Math.max(x, window.innerWidth - x), Math.max(y, window.innerHeight - y));
 
+  // The circle is a CSS animation on ::view-transition-new(root) (styles.css) that reads these
+  // properties. (Firefox 159 does not apply element.animate() to View Transition pseudo-elements;
+  // CSS animations on them work in every browser that has View Transitions.)
+  const reveal: Record<string, string> = {
+    [REVEAL_VARS.x]: `${x}px`,
+    [REVEAL_VARS.y]: `${y}px`,
+    [REVEAL_VARS.radius]: `${radius}px`,
+    [REVEAL_VARS.duration]: `${REVEAL_MS}ms`,
+  };
   revealing = true;
+  for (const [name, value] of Object.entries(reveal)) root.style.setProperty(name, value);
   root.classList.add(REVEAL_CLASS);
   const done = () => {
     revealing = false;
     root.classList.remove(REVEAL_CLASS);
+    for (const name of Object.keys(reveal)) root.style.removeProperty(name);
   };
   let transition: ViewTransitionLike;
   try {
@@ -112,18 +130,9 @@ export function chooseTheme(theme: Theme, origin?: Element | null): void {
     applyThemeInstantly(theme);
     return;
   }
-  transition.ready.then(
-    () => {
-      if (typeof root.animate !== "function") return;
-      root.animate(
-        { clipPath: [`circle(0px at ${x}px ${y}px)`, `circle(${radius}px at ${x}px ${y}px)`] },
-        { duration: REVEAL_MS, easing: "ease-in-out", pseudoElement: "::view-transition-new(root)" },
-      );
-    },
-    // Skipped (for example the tab was hidden): the theme is still applied by the update callback.
-    () => {},
-  );
-  // Finished, skipped or failed: never leave the class or the guard behind.
+  // Skipped (for example the tab was hidden): the update callback still applies the theme.
+  transition.ready.catch(() => {});
+  // Finished, skipped or failed: never leave the class, the properties or the guard behind.
   transition.finished.then(done, done);
 }
 
