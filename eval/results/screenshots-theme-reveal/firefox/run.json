@@ -1,0 +1,571 @@
+{
+  "browser": "Firefox 159.0.1",
+  "reducedMotion": false,
+  "when": "2026-11-09T19:48:23.229Z",
+  "pages": {
+    "explorer": {
+      "info": {
+        "w": 1366,
+        "h": 635,
+        "dpr": 1,
+        "vt": true,
+        "reduced": false,
+        "theme": "light"
+      },
+      "toggleCentre": {
+        "x": 1326,
+        "y": 25.5
+      },
+      "steps": [
+        {
+          "name": "explorer-light-to-dark-25pct",
+          "shot": null,
+          "pauseAtMs": 112.5,
+          "held": {
+            "progress": 0.25,
+            "newClipPath": "circle(188.495px at 1326px 25.5px)",
+            "oldClipPath": "none",
+            "oldAnimation": "none",
+            "newAnimation": "theme-reveal"
+          },
+          "before": {
+            "theme": "light",
+            "cls": "",
+            "vt": 0,
+            "stored": "light",
+            "pressed": "false"
+          },
+          "after": {
+            "theme": "dark",
+            "cls": "",
+            "vt": 1,
+            "stored": "dark",
+            "pressed": "true"
+          },
+          "transition": {
+            "t0": 18777,
+            "before": "light",
+            "ready": 385,
+            "finished": 1645,
+            "classAfter": "theme-reveal",
+            "after": "dark"
+          }
+        },
+        {
+          "name": "explorer-dark-to-light-25pct",
+          "shot": null,
+          "pauseAtMs": 112.5,
+          "held": {
+            "progress": 0.25,
+            "newClipPath": "circle(188.495px at 1326px 25.5px)",
+            "oldClipPath": "none",
+            "oldAnimation": "none",
+            "newAnimation": "theme-reveal"
+          },
+          "before": {
+            "theme": "dark",
+            "cls": "",
+            "vt": 1,
+            "stored": "dark",
+            "pressed": "true"
+          },
+          "after": {
+            "theme": "light",
+            "cls": "",
+            "vt": 2,
+            "stored": "light",
+            "pressed": "false"
+          },
+          "transition": {
+            "t0": 21888,
+            "before": "dark",
+            "ready": 343,
+            "finished": 1717,
+            "classAfter": "theme-reveal",
+            "after": "light"
+          }
+        },
+        {
+          "name": "explorer-light-to-dark-50pct",
+          "shot": null,
+          "pauseAtMs": 225,
+          "held": {
+            "progress": 0.5,
+            "newClipPath": "circle(729.686px at 1326px 25.5px)",
+            "oldClipPath": "none",
+            "oldAnimation": "none",
+            "newAnimation": "theme-reveal"
+          },
+          "before": {
+            "theme": "light",
+            "cls": "",
+            "vt": 2,
+            "stored": "light",
+            "pressed": "false"
+          },
+          "after": {
+            "theme": "dark",
+            "cls": "",
+            "vt": 3,
+            "stored": "dark",
+            "pressed": "true"
+          },
+          "transition": {
+            "t0": 24636,
+            "before": "light",
+            "ready": 1316,
+            "finished": 3771,
+            "classAfter": "theme-reveal",
+            "after": "dark"
+          }
+        },
+        {
+          "name": "explorer-dark-to-light-50pct",
+          "shot": null,
+          "pauseAtMs": 225,
+          "held": {
+            "progress": 0.5,
+            "newClipPath": "circle(729.686px at 1326px 25.5px)",
+            "oldClipPath": "none",
+            "oldAnimation": "none",
+            "newAnimation": "theme-reveal"
+          },
+          "before": {
+            "theme": "dark",
+            "cls": "",
+            "vt": 3,
+            "stored": "dark",
+            "pressed": "true"
+          },
+          "after": {
+            "theme": "light",
+            "cls": "",
+            "vt": 4,
+            "stored": "light",
+            "pressed": "false"
+          },
+          "transition": {
+            "t0": 29269,
+            "before": "dark",
+            "ready": 1314,
+            "finished": 2545,
+            "classAfter": "theme-reveal",
+            "after": "light"
+          }
+        },
+        {
+          "name": "explorer-light-to-dark-75pct",
+          "shot": null,
+          "pauseAtMs": 337.5,
+          "held": {
+            "progress": 0.75,
+            "newClipPath": "circle(1270.88px at 1326px 25.5px)",
+            "oldClipPath": "none",
+            "oldAnimation": "none",
+            "newAnimation": "theme-reveal"
+          },
+          "before": {
+            "theme": "light",
+            "cls": "",
+            "vt": 4,
+            "stored": "light",
+            "pressed": "false"
+          },
+          "after": {
+            "theme": "dark",
+            "cls": "",
+            "vt": 5,
+            "stored": "dark",
+            "pressed": "true"
+          },
+          "transition": {
+            "t0": 32946,
+            "before": "light",
+            "ready": 485,
+            "finished": 1629,
+            "classAfter": "theme-reveal",
+            "after": "dark"
+          }
+        },
+        {
+          "name": "explorer-dark-to-light-75pct",
+          "shot": null,
+          "pauseAtMs": 337.5,
+          "held": {
+            "progress": 0.75,
+            "newClipPath": "circle(1270.88px at 1326px 25.5px)",
+            "oldClipPath": "none",
+            "oldAnimation": "none",
+            "newAnimation": "theme-reveal"
+          },
+          "before": {
+            "theme": "dark",
+            "cls": "",
+            "vt": 5,
+            "stored": "dark",
+            "pressed": "true"
+          },
+          "after": {
+            "theme": "light",
+            "cls": "",
+            "vt": 6,
+            "stored": "light",
+            "pressed": "false"
+          },
+          "transition": {
+            "t0": 35435,
+            "before": "dark",
+            "ready": 536,
+            "finished": 1503,
+            "classAfter": "theme-reveal",
+            "after": "light"
+          }
+        },
+        {
+          "name": "explorer-after-reveal-dark",
+          "shot": null,
+          "pauseAtMs": null,
+          "held": null,
+          "before": {
+            "theme": "light",
+            "cls": "",
+            "vt": 6,
+            "stored": "light",
+            "pressed": "false"
+          },
+          "after": {
+            "theme": "dark",
+            "cls": "",
+            "vt": 7,
+            "stored": "dark",
+            "pressed": "true"
+          },
+          "transition": {
+            "t0": 37518,
+            "before": "light",
+            "ready": 704,
+            "finished": 885,
+            "classAfter": "theme-reveal",
+            "after": "dark"
+          }
+        },
+        {
+          "name": "explorer-after-reveal-light",
+          "shot": null,
+          "pauseAtMs": null,
+          "held": null,
+          "before": {
+            "theme": "dark",
+            "cls": "",
+            "vt": 7,
+            "stored": "dark",
+            "pressed": "true"
+          },
+          "after": {
+            "theme": "light",
+            "cls": "",
+            "vt": 8,
+            "stored": "light",
+            "pressed": "false"
+          },
+          "transition": {
+            "t0": 39434,
+            "before": "dark",
+            "ready": 286,
+            "finished": 743,
+            "classAfter": "theme-reveal",
+            "after": "light"
+          }
+        }
+      ],
+      "keyFocus": {
+        "active": "icon-button theme-toggle",
+        "hasFocus": false
+      },
+      "doubleClick": {
+        "before": {
+          "theme": "light",
+          "cls": "",
+          "vt": 8,
+          "stored": "light",
+          "pressed": "false"
+        },
+        "afterTwoClicks": {
+          "theme": "dark",
+          "cls": "",
+          "vt": 9,
+          "stored": "dark",
+          "pressed": "true"
+        },
+        "afterTwoEnters": {
+          "theme": "dark",
+          "cls": "",
+          "vt": 9,
+          "stored": "dark",
+          "pressed": "true"
+        }
+      },
+      "anims": [
+        {
+          "pseudo": "::view-transition-new(root)",
+          "name": "theme-reveal",
+          "duration": 450,
+          "easing": "linear",
+          "x": "1326px",
+          "y": "25.5px",
+          "r": "1459.371868304991px"
+        },
+        {
+          "pseudo": "::view-transition-new(root)",
+          "name": "theme-reveal",
+          "duration": 450,
+          "easing": "linear",
+          "x": "1326px",
+          "y": "25.5px",
+          "r": "1459.371868304991px"
+        },
+        {
+          "pseudo": "::view-transition-new(root)",
+          "name": "theme-reveal",
+          "duration": 450,
+          "easing": "linear",
+          "x": "1326px",
+          "y": "25.5px",
+          "r": "1459.371868304991px"
+        },
+        {
+          "pseudo": "::view-transition-new(root)",
+          "name": "theme-reveal",
+          "duration": 450,
+          "easing": "linear",
+          "x": "1326px",
+          "y": "25.5px",
+          "r": "1459.371868304991px"
+        },
+        {
+          "pseudo": "::view-transition-new(root)",
+          "name": "theme-reveal",
+          "duration": 450,
+          "easing": "linear",
+          "x": "1326px",
+          "y": "25.5px",
+          "r": "1459.371868304991px"
+        },
+        {
+          "pseudo": "::view-transition-new(root)",
+          "name": "theme-reveal",
+          "duration": 450,
+          "easing": "linear",
+          "x": "1326px",
+          "y": "25.5px",
+          "r": "1459.371868304991px"
+        },
+        {
+          "pseudo": "::view-transition-new(root)",
+          "name": "theme-reveal",
+          "duration": 450,
+          "easing": "linear",
+          "x": "1326px",
+          "y": "25.5px",
+          "r": "1459.371868304991px"
+        },
+        {
+          "pseudo": "::view-transition-new(root)",
+          "name": "theme-reveal",
+          "duration": 450,
+          "easing": "linear",
+          "x": "1326px",
+          "y": "25.5px",
+          "r": "1459.371868304991px"
+        },
+        {
+          "pseudo": "::view-transition-new(root)",
+          "name": "theme-reveal",
+          "duration": 450,
+          "easing": "linear",
+          "x": "1326px",
+          "y": "25.5px",
+          "r": "1459.371868304991px"
+        }
+      ]
+    },
+    "findings": {
+      "info": {
+        "w": 1366,
+        "h": 635,
+        "dpr": 1,
+        "vt": true,
+        "reduced": false,
+        "theme": "light"
+      },
+      "toggleCentre": {
+        "x": 1326,
+        "y": 25.5
+      },
+      "steps": [
+        {
+          "name": "findings-light-to-dark-50pct",
+          "shot": null,
+          "pauseAtMs": 225,
+          "held": {
+            "progress": 0.5,
+            "newClipPath": "circle(729.686px at 1326px 25.5px)",
+            "oldClipPath": "none",
+            "oldAnimation": "none",
+            "newAnimation": "theme-reveal"
+          },
+          "before": {
+            "theme": "light",
+            "cls": "",
+            "vt": 0,
+            "stored": "light",
+            "pressed": "false"
+          },
+          "after": {
+            "theme": "dark",
+            "cls": "",
+            "vt": 1,
+            "stored": "dark",
+            "pressed": "true"
+          },
+          "transition": {
+            "t0": 9236,
+            "before": "light",
+            "ready": 446,
+            "finished": 1392,
+            "classAfter": "theme-reveal",
+            "after": "dark"
+          }
+        },
+        {
+          "name": "findings-dark-to-light-50pct",
+          "shot": null,
+          "pauseAtMs": 225,
+          "held": {
+            "progress": 0.5,
+            "newClipPath": "circle(729.686px at 1326px 25.5px)",
+            "oldClipPath": "none",
+            "oldAnimation": "none",
+            "newAnimation": "theme-reveal"
+          },
+          "before": {
+            "theme": "dark",
+            "cls": "",
+            "vt": 1,
+            "stored": "dark",
+            "pressed": "true"
+          },
+          "after": {
+            "theme": "light",
+            "cls": "",
+            "vt": 2,
+            "stored": "light",
+            "pressed": "false"
+          },
+          "transition": {
+            "t0": 11203,
+            "before": "dark",
+            "ready": 316,
+            "finished": 1407,
+            "classAfter": "theme-reveal",
+            "after": "light"
+          }
+        },
+        {
+          "name": "findings-after-reveal-dark",
+          "shot": null,
+          "pauseAtMs": null,
+          "held": null,
+          "before": {
+            "theme": "light",
+            "cls": "",
+            "vt": 2,
+            "stored": "light",
+            "pressed": "false"
+          },
+          "after": {
+            "theme": "dark",
+            "cls": "",
+            "vt": 3,
+            "stored": "dark",
+            "pressed": "true"
+          },
+          "transition": {
+            "t0": 13621,
+            "before": "light",
+            "ready": 208,
+            "finished": 644,
+            "classAfter": "theme-reveal",
+            "after": "dark"
+          }
+        },
+        {
+          "name": "findings-after-reveal-light",
+          "shot": null,
+          "pauseAtMs": null,
+          "held": null,
+          "before": {
+            "theme": "dark",
+            "cls": "",
+            "vt": 3,
+            "stored": "dark",
+            "pressed": "true"
+          },
+          "after": {
+            "theme": "light",
+            "cls": "",
+            "vt": 4,
+            "stored": "light",
+            "pressed": "false"
+          },
+          "transition": {
+            "t0": 14883,
+            "before": "dark",
+            "ready": 349,
+            "finished": 988,
+            "classAfter": "theme-reveal",
+            "after": "light"
+          }
+        }
+      ],
+      "anims": [
+        {
+          "pseudo": "::view-transition-new(root)",
+          "name": "theme-reveal",
+          "duration": 450,
+          "easing": "linear",
+          "x": "1326px",
+          "y": "25.5px",
+          "r": "1459.371868304991px"
+        },
+        {
+          "pseudo": "::view-transition-new(root)",
+          "name": "theme-reveal",
+          "duration": 450,
+          "easing": "linear",
+          "x": "1326px",
+          "y": "25.5px",
+          "r": "1459.371868304991px"
+        },
+        {
+          "pseudo": "::view-transition-new(root)",
+          "name": "theme-reveal",
+          "duration": 450,
+          "easing": "linear",
+          "x": "1326px",
+          "y": "25.5px",
+          "r": "1459.371868304991px"
+        },
+        {
+          "pseudo": "::view-transition-new(root)",
+          "name": "theme-reveal",
+          "duration": 450,
+          "easing": "linear",
+          "x": "1326px",
+          "y": "25.5px",
+          "r": "1459.371868304991px"
+        }
+      ]
+    }
+  }
+}

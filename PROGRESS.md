@@ -1367,6 +1367,37 @@
   - **Note (Git Bash):** a value starting with `/` in `REPOLENS_DEV_API_DELAY_MATCH` is rewritten by MSYS into a Windows path; leave out the leading slash there (PowerShell is fine).
   - **Later:** the selected file on a deep link opens at the left edge of the canvas (same on main); the first-visit card can cover a node until closed; add the web tests to CI (CLAUDE.md: frontend CI only if asked).
   - **Servers left running:** API on 8000 (key loaded), `vite preview` on 5173 with this branch's build (no delay).
+- **Theme switch as a circular reveal (`fix/theme-transition`, 9–10 Nov; not merged, waiting for the owner's real-mouse test in Firefox and Chrome).** $0 API spend.
+  - **Diagnosis (local probe, never committed).** Setup: Explorer on redash (map, `queries.py` panel, Ask open) and Findings (All), at real size on this PC. The old `.theme-switching *` class started over 1,000 colour transitions per click.
+    - **Style recalc on Explorer:** 361 ms in Chrome 139, 154 ms in Edge 156, 85 ms in Firefox 159.
+    - **Click to first paint (Chrome 139):** 0.9–1.6 s.
+    - **Instant variable swap instead:** 10–64 ms of style recalc.
+    - **View Transitions** exist in all three browsers.
+    - **Input during a transition:** pointer clicks go to `<html>` until it finishes (about 0.35 s cross-fade, 0.55 s reveal); typing is not blocked.
+    - **Choice:** the circular reveal, with an instant fallback.
+  - **Built (see DESIGN.md › Motion).**
+    - **`chooseTheme(theme, origin)`:** a View Transition whose update callback swaps the variables with every transition off (`theme-instant` class, swap, one style read, class removed).
+    - **The circle:** a CSS `@keyframes theme-reveal` on `::view-transition-new(root)` (`clip-path: circle()`, 450 ms, ease-in-out), from the toggle's box centre to the farthest window corner, read from `--theme-reveal-x/-y/-r/-ms` set on `<html>` for the switch. Old and new images have `animation: none`, so there is no cross-fade.
+    - **Guard:** presses during a reveal are ignored. Class, properties and guard are cleared on finished, skipped or failed.
+    - **Fallbacks:** no View Transitions, reduced motion or no origin all give the instant swap without a transition.
+    - **Removed:** the `.theme-switching` rules.
+    - **Unchanged:** the boot script, stored choice, follow-OS behaviour and the toggle's name.
+  - **Found while capturing evidence:** `element.animate(…, { pseudoElement: "::view-transition-new(root)" })` runs in Firefox 159 but is not applied (computed `clip-path: none`; the screen shows an instant switch), so the circle is now a CSS animation.
+    - The probe's Firefox "reveal" timings measured a transition with no visible circle. Its phase times stand; its smoothness numbers don't describe the circle.
+  - **Checks:**
+    - **Web:** 209 tests pass, including 17 theme tests (View Transitions path, both directions, transitions off in the update, no stacking, skipped/failed cleanup, a throwing start, reduced motion, no support, the stylesheet rules) and the existing boot-script tests. Typecheck clean.
+    - **Shimmer test:** its "no keyframes move a background" check is now scoped to each `@keyframes` block. The old regex ran from the new keyframes into later rules.
+    - **Backend:** ruff clean, 491 passed, 3 network skips (on `5b78a13`; the later commits are web-only).
+    - **Graph and API:** `git diff main` on the graph and API files is empty.
+    - **457-view check:** 457 of 457 views identical (`ui_drawn_counts-after-theme-reveal-…-5b78a13.json`; theme files only since).
+  - **Evidence:** `eval/results/screenshots-theme-reveal/` (README; script `eval/theme_reveal_evidence.mjs`).
+    - **Edge 156:** page shots at 1358x636 of the reveal held at 25/50/75% in both directions on Explorer, and 50% on Findings.
+    - **Firefox 159:** the computed circle at each held point (188.5 / 729.7 / 1270.9 px at the toggle centre). No pictures: its screenshot command leaves out the transition layer, and screen capture is not safe (below).
+    - **No stacking:** two real clicks give one transition in both browsers; two Enters give one transition in Edge.
+    - **Reduced motion, both browsers:** 0 View Transitions and an instant switch.
+    - **Unheld reveal in Edge:** finished 579–754 ms after the click.
+  - **Incident (harness):** a screen capture for Firefox caught the owner's own windows, and the first window helper also minimised and re-maximised the owner's Firefox. Those images were deleted at once and never committed. The committed helper only resizes the test window, found by its throwaway profile, without activating it.
+  - **Not verified here:** how the reveal looks by eye in Firefox; a Firefox keyboard double-press (BiDi keys need OS focus); Chrome itself (same engine as Edge, older). The owner's real-mouse test covers these.
 
 ### Notes for the Part B (UI) session
 Decided in Step 0 of the folder map and followed by the Part B build above (kept for the reasoning).

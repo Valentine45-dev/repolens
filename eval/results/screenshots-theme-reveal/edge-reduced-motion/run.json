@@ -1,0 +1,121 @@
+{
+  "browser": "Edg/156.0.4314.58",
+  "reducedMotion": true,
+  "when": "2026-11-09T19:42:27.338Z",
+  "pages": {
+    "explorer": {
+      "info": {
+        "w": 1358,
+        "h": 636,
+        "dpr": 1,
+        "vt": true,
+        "reduced": true,
+        "theme": "light"
+      },
+      "toggleCentre": {
+        "x": 1318,
+        "y": 25.5
+      },
+      "steps": [
+        {
+          "name": "explorer-light-to-dark-instant",
+          "shot": "explorer-light-to-dark-instant.jpg",
+          "pauseAtMs": null,
+          "before": {
+            "theme": "light",
+            "cls": "",
+            "vt": 0,
+            "stored": "light",
+            "pressed": "false"
+          },
+          "after": {
+            "theme": "dark",
+            "cls": "",
+            "vt": 0,
+            "stored": "dark",
+            "pressed": "true"
+          },
+          "transition": null
+        },
+        {
+          "name": "explorer-dark-to-light-instant",
+          "shot": "explorer-dark-to-light-instant.jpg",
+          "pauseAtMs": null,
+          "before": {
+            "theme": "dark",
+            "cls": "",
+            "vt": 0,
+            "stored": "dark",
+            "pressed": "true"
+          },
+          "after": {
+            "theme": "light",
+            "cls": "",
+            "vt": 0,
+            "stored": "light",
+            "pressed": "false"
+          },
+          "transition": null
+        }
+      ],
+      "anims": []
+    },
+    "findings": {
+      "info": {
+        "w": 1358,
+        "h": 636,
+        "dpr": 1,
+        "vt": true,
+        "reduced": true,
+        "theme": "light"
+      },
+      "toggleCentre": {
+        "x": 1318,
+        "y": 25.5
+      },
+      "steps": [
+        {
+          "name": "findings-light-to-dark-instant",
+          "shot": "findings-light-to-dark-instant.jpg",
+          "pauseAtMs": null,
+          "before": {
+            "theme": "light",
+            "cls": "",
+            "vt": 0,
+            "stored": "light",
+            "pressed": "false"
+          },
+          "after": {
+            "theme": "dark",
+            "cls": "",
+            "vt": 0,
+            "stored": "dark",
+            "pressed": "true"
+          },
+          "transition": null
+        },
+        {
+          "name": "findings-dark-to-light-instant",
+          "shot": "findings-dark-to-light-instant.jpg",
+          "pauseAtMs": null,
+          "before": {
+            "theme": "dark",
+            "cls": "",
+            "vt": 0,
+            "stored": "dark",
+            "pressed": "true"
+          },
+          "after": {
+            "theme": "light",
+            "cls": "",
+            "vt": 0,
+            "stored": "light",
+            "pressed": "false"
+          },
+          "transition": null
+        }
+      ],
+      "anims": []
+    }
+  }
+}

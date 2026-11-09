@@ -215,7 +215,7 @@ A monochrome zinc palette where black does the work of an accent and three seman
 `--info` colours the Low severity (icon and word, never colour alone).
 
 ### Dark theme
-Same roles, other values (frontmatter `colors-dark`). Ink becomes a light grey and Paper a near-black; state colours are lifted to hold 4.5:1 on the dark ground. Only colours change: sizes, spacing and the graph's layout are identical. A script at the top of `index.html` sets `data-theme` on `<html>` before anything paints (a stored pick, else `prefers-color-scheme`), and `web/src/theme.ts` follows the system until the user picks with the top-bar toggle (`aria-pressed`, name "Dark theme"; remembered in `localStorage` as `repolens.theme`). Switching eases colours only, for 200ms, through a class that is on just for the switch; none under reduced motion.
+Same roles, other values (frontmatter `colors-dark`). Ink becomes a light grey and Paper a near-black; state colours are lifted to hold 4.5:1 on the dark ground. Only colours change: sizes, spacing and the graph's layout are identical. A script at the top of `index.html` sets `data-theme` on `<html>` before anything paints (a stored pick, else `prefers-color-scheme`), and `web/src/theme.ts` follows the system until the user picks with the top-bar toggle (`aria-pressed`, name "Dark theme"; remembered in `localStorage` as `repolens.theme`). Switching is a circular reveal from the toggle (see Motion); instant under reduced motion.
 
 Contrast (WCAG 2.x; text 4.5:1, UI parts and graph strokes 3:1), light / dark:
 
@@ -375,6 +375,19 @@ The default map: folder, then file, then function. Never more than 60 nodes (the
 ### Loading
 Skeleton bars in Sunk Grey at 4px radius, sized to the text they replace, with one shared shimmer: a soft band (`--shimmer`, lighter than Sunk Grey; a faint light band in dark) moved by `transform` on a pseudo-element, 1.5s per sweep, every bar on the same start time so they sweep together; static under reduced motion. Containers carry `aria-busy`. Loaders shown over content that is already there (the "Opening `folder`…" pill over the dimmed map) appear after 200ms and stay at least 400ms (`useDelayedFlag`), so a fast load shows nothing and a slow one does not blink; layout-keeping skeletons show at once. The file panel's code area fills with placeholder lines at the code's line height and a gutter already as wide as the file's last line number; the Findings list loads as its own table (header and eight 40px rows); a link to a finding draws the panel frame at once; the reachability block keeps its shape. Ask says "Working on it…" and only after 1.5s "this can take up to 40 seconds". `REPOLENS_DEV_API_DELAY_MS` (dev and preview server only, README) slows the API to see all of this. Where a surface has a shape, the skeleton keeps it, and it is the real surface wherever the page already knows the answer: the Explorer draws its breadcrumb row (real Up button, real folder names from the address, only the repo name grey), toolbar, legend and notes row at once and only the repo name and counts are grey; the map placeholder is plain rows of grey cards at the real node size and gap (208×76, 14px), not a drawn graph; List view shows nine 36px ruled rows. `index.html` ships one page-shaped template per kind of page (home, Explorer, Findings) built from the real markup and class names, so every placeholder sits where its element will be: home is its real text (the recent list from this browser, only the status grey), an analysis started in this browser shows its real title, and the rest of the screen's room is reserved (the Findings count badge, the filter widths, the scrollbar gutter, the caption row). The three first-screen fonts are preloaded. Measured with `eval/layout_shift.mjs`: layout shift 0 on home and Findings, 0.0001 on the Explorer, every landmark within 0.5px of its placeholder. The words ("Laying out…", "Loading files…") stay for screen readers only. Skeletons are still: no shimmer.
 
+## Motion
+
+Motion is small and never in the way: colour eases of 150–200ms on `cubic-bezier(0.16, 1, 0.3, 1)` (hover, the Stage Ledger, the Ask list fades), the skeleton shimmer by `transform`, and the theme switch below. Under `prefers-reduced-motion: reduce` every one of them is off or instant.
+
+**Theme switch (circular reveal).** Pressing the toggle reveals the new theme in a circle that grows from the toggle's centre to the farthest window corner, 450ms, `ease-in-out`, the same in both directions. It is a View Transition (`web/src/theme.ts`, rules in `styles.css`):
+- Inside the update callback the theme variables are swapped with every transition off (`theme-instant` on `<html>`, swap, one style read, class removed), so the new snapshot has no element half way through its own colour ease.
+- Only `::view-transition-new(root)` animates, by a CSS `@keyframes theme-reveal` on `clip-path: circle()`; its centre, radius and duration come from `--theme-reveal-x/-y/-r/-ms`, set on `<html>` with the `theme-reveal` class for the switch only. The default cross-fade is off (`animation: none` on old and new); the new image sits above the old. (A CSS animation, not `element.animate()`: Firefox 159 does not apply the latter to View Transition pseudo-elements.)
+- The centre is the toggle's box, not the pointer, so a keyboard press looks the same.
+- While a reveal runs, further toggle presses are ignored (no stacking); the browser itself sends pointer clicks during a View Transition to `<html>`, so a click elsewhere in that ~0.5s does nothing, while typing is unaffected. The class, the properties and the guard are cleared when the transition finishes, is skipped or fails.
+- No View Transitions in the browser, or reduced motion: the same instant swap (transitions off for that one style change), no View Transition.
+
+No element ever gets a colour `transition` for the switch: the old approach (a class that gave every element 200ms colour transitions) started over 1,000 transitions per switch and blocked the page for up to 1.6s on the eval PC.
+
 ## Do's and Don'ts
 
 ### Do:
@@ -383,7 +396,7 @@ Skeleton bars in Sunk Grey at 4px radius, sized to the text they replace, with o
 - **Do** separate with 1px Hairline rules and the Paper-to-Bench-Grey tonal step.
 - **Do** pair every state colour with an icon or word saying the same thing.
 - **Do** use the authored 16px line icons (1.5 stroke, `currentColor`) and add new glyphs in the same grid and stroke.
-- **Do** animate only colour and background, 150ms on `cubic-bezier(0.16, 1, 0.3, 1)` (the theme switch: 200ms, colours only; the skeleton shimmer: transform only), and honour reduced motion.
+- **Do** animate only colour and background, 150ms on `cubic-bezier(0.16, 1, 0.3, 1)` (the theme switch: a View Transition clip, not element transitions; the skeleton shimmer: transform only), and honour reduced motion.
 - **Do** show a number only where the backend reports real progress.
 
 ### Don't:
