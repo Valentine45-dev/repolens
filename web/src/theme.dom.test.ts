@@ -1,7 +1,17 @@
 // @vitest-environment jsdom
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-import { applyTheme, chooseTheme, followSystem, readStored, resolveTheme, THEME_KEY, TRANSITION_MS } from "./theme";
+import {
+  applyTheme,
+  chooseTheme,
+  followSystem,
+  INSTANT_CLASS,
+  readStored,
+  resolveTheme,
+  REVEAL_CLASS,
+  REVEAL_MS,
+  THEME_KEY,
+} from "./theme";
 
 // @ts-expect-error node:fs has no type declarations here; the tests run in Node
 const { readFileSync } = await import("node:fs");
@@ -94,21 +104,18 @@ describe("index.html boot script (runs before first paint)", () => {
 });
 
 describe("choosing a theme", () => {
-  it("is remembered and applied, and eases colours for 200ms only", () => {
-    vi.useFakeTimers();
-    chooseTheme("dark");
+  it("is remembered and applied instantly, with transitions off only during the swap", () => {
+    const seen: boolean[] = [];
+    const spy = vi.spyOn(window, "getComputedStyle").mockImplementation(() => {
+      seen.push(document.documentElement.classList.contains(INSTANT_CLASS));
+      return { color: "" } as CSSStyleDeclaration;
+    });
+    chooseTheme("dark"); // no origin and no View Transitions in jsdom: the instant switch
     expect(localStorage.getItem(THEME_KEY)).toBe("dark");
     expect(theme()).toBe("dark");
-    expect(document.documentElement.classList.contains("theme-switching")).toBe(true);
-    vi.advanceTimersByTime(TRANSITION_MS);
-    expect(document.documentElement.classList.contains("theme-switching")).toBe(false);
-  });
-
-  it("is instant under reduced motion (no transition class at all)", () => {
-    setMedia("(prefers-reduced-motion: reduce)", true);
-    chooseTheme("dark");
-    expect(theme()).toBe("dark");
-    expect(document.documentElement.classList.contains("theme-switching")).toBe(false);
+    expect(seen).toEqual([true]); // one style read, while every transition was off
+    expect(document.documentElement.className).toBe(""); // nothing left behind
+    spy.mockRestore();
   });
 
   it("still applies when storage throws on write", () => {
@@ -130,5 +137,168 @@ describe("choosing a theme", () => {
     setMedia("(prefers-color-scheme: dark)", true);
     expect(theme()).toBe("light");
     stop();
+  });
+});
+
+// A stand-in for document.startViewTransition: records each call and lets the test run the update
+// callback and settle `ready` and `finished` by hand, as a browser does over a few frames.
+type Settle = { promise: Promise<void>; resolve: () => void; reject: () => void };
+function settle(): Settle {
+  let resolve!: () => void;
+  let reject!: () => void;
+  const promise = new Promise<void>((res, rej) => {
+    resolve = res;
+    reject = () => rej(new Error("skipped"));
+  });
+  return { promise, resolve, reject };
+}
+type FakeTransition = { update: () => void; ready: Settle; finished: Settle };
+function fakeViewTransitions() {
+  const calls: FakeTransition[] = [];
+  const start = vi.fn((update: () => void) => {
+    const call = { update, ready: settle(), finished: settle() };
+    calls.push(call);
+    return { ready: call.ready.promise, finished: call.finished.promise };
+  });
+  const animate = vi.fn();
+  Object.assign(document, { startViewTransition: start });
+  Object.assign(document.documentElement, { animate });
+  return { calls, start, animate };
+}
+const flushPromises = () => new Promise((r) => setTimeout(r, 0));
+
+function toggleAt(left: number, top: number): HTMLButtonElement {
+  const button = document.createElement("button");
+  vi.spyOn(button, "getBoundingClientRect").mockReturnValue({ left, top, width: 32, height: 32 } as DOMRect);
+  return button;
+}
+
+describe("the circular reveal (View Transitions)", () => {
+  afterEach(() => {
+    delete (document as unknown as Record<string, unknown>).startViewTransition;
+    delete (document.documentElement as unknown as Record<string, unknown>).animate;
+  });
+
+  it("grows a circle from the toggle's centre to the farthest window corner", async () => {
+    const { calls, start, animate } = fakeViewTransitions();
+    chooseTheme("dark", toggleAt(1300, 10));
+    expect(start).toHaveBeenCalledTimes(1);
+    expect(document.documentElement.classList.contains(REVEAL_CLASS)).toBe(true);
+    expect(theme()).toBeUndefined(); // the page changes inside the update callback, not before
+
+    calls[0].update();
+    expect(theme()).toBe("dark");
+    expect(localStorage.getItem(THEME_KEY)).toBe("dark");
+
+    calls[0].ready.resolve();
+    await flushPromises();
+    const [x, y] = [1316, 26];
+    const r = Math.hypot(Math.max(x, window.innerWidth - x), Math.max(y, window.innerHeight - y));
+    expect(animate).toHaveBeenCalledWith(
+      { clipPath: [`circle(0px at ${x}px ${y}px)`, `circle(${r}px at ${x}px ${y}px)`] },
+      { duration: REVEAL_MS, easing: "ease-in-out", pseudoElement: "::view-transition-new(root)" },
+    );
+
+    calls[0].finished.resolve();
+    await flushPromises();
+    expect(document.documentElement.className).toBe("");
+  });
+
+  it("swaps the variables with transitions off inside the update, so the new snapshot is settled", async () => {
+    const { calls } = fakeViewTransitions();
+    const seen: boolean[] = [];
+    const spy = vi.spyOn(window, "getComputedStyle").mockImplementation(() => {
+      seen.push(document.documentElement.classList.contains(INSTANT_CLASS));
+      return { color: "" } as CSSStyleDeclaration;
+    });
+    chooseTheme("dark", toggleAt(0, 0));
+    expect(seen).toEqual([]);
+    calls[0].update();
+    expect(seen).toEqual([true]);
+    expect(document.documentElement.classList.contains(INSTANT_CLASS)).toBe(false);
+    spy.mockRestore();
+    calls[0].finished.resolve();
+    await flushPromises();
+  });
+
+  it("runs the same reveal in both directions", async () => {
+    const { calls, start } = fakeViewTransitions();
+    applyTheme("dark");
+    chooseTheme("light", toggleAt(0, 0));
+    calls[0].update();
+    expect(theme()).toBe("light");
+    calls[0].finished.resolve();
+    await flushPromises();
+    chooseTheme("dark", toggleAt(0, 0));
+    expect(start).toHaveBeenCalledTimes(2);
+    calls[1].update();
+    expect(theme()).toBe("dark");
+    calls[1].finished.resolve();
+    await flushPromises();
+  });
+
+  it("ignores a second click while a reveal runs (no stacking), and works again once it ends", async () => {
+    const { calls, start } = fakeViewTransitions();
+    const button = toggleAt(0, 0);
+    chooseTheme("dark", button);
+    calls[0].update();
+    chooseTheme("light", button); // double click
+    expect(start).toHaveBeenCalledTimes(1);
+    expect(theme()).toBe("dark");
+    expect(localStorage.getItem(THEME_KEY)).toBe("dark");
+    calls[0].ready.resolve();
+    calls[0].finished.resolve();
+    await flushPromises();
+    chooseTheme("light", button);
+    expect(start).toHaveBeenCalledTimes(2);
+    calls[1].update();
+    calls[1].finished.resolve();
+    await flushPromises();
+    expect(theme()).toBe("light");
+  });
+
+  it("leaves no class and no guard behind when the transition is skipped or fails", async () => {
+    const { calls, start, animate } = fakeViewTransitions();
+    chooseTheme("dark", toggleAt(0, 0));
+    calls[0].update();
+    calls[0].ready.reject();
+    calls[0].finished.reject();
+    await flushPromises();
+    expect(animate).not.toHaveBeenCalled();
+    expect(document.documentElement.className).toBe("");
+    expect(theme()).toBe("dark");
+    chooseTheme("light", toggleAt(0, 0));
+    expect(start).toHaveBeenCalledTimes(2);
+    calls[1].update();
+    calls[1].finished.resolve();
+    await flushPromises();
+  });
+
+  it("switches instantly if starting the transition throws", () => {
+    Object.assign(document, {
+      startViewTransition: () => {
+        throw new Error("InvalidStateError");
+      },
+    });
+    chooseTheme("dark", toggleAt(0, 0));
+    expect(theme()).toBe("dark");
+    expect(document.documentElement.className).toBe("");
+  });
+
+  it("is never used under reduced motion: the switch is instant", () => {
+    const { start } = fakeViewTransitions();
+    setMedia("(prefers-reduced-motion: reduce)", true);
+    chooseTheme("dark", toggleAt(0, 0));
+    expect(start).not.toHaveBeenCalled();
+    expect(theme()).toBe("dark");
+    expect(document.documentElement.className).toBe("");
+  });
+
+  it("falls back to the instant switch where the browser has no View Transitions", () => {
+    expect("startViewTransition" in document).toBe(false);
+    chooseTheme("dark", toggleAt(0, 0));
+    expect(theme()).toBe("dark");
+    expect(localStorage.getItem(THEME_KEY)).toBe("dark");
+    expect(document.documentElement.className).toBe("");
   });
 });

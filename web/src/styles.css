@@ -107,21 +107,22 @@
   color-scheme: dark;
 }
 
-/* The theme toggle eases colours only, for 200ms, and only while this class is on (theme.ts adds
-   it for the switch and never under reduced motion), so pan, zoom and hover are never slowed. */
-@media (prefers-reduced-motion: no-preference) {
-  .theme-switching,
-  .theme-switching *,
-  .theme-switching *::before,
-  .theme-switching *::after {
-    transition:
-      background-color 200ms var(--ease-out),
-      color 200ms var(--ease-out),
-      border-color 200ms var(--ease-out),
-      outline-color 200ms var(--ease-out),
-      fill 200ms var(--ease-out),
-      stroke 200ms var(--ease-out) !important;
-  }
+/* Theme switch (theme.ts). The variables are swapped with every transition off for that one style
+   change, so no element eases on its own and the first frame is all one theme. */
+.theme-instant,
+.theme-instant *,
+.theme-instant *::before,
+.theme-instant *::after {
+  transition: none !important;
+}
+
+/* The reveal: a View Transition in which only the circle on the new page image animates (theme.ts
+   runs it with element.animate). No cross-fade; the new image sits above the old one. Never under
+   reduced motion (theme.ts switches instantly then). */
+:root.theme-reveal::view-transition-old(root),
+:root.theme-reveal::view-transition-new(root) {
+  animation: none;
+  mix-blend-mode: normal;
 }
 
 *,

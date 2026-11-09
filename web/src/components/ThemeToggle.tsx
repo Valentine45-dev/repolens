@@ -12,7 +12,7 @@ export function ThemeToggle() {
       aria-pressed={dark}
       aria-label="Dark theme"
       title="Dark theme (follows your system until you choose)"
-      onClick={() => chooseTheme(dark ? "light" : "dark")}
+      onClick={(event) => chooseTheme(dark ? "light" : "dark", event.currentTarget)}
     >
       <Icon name={dark ? "moon" : "sun"} />
     </button>
