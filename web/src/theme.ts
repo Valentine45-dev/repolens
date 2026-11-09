@@ -7,7 +7,19 @@ import { useSyncExternalStore } from "react";
 export type Theme = "light" | "dark";
 
 export const THEME_KEY = "repolens.theme";
-export const TRANSITION_MS = 200;
+/** How long the circular reveal of a new theme takes. */
+export const REVEAL_MS = 450;
+/** On <html> only while the variables are swapped: turns every transition off (styles.css). */
+export const INSTANT_CLASS = "theme-instant";
+/** On <html> only while a reveal runs: the View Transition shows just the circle (styles.css). */
+export const REVEAL_CLASS = "theme-reveal";
+/** Set on <html> only while a reveal runs: the circle's centre, final radius and duration. */
+export const REVEAL_VARS = {
+  x: "--theme-reveal-x",
+  y: "--theme-reveal-y",
+  radius: "--theme-reveal-r",
+  duration: "--theme-reveal-ms",
+} as const;
 const DARK_QUERY = "(prefers-color-scheme: dark)";
 const REDUCED_QUERY = "(prefers-reduced-motion: reduce)";
 
@@ -49,19 +61,79 @@ export function applyTheme(theme: Theme): void {
   listeners.forEach((l) => l());
 }
 
-let switchTimer: number | undefined;
-
-/** The user's pick: remembered, applied, and eased over 200ms by a class that transitions only
- * colours (so graph pan, zoom and hover are never slowed). Under reduced motion it is instant. */
-export function chooseTheme(theme: Theme): void {
-  writeStored(theme);
+/** Swap the theme with every CSS transition off for that one style change, so nothing eases on its
+ * own (buttons and map nodes have hover colour transitions) and the first frame is all one theme.
+ * Reading one style makes the browser compute the new colours while the class is still on. */
+export function applyThemeInstantly(theme: Theme): void {
   const root = document.documentElement;
-  if (!matches(REDUCED_QUERY)) {
-    root.classList.add("theme-switching");
-    window.clearTimeout(switchTimer);
-    switchTimer = window.setTimeout(() => root.classList.remove("theme-switching"), TRANSITION_MS);
+  root.classList.add(INSTANT_CLASS);
+  try {
+    applyTheme(theme);
+    void window.getComputedStyle(document.body ?? root).color;
+  } finally {
+    root.classList.remove(INSTANT_CLASS);
   }
-  applyTheme(theme);
+}
+
+// The parts of the View Transitions API used here (not every browser has it).
+interface ViewTransitionLike {
+  ready: Promise<unknown>;
+  finished: Promise<unknown>;
+}
+type StartViewTransition = (update: () => void) => ViewTransitionLike;
+
+let revealing = false;
+
+/** The user's pick from the toggle: remembered and applied. Where the browser has View Transitions
+ * and motion is allowed, the new theme is revealed by a circle that grows from the toggle's centre
+ * (its box, not the pointer, so a keyboard press looks the same) to the farthest window corner; the
+ * page underneath switches instantly, so no element is transitioned and pan, zoom and hover are
+ * never slowed. Otherwise (no support, reduced motion, no origin) the switch is instant. A pick
+ * made while a reveal is still running is ignored, so reveals never stack. */
+export function chooseTheme(theme: Theme, origin?: Element | null): void {
+  if (revealing) return;
+  writeStored(theme);
+  const start = (document as unknown as { startViewTransition?: StartViewTransition }).startViewTransition;
+  if (!origin || typeof start !== "function" || matches(REDUCED_QUERY)) {
+    applyThemeInstantly(theme);
+    return;
+  }
+
+  const root = document.documentElement;
+  const box = origin.getBoundingClientRect();
+  const x = box.left + box.width / 2;
+  const y = box.top + box.height / 2;
+  const radius = Math.hypot(Math.max(x, window.innerWidth - x), Math.max(y, window.innerHeight - y));
+
+  // The circle is a CSS animation on ::view-transition-new(root) (styles.css) that reads these
+  // properties. (Firefox 159 does not apply element.animate() to View Transition pseudo-elements;
+  // CSS animations on them work in every browser that has View Transitions.)
+  const reveal: Record<string, string> = {
+    [REVEAL_VARS.x]: `${x}px`,
+    [REVEAL_VARS.y]: `${y}px`,
+    [REVEAL_VARS.radius]: `${radius}px`,
+    [REVEAL_VARS.duration]: `${REVEAL_MS}ms`,
+  };
+  revealing = true;
+  for (const [name, value] of Object.entries(reveal)) root.style.setProperty(name, value);
+  root.classList.add(REVEAL_CLASS);
+  const done = () => {
+    revealing = false;
+    root.classList.remove(REVEAL_CLASS);
+    for (const name of Object.keys(reveal)) root.style.removeProperty(name);
+  };
+  let transition: ViewTransitionLike;
+  try {
+    transition = start.call(document, () => applyThemeInstantly(theme));
+  } catch {
+    done();
+    applyThemeInstantly(theme);
+    return;
+  }
+  // Skipped (for example the tab was hidden): the update callback still applies the theme.
+  transition.ready.catch(() => {});
+  // Finished, skipped or failed: never leave the class, the properties or the guard behind.
+  transition.finished.then(done, done);
 }
 
 const listeners = new Set<() => void>();
