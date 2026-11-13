@@ -1887,3 +1887,54 @@ are deliberately not changed after seeing eval results; these stay as documented
 - Old snapshots analysed before the embed stage (no chunks, no `search_error`) offer no
   "Retry preparing search"; re-ingest them instead. (ky, snapshot 21, was re-ingested on 28 Oct
   and has Ask now.)
+
+- **Citation chip opens the File tab (`fix/citation-opens-file`, 13 Nov; owner's real-mouse
+  test passed, merged into `main`).** Real-mouse bug report: below 1600px (File | Ask
+  tabs), clicking a citation chip for a file already open behind Ask left Ask in front and the
+  code view could scroll while the panel was `display:none`, landing on the wrong lines (often
+  line 1) once the File tab was opened by hand. $0 API spend (graph-routed and hand-seeded test
+  turns only; no LLM call).
+  - **Cause:** `useRightTab`'s effect only watched `panelParam` (the file/finding id), so a chip
+    for lines in the *same* file never changed that id and never re-fired. Separately,
+    `CodeView`'s scroll effect ran on `[rangeKey]` with no awareness of whether the panel was
+    visible, so it could measure and scroll a hidden (zero-layout) element.
+  - **Fix:** links that open lines now carry router state (`REVEAL`, `links.ts`); `useRightTab`
+    also takes the `lines` param and a token from `useRevealToken()` (changes on each such
+    navigation, including the same address clicked again) and brings the panel forward on
+    either. `NodePanel`/`CodeView` take a `hidden` prop from the shell (`panelHidden` in
+    `AnalysisContext`) and a `reveal` token; the scroll runs once per request, only while shown,
+    via `scrollToRange` (new in `scroll.ts`): centred with 3 lines of context when it fits,
+    otherwise the first line placed that far below the top (never flush), smooth only when the
+    file was already on screen and never under reduced motion. Focus moves to the code area when
+    a chip behind the tab brought it forward. Ask stays mounted throughout (conversation, draft,
+    scroll position kept).
+  - **Audited every entry point that selects a file or lines** (citation chips, graph-answer
+    site chips and result rows, Used by/Uses site chips, Findings "Open in Explorer", a finding's
+    reachability chips, deep links with `lines=`): all now bring the panel forward and scroll
+    correctly below 1600px. "Open in Explorer" and the reachability chip never carried `ask=1`
+    on either branch (they close Ask instead of sharing the column) — a separate, pre-existing
+    behaviour, left alone per the report's "fix any that fail the same way."
+  - **Checks:** web 221/221 tests (new: `CodeView.dom.test.tsx`, `AnalysisShell.dom.test.tsx`,
+    extended `rightTab.dom.test.tsx`), `tsc` clean; backend ruff clean, 491 passed, 3 network
+    skips; graph/API diff against `main` empty; 457-view check (`ui_drawn_counts-after-citation-
+    tab-20261113T134550Z-8e6a787.json`) 457/457 identical.
+  - **Evidence:** `eval/results/screenshots-citation-tab/` (README; script
+    `eval/citation_tab_evidence.mjs`), headless Edge, throwaway profile, real mouse clicks,
+    1366 and 1920, plus reduced motion — pass/fail table per entry point, before (`main`) vs
+    after.
+  - **Owner's Firefox check (13 Nov): passed** at 1366 — graph-answer chips, AI-answer citation
+    chips (several lines in the same file and in another file), the same chip clicked again,
+    Used by/Uses chips and Findings "Open in Explorer" all open the File tab with the lines
+    centred, and Ask state (conversation, draft, scroll) is preserved.
+  - **Owner testing spend (13 Nov, not part of any evaluation):** one real AI question asked by
+    hand in that Firefox check, on pygoat (snapshot 2) — "What does challenge/models.py do?"
+    (cited `challenge/models.py:27-28,64-65,82-83,85-89` and `challenge/admin.py:2`), ~2.6k
+    tokens (`llm_tokens_used` 9,090 → 11,658). Everything else in this branch's own evidence
+    stayed graph-routed or hand-seeded client-side (sessionStorage only, never sent to the
+    server): $0 from the agent's own work, confirmed by tracing every `/ask` call it made and
+    by the unchanged file/symbol/edge/finding/chunk counts and job table for snapshot 2.
+  - **Merged into `main`** with a merge commit (not squashed), after confirming no other
+    `/ask` call this branch's work made was AI-routed and that both commits touch only the fix,
+    its tests, and the labelled evidence/PROGRESS entry above.
+  - **Servers left running:** API on 8000 (key loaded), `vite preview` on 5173 with `main`'s
+    build.

@@ -10,7 +10,7 @@ import {
   repoName,
   type SnapshotStatus,
 } from "../api";
-import { useSetParams } from "../links";
+import { useRevealToken, useSetParams } from "../links";
 import { loadRecent } from "../recent";
 import { useRightTab } from "../rightTab";
 import { useMediaQuery } from "../useMediaQuery";
@@ -21,6 +21,9 @@ export interface AnalysisContext {
   snapshotId: number;
   /** Ask and a file or finding panel share one right column, as tabs (Ask open, 901-1599px). */
   tabbed: boolean;
+  /** The file or finding panel is mounted but behind the Ask tab (display: none): anything that
+   * needs its layout, such as scrolling to cited lines, waits until this turns false. */
+  panelHidden: boolean;
   /** Undefined until the status has loaded: the page draws its chrome at once and waits for this
    * before it asks for data (an analysis that is not done redirects away). */
   status: SnapshotStatus | undefined;
@@ -45,7 +48,9 @@ export function AnalysisShell() {
   const midWidth = useMediaQuery("(min-width: 901px) and (max-width: 1599px)");
   const tabbed = askOpen && panelOpen && midWidth;
   const askPrefill = params.get("askq");
-  const [rightTab, setRightTab] = useRightTab(panelParam, askOpen, askPrefill);
+  const reveal = useRevealToken();
+  const [rightTab, setRightTab] = useRightTab(panelParam, askOpen, askPrefill, params.get("lines"), reveal);
+  const panelHidden = tabbed && rightTab === "ask";
   const panelKind = params.get("finding") !== null ? "Finding" : "File";
 
   const status = useQuery({
@@ -145,7 +150,9 @@ export function AnalysisShell() {
               </button>
             </div>
           ) : (
-            <Outlet context={{ snapshotId, tabbed, status: status.data } satisfies AnalysisContext} />
+            <Outlet
+              context={{ snapshotId, tabbed, panelHidden, status: status.data } satisfies AnalysisContext}
+            />
           )}
         </div>
         {tabbed ? (

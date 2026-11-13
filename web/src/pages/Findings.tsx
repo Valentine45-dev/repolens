@@ -23,7 +23,7 @@ import { languageLabel } from "../graphModel";
 import { CloseButton } from "../components/CloseButton";
 import { useEscapeToClose } from "../escapeStack";
 import { findingsCountLabel } from "../findingsCount";
-import { exploreHref, useSetParams } from "../links";
+import { exploreHref, REVEAL, useSetParams } from "../links";
 
 const PAGE = 50;
 const SECRET_RULE = "hardcoded-secret";
@@ -602,6 +602,7 @@ export function FindingPanel({
         <div className="callout-actions">
           <Link
             className="button button-secondary button-small"
+            state={REVEAL}
             to={exploreHref(snapshotId, {
               fileId: finding.file_id,
               lines: { start: finding.line, end: finding.line },

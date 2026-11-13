@@ -14,7 +14,7 @@ import {
   type SnapshotStatus,
 } from "../api";
 import { degrees } from "../graphModel";
-import { exploreHref, useSetParams } from "../links";
+import { exploreHref, REVEAL, useSetParams } from "../links";
 import { SiteChips } from "./SiteChips";
 import { scrollToStart } from "../scroll";
 import { useScrollEdges } from "../scrollEdges";
@@ -508,7 +508,7 @@ function ResultRow({
   }
   const href = resultHref(snapshotId, r);
   return href ? (
-    <Link to={href} className="result-row">
+    <Link to={href} state={REVEAL} className="result-row">
       {body}
     </Link>
   ) : (
@@ -527,6 +527,7 @@ function SourceChips({ snapshotId, sources }: { snapshotId: number; sources: Cit
         <li key={`${c.path}:${c.start_line}-${c.end_line}`}>
           <Link
             className="citation"
+            state={REVEAL}
             to={exploreHref(snapshotId, {
               fileId: c.file_id,
               lines: { start: c.start_line, end: c.end_line },

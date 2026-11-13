@@ -17,7 +17,7 @@ import { NodePanel } from "../components/NodePanel";
 import { applyCap, degrees, layoutGraph, RENDER_CAP } from "../graphModel";
 import { densityText, statusText } from "../legendText";
 import { useDocumentTitle } from "../documentTitle";
-import { parseLines, useSetParams, type LineRange } from "../links";
+import { parseLines, useRevealToken, useSetParams, type LineRange } from "../links";
 import { layoutMap } from "../mapLayout";
 import {
   edgeBudgetFor,
@@ -53,7 +53,8 @@ export function Explore() {
 }
 
 function ExploreInner() {
-  const { snapshotId, status } = useOutletContext<AnalysisContext>();
+  const { snapshotId, status, panelHidden } = useOutletContext<AnalysisContext>();
+  const reveal = useRevealToken();
   const ready = status !== undefined; // no data is asked for before the analysis is known to be done
   const [params] = useSearchParams();
   const location = useLocation();
@@ -487,6 +488,8 @@ function ExploreInner() {
             node={selected}
             minConfidence={showGuesses ? 0.5 : 0.9}
             highlight={highlight}
+            reveal={reveal}
+            hidden={panelHidden}
             isInGraph={isInGraph}
             onSelectFile={select}
             onShowLines={showLines}

@@ -11,7 +11,7 @@ import {
 } from "../api";
 import { GUESS_BELOW, languageLabel } from "../graphModel";
 import type { LineRange } from "../links";
-import { scrollToCenter } from "../scroll";
+import { scrollToRange } from "../scroll";
 import { CloseButton } from "./CloseButton";
 import { useEscapeToClose } from "../escapeStack";
 import { PanelTitle } from "./PanelTitle";
@@ -27,6 +27,8 @@ export function NodePanel({
   node,
   minConfidence,
   highlight,
+  reveal = null,
+  hidden = false,
   isInGraph,
   onSelectFile,
   onShowLines,
@@ -38,6 +40,11 @@ export function NodePanel({
   node: GraphNode;
   minConfidence: number;
   highlight: LineRange | null; // cited or flagged lines, from the URL
+  /** Changes on each "open these lines" link (useRevealToken), so a click on the same chip again
+   * shows the lines again. */
+  reveal?: string | null;
+  /** Behind the Ask tab (display: none): focus and scrolling wait until it is shown. */
+  hidden?: boolean;
   isInGraph: (fileId: number) => boolean;
   onSelectFile: (fileId: number, lines?: LineRange) => void;
   onShowLines: (lines: LineRange) => void;
@@ -50,7 +57,7 @@ export function NodePanel({
   const highlightKey = highlight ? `${highlight.start}-${highlight.end}` : null;
   useEffect(() => {
     if (highlightKey) setTab("code");
-  }, [highlightKey]);
+  }, [highlightKey, reveal]);
   const titleId = useId();
   const titleRef = useRef<HTMLHeadingElement>(null);
 
@@ -62,9 +69,16 @@ export function NodePanel({
       if (opener?.isConnected) opener.focus();
     };
   }, []);
+  // A hidden heading cannot take focus: a file opened behind the Ask tab is focused when shown.
+  const focusPending = useRef(true);
   useEffect(() => {
-    titleRef.current?.focus();
+    focusPending.current = true;
   }, [node.id]);
+  useEffect(() => {
+    if (hidden || !focusPending.current) return;
+    focusPending.current = false;
+    titleRef.current?.focus();
+  }, [node.id, hidden]);
 
   const panelRef = useRef<HTMLElement>(null);
   useEscapeToClose(panelRef, onClose);
@@ -168,7 +182,13 @@ export function NodePanel({
       <div className="panel-body" role="tabpanel">
         {tab === "code" ? (
           file.data ? (
-            <CodeView key={node.id} content={file.data.content} highlight={highlight} />
+            <CodeView
+              key={node.id}
+              content={file.data.content}
+              highlight={highlight}
+              reveal={reveal}
+              hidden={hidden}
+            />
           ) : (
             <PanelState query={file} codeLines={node.loc} />
           )
@@ -273,7 +293,20 @@ const CODE_SKELETON = [28, 0, 18, 22, 14, 0, 0, 34, 40, 26, 0, 30, 44, 20, 0, 36
 // 1080px of panel at the code's 19.2px line height is about 50 lines; 80 covers taller screens.
 const CODE_SKELETON_MAX = 80;
 
-function CodeView({ content, highlight }: { content: string; highlight: LineRange | null }) {
+// Lines of context kept above a cited range that is too tall to centre (code line height 19.2px).
+const SCROLL_CONTEXT_LINES = 3;
+
+export function CodeView({
+  content,
+  highlight,
+  reveal,
+  hidden,
+}: {
+  content: string;
+  highlight: LineRange | null;
+  reveal: string | null;
+  hidden: boolean;
+}) {
   const lines = useMemo(() => {
     const all = content.split("\n");
     if (all.length > 1 && all[all.length - 1] === "") all.pop();
@@ -286,11 +319,32 @@ function CodeView({ content, highlight }: { content: string; highlight: LineRang
       ? { start: highlight.start, end: Math.min(highlight.end, lines.length) }
       : null;
   const rangeKey = range ? `${range.start}-${range.end}` : null;
+  // Scroll to the lines once per request (new lines, or the same lines asked for again), and only
+  // while the panel is on screen: behind the Ask tab it has no layout, so a scroll there does
+  // nothing and the file would open on line 1. A request made while hidden waits for the tab.
+  const requestKey = rangeKey === null ? null : `${rangeKey}|${reveal ?? ""}`;
+  const doneKey = useRef<string | null>(null);
+  const wasShown = useRef(false);
   useEffect(() => {
+    const shownBefore = wasShown.current;
+    wasShown.current = !hidden;
+    if (hidden || !range || requestKey === null || doneKey.current === requestKey) return;
     const mark = markRef.current;
     const panel = mark?.closest<HTMLElement>(".panel-body");
-    if (mark && panel) scrollToCenter(panel, mark);
-  }, [rangeKey]);
+    if (!mark || !panel) return;
+    doneKey.current = requestKey;
+    const lineHeight = mark.getBoundingClientRect().height / (range.end - range.start + 1);
+    // Glide only within code that was already on screen; a file just opened or just brought to
+    // the front lands on the lines at once. Never under reduced motion.
+    const smooth = shownBefore && !window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    scrollToRange(panel, mark, SCROLL_CONTEXT_LINES * lineHeight, smooth);
+    // The chip that asked is now behind the panel, out of the tab order: keep focus in view.
+    const active = document.activeElement;
+    const code = mark.parentElement;
+    if (code && (!active || active === document.body || active.closest("[inert]"))) {
+      code.focus({ preventScroll: true });
+    }
+  }, [requestKey, hidden]); // range is part of requestKey
   return (
     <div
       className="code"
