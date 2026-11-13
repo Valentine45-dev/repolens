@@ -9,6 +9,8 @@ const apiUrl = process.env.API_URL ?? "http://127.0.0.1:8000";
 
 export default defineConfig({
   plugins: [react(), devApiDelay(process.env)],
+  // The code-colouring worker loads each grammar on first use, which needs an ES-module worker.
+  worker: { format: "es" },
   server: {
     port: 5173,
     proxy: {
