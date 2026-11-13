@@ -235,9 +235,9 @@ VS Code-style (light-plus based), adjusted for contrast. They are the one place 
 
 Changed from VS Code (bold above): light type, escape, number, attribute; dark keyword, tag, regex, comment. All other values are light-plus / dark-plus as they are. Every role holds 4.5:1 on Paper and on the highlight band in both themes; `web/src/codeColoursCss.test.ts` computes this from `styles.css`. Line numbers are unaffected: the gutter is opaque and above the code.
 
-- **Languages:** Python (`.py`, `.pyi`), JavaScript (`.js .mjs .cjs .jsx`, VS Code's JavaScript grammar, which includes JSX), TypeScript (`.ts .mts .cts`) and TSX. Everything else is plain text.
+- **Languages:** Python (`.py`, `.pyi`), JavaScript (`.js .mjs .cjs .jsx`, VS Code's JavaScript grammar, which includes JSX), TypeScript (`.ts .mts .cts`) and TSX. Everything else is plain text. JavaScript, TypeScript and TSX use Shiki's precompiled grammars (identical colours, a faster first file in Firefox); Python uses the regular grammar, because the precompiled one colours most of a file wrongly (shikijs/shiki#918).
 - **Limit:** files over **3,000 lines or 256 KB** stay plain, and the panel caption adds "Colours off for large files" (known from the line count before the text arrives, so nothing moves). Lines over 1,000 characters stay uncoloured. Why 3,000: tokenising runs in a Web Worker, but putting the coloured spans on the page is one main-thread task that grows with the file. On the eval PC it took about 1.2 s for a 4,591-line file and about 0.25 to 0.45 s for 1,200 to 2,850 lines (`eval/results/screenshots-code-highlight/`).
-- **Loading:** plain text first, then colours swap in, in the same `<pre>` (same text, font and line height), so the scroll position, the cited-line band, selection and copy stay as they are. Shiki and the worker load only when a code view first needs them (never on Home or Findings). If anything fails, the code stays plain and a note goes to the console.
+- **Loading:** plain text first, then colours swap in, in the same `<pre>` (same text, font and line height), so the scroll position, the cited-line band, selection and copy stay as they are. Shiki and the worker load only on the Explorer (never on Home or Findings): once its map or graph has drawn, an idle callback starts the worker and warms the Python grammar in the background (once per page; a file opened meanwhile goes first; skipped on a data-saver connection). Measured: the first Python file then colours in ~0.14 s instead of ~0.8-1.1 s (Edge) and ~0.5-0.7 s instead of ~1.2-2.3 s (Firefox). Warming JavaScript was measured too and gave nothing, so it is not done; the first JS file still takes ~2-6 s on the eval PC (in the worker; the plain text is shown meanwhile). If anything fails, the code stays plain and a note goes to the console.
 - **Theme switch:** the role colours are CSS tokens, so the circular reveal's variable swap recolours the code in the new snapshot. Nothing is tokenised again.
 - **Not coloured:** the Findings panel's one-line snippet. A line shown without its file can be coloured wrongly (a line inside a docstring), and "Open in Explorer" shows it in colour.
 
@@ -271,7 +271,7 @@ Node and chip borders (Strong Hairline, 1.5 / 1.8) and the folder fill against t
 ## Typography
 
 **Body Font:** Inter Variable (self-hosted via @fontsource-variable/inter, falls back to system UI sans), with `cv11` and `ss01` enabled.
-**Mono Font:** JetBrains Mono 400 and 500 (self-hosted via @fontsource/jetbrains-mono), ligatures off.
+**Mono Font:** JetBrains Mono 400 and 500 (self-hosted via @fontsource/jetbrains-mono), ligatures off: every rule that sets the mono font also sets `font-variant-ligatures: none`, so `!==` and `=>` show as their characters (code view, paths, chips, inputs; `monoFont.test.ts`).
 
 **Character:** A neutral grotesk for sentences and a coder's mono for facts; the pairing reads like a terminal printout annotated by a careful editor.
 

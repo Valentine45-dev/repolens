@@ -2000,3 +2000,38 @@ are deliberately not changed after seeing eval results; these stay as documented
     was served on 127.0.0.1:5175 from a scratch worktree for the before shots, then stopped and
     removed. An older preview from an earlier session still listens on 127.0.0.1:5174 (not
     started here, left alone).
+
+- **Code colours, round 2 (`feat/code-highlight`, 14 Nov; after the owner's Firefox test passed
+  everything but a slow first colouring, ~3 s Python and ~6 s JS once per session).** $0 API
+  spend. Evidence: `eval/results/screenshots-code-highlight/README.md` ("Round 2").
+  - **Precompiled grammars: kept for JavaScript, TypeScript and TSX only.** Cold-start median to
+    colours (headless, fresh profiles): Firefox JS 14.3 s -> 8.6 s, Edge JS 3.4 -> 3.2 s; their
+    colours are identical to the regex engine's character for character (10 real files), and a
+    test keeps checking that. Python looked faster too, but its precompiled grammar colours 39-87%
+    of characters wrongly (shikijs/shiki#918, open), so Python stays on the regex engine. One new
+    dependency, `@shikijs/langs-precompiled` 4.6.0 (pinned; the package calls itself experimental);
+    ~+1.0 kB gzip per JS/TS/TSX grammar. The worker now holds two highlighters (regex for Python,
+    raw for JS/TS/TSX).
+  - **Warm-up: Python only.** After the Explorer's map (or flat graph) reports ready, an idle
+    callback starts the worker and warms the Python grammar with a short sample; once per page,
+    real files go ahead of it, 30 s timeout, failures only noted in the console, skipped on a
+    data-saver connection. A/B (Edge and Firefox, 3 runs each, file opened 20 s after the map):
+    first Python file 0.78-1.07 s -> 0.13-0.15 s (Edge), 1.2-2.3 s -> 0.5-0.7 s (Firefox). Warming
+    JS was measured and gave nothing (no compile step left in the precompiled grammar; the cost is
+    running it), so it is not done. No effect on the map's first render (the warm-up starts after
+    it); Home and Findings still load no Shiki or worker (checked after 7 s).
+  - **Ligatures off wherever the mono font is used** (13 rules lacked it; the code view drew
+    `!==` as one glyph): every rule that sets `--font-mono` also sets `font-variant-ligatures:
+    none`; `monoFont.test.ts`; 1,787 mono elements checked in Edge, none with ligatures.
+  - **Checks:** web 251/251, `tsc` clean, backend ruff clean (backend unchanged), graph/API diff
+    against `main` empty, 457-view check 457/457 identical
+    (`ui_drawn_counts-after-code-highlight-warmup-20261113T222149Z-7e3a25d.json`, run on the
+    working tree before the commit). Main bundle unchanged (424.93 / 133.96 kB gzip); Explore
+    chunk 224.40 / 72.32.
+  - **Not verified:** the owner's real Firefox; headless Firefox here is much slower than a
+    normal Firefox (the map alone took ~30 s with the remote protocol on), so the Firefox numbers
+    are for comparison only. The first JS file in a session still takes ~2-6 s to colour (plain
+    text shown meanwhile).
+  - **Environment:** the PC restarted during this round; Docker Desktop, the db, the API (8000)
+    and the 5173 preview were started again. The A/B build without the warm-up was served on
+    127.0.0.1:5175 from a scratch copy and stopped afterwards.
