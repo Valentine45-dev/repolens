@@ -1,0 +1,174 @@
+{
+  "run": {
+    "commit_sha": "d33c614fce9d3db8687d436975dd211fe239f95a",
+    "dirty": false,
+    "run_at": "2026-11-13T11:56:45+00:00",
+    "machine": "LAPTOP-4C2E555R",
+    "cpu": "Intel(R) Pentium(R) Silver N5030 CPU @ 1.10GHz",
+    "cpu_threads": 4,
+    "ram_gb": 7.8,
+    "os": "Windows 11 (10.0.22631)",
+    "python": "3.12.16",
+    "packages": {
+      "torch": "2.14.1+cpu",
+      "sentence-transformers": "6.2.0",
+      "transformers": "5.21.0",
+      "tree-sitter": "0.25.2",
+      "anthropic": "2.3.0"
+    },
+    "max_analysis_s": 600,
+    "tool_pins": {
+      "bandit": "bandit==1.9.4",
+      "semgrep": "semgrep==1.182.1"
+    },
+    "notes": "",
+    "embedder": "sentence-transformers",
+    "embed_model": "sentence-transformers/all-MiniLM-L6-v2",
+    "embed_revision": "1110a243fdf4706b3f48f1d95db1a4f5529b4d41",
+    "llm_used": false,
+    "llm": {
+      "provider": "anthropic",
+      "model": "claude-sonnet-5-5",
+      "effort": "low",
+      "thinking": "between_tools",
+      "max_tokens": 4000,
+      "prompt_version": "2026-10-28.2"
+    },
+    "retrieval": {
+      "top_k": 8,
+      "graph_expansion": true,
+      "expand_max": 8,
+      "context_tokens": 6000
+    }
+  },
+  "plan": "eval/results/CALL-CALIBRATION-J3-PLAN.md (with Amendment 1)",
+  "j3_sheet_sha256": "4de0cc5513720b789123de4499a443a68376be280d2e83cc04186819e69e6072",
+  "j1_sheet_sha256": "672a3559991f218486d05eea9ffe12c2e4700120f44028f65851078c4bd19c34",
+  "judge": "J3",
+  "ai_use": "none (self-reported)",
+  "normalisations": {
+    "bom": "blank has BOM: True, J3 has BOM: True (same)",
+    "line_endings_in_file": {
+      "blank": {
+        "crlf": 31,
+        "lone_lf": 510,
+        "lone_cr": 0
+      },
+      "j3": {
+        "crlf": 31,
+        "lone_lf": 510,
+        "lone_cr": 0
+      }
+    },
+    "trailing_empty_rows_ignored": {
+      "blank": 0,
+      "j3": 0
+    },
+    "quoting_style": {
+      "blank": "minimal",
+      "j3": "minimal",
+      "differs": false
+    },
+    "non_label_cells_needing_normalisation": {
+      "line_endings_only": 0,
+      "whitespace_only": 0,
+      "line_endings_and_whitespace": 0
+    },
+    "non_label_cells_needing_normalisation_where": {
+      "line_endings_only": [],
+      "whitespace_only": [],
+      "line_endings_and_whitespace": []
+    },
+    "labels_needing_trim_or_lower_case": 0
+  },
+  "rows": 30,
+  "three_categories": {
+    "n": 30,
+    "agree": 30,
+    "percent_agreement": 1.0,
+    "chance_agreement": 0.82,
+    "kappa": 1.0,
+    "kappa_note": null,
+    "kappa_below_0.4": false,
+    "j1_counts": {
+      "correct": 27,
+      "incorrect": 3,
+      "unsure": 0
+    },
+    "j3_counts": {
+      "correct": 27,
+      "incorrect": 3,
+      "unsure": 0
+    },
+    "table_rows_j1_cols_j3": {
+      "J1 correct": {
+        "J3 correct": 27,
+        "J3 incorrect": 0,
+        "J3 unsure": 0
+      },
+      "J1 incorrect": {
+        "J3 correct": 0,
+        "J3 incorrect": 3,
+        "J3 unsure": 0
+      },
+      "J1 unsure": {
+        "J3 correct": 0,
+        "J3 incorrect": 0,
+        "J3 unsure": 0
+      }
+    }
+  },
+  "correct_vs_incorrect": {
+    "n": 30,
+    "agree": 30,
+    "percent_agreement": 1.0,
+    "chance_agreement": 0.82,
+    "kappa": 1.0,
+    "kappa_note": null,
+    "kappa_below_0.4": false,
+    "j1_counts": {
+      "correct": 27,
+      "incorrect": 3
+    },
+    "j3_counts": {
+      "correct": 27,
+      "incorrect": 3
+    },
+    "table_rows_j1_cols_j3": {
+      "J1 correct": {
+        "J3 correct": 27,
+        "J3 incorrect": 0
+      },
+      "J1 incorrect": {
+        "J3 correct": 0,
+        "J3 incorrect": 3
+      }
+    },
+    "excluded_rows_either_unsure": 0,
+    "excluded_ids": []
+  },
+  "kappa_flag_threshold": 0.4,
+  "disagreements": [],
+  "unsure_rows": [],
+  "j3_per_band_descriptive": {
+    "1.0": {
+      "rows": 10,
+      "j3_correct": 10,
+      "j3_incorrect": 0,
+      "j3_unsure": 0
+    },
+    "0.9": {
+      "rows": 10,
+      "j3_correct": 10,
+      "j3_incorrect": 0,
+      "j3_unsure": 0
+    },
+    "0.5": {
+      "rows": 10,
+      "j3_correct": 7,
+      "j3_incorrect": 3,
+      "j3_unsure": 0
+    }
+  },
+  "note": "Per-band counts are descriptive only: no intervals, no test. J1's labels and CALL-CALIBRATION.md are unchanged."
+}
