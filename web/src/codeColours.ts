@@ -20,7 +20,7 @@ export interface ColourRequest {
 interface WorkerLike {
   postMessage(message: unknown): void;
   terminate(): void;
-  addEventListener(type: "message" | "error" | "messageerror", listener: (event: never) => void): void;
+  addEventListener(type: "message" | "error" | "messageerror", listener: (event: Event) => void): void;
 }
 
 interface Job {
@@ -101,22 +101,23 @@ function pump(): void {
 
 function startWorker(): WorkerLike {
   const w = makeWorker();
-  w.addEventListener("message", ((event: MessageEvent<{ id: number; lines?: ColouredLine[]; error?: string }>) => {
+  w.addEventListener("message", (event) => {
     if (w !== worker) return; // from a worker already replaced
+    const data = (event as MessageEvent<{ id: number; lines?: ColouredLine[]; error?: string }>).data;
     const job = current;
-    if (!job || event.data.id !== job.id) return;
+    if (!job || data.id !== job.id) return;
     finish();
-    if (event.data.lines) {
-      remember(job, event.data.lines);
-      job.resolve(job.cancelled ? null : event.data.lines);
+    if (data.lines) {
+      remember(job, data.lines);
+      job.resolve(job.cancelled ? null : data.lines);
     } else {
-      job.reject(new Error(event.data.error ?? "Colouring failed"));
+      job.reject(new Error(data.error ?? "Colouring failed"));
     }
     pump();
-  }) as never);
-  const crashed = (() => {
+  });
+  const crashed = () => {
     if (w === worker) fail(new Error("The colouring worker stopped"));
-  }) as never;
+  };
   w.addEventListener("error", crashed);
   w.addEventListener("messageerror", crashed);
   return w;

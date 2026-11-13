@@ -44,7 +44,7 @@ function FilePage() {
   return (
     <aside className="panel">
       <div className="panel-body">
-        <CodeView content={CONTENT} highlight={parseLines(params.get("lines"))} reveal={reveal} hidden={panelHidden} />
+        <CodeView path="notes.txt" content={CONTENT} highlight={parseLines(params.get("lines"))} reveal={reveal} hidden={panelHidden} />
       </div>
     </aside>
   );

@@ -8,7 +8,7 @@ class FakeWorker {
   static made: FakeWorker[] = [];
   sent: { id: number; code: string; lang: string }[] = [];
   terminated = false;
-  listeners: Record<string, ((e: unknown) => void)[]> = {};
+  listeners: Record<string, ((e: Event) => void)[]> = {};
   constructor() {
     FakeWorker.made.push(this);
   }
@@ -18,14 +18,14 @@ class FakeWorker {
   terminate() {
     this.terminated = true;
   }
-  addEventListener(type: string, fn: (e: unknown) => void) {
+  addEventListener(type: string, fn: (e: Event) => void) {
     (this.listeners[type] ??= []).push(fn);
   }
   reply(id: number, lines: ColouredLine[]) {
-    for (const fn of this.listeners.message ?? []) fn({ data: { id, lines } });
+    for (const fn of this.listeners.message ?? []) fn({ data: { id, lines } } as unknown as Event);
   }
   crash() {
-    for (const fn of this.listeners.error ?? []) fn({});
+    for (const fn of this.listeners.error ?? []) fn({} as Event);
   }
 }
 const last = () => FakeWorker.made[FakeWorker.made.length - 1];

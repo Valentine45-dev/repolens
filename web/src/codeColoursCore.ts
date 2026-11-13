@@ -34,6 +34,7 @@ const ROLE_OF: Record<string, (typeof ROLES)[number]> = {
 };
 
 const THEME = "repolens-roles";
+const LINE_TIME_LIMIT_MS = 5000;
 const MARK = /^var\(--r(\d+)\)$/;
 
 /** light-plus's scope rules with each colour replaced by a role marker (no font styles). */
@@ -83,6 +84,10 @@ export async function colourLines(code: string, lang: CodeLang): Promise<Coloure
     lang,
     theme: THEME,
     tokenizeMaxLineLength: MAX_LINE_CHARS,
+    // Shiki's default (500 ms a line) is hit on the eval PC while a grammar's patterns are first
+    // compiled, and the rest of that line then gets the wrong colours. This runs in the worker,
+    // which the page stops after TIMEOUT_MS anyway.
+    tokenizeTimeLimit: LINE_TIME_LIMIT_MS,
   });
   return tokens.map((row) => {
     const out: ColouredLine = [];

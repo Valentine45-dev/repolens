@@ -30,6 +30,22 @@
   --node-external: #71717a; /* was #a1a1aa (2.6:1 on white); this holds 4.8:1 */
   --edge: #8a8a93; /* graph edges: 3.4:1 on white, above the 3:1 floor for UI graphics */
   --highlight: #fdf3d3; /* cited or flagged code lines; text on it stays above 15:1 */
+  /* Code colours (codeRoles.ts): VS Code light-plus based, adjusted for contrast. Every role holds
+     4.5:1 on Paper and on the highlight band (DESIGN.md lists each). Plain code text stays --text. */
+  --code-keyword: #0000ff;
+  --code-control: #af00db;
+  --code-variable: #001080;
+  --code-property: #0451a5;
+  --code-constant: #0070c1;
+  --code-function: #795e26;
+  --code-type: #1f6e85; /* light-plus #267f99 is 4.1:1 on the band */
+  --code-string: #a31515;
+  --code-escape: #c50000; /* #ee0000: 4.1:1 */
+  --code-regex: #811f3f;
+  --code-number: #08734b; /* #098658: 4.2:1 */
+  --code-comment: #008000;
+  --code-tag: #800000;
+  --code-attribute: #c50000; /* #e50000: 4.4:1 */
   /* The band that sweeps over loading skeletons: a little lighter than Sunk Grey. */
   --shimmer: color-mix(in srgb, var(--bg) 75%, transparent);
 
@@ -101,6 +117,21 @@
   --node-external: #94949e;
   --edge: #7c7c86;
   --highlight: #3b3214;
+  /* dark-plus based; lifted where dark-plus falls under 4.5:1 on the highlight band */
+  --code-keyword: #5ea3dc; /* #569cd6: 4.3:1 */
+  --code-control: #c586c0;
+  --code-variable: #9cdcfe;
+  --code-property: #9cdcfe;
+  --code-constant: #4fc1ff;
+  --code-function: #dcdcaa;
+  --code-type: #4ec9b0;
+  --code-string: #ce9178;
+  --code-escape: #d7ba7d;
+  --code-regex: #e58282; /* #d16969: 3.6:1 */
+  --code-number: #b5cea8;
+  --code-comment: #7fae69; /* #6a9955: 3.8:1 */
+  --code-tag: #5ea3dc; /* #569cd6: 4.3:1 */
+  --code-attribute: #9cdcfe;
   /* A faint light band on the dark skeleton grey (never white: no flash). */
   --shimmer: color-mix(in srgb, var(--text) 7%, transparent);
 
@@ -1823,6 +1854,64 @@ a {
 
 .code-text {
   position: relative; /* above the highlight; the sticky gutter already is */
+}
+
+/* Code colours: one class per role (codeRoles.ts), colour only, so the coloured text has exactly
+   the plain text's metrics (no weight or style changes, no transitions). */
+.tk-keyword {
+  color: var(--code-keyword);
+}
+
+.tk-control {
+  color: var(--code-control);
+}
+
+.tk-variable {
+  color: var(--code-variable);
+}
+
+.tk-property {
+  color: var(--code-property);
+}
+
+.tk-constant {
+  color: var(--code-constant);
+}
+
+.tk-function {
+  color: var(--code-function);
+}
+
+.tk-type {
+  color: var(--code-type);
+}
+
+.tk-string {
+  color: var(--code-string);
+}
+
+.tk-escape {
+  color: var(--code-escape);
+}
+
+.tk-regex {
+  color: var(--code-regex);
+}
+
+.tk-number {
+  color: var(--code-number);
+}
+
+.tk-comment {
+  color: var(--code-comment);
+}
+
+.tk-tag {
+  color: var(--code-tag);
+}
+
+.tk-attribute {
+  color: var(--code-attribute);
 }
 
 /* The code view while the file loads: the same gutter and line height, grey bars for lines. */
