@@ -1888,8 +1888,8 @@ are deliberately not changed after seeing eval results; these stay as documented
   "Retry preparing search"; re-ingest them instead. (ky, snapshot 21, was re-ingested on 28 Oct
   and has Ask now.)
 
-- **Citation chip opens the File tab (`fix/citation-opens-file`, 13 Nov; pushed, CI pending,
-  not merged — owner's real-mouse test next).** Real-mouse bug report: below 1600px (File | Ask
+- **Citation chip opens the File tab (`fix/citation-opens-file`, 13 Nov; owner's real-mouse
+  test passed, merged into `main`).** Real-mouse bug report: below 1600px (File | Ask
   tabs), clicking a citation chip for a file already open behind Ask left Ask in front and the
   code view could scroll while the panel was `display:none`, landing on the wrong lines (often
   line 1) once the File tab was opened by hand. $0 API spend (graph-routed and hand-seeded test
@@ -1922,5 +1922,19 @@ are deliberately not changed after seeing eval results; these stay as documented
     `eval/citation_tab_evidence.mjs`), headless Edge, throwaway profile, real mouse clicks,
     1366 and 1920, plus reduced motion — pass/fail table per entry point, before (`main`) vs
     after.
-  - **Servers left running:** API on 8000 (key loaded), `vite preview` on 5173 with this
-    branch's build.
+  - **Owner's Firefox check (13 Nov): passed** at 1366 — graph-answer chips, AI-answer citation
+    chips (several lines in the same file and in another file), the same chip clicked again,
+    Used by/Uses chips and Findings "Open in Explorer" all open the File tab with the lines
+    centred, and Ask state (conversation, draft, scroll) is preserved.
+  - **Owner testing spend (13 Nov, not part of any evaluation):** one real AI question asked by
+    hand in that Firefox check, on pygoat (snapshot 2) — "What does challenge/models.py do?"
+    (cited `challenge/models.py:27-28,64-65,82-83,85-89` and `challenge/admin.py:2`), ~2.6k
+    tokens (`llm_tokens_used` 9,090 → 11,658). Everything else in this branch's own evidence
+    stayed graph-routed or hand-seeded client-side (sessionStorage only, never sent to the
+    server): $0 from the agent's own work, confirmed by tracing every `/ask` call it made and
+    by the unchanged file/symbol/edge/finding/chunk counts and job table for snapshot 2.
+  - **Merged into `main`** with a merge commit (not squashed), after confirming no other
+    `/ask` call this branch's work made was AI-routed and that both commits touch only the fix,
+    its tests, and the labelled evidence/PROGRESS entry above.
+  - **Servers left running:** API on 8000 (key loaded), `vite preview` on 5173 with `main`'s
+    build.
