@@ -53,7 +53,7 @@ describe("language and size", () => {
     expect(langForPath(".py")).toBeNull();
   });
 
-  it("turns colours off above 5,000 lines or 256 KB", () => {
+  it("turns colours off above 3,000 lines or 256 KB", () => {
     expect(isTooLarge(MAX_LINES)).toBe(false);
     expect(isTooLarge(MAX_LINES + 1)).toBe(true);
     expect(isTooLarge(10, MAX_BYTES)).toBe(false);
