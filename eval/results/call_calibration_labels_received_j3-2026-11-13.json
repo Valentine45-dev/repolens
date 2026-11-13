@@ -1,0 +1,57 @@
+{
+ "received": "2026-11-13",
+ "file": "sheet-labelled-judge3.csv (outside git, repolens-eval-assets/call-calibration/)",
+ "sha256": "4de0cc5513720b789123de4499a443a68376be280d2e83cc04186819e69e6072",
+ "stated_sha256": "4de0cc5513720b789123de4499a443a68376be280d2e83cc04186819e69e6072",
+ "stated_sha256_matches": true,
+ "judge": "J3 (third person; labelled the sheet built for a second judge; identified by code only)",
+ "ai_use": "none (self-reported)",
+ "plan": "eval/results/CALL-CALIBRATION-J3-PLAN.md (with Amendment 1)",
+ "checks": {
+  "passed": true,
+  "problems": [],
+  "header_equal_after_normalisation": true,
+  "rows": 30,
+  "ids_identical_and_same_order": true,
+  "ids_unique": true,
+  "invalid_labels": [],
+  "unsure_rows_without_note": 0
+ },
+ "normalisations": {
+  "bom": "blank has BOM: True, J3 has BOM: True (same)",
+  "line_endings_in_file": {
+   "blank": {
+    "crlf": 31,
+    "lone_lf": 510,
+    "lone_cr": 0
+   },
+   "j3": {
+    "crlf": 31,
+    "lone_lf": 510,
+    "lone_cr": 0
+   }
+  },
+  "trailing_empty_rows_ignored": {
+   "blank": 0,
+   "j3": 0
+  },
+  "quoting_style": {
+   "blank": "minimal",
+   "j3": "minimal",
+   "differs": false
+  },
+  "non_label_cells_needing_normalisation": {
+   "line_endings_only": 0,
+   "whitespace_only": 0,
+   "line_endings_and_whitespace": 0
+  },
+  "non_label_cells_needing_normalisation_where": {
+   "line_endings_only": [],
+   "whitespace_only": [],
+   "line_endings_and_whitespace": []
+  },
+  "labels_needing_trim_or_lower_case": 0
+ },
+ "notes_committed": false,
+ "agreement_computed": false
+}
