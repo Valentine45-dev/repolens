@@ -1996,6 +1996,7 @@ are deliberately not changed after seeing eval results; these stay as documented
   - **Not verified:** Firefox timings (owner's test). Pre-existing, not touched: JetBrains Mono
     ligatures show in the code view (`!==` as one glyph) on `main` too, though DESIGN.md says
     ligatures are off; the Explorer body moves 22 px when the legend's second line appears.
-  - **Servers:** API on 8000; `vite preview` on 5173 serves this branch's build; `main`'s build on
-    127.0.0.1:5175 (scratch worktree) for before/after. An older preview from an earlier session
-    still listens on 127.0.0.1:5174 (not started here, left alone).
+  - **Servers:** API on 8000; `vite preview` on 5173 serves this branch's build. `main`'s build
+    was served on 127.0.0.1:5175 from a scratch worktree for the before shots, then stopped and
+    removed. An older preview from an earlier session still listens on 127.0.0.1:5174 (not
+    started here, left alone).
