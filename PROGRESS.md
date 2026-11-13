@@ -1847,6 +1847,13 @@ are deliberately not changed after seeing eval results; these stay as documented
 - More generally: the rules are syntactic (no taint tracking), so they flag constant arguments
   too (constant `eval`, fixed-string `shell=True`, SQL with a constant table name, a logged SQL
   string), and fixture recall shows the rules work as designed, not real-world recall.
+- **Code colours after a multi-line redaction can be wrong** (`feat/code-highlight`). Redaction
+  replaces a secret with `[REDACTED]` plus the same number of newlines, so line numbers stay put.
+  If the redacted span held the end of a string or comment (for example a private-key block
+  inside a triple-quoted string), the tokenizer no longer sees that string close, and the lines
+  after it can be coloured as string or code wrongly. The text itself is unchanged (the code
+  view uses the colours only if the coloured runs give back the stored text exactly). Not fixed:
+  rare, cosmetic, and fixing it would mean keeping string delimiters through redaction.
 
 ## Known issues
 - A dagre layout of 300 nodes takes ~0.4s on the main thread (dev); fine at the cap, would need
@@ -1938,3 +1945,57 @@ are deliberately not changed after seeing eval results; these stay as documented
     its tests, and the labelled evidence/PROGRESS entry above.
   - **Servers left running:** API on 8000 (key loaded), `vite preview` on 5173 with `main`'s
     build.
+
+- **Syntax colours in the code view (`feat/code-highlight`, 13 Nov; built, pushed, waiting for
+  the owner's Firefox test, not merged).** $0 API spend (no `/ask` call; the evidence reads the
+  dev database through the graph and file APIs only).
+  - **What:** the file panel's code view shows VS Code-style colours (light-plus based, adjusted
+    for contrast; the roles, values and ratios are in DESIGN.md, "Code colours") in both themes.
+    Shiki 4.6.0 (MIT, pinned exactly), fine-grained: `shiki/core` + the JavaScript regex engine
+    (no WASM), Python / JavaScript (also `.jsx`, whose JSX the JS grammar covers) / TypeScript /
+    TSX. No JSON (the panel only opens parsed Python/JS/TS files) and no colours in the Findings
+    snippet (a lone line can be coloured wrongly). One new dependency (`shiki`, 45 packages,
+    none with install scripts).
+  - **How:** one tokenising pass with a theme made from light-plus's scope rules whose colours
+    are role markers; each run maps to a fixed `.tk-<role>` class and `--code-<role>` tokens give
+    the light and dark colour, so a theme switch (including the circular reveal) is CSS only. It
+    runs in one long-lived Web Worker (`codeColours.worker.ts`), made on the first request and
+    replaced only after a 10 s timeout or a crash; requests go one at a time, a cancelled request
+    is dropped (never sent if queued; its answer discarded if sent), and the last 6 results are
+    remembered (tab switches, reopened files). `CodeView` shows the plain text first and swaps the
+    runs (React text and spans, never HTML) into the same `<pre>` when they match the stored text
+    exactly; each request has an id, and an answer for another file or an earlier opening of the
+    same file is never applied. Anything going wrong leaves plain text and a console note.
+  - **Limit: 3,000 lines or 256 KB** (+ lines over 1,000 characters stay uncoloured). Proposed
+    5,000; the owner's rule was to drop to 3,000 if the swap's main-thread task on black's
+    `tests/test_black.py` exceeded 200 ms: it was 1,081-1,228 ms (7,402 spans). At 3,000 the
+    biggest coloured files still take 0.25-0.45 s to swap on the eval PC (trans.py 2,849 lines
+    433 ms; flask app.py 256 ms; express test/app.router.js 278 ms); the plain render of the same
+    files is itself 0.10-0.24 s. 5 of 768 openable code files (PyGoat, express, flask, black) are
+    over the limit. A variant that joined plain runs into one text node was 3x slower (rejected).
+  - **Found while building:** Shiki's 500 ms per-line tokenize limit was hit on the eval PC while
+    a grammar's patterns compiled (first lines of the first JS file came out mis-coloured in a
+    loaded test run); the worker now allows 5 s a line.
+  - **Measurements** (headless Edge, eval PC; `eval/results/screenshots-code-highlight/README.md`):
+    main bundle `index-*.js` 424.93 kB / 133.96 kB gzip before and 424.93 / 133.97 after;
+    Explore chunk 220.46 / 70.59 -> 223.67 / 72.00; main CSS 64.23 / 22.18 -> 65.38 / 22.55.
+    New lazy chunks: worker (core + engine + light-plus) 176.7 kB / 56.2 kB gzip, python 69.9 /
+    9.2, javascript 174.8 / 16.6, typescript 181.1 / 16.1, tsx 175.5 / 16.6; no `.wasm`. Home and
+    Findings load none of them (network + resource timing). Time from plain to colours: first
+    file 0.9-2.9 s (worker + Shiki + Python), second file = first JS 3.3-3.9 s (grammar
+    compile), Python again 0.3-0.5 s, JS again (1,050 lines) 0.75-1.0 s. Tokenising in Node on
+    the same PC: a typical 57-line Python file 9 ms, flask app.py 136 ms, express
+    lib/response.js 293 ms.
+  - **Checks:** web 244/244 tests (new: `codeColours.test.ts`, `codeColoursCore.test.ts` with
+    real Shiki, `codeColoursCss.test.ts` with every role's 4.5:1 computed from `styles.css`,
+    `CodeViewColours.dom.test.tsx`; the citation scroll tests unchanged apart from the new `path`
+    prop), `tsc` clean; backend ruff clean, full pytest 490 passed, 3 skipped, 1 setup error in
+    `test_ask_db.py` while the web suite ran alongside (the file alone: 53/53; backend unchanged
+    on this branch); graph/API diff against `main` empty; 457-view check
+    (`ui_drawn_counts-after-code-highlight-20261113T163128Z-a98b4d4.json`) 457/457 identical.
+  - **Not verified:** Firefox timings (owner's test). Pre-existing, not touched: JetBrains Mono
+    ligatures show in the code view (`!==` as one glyph) on `main` too, though DESIGN.md says
+    ligatures are off; the Explorer body moves 22 px when the legend's second line appears.
+  - **Servers:** API on 8000; `vite preview` on 5173 serves this branch's build; `main`'s build on
+    127.0.0.1:5175 (scratch worktree) for before/after. An older preview from an earlier session
+    still listens on 127.0.0.1:5174 (not started here, left alone).

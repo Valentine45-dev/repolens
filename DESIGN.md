@@ -214,6 +214,33 @@ A monochrome zinc palette where black does the work of an accent and three seman
 
 `--info` colours the Low severity (icon and word, never colour alone).
 
+### Code colours (file panel code view)
+VS Code-style (light-plus based), adjusted for contrast. They are the one place hues appear that aren't state: they are scoped to code text in the file panel and say nothing about the code's quality or safety. Each token kind (role) is a CSS token `--code-<role>` with a light and a dark value, used through a `.tk-<role>` class that sets only `color`. Plain code text stays `--text`. Roles come from one tokenising pass against light-plus's scope rules (`web/src/codeColoursCore.ts`), so light and dark are pure CSS.
+
+| Role | Light | Dark | Light on Paper / band | Dark on Paper / band |
+|---|---|---|---|---|
+| keyword (`def`, `const`, `import`) | #0000ff | **#5ea3dc** (dark-plus #569cd6: 4.3 on the band) | 8.6 / 7.7 | 7.0 / 4.7 |
+| control (`if`, `return`, `for`) | #af00db | #c586c0 | 5.5 / 4.9 | 6.8 / 4.6 |
+| variable, property | #001080, #0451a5 | #9cdcfe | 15.2 / 13.7, 7.7 / 6.9 | 12.6 / 8.5 |
+| constant | #0070c1 | #4fc1ff | 5.1 / 4.6 | 9.3 / 6.3 |
+| function | #795e26 | #dcdcaa | 6.1 / 5.5 | 13.3 / 9.0 |
+| type, class | **#1f6e85** (light-plus #267f99: 4.1 on the band) | #4ec9b0 | 5.8 / 5.2 | 9.3 / 6.2 |
+| string | #a31515 | #ce9178 | 7.8 / 7.1 | 7.1 / 4.8 |
+| escape (`\n` in a string) | **#c50000** (#ee0000: 4.1) | #d7ba7d | 6.2 / 5.6 | 10.1 / 6.8 |
+| regex | #811f3f | **#e58282** (#d16969: 3.6) | 9.5 / 8.6 | 7.1 / 4.8 |
+| number | **#08734b** (#098658: 4.2) | #b5cea8 | 5.9 / 5.3 | 11.1 / 7.5 |
+| comment | #008000 | **#7fae69** (#6a9955: 3.8) | 5.1 / 4.6 | 7.3 / 4.9 |
+| tag (JSX) | #800000 | **#5ea3dc** (#569cd6: 4.3) | 10.9 / 9.9 | 7.0 / 4.7 |
+| attribute (JSX) | **#c50000** (#e50000: 4.4) | #9cdcfe | 6.2 / 5.6 | 12.6 / 8.5 |
+
+Changed from VS Code (bold above): light type, escape, number, attribute; dark keyword, tag, regex, comment. All other values are light-plus / dark-plus as they are. Every role holds 4.5:1 on Paper and on the highlight band in both themes; `web/src/codeColoursCss.test.ts` computes this from `styles.css`. Line numbers are unaffected: the gutter is opaque and above the code.
+
+- **Languages:** Python (`.py`, `.pyi`), JavaScript (`.js .mjs .cjs .jsx`, VS Code's JavaScript grammar, which includes JSX), TypeScript (`.ts .mts .cts`) and TSX. Everything else is plain text.
+- **Limit:** files over **3,000 lines or 256 KB** stay plain, and the panel caption adds "Colours off for large files" (known from the line count before the text arrives, so nothing moves). Lines over 1,000 characters stay uncoloured. Why 3,000: tokenising runs in a Web Worker, but putting the coloured spans on the page is one main-thread task that grows with the file. On the eval PC it took about 1.2 s for a 4,591-line file and about 0.25 to 0.45 s for 1,200 to 2,850 lines (`eval/results/screenshots-code-highlight/`).
+- **Loading:** plain text first, then colours swap in, in the same `<pre>` (same text, font and line height), so the scroll position, the cited-line band, selection and copy stay as they are. Shiki and the worker load only when a code view first needs them (never on Home or Findings). If anything fails, the code stays plain and a note goes to the console.
+- **Theme switch:** the role colours are CSS tokens, so the circular reveal's variable swap recolours the code in the new snapshot. Nothing is tokenised again.
+- **Not coloured:** the Findings panel's one-line snippet. A line shown without its file can be coloured wrongly (a line inside a docstring), and "Open in Explorer" shows it in colour.
+
 ### Dark theme
 Same roles, other values (frontmatter `colors-dark`). Ink becomes a light grey and Paper a near-black; state colours are lifted to hold 4.5:1 on the dark ground. Only colours change: sizes, spacing and the graph's layout are identical. A script at the top of `index.html` sets `data-theme` on `<html>` before anything paints (a stored pick, else `prefers-color-scheme`), and `web/src/theme.ts` follows the system until the user picks with the top-bar toggle (`aria-pressed`, name "Dark theme"; remembered in `localStorage` as `repolens.theme`). Switching is a circular reveal from the toggle (see Motion); instant under reduced motion.
 
@@ -237,7 +264,7 @@ Contrast (WCAG 2.x; text 4.5:1, UI parts and graph strokes 3:1), light / dark:
 Node and chip borders (Strong Hairline, 1.5 / 1.8) and the folder fill against the canvas (1.04 / 1.06) are below 3:1 in both themes by design: a node is identified by its text, icon and word, not its outline. Dimmed nodes (28%) and edges (15%) are de-emphasis on purpose.
 
 ### Named Rules
-**The Ink Is The Accent Rule.** Black is the only emphasis colour. There is no brand hue; a new surface that wants attention uses Ink, weight, or position, never a new colour.
+**The Ink Is The Accent Rule.** Black is the only emphasis colour. There is no brand hue; a new surface that wants attention uses Ink, weight, or position, never a new colour. (Code colours, above, are the one exception: they live only inside the code view's text.)
 
 **The State-Only Colour Rule.** Green, red and amber appear only to report job or input state, and always beside an icon or word that says the same thing; colour is never the only carrier of meaning.
 
@@ -338,7 +365,7 @@ A ruled vertical list: a 20px icon column, the stage label, and a right-aligned 
 - **First visit:** a "How to read this map" card (three lines, "Got it" and a close button) at the bottom left of the canvas, shown until closed once (`repolens.mapHintSeen`).
 - **First view:** fits the whole graph when that needs zoom 0.6 or closer; otherwise it opens on the most connected file and its neighbours at zoom 0.8, and a caption over the canvas names that file ("Fit shows all files") until the user picks a file or presses Fit. Fit always shows everything. A selected file is centred in the canvas area the panel leaves free. Enter or Space on a focused file node opens it, like a click.
 - **Toolbar:** one row beside the Ask panel at 1366px: segmented Graph/List control (Bench Grey track, Paper pressed segment, 32px), a second segmented control for the level of detail (Folders / Files / Flat), a small secondary Fit button, then a "Show" group of native checkboxes with Ink accent: "Tests & examples" (it hides `examples/` with the tests), "Guessed calls", "All edges" (dimmed when the map leaves nothing out; its hover text and description then say "All connections are already shown."). What is in view and what is hidden ("25 files · 58 test or example files hidden here") sits at the right of the breadcrumb row; List view keeps it at the right of the toolbar. While the next folder loads, the old map dims, stops taking clicks and shows "Opening `folder`…"; the breadcrumbs already show the target.
-- **Node panel:** docked right, `min(480px, 42vw)`, Hairline left border (an overlay under 900px). Path in mono, a four-fact row (Used by, Uses, External imports, Unresolved imports), underline tabs (Code, Used by, Uses), and a code view with a sticky Bench Grey line-number gutter. Neighbours are grouped by file; external and unresolved entries carry a small tag (dashed External Grey for external). The title is the folder over the file name, each on one line cut with an ellipsis (the folder from the left, so the part next to the file stays); a name is never broken mid-word, and the full path is the hover text and accessible name. The panel never grows past the canvas area (`max-height: 100%`): the code area takes what is left and scrolls both ways inside it. The line-number gutter is sticky on the left with an opaque Bench Grey background and sits above the code and the highlight band.
+- **Node panel:** docked right, `min(480px, 42vw)`, Hairline left border (an overlay under 900px). Path in mono, a four-fact row (Used by, Uses, External imports, Unresolved imports), underline tabs (Code, Used by, Uses), and a code view with a sticky Bench Grey line-number gutter and syntax colours (see Code colours). Neighbours are grouped by file; external and unresolved entries carry a small tag (dashed External Grey for external). The title is the folder over the file name, each on one line cut with an ellipsis (the folder from the left, so the part next to the file stays); a name is never broken mid-word, and the full path is the hover text and accessible name. The panel never grows past the canvas area (`max-height: 100%`): the code area takes what is left and scrolls both ways inside it. The line-number gutter is sticky on the left with an opaque Bench Grey background and sits above the code and the highlight band.
 - **List view:** a full-width table with a sticky Bench Grey header, 36px rows, mono numbers right-aligned; the selected row takes Sunk Grey.
 
 ### Findings page
