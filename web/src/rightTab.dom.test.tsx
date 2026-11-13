@@ -17,14 +17,19 @@ beforeEach(() => {
 });
 afterEach(() => act(() => root.unmount()));
 
-function Probe(props: { panel: string | null; ask: boolean; prefill: string | null }) {
-  const [tab, setTab] = useRightTab(props.panel, props.ask, props.prefill);
+function Probe(props: { panel: string | null; ask: boolean; prefill: string | null; lines: string | null; reveal: string | null }) {
+  const [tab, setTab] = useRightTab(props.panel, props.ask, props.prefill, props.lines, props.reveal);
   current = tab;
   choose = setTab;
   return null;
 }
-const show = (panel: string | null, ask: boolean, prefill: string | null = null) =>
-  act(() => root.render(<Probe panel={panel} ask={ask} prefill={prefill} />));
+const show = (
+  panel: string | null,
+  ask: boolean,
+  prefill: string | null = null,
+  lines: string | null = null,
+  reveal: string | null = null,
+) => act(() => root.render(<Probe panel={panel} ask={ask} prefill={prefill} lines={lines} reveal={reveal} />));
 
 describe("which side panel is in front when Ask and a panel share a column", () => {
   it("a link that opens both shows the panel first", () => {
@@ -51,5 +56,21 @@ describe("which side panel is in front when Ask and a panel share a column", () 
     act(() => choose("ask"));
     show("789", true);
     expect(current).toBe("ask");
+  });
+
+  it("new lines in the file already open bring the file to the front", () => {
+    show("789", true, null, "53-56");
+    act(() => choose("ask"));
+    show("789", true, null, "380-390");
+    expect(current).toBe("panel");
+  });
+
+  it("an 'open these lines' link brings the file to the front even when the address is unchanged", () => {
+    show("789", true, null, "53-56", "key-1");
+    act(() => choose("ask"));
+    show("789", true, null, "53-56", "key-1"); // an unrelated re-render: the choice stays
+    expect(current).toBe("ask");
+    show("789", true, null, "53-56", "key-2"); // the same chip clicked again
+    expect(current).toBe("panel");
   });
 });

@@ -2,7 +2,7 @@ import { useState } from "react";
 import { Link } from "react-router-dom";
 
 import type { FindingReach, ReachStep, ReachTier } from "../api";
-import { exploreHref } from "../links";
+import { exploreHref, REVEAL } from "../links";
 
 export type ReachView =
   | { status: "loading" }
@@ -62,6 +62,7 @@ function Chip({ snapshotId, step }: { snapshotId: number; step: ReachStep }) {
       className="site-chip"
       data-guess={step.guess || undefined}
       title={title}
+      state={REVEAL}
       to={exploreHref(snapshotId, {
         fileId: step.file_id,
         lines: { start: step.start_line, end: step.start_line },

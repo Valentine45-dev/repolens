@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 
 import type { Site } from "../api";
 import { GUESS_BELOW } from "../graphModel";
+import { REVEAL } from "../links";
 
 export const SHOWN = 3; // lines listed per import or call; "+N more" lists the rest (see below)
 
@@ -52,7 +53,7 @@ export function SiteChips({
         const common = { className: "site-chip", title, "data-guess": guess || undefined };
         if (href) {
           return (
-            <Link key={s.line} {...common} to={href(s.line)}>
+            <Link key={s.line} {...common} to={href(s.line)} state={REVEAL}>
               {label}
             </Link>
           );

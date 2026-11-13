@@ -1,7 +1,7 @@
 // Addresses inside an analysis (spec §3.6: state lives in the URL).
 
-import { useCallback } from "react";
-import { useSearchParams } from "react-router-dom";
+import { useCallback, useState } from "react";
+import { useLocation, useSearchParams } from "react-router-dom";
 
 export interface LineRange {
   start: number;
@@ -62,4 +62,20 @@ export function useSetParams() {
     },
     [setParams],
   );
+}
+
+/** Router state for an "open these lines" link (citation chips, graph results and line chips,
+ * Open in Explorer, reachability chips): the file panel comes to the front and the lines are
+ * scrolled into view, also when the address does not change (the same chip clicked again). */
+export const REVEAL = { reveal: true } as const;
+
+/** Changes on every navigation that carries REVEAL, and only then: a later navigation without it
+ * (a replace that tidies the address, a map toggle) keeps the last value. Null until the first. */
+export function useRevealToken(): string | null {
+  const location = useLocation();
+  const state = location.state as { reveal?: unknown } | null;
+  const key = state?.reveal === true ? location.key : null;
+  const [last, setLast] = useState(key);
+  if (key !== null && key !== last) setLast(key);
+  return key ?? last;
 }
