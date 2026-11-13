@@ -1,0 +1,304 @@
+{
+  "when": "2026-11-13T22:06:08.115Z",
+  "builds": {
+    "with": "http://127.0.0.1:5173",
+    "without": "http://127.0.0.1:5175"
+  },
+  "wait_after_map_ms": 20000,
+  "note": "eval PC under outside load (owner's Chrome, Windows background tasks after a restart): absolute times inflated; with/without alternate order per run",
+  "runs": [
+    {
+      "run": 1,
+      "browser": "edge",
+      "build": "with",
+      "map_drawn": true,
+      "ms_nav_to_map_drawn": 14245,
+      "long_tasks_before_map_ms": [
+        142,
+        102,
+        63,
+        365
+      ],
+      "long_tasks_after_map_while_waiting_ms": [
+        153
+      ],
+      "python": {
+        "file": "introduction/views.py",
+        "coloured": true,
+        "ms_plain_to_colours": 139,
+        "ms_click_to_colours": 890
+      },
+      "javascript": {
+        "file": "introduction/static/js/lab_manager.js",
+        "coloured": true,
+        "ms_plain_to_colours": 3781,
+        "ms_click_to_colours": 4905
+      }
+    },
+    {
+      "run": 1,
+      "browser": "edge",
+      "build": "without",
+      "map_drawn": true,
+      "ms_nav_to_map_drawn": 6987,
+      "long_tasks_before_map_ms": [
+        125,
+        91,
+        109,
+        52,
+        245
+      ],
+      "long_tasks_after_map_while_waiting_ms": [
+        88
+      ],
+      "python": {
+        "file": "introduction/views.py",
+        "coloured": true,
+        "ms_plain_to_colours": 1069,
+        "ms_click_to_colours": 1327
+      },
+      "javascript": {
+        "file": "introduction/static/js/lab_manager.js",
+        "coloured": true,
+        "ms_plain_to_colours": 2604,
+        "ms_click_to_colours": 2957
+      }
+    },
+    {
+      "run": 2,
+      "browser": "edge",
+      "build": "without",
+      "map_drawn": true,
+      "ms_nav_to_map_drawn": 8593,
+      "long_tasks_before_map_ms": [
+        104,
+        118,
+        233
+      ],
+      "long_tasks_after_map_while_waiting_ms": [
+        85
+      ],
+      "python": {
+        "file": "introduction/views.py",
+        "coloured": true,
+        "ms_plain_to_colours": 955,
+        "ms_click_to_colours": 1686
+      },
+      "javascript": {
+        "file": "introduction/static/js/lab_manager.js",
+        "coloured": true,
+        "ms_plain_to_colours": 2183,
+        "ms_click_to_colours": 3165
+      }
+    },
+    {
+      "run": 2,
+      "browser": "edge",
+      "build": "with",
+      "map_drawn": true,
+      "ms_nav_to_map_drawn": 5527,
+      "long_tasks_before_map_ms": [
+        125,
+        62,
+        104,
+        267
+      ],
+      "long_tasks_after_map_while_waiting_ms": [
+        82
+      ],
+      "python": {
+        "file": "introduction/views.py",
+        "coloured": true,
+        "ms_plain_to_colours": 146,
+        "ms_click_to_colours": 1168
+      },
+      "javascript": {
+        "file": "introduction/static/js/lab_manager.js",
+        "coloured": true,
+        "ms_plain_to_colours": 2319,
+        "ms_click_to_colours": 3452
+      }
+    },
+    {
+      "run": 3,
+      "browser": "edge",
+      "build": "with",
+      "map_drawn": true,
+      "ms_nav_to_map_drawn": 7912,
+      "long_tasks_before_map_ms": [
+        117,
+        146,
+        59,
+        239
+      ],
+      "long_tasks_after_map_while_waiting_ms": [
+        82
+      ],
+      "python": {
+        "file": "introduction/views.py",
+        "coloured": true,
+        "ms_plain_to_colours": 128,
+        "ms_click_to_colours": 530
+      },
+      "javascript": {
+        "file": "introduction/static/js/lab_manager.js",
+        "coloured": true,
+        "ms_plain_to_colours": 1934,
+        "ms_click_to_colours": 2612
+      }
+    },
+    {
+      "run": 3,
+      "browser": "edge",
+      "build": "without",
+      "map_drawn": true,
+      "ms_nav_to_map_drawn": 9428,
+      "long_tasks_before_map_ms": [
+        105,
+        135,
+        240
+      ],
+      "long_tasks_after_map_while_waiting_ms": [
+        92
+      ],
+      "python": {
+        "file": "introduction/views.py",
+        "coloured": true,
+        "ms_plain_to_colours": 780,
+        "ms_click_to_colours": 1041
+      },
+      "javascript": {
+        "file": "introduction/static/js/lab_manager.js",
+        "coloured": true,
+        "ms_plain_to_colours": 1734,
+        "ms_click_to_colours": 2511
+      }
+    },
+    {
+      "run": 1,
+      "browser": "firefox",
+      "build": "with",
+      "map_drawn": true,
+      "ms_nav_to_map_drawn": 4059,
+      "long_tasks_before_map_ms": [],
+      "long_tasks_after_map_while_waiting_ms": "not supported in Firefox",
+      "python": {
+        "file": "introduction/views.py",
+        "coloured": true,
+        "ms_plain_to_colours": 532,
+        "ms_click_to_colours": 1248
+      },
+      "javascript": {
+        "file": "introduction/static/js/lab_manager.js",
+        "coloured": true,
+        "ms_plain_to_colours": 6051,
+        "ms_click_to_colours": 8021
+      }
+    },
+    {
+      "run": 1,
+      "browser": "firefox",
+      "build": "without",
+      "map_drawn": true,
+      "ms_nav_to_map_drawn": 5823,
+      "long_tasks_before_map_ms": [],
+      "long_tasks_after_map_while_waiting_ms": "not supported in Firefox",
+      "python": {
+        "file": "introduction/views.py",
+        "coloured": true,
+        "ms_plain_to_colours": 2345,
+        "ms_click_to_colours": 3641
+      },
+      "javascript": {
+        "file": "introduction/static/js/lab_manager.js",
+        "coloured": true,
+        "ms_plain_to_colours": 5037,
+        "ms_click_to_colours": 5754
+      }
+    },
+    {
+      "run": 2,
+      "browser": "firefox",
+      "build": "without",
+      "map_drawn": true,
+      "ms_nav_to_map_drawn": 75997,
+      "long_tasks_before_map_ms": [],
+      "long_tasks_after_map_while_waiting_ms": "not supported in Firefox",
+      "python": {
+        "file": "introduction/views.py",
+        "coloured": true,
+        "ms_plain_to_colours": 1534,
+        "ms_click_to_colours": 2447
+      },
+      "javascript": {
+        "file": "introduction/static/js/lab_manager.js",
+        "coloured": true,
+        "ms_plain_to_colours": 6240,
+        "ms_click_to_colours": 6965
+      }
+    },
+    {
+      "run": 2,
+      "browser": "firefox",
+      "build": "with",
+      "map_drawn": true,
+      "ms_nav_to_map_drawn": 7746,
+      "long_tasks_before_map_ms": [],
+      "long_tasks_after_map_while_waiting_ms": "not supported in Firefox",
+      "python": {
+        "file": "introduction/views.py",
+        "coloured": true,
+        "ms_plain_to_colours": 682,
+        "ms_click_to_colours": 1592
+      },
+      "javascript": {
+        "file": "introduction/static/js/lab_manager.js",
+        "coloured": true,
+        "ms_plain_to_colours": 4102,
+        "ms_click_to_colours": 5062
+      }
+    },
+    {
+      "run": 3,
+      "browser": "firefox",
+      "build": "with",
+      "map_drawn": true,
+      "ms_nav_to_map_drawn": 4348,
+      "long_tasks_before_map_ms": [],
+      "long_tasks_after_map_while_waiting_ms": "not supported in Firefox",
+      "python": {
+        "file": "introduction/views.py",
+        "coloured": true,
+        "ms_plain_to_colours": 660,
+        "ms_click_to_colours": 911
+      },
+      "javascript": {
+        "file": "introduction/static/js/lab_manager.js",
+        "coloured": true,
+        "ms_plain_to_colours": 2436,
+        "ms_click_to_colours": 3189
+      }
+    },
+    {
+      "run": 3,
+      "browser": "firefox",
+      "build": "without",
+      "map_drawn": true,
+      "ms_nav_to_map_drawn": 4100,
+      "long_tasks_before_map_ms": [],
+      "long_tasks_after_map_while_waiting_ms": "not supported in Firefox",
+      "python": {
+        "file": "introduction/views.py",
+        "coloured": true,
+        "ms_plain_to_colours": 1230,
+        "ms_click_to_colours": 1845
+      },
+      "javascript": {
+        "file": "introduction/static/js/lab_manager.js",
+        "coloured": true,
+        "ms_plain_to_colours": 2557,
+        "ms_click_to_colours": 2940
+      }
+    }
+  ]
+}

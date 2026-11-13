@@ -203,7 +203,7 @@ async function measure() {
     const from = requests.length;
     await open(path);
     await waitFor(ready);
-    await sleep(2500);
+    await sleep(7000); // longer than the warm-up's 5 s idle timeout: it would have started by now
     const urls = requests.slice(from).filter((u) => !u.startsWith("data:"));
     const resources = await evaluate(`performance.getEntriesByType("resource").map((e) => e.name.replace(location.origin, ""))`);
     return { page: name, path, requests: urls, heavy_requests: urls.filter(heavy), heavy_resources: resources.filter(heavy) };
@@ -212,6 +212,7 @@ async function measure() {
     await page("Home", "/", `document.querySelector("input")`),
     await page("Findings", "/a/2/findings", `document.querySelector("table, .findings-list, [role=table]")`),
     await page("Explorer with a file open (control)", href(PY), `document.querySelector(".panel .code[data-colours=on]")`),
+    await page("Explorer map, no file open (warm-up control)", "/a/2/explore", `document.querySelector(".react-flow__node")`),
   ];
   cdp.close();
 
@@ -284,6 +285,23 @@ async function measure() {
   };
   cdp.close();
 
+  }
+  if (want("ligatures")) {
+  // 6. Ligatures off wherever JetBrains Mono is drawn (code view, paths, chips, tags), JS file open.
+  await newPage("light");
+  await open(href(JS));
+  await waitFor(`${codeFor(JS)} && ${stateIs("on")}`);
+  await sleep(800);
+  out.ligatures = await evaluate(`(() => {
+    const mono = [...document.querySelectorAll("body *")].filter((el) => el.childNodes.length && [...el.childNodes].some((n) => n.nodeType === 3 && n.textContent.trim()) && getComputedStyle(el).fontFamily.includes("JetBrains Mono"));
+    const on = mono.filter((el) => getComputedStyle(el).fontVariantLigatures !== "none");
+    return { mono_text_elements: mono.length, with_ligatures: on.length, examples_with: on.slice(0, 5).map((el) => el.className || el.tagName), code_text: getComputedStyle(document.querySelector(".panel .code-text")).fontVariantLigatures, has_neq: document.querySelector(".panel .code-text").textContent.includes("!==") };
+  })()`);
+  // a close-up of line 10 of lab_manager.js ("document.cookie !== ''"), at 3x
+  const box = await evaluate(`(() => { const r = document.querySelector(".panel .code-highlight").getBoundingClientRect(); return { x: r.x, y: r.y, width: Math.min(r.width, 460), height: 20 }; })()`);
+  const r = await cdp.send("Page.captureScreenshot", { format: "png", clip: { ...box, scale: 3 } });
+  writeFileSync(join(OUT, `${LABEL}-${W}-ligatures-closeup.png`), Buffer.from(r.data, "base64"));
+  cdp.close();
   }
   if (want("large")) {
   // 5. Files over the limit stay plain, with the caption note.

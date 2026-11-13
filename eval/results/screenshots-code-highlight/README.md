@@ -90,3 +90,70 @@ node eval/code_highlight_evidence.mjs --base http://127.0.0.1:5175 --out eval/re
 node eval/code_highlight_evidence.mjs --base http://127.0.0.1:5173 --out eval/results/screenshots-code-highlight --label after --mode shots
 node eval/code_highlight_evidence.mjs --base http://127.0.0.1:5173 --out eval/results/screenshots-code-highlight --label after --mode measure
 ```
+
+## Round 2 (after the owner's Firefox test): precompiled grammars, warm-up, ligatures
+
+The owner found the first colouring in a Firefox session slow: about 3 s for the first Python file
+and about 6 s for the first JS file. After that, colours were instant.
+
+### Precompiled grammars (`precompiled-bench.json`, `precompiled-colour-compare.txt`; harness in `eval/precompiled_bench/`)
+Median time from the file text to colours on a cold start (3 runs each, fresh headless browser and
+throwaway profile for every run, machine otherwise idle). The current setup is the regex engine
+with regular grammars; precompiled is the raw engine with precompiled grammars:
+
+| Browser | Python (`views.py`) current → precompiled | JS (`lab_manager.js`) current → precompiled |
+|---|---|---|
+| Edge | 1,038 → 744 ms | 3,412 → 3,204 ms |
+| Firefox | 4,339 → 3,022 ms | 14,273 → 8,642 ms |
+
+The colours were then compared character by character in Node:
+- **JavaScript, TypeScript and TSX are identical:** 0 differing characters over 4 express files
+  and 6 TS/TSX files.
+- **Python is wrong:** 39 to 87% of characters change colour, usually because everything after
+  some line becomes string colour. This is shikijs/shiki#918, still open.
+
+Python's apparent speed-up came from that broken output. Kept: precompiled grammars for JS, TS
+and TSX only (about +1.0 kB gzip per grammar). Python stays on the regex engine.
+`codeColoursCore.test.ts` checks on every test run that the precompiled JS/TS/TSX colours equal
+the regex engine's on real files.
+
+### Warm-up (`warmup.json`; script `eval/code_warmup_evidence.mjs`)
+This is an A/B on the same flow. Each run opens PyGoat's Explorer map, waits 20 s after the map
+draws, then opens a Python file and then a JS file in-app. The **with** build is this branch; the
+**without** build is the same tree with only `scheduleWarmUp` turned off, served on 5175. Both ran
+in Edge (DevTools protocol) and Firefox (WebDriver BiDi), headless with throwaway profiles, 3 runs
+each, alternating which build ran first.
+
+The PC was under outside load during these runs (the owner's Chrome and Windows background tasks
+after a restart, CPU at 100%), so absolute times are inflated. The with/without comparison is
+like for like. Plain text to colours:
+
+| | Python, 1st file: without → with | JS, 2nd file: without → with |
+|---|---|---|
+| Edge | 780–1,069 → 128–146 ms | 1,734–2,604 → 1,934–3,781 ms |
+| Firefox | 1,230–2,345 → 532–682 ms | 2,557–6,240 → 2,436–6,051 ms |
+
+Warming Python helps clearly. Warming JS gives nothing: its precompiled grammar has no compile
+step left, and the remaining cost is running the tokenizer over the file. The shipped warm-up
+therefore loads Python only, which also starts the worker and Shiki's core for every later file.
+
+Effect on the map:
+- The warm-up starts only after the map's React Flow canvas reports ready, plus an idle callback.
+- Map draw times show no systematic difference: Edge 5.5–14.2 s with against 7.0–9.4 s without,
+  under load.
+- Main-thread long tasks after the map while waiting (Edge) were 82–153 ms with against 85–92 ms
+  without.
+- Firefox has no long-task API.
+
+### Lazy loading, re-checked with the warm-up (`measure-lazy-ligatures.json`)
+- Home and Findings request no worker, grammar or Shiki file after 7 s, which is longer than the
+  warm-up's 5 s idle timeout.
+- The Explorer with a file open loads the worker.
+- The Explorer map with no file open now loads it too: that is the warm-up.
+
+### Ligatures (`measure-lazy-ligatures.json`, `after-1366-ligatures-closeup.png`)
+- With a JS file open, 1,787 elements drawn in JetBrains Mono have `font-variant-ligatures: none`
+  and none have ligatures on.
+- The close-up of `lab_manager.js` line 10 shows `!==` as three characters.
+- `web/src/monoFont.test.ts` checks that every CSS rule that sets the mono font also turns
+  ligatures off.
