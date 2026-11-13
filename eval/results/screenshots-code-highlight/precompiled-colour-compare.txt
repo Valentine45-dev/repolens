@@ -1,0 +1,18 @@
+2-introduction_views.py            python     differing chars 5572/8195 (67.99%) first differing line 22  top: #008000->#a31515:2592 #000000->#a31515:1818 #af00db->#a31515:407
+3-examples_cookies_index.js        javascript differing chars 0/1111 (0.00%) first differing line null  top: 
+3-lib_application.js               javascript differing chars 0/10868 (0.00%) first differing line null  top: 
+3-lib_response.js                  javascript differing chars 0/19243 (0.00%) first differing line null  top: 
+3-test_app.router.js               javascript differing chars 0/20662 (0.00%) first differing line null  top: 
+6-examples_tutorial_flaskr_db.py   python     differing chars 494/1027 (48.10%) first differing line 14  top: #000000->#a31515:369 #795e26->#a31515:52 #0000ff->#a31515:40
+6-src_flask_app.py                 python     differing chars 18188/46916 (38.77%) first differing line 64  top: #000000->#a31515:9086 #008000->#a31515:4063 #0000ff->#a31515:1546
+6-src_flask_json_tag.py            python     differing chars 3975/6751 (58.88%) first differing line 44  top: #000000->#a31515:1841 #001080->#a31515:430 #af00db->#a31515:371
+7-profiling_list_huge.py           python     differing chars 605610/695365 (87.09%) first differing line 2  top: #a31515->#000000:605610
+7-src_black_linegen.py             python     differing chars 73627/85251 (86.36%) first differing line 5  top: #000000->#a31515:45586 #008000->#a31515:14300 #0000ff->#a31515:3517
+7-src_black_lines.py               python     differing chars 43033/50112 (85.87%) first differing line 42  top: #000000->#a31515:23024 #008000->#a31515:10407 #0000ff->#a31515:3431
+7-tests_test_black.py              python     differing chars 98712/128208 (76.99%) first differing line 69  top: #000000->#a31515:65250 #795e26->#a31515:9089 #008000->#a31515:8903
+api.ts                             typescript differing chars 0/12209 (0.00%) first differing line null  top: 
+codeColours.ts                     typescript differing chars 0/5379 (0.00%) first differing line null  top: 
+components_MapView.tsx             tsx        differing chars 0/17410 (0.00%) first differing line null  top: 
+components_NodePanel.tsx           tsx        differing chars 0/15757 (0.00%) first differing line null  top: 
+mapModel.ts                        typescript differing chars 0/15555 (0.00%) first differing line null  top: 
+pages_Explore.tsx                  tsx        differing chars 0/15521 (0.00%) first differing line null  top: 

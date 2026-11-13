@@ -1,0 +1,257 @@
+{
+  "base": "http://127.0.0.1:5173",
+  "when": "2026-11-13T16:17:24.179Z",
+  "viewport": "1366x768",
+  "lazy": [
+    {
+      "page": "Home",
+      "path": "/",
+      "requests": [
+        "/",
+        "/assets/inter-latin-wght-normal-Dx4kXJAl.woff2",
+        "/assets/jetbrains-mono-latin-400-normal-V6pRDFza.woff2",
+        "/assets/jetbrains-mono-latin-500-normal-BWZEU5yA.woff2",
+        "/assets/index-CsigaDCE.js",
+        "/assets/index-DdQO4jop.css"
+      ],
+      "heavy_requests": [],
+      "heavy_resources": []
+    },
+    {
+      "page": "Findings",
+      "path": "/a/2/findings",
+      "requests": [
+        "/a/2/findings",
+        "/assets/inter-latin-wght-normal-Dx4kXJAl.woff2",
+        "/assets/jetbrains-mono-latin-400-normal-V6pRDFza.woff2",
+        "/assets/jetbrains-mono-latin-500-normal-BWZEU5yA.woff2",
+        "/assets/index-CsigaDCE.js",
+        "/assets/index-DdQO4jop.css",
+        "/api/rules",
+        "/api/snapshots/2/status"
+      ],
+      "heavy_requests": [],
+      "heavy_resources": []
+    },
+    {
+      "page": "Explorer with a file open (control)",
+      "path": "/a/2/explore?node=1767&lines=21-28",
+      "requests": [
+        "/a/2/explore?node=1767&lines=21-28",
+        "/assets/inter-latin-wght-normal-Dx4kXJAl.woff2",
+        "/assets/jetbrains-mono-latin-400-normal-V6pRDFza.woff2",
+        "/assets/jetbrains-mono-latin-500-normal-BWZEU5yA.woff2",
+        "/assets/index-CsigaDCE.js",
+        "/assets/index-DdQO4jop.css",
+        "/assets/Explore-DqR7H9k4.js",
+        "/assets/Explore-DLioOiRN.css",
+        "/api/snapshots/2/status",
+        "/api/snapshots/2/graph?exclude_tests=true&min_confidence=0.9",
+        "/api/snapshots/2/findings?limit=1",
+        "/api/snapshots/2/files/1767",
+        "/api/symbols/9144/dependents?min_confidence=0.9",
+        "/api/symbols/9144/dependencies?min_confidence=0.9",
+        "/api/snapshots/2/graph?level=folder&exclude_tests=true&min_confidence=0.9&root=introduction",
+        "/assets/codeColours.worker-DKyhpzSi.js"
+      ],
+      "heavy_requests": [
+        "/assets/codeColours.worker-DKyhpzSi.js"
+      ],
+      "heavy_resources": [
+        "/assets/codeColours.worker-DKyhpzSi.js"
+      ]
+    }
+  ],
+  "timing": [
+    {
+      "order": 1,
+      "note": "first file: worker start, Shiki core + engine, Python grammar",
+      "file": "introduction/views.py",
+      "coloured": true,
+      "ms_plain_to_colours": 883,
+      "lines": "21-28"
+    },
+    {
+      "order": 2,
+      "note": "second file, first JS: JavaScript grammar loads and compiles",
+      "file": "introduction/static/js/lab_manager.js",
+      "coloured": true,
+      "ms_plain_to_colours": 3881,
+      "lines": "10-16"
+    },
+    {
+      "order": 3,
+      "note": "third file, Python again (warm)",
+      "file": "challenge/labs/security_headers_lab/app.py",
+      "coloured": true,
+      "ms_plain_to_colours": 483,
+      "lines": "1-3"
+    },
+    {
+      "order": 4,
+      "note": "fourth file, JS again (warm)",
+      "file": "lib/response.js",
+      "coloured": true,
+      "ms_plain_to_colours": 1025,
+      "lines": "1-3"
+    }
+  ],
+  "swap": [
+    {
+      "file": "src/black/trans.py",
+      "ms_plain_to_colours": 1904,
+      "spans": 3177,
+      "swap_long_task_ms": 433,
+      "plain_render_long_task_ms": 236,
+      "shifts": [
+        {
+          "t": 3837.7000000476837,
+          "value": 0.01113538616398243,
+          "sources": [
+            "explore-body"
+          ]
+        }
+      ],
+      "header_height": [
+        83.5,
+        83.5
+      ],
+      "body_top": [
+        407,
+        429
+      ],
+      "longest_task_while_colouring_ms": 504,
+      "layout_shift_during": 0.01113538616398243,
+      "scrollTop": [
+        26748,
+        26748
+      ],
+      "pre_top": [
+        -26341,
+        -26319
+      ],
+      "pre_height": [
+        54689.1875,
+        54689.1875
+      ],
+      "band_top": [
+        531.796875,
+        553.796875
+      ],
+      "label": "File contents, lines 1400 to 1404 highlighted"
+    },
+    {
+      "file": "src/flask/app.py",
+      "ms_plain_to_colours": 1666,
+      "spans": 2046,
+      "swap_long_task_ms": 256,
+      "plain_render_long_task_ms": 179,
+      "shifts": [
+        {
+          "t": 5534.700000047684,
+          "value": 0.01113538616398243,
+          "sources": [
+            "explore-body"
+          ]
+        }
+      ],
+      "header_height": [
+        83.5,
+        83.5
+      ],
+      "body_top": [
+        407,
+        429
+      ],
+      "longest_task_while_colouring_ms": 315,
+      "layout_shift_during": 0.01113538616398243,
+      "scrollTop": [
+        15228,
+        15228
+      ],
+      "pre_top": [
+        -14821,
+        -14799
+      ],
+      "pre_height": [
+        32374.125,
+        32374.125
+      ],
+      "band_top": [
+        531.796875,
+        553.796875
+      ],
+      "label": "File contents, lines 800 to 804 highlighted"
+    },
+    {
+      "file": "test/app.router.js",
+      "ms_plain_to_colours": 2814,
+      "spans": 2890,
+      "swap_long_task_ms": 278,
+      "plain_render_long_task_ms": 102,
+      "shifts": [],
+      "header_height": [
+        83.5,
+        83.5
+      ],
+      "body_top": [
+        407,
+        407
+      ],
+      "longest_task_while_colouring_ms": 538,
+      "layout_shift_during": 0,
+      "scrollTop": [
+        11388,
+        11388
+      ],
+      "pre_top": [
+        -10981,
+        -10981
+      ],
+      "pre_height": [
+        23375.1875,
+        23375.1875
+      ],
+      "band_top": [
+        531.796875,
+        531.796875
+      ],
+      "label": "File contents, lines 600 to 604 highlighted"
+    }
+  ],
+  "theme": {
+    "before": {
+      "keyword": "rgb(0, 0, 255)",
+      "string": "rgb(163, 21, 21)",
+      "function": "rgb(121, 94, 38)",
+      "plain": "rgb(10, 10, 10)",
+      "band": "rgb(253, 243, 211)",
+      "theme": "light"
+    },
+    "after": {
+      "keyword": "rgb(94, 163, 220)",
+      "string": "rgb(206, 145, 120)",
+      "function": "rgb(220, 220, 170)",
+      "plain": "rgb(244, 244, 245)",
+      "band": "rgb(59, 50, 20)",
+      "theme": "dark"
+    },
+    "same_pre_element": true,
+    "same_first_token_node": true,
+    "still_coloured": true
+  },
+  "large": [
+    {
+      "file": "tests/test_black.py",
+      "state": "off",
+      "caption": "Python · 4591 lines · Colours off for large files",
+      "spans": 0
+    },
+    {
+      "file": "profiling/list_huge.py",
+      "state": "off",
+      "caption": "Python · 22431 lines · Colours off for large files",
+      "spans": 0
+    }
+  ]
+}

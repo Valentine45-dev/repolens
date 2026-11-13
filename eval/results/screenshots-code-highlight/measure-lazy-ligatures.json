@@ -1,0 +1,100 @@
+{
+  "base": "http://127.0.0.1:5173",
+  "when": "2026-11-13T22:20:33.680Z",
+  "viewport": "1366x768",
+  "lazy": [
+    {
+      "page": "Home",
+      "path": "/",
+      "requests": [
+        "/",
+        "/assets/inter-latin-wght-normal-Dx4kXJAl.woff2",
+        "/assets/jetbrains-mono-latin-400-normal-V6pRDFza.woff2",
+        "/assets/jetbrains-mono-latin-500-normal-BWZEU5yA.woff2",
+        "/assets/index-CcV-pleo.js",
+        "/assets/index-DsCNRspE.css",
+        "/favicon.svg"
+      ],
+      "heavy_requests": [],
+      "heavy_resources": []
+    },
+    {
+      "page": "Findings",
+      "path": "/a/2/findings",
+      "requests": [
+        "/a/2/findings",
+        "/assets/inter-latin-wght-normal-Dx4kXJAl.woff2",
+        "/assets/jetbrains-mono-latin-400-normal-V6pRDFza.woff2",
+        "/assets/jetbrains-mono-latin-500-normal-BWZEU5yA.woff2",
+        "/assets/index-CcV-pleo.js",
+        "/assets/index-DsCNRspE.css",
+        "/api/rules",
+        "/api/snapshots/2/status",
+        "/api/snapshots/2/findings?category=security&limit=50&offset=0",
+        "/api/snapshots/2/findings?limit=1"
+      ],
+      "heavy_requests": [],
+      "heavy_resources": []
+    },
+    {
+      "page": "Explorer with a file open (control)",
+      "path": "/a/2/explore?node=1767&lines=21-28",
+      "requests": [
+        "/a/2/explore?node=1767&lines=21-28",
+        "/assets/inter-latin-wght-normal-Dx4kXJAl.woff2",
+        "/assets/jetbrains-mono-latin-400-normal-V6pRDFza.woff2",
+        "/assets/jetbrains-mono-latin-500-normal-BWZEU5yA.woff2",
+        "/assets/index-CcV-pleo.js",
+        "/assets/index-DsCNRspE.css",
+        "/assets/Explore-0TdQvkaN.js",
+        "/assets/Explore-DLioOiRN.css",
+        "/api/snapshots/2/status",
+        "/api/snapshots/2/graph?exclude_tests=true&min_confidence=0.9",
+        "/api/snapshots/2/findings?limit=1",
+        "/api/snapshots/2/files/1767",
+        "/api/symbols/9144/dependents?min_confidence=0.9",
+        "/api/symbols/9144/dependencies?min_confidence=0.9",
+        "/api/snapshots/2/graph?level=folder&exclude_tests=true&min_confidence=0.9&root=introduction",
+        "/assets/codeColours.worker-DWOtbIQW.js"
+      ],
+      "heavy_requests": [
+        "/assets/codeColours.worker-DWOtbIQW.js"
+      ],
+      "heavy_resources": [
+        "/assets/codeColours.worker-DWOtbIQW.js"
+      ]
+    },
+    {
+      "page": "Explorer map, no file open (warm-up control)",
+      "path": "/a/2/explore",
+      "requests": [
+        "/a/2/explore",
+        "/assets/inter-latin-wght-normal-Dx4kXJAl.woff2",
+        "/assets/jetbrains-mono-latin-400-normal-V6pRDFza.woff2",
+        "/assets/jetbrains-mono-latin-500-normal-BWZEU5yA.woff2",
+        "/assets/index-CcV-pleo.js",
+        "/assets/index-DsCNRspE.css",
+        "/assets/Explore-0TdQvkaN.js",
+        "/assets/Explore-DLioOiRN.css",
+        "/api/snapshots/2/status",
+        "/api/snapshots/2/graph?exclude_tests=true&min_confidence=0.9",
+        "/api/snapshots/2/findings?limit=1",
+        "/api/snapshots/2/graph?level=folder&exclude_tests=true&min_confidence=0.9",
+        "/assets/codeColours.worker-DWOtbIQW.js"
+      ],
+      "heavy_requests": [
+        "/assets/codeColours.worker-DWOtbIQW.js"
+      ],
+      "heavy_resources": [
+        "/assets/codeColours.worker-DWOtbIQW.js"
+      ]
+    }
+  ],
+  "ligatures": {
+    "mono_text_elements": 1787,
+    "with_ligatures": 0,
+    "examples_with": [],
+    "code_text": "none",
+    "has_neq": true
+  }
+}

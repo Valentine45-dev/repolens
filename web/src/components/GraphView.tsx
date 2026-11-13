@@ -17,6 +17,7 @@ import {
 import { memo, useEffect, useMemo, useRef, useState } from "react";
 
 import type { GraphEdge, GraphNode } from "../api";
+import { scheduleWarmUp } from "../codeColours";
 import {
   isGuess,
   languageLabel,
@@ -175,6 +176,8 @@ export function GraphView({
   const [fitOnMount] = useState(selectedId === null);
   const canvasRef = useRef<HTMLDivElement>(null);
   const [ready, setReady] = useState(false); // set by onInit: the viewport can be moved
+  // Once the graph has drawn, warm up code colours (Python) while the browser is idle (codeColours.ts).
+  useEffect(() => (ready ? scheduleWarmUp() : undefined), [ready]);
   // The canvas narrows when the docked panel opens; centring must use the final size, so it
   // re-runs whenever the canvas is resized.
   const [canvasSize, setCanvasSize] = useState("");

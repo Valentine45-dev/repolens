@@ -41,6 +41,7 @@ function show(props: { start: number; end: number; hidden: boolean; reveal?: str
     root.render(
       <div className="panel-body" data-hidden={String(props.hidden)}>
         <CodeView
+          path="notes.txt"
           content={CONTENT}
           highlight={{ start: props.start, end: props.end }}
           reveal={props.reveal ?? null}

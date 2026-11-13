@@ -1,0 +1,218 @@
+{
+  "base": "http://127.0.0.1:5173",
+  "when": "2026-11-13T16:08:34.633Z",
+  "viewport": "1366x768",
+  "swap": [
+    {
+      "file": "tests/test_black.py",
+      "ms_plain_to_colours": 4213,
+      "spans": 7402,
+      "swap_long_task_ms": 1228,
+      "plain_render_long_task_ms": 620,
+      "shifts": [
+        {
+          "t": 56724.09999990463,
+          "value": 0.13583098863407905,
+          "sources": [
+            "graph-skeleton-card",
+            "graph-skeleton-card",
+            "graph-skeleton-card",
+            "graph-skeleton-card",
+            "graph-skeleton-card"
+          ]
+        }
+      ],
+      "header_height": [
+        83.5,
+        83.5
+      ],
+      "body_top": [
+        407,
+        407
+      ],
+      "longest_task_while_colouring_ms": 1228,
+      "layout_shift_during": 0.13583098863407905,
+      "scrollTop": [
+        42108,
+        42108
+      ],
+      "pre_top": [
+        -41701,
+        -41701
+      ],
+      "pre_height": [
+        88113.8125,
+        88113.8125
+      ],
+      "band_top": [
+        531.796875,
+        531.796875
+      ],
+      "label": "File contents, lines 2200 to 2204 highlighted"
+    },
+    {
+      "file": "src/black/linegen.py",
+      "ms_plain_to_colours": 3607,
+      "spans": 3835,
+      "swap_long_task_ms": 592,
+      "plain_render_long_task_ms": 297,
+      "shifts": [
+        {
+          "t": 8125.5,
+          "value": 0.01113538616398243,
+          "sources": [
+            "explore-body"
+          ]
+        }
+      ],
+      "header_height": [
+        83.5,
+        83.5
+      ],
+      "body_top": [
+        407,
+        429
+      ],
+      "longest_task_while_colouring_ms": 592,
+      "layout_shift_during": 0.01113538616398243,
+      "scrollTop": [
+        28668,
+        28668
+      ],
+      "pre_top": [
+        -28261,
+        -28239
+      ],
+      "pre_height": [
+        61117,
+        61117
+      ],
+      "band_top": [
+        531.796875,
+        553.796875
+      ],
+      "label": "File contents, lines 1500 to 1504 highlighted"
+    },
+    {
+      "file": "src/black/trans.py",
+      "ms_plain_to_colours": 2896,
+      "spans": 3177,
+      "swap_long_task_ms": 462,
+      "plain_render_long_task_ms": 838,
+      "shifts": [
+        {
+          "t": 4582.599999904633,
+          "value": 0.01113538616398243,
+          "sources": [
+            "explore-body"
+          ]
+        }
+      ],
+      "header_height": [
+        83.5,
+        83.5
+      ],
+      "body_top": [
+        407,
+        429
+      ],
+      "longest_task_while_colouring_ms": 493,
+      "layout_shift_during": 0.01113538616398243,
+      "scrollTop": [
+        26748,
+        26748
+      ],
+      "pre_top": [
+        -26341,
+        -26319
+      ],
+      "pre_height": [
+        54689.1875,
+        54689.1875
+      ],
+      "band_top": [
+        531.796875,
+        553.796875
+      ],
+      "label": "File contents, lines 1400 to 1404 highlighted"
+    },
+    {
+      "file": "src/flask/app.py",
+      "ms_plain_to_colours": 2258,
+      "spans": 2046,
+      "swap_long_task_ms": 252,
+      "plain_render_long_task_ms": 153,
+      "shifts": [
+        {
+          "t": 4017,
+          "value": 0.01113538616398243,
+          "sources": [
+            "explore-body"
+          ]
+        }
+      ],
+      "header_height": [
+        83.5,
+        83.5
+      ],
+      "body_top": [
+        407,
+        429
+      ],
+      "longest_task_while_colouring_ms": 451,
+      "layout_shift_during": 0.01113538616398243,
+      "scrollTop": [
+        15228,
+        15228
+      ],
+      "pre_top": [
+        -14821,
+        -14799
+      ],
+      "pre_height": [
+        32374.125,
+        32374.125
+      ],
+      "band_top": [
+        531.796875,
+        553.796875
+      ],
+      "label": "File contents, lines 800 to 804 highlighted"
+    },
+    {
+      "file": "test/app.router.js",
+      "ms_plain_to_colours": 3168,
+      "spans": 2890,
+      "swap_long_task_ms": 284,
+      "plain_render_long_task_ms": 123,
+      "shifts": [],
+      "header_height": [
+        83.5,
+        83.5
+      ],
+      "body_top": [
+        407,
+        407
+      ],
+      "longest_task_while_colouring_ms": 507,
+      "layout_shift_during": 0,
+      "scrollTop": [
+        11388,
+        11388
+      ],
+      "pre_top": [
+        -10981,
+        -10981
+      ],
+      "pre_height": [
+        23375.1875,
+        23375.1875
+      ],
+      "band_top": [
+        531.796875,
+        531.796875
+      ],
+      "label": "File contents, lines 600 to 604 highlighted"
+    }
+  ]
+}

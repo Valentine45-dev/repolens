@@ -1,5 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
-import { useEffect, useId, useMemo, useRef, useState, type CSSProperties } from "react";
+import { Fragment, useEffect, useId, useMemo, useRef, useState, type CSSProperties, type ReactNode } from "react";
 
 import {
   getFile,
@@ -11,6 +11,8 @@ import {
 } from "../api";
 import { GUESS_BELOW, languageLabel } from "../graphModel";
 import type { LineRange } from "../links";
+import { requestColours } from "../codeColours";
+import { isTooLarge, langForPath, MAX_BYTES, ROLES, utf8Length, type ColouredLine } from "../codeRoles";
 import { scrollToRange } from "../scroll";
 import { CloseButton } from "./CloseButton";
 import { useEscapeToClose } from "../escapeStack";
@@ -108,6 +110,11 @@ export function NodePanel({
     queryFn: ({ signal }) => getNeighbours(node.symbol_id, "dependencies", minConfidence, signal),
     staleTime: Infinity,
   });
+  // Under the line limit but over the byte limit: only known once the text is here.
+  const coloursOff = useMemo(
+    () => (file.data ? utf8Length(file.data.content) > MAX_BYTES : false),
+    [file.data],
+  );
 
   return (
     <aside className="panel" aria-labelledby={titleId} ref={panelRef}>
@@ -116,6 +123,8 @@ export function NodePanel({
           <PanelTitle id={titleId} path={node.path} titleRef={titleRef} />
           <p className="caption">
             {languageLabel(node.language)} · <span className="mono num">{node.loc}</span> lines
+            {/* known from the line count before the text arrives, so it never shifts the panel */}
+            {langForPath(node.path) && (isTooLarge(node.loc) || coloursOff) ? " · Colours off for large files" : null}
           </p>
         </div>
         {onShowFunctions ? (
@@ -184,6 +193,7 @@ export function NodePanel({
           file.data ? (
             <CodeView
               key={node.id}
+              path={node.path}
               content={file.data.content}
               highlight={highlight}
               reveal={reveal}
@@ -297,11 +307,13 @@ const CODE_SKELETON_MAX = 80;
 const SCROLL_CONTEXT_LINES = 3;
 
 export function CodeView({
+  path,
   content,
   highlight,
   reveal,
   hidden,
 }: {
+  path: string;
   content: string;
   highlight: LineRange | null;
   reveal: string | null;
@@ -312,6 +324,7 @@ export function CodeView({
     if (all.length > 1 && all[all.length - 1] === "") all.pop();
     return all;
   }, [content]);
+  const colours = useCodeColours(path, content, lines);
   const gutter = useMemo(() => lines.map((_, i) => i + 1).join("\n"), [lines]);
   const markRef = useRef<HTMLDivElement>(null);
   const range =
@@ -348,6 +361,7 @@ export function CodeView({
   return (
     <div
       className="code"
+      data-colours={colours.state}
       tabIndex={0}
       aria-label={
         range ? `File contents, lines ${range.start} to ${range.end} highlighted` : "File contents"
@@ -364,9 +378,80 @@ export function CodeView({
       <pre className="code-gutter" aria-hidden="true">
         {gutter}
       </pre>
-      <pre className="code-text">{lines.join("\n")}</pre>
+      <pre className="code-text">{colours.lines ? renderColoured(colours.lines) : lines.join("\n")}</pre>
     </div>
   );
+}
+
+type ColourState = "pending" | "on" | "off" | "plain";
+
+/** Plain text first; the coloured runs replace it in the same <pre> once the worker answers. Each
+ * request has an id: an answer for an earlier request (another file, or this one opened again) is
+ * never applied. Anything going wrong leaves the plain text, with a note in the console. */
+function useCodeColours(
+  path: string,
+  content: string,
+  lines: string[],
+): { state: ColourState; lines: ColouredLine[] | null } {
+  const lang = langForPath(path);
+  const large = useMemo(() => isTooLarge(lines.length, utf8Length(content)), [lines, content]);
+  const [result, setResult] = useState<{ id: number; lines: ColouredLine[] } | null>(null);
+  const [failed, setFailed] = useState(false);
+  const latest = useRef(0);
+  useEffect(() => {
+    setResult(null);
+    setFailed(false);
+    if (!lang || large) return;
+    const req = requestColours(content, lang);
+    latest.current = req.id;
+    req.promise.then(
+      (coloured) => {
+        if (latest.current !== req.id || !coloured) return; // stale or cancelled
+        if (sameText(coloured, lines)) setResult({ id: req.id, lines: coloured.slice(0, lines.length) });
+        else {
+          console.warn("Code colours do not match the file's text; showing plain text.");
+          setFailed(true);
+        }
+      },
+      (err: unknown) => {
+        if (latest.current !== req.id) return;
+        console.warn("Code colours unavailable; showing plain text.", err);
+        setFailed(true);
+      },
+    );
+    return () => {
+      latest.current = 0;
+      req.cancel();
+    };
+  }, [content, lang, large, lines]);
+  const state: ColourState = !lang || failed ? "plain" : large ? "off" : result ? "on" : "pending";
+  return { state, lines: result && result.id === latest.current ? result.lines : null };
+}
+
+/** The runs must give back the file exactly (the redacted text included), or they are not used. */
+function sameText(coloured: ColouredLine[], lines: string[]): boolean {
+  if (coloured.length < lines.length) return false;
+  for (let i = coloured.length - 1; i >= lines.length; i--) if (coloured[i].length) return false;
+  return lines.every((line, i) => coloured[i].map((run) => run[1]).join("") === line);
+}
+
+/** Runs as React text and spans with a fixed class per role: never HTML from the file. */
+function renderColoured(coloured: ColouredLine[]): ReactNode[] {
+  return coloured.map((line, i) => (
+    <Fragment key={i}>
+      {i ? "\n" : null}
+      {line.map(([role, text], j) => {
+        const name = ROLES[role];
+        return name ? (
+          <span key={j} className={`tk-${name}`}>
+            {text}
+          </span>
+        ) : (
+          text
+        );
+      })}
+    </Fragment>
+  ));
 }
 
 function FileFindings({
