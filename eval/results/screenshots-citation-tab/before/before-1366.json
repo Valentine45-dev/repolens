@@ -1,0 +1,288 @@
+{
+  "base": "http://127.0.0.1:5174",
+  "viewport": [
+    1366,
+    768
+  ],
+  "reducedMotion": false,
+  "browser": "msedge.exe",
+  "steps": {
+    "a0-ask": {
+      "url": "/a/2/explore?ask=1",
+      "rightTab": null,
+      "tabs": [],
+      "askVisible": true,
+      "panelVisible": false,
+      "panelScrollTop": null,
+      "highlightAria": null,
+      "markInView": null,
+      "askScrollTop": 561,
+      "askTurns": 2,
+      "draft": "half-typed question"
+    },
+    "a1-after-chip": {
+      "url": "/a/2/explore?node=1794&lines=53-56&ask=1",
+      "rightTab": "panel",
+      "tabs": [
+        "File*",
+        "Ask"
+      ],
+      "askVisible": false,
+      "panelVisible": true,
+      "panelScrollTop": 832,
+      "highlightAria": "File contents, lines 53 to 56 highlighted",
+      "markInView": {
+        "panelTop": 319,
+        "panelBottom": 768,
+        "markTop": 497,
+        "markBottom": 574,
+        "above": 178,
+        "below": 194,
+        "fullyInside": true
+      },
+      "askScrollTop": 561,
+      "askTurns": 2,
+      "draft": "half-typed question"
+    },
+    "a2-back-to-ask": {
+      "url": "/a/2/explore?node=1794&lines=53-56&ask=1",
+      "rightTab": "ask",
+      "tabs": [
+        "File",
+        "Ask*"
+      ],
+      "askVisible": true,
+      "panelVisible": false,
+      "panelScrollTop": 0,
+      "highlightAria": "File contents, lines 53 to 56 highlighted",
+      "markInView": null,
+      "askScrollTop": 561,
+      "askTurns": 2,
+      "draft": "half-typed question",
+      "askScrollBefore": 561,
+      "draftBefore": "half-typed question",
+      "askTurnsBefore": 2
+    },
+    "b1-same-file-chip": {
+      "url": "/a/2/explore?node=1794&lines=380-390&ask=1",
+      "rightTab": "ask",
+      "tabs": [
+        "File",
+        "Ask*"
+      ],
+      "askVisible": true,
+      "panelVisible": false,
+      "panelScrollTop": 0,
+      "highlightAria": "File contents, lines 380 to 390 highlighted",
+      "markInView": null,
+      "askScrollTop": 561,
+      "askTurns": 2,
+      "draft": "half-typed question",
+      "scrollTopAt60ms": 0
+    },
+    "b2-scrolled-away": {
+      "url": "/a/2/explore?node=1794&lines=380-390&ask=1",
+      "rightTab": "ask",
+      "tabs": [
+        "File",
+        "Ask*"
+      ],
+      "askVisible": true,
+      "panelVisible": false,
+      "panelScrollTop": 0,
+      "highlightAria": "File contents, lines 380 to 390 highlighted",
+      "markInView": null,
+      "askScrollTop": 561,
+      "askTurns": 2,
+      "draft": "half-typed question"
+    },
+    "b3-same-chip-again": {
+      "url": "/a/2/explore?node=1794&lines=380-390&ask=1",
+      "rightTab": "ask",
+      "tabs": [
+        "File",
+        "Ask*"
+      ],
+      "askVisible": true,
+      "panelVisible": false,
+      "panelScrollTop": 0,
+      "highlightAria": "File contents, lines 380 to 390 highlighted",
+      "markInView": null,
+      "askScrollTop": 561,
+      "askTurns": 2,
+      "draft": "half-typed question"
+    },
+    "c1-other-file-chip": {
+      "url": "/a/2/explore?node=1767&lines=300-310&ask=1",
+      "rightTab": "panel",
+      "tabs": [
+        "File*",
+        "Ask"
+      ],
+      "askVisible": false,
+      "panelVisible": true,
+      "panelScrollTop": 5641,
+      "highlightAria": "File contents, lines 300 to 310 highlighted",
+      "markInView": {
+        "panelTop": 319,
+        "panelBottom": 768,
+        "markTop": 431,
+        "markBottom": 642,
+        "above": 112,
+        "below": 126,
+        "fullyInside": true
+      },
+      "askScrollTop": 561,
+      "askTurns": 2,
+      "draft": "half-typed question"
+    },
+    "d1-graph-site-chip": {
+      "url": "/a/2/explore?node=1794&lines=212-212&ask=1",
+      "rightTab": "panel",
+      "tabs": [
+        "File*",
+        "Ask"
+      ],
+      "askVisible": false,
+      "panelVisible": true,
+      "panelScrollTop": 5641,
+      "highlightAria": "File contents, lines 212 to 212 highlighted",
+      "markInView": {
+        "panelTop": 319,
+        "panelBottom": 768,
+        "markTop": -1259,
+        "markBottom": -1240,
+        "above": -1578,
+        "below": 2008,
+        "fullyInside": false
+      },
+      "askScrollTop": 174,
+      "askTurns": 2,
+      "draft": "half-typed question"
+    },
+    "e1-graph-result-row": {
+      "url": "/a/2/explore?node=1794&lines=103-230&ask=1",
+      "rightTab": "ask",
+      "tabs": [
+        "File",
+        "Ask*"
+      ],
+      "askVisible": true,
+      "panelVisible": false,
+      "panelScrollTop": 0,
+      "highlightAria": "File contents, lines 103 to 230 highlighted",
+      "markInView": null,
+      "askScrollTop": 118,
+      "askTurns": 2,
+      "draft": "half-typed question"
+    },
+    "f1-uses-site-chip": {
+      "url": "/a/2/explore?node=1767&ask=1&lines=11-11",
+      "rightTab": "panel",
+      "tabs": [
+        "File*",
+        "Ask"
+      ],
+      "askVisible": false,
+      "panelVisible": true,
+      "panelScrollTop": 0,
+      "highlightAria": "File contents, lines 11 to 11 highlighted",
+      "markInView": {
+        "panelTop": 319,
+        "panelBottom": 768,
+        "markTop": 523,
+        "markBottom": 542,
+        "above": 204,
+        "below": 226,
+        "fullyInside": true
+      },
+      "askScrollTop": 583,
+      "askTurns": 2,
+      "draft": "",
+      "clicked": "views.py:11"
+    },
+    "g0-finding-open": {
+      "url": "/a/2/findings?category=all&ask=1&finding=5429",
+      "rightTab": "panel",
+      "tabs": [
+        "Finding*",
+        "Ask"
+      ],
+      "askVisible": false,
+      "panelVisible": true,
+      "panelScrollTop": 0,
+      "highlightAria": null,
+      "markInView": null,
+      "askScrollTop": 583,
+      "askTurns": 2,
+      "draft": ""
+    },
+    "g1-open-in-explorer": {
+      "url": "/a/2/explore?node=1662&lines=44-44",
+      "rightTab": null,
+      "tabs": [],
+      "askVisible": false,
+      "panelVisible": true,
+      "panelScrollTop": 674,
+      "highlightAria": "File contents, lines 44 to 44 highlighted",
+      "markInView": {
+        "panelTop": 407,
+        "panelBottom": 768,
+        "markTop": 571,
+        "markBottom": 590,
+        "above": 164,
+        "below": 178,
+        "fullyInside": true
+      },
+      "askScrollTop": null,
+      "askTurns": null,
+      "draft": null
+    },
+    "h1-reach-chip": {
+      "url": "/a/2/explore?node=1662&lines=1-1",
+      "rightTab": null,
+      "tabs": [],
+      "askVisible": false,
+      "panelVisible": true,
+      "panelScrollTop": 0,
+      "highlightAria": "File contents, lines 1 to 1 highlighted",
+      "markInView": {
+        "panelTop": 407,
+        "panelBottom": 768,
+        "markTop": 419,
+        "markBottom": 438,
+        "above": 12,
+        "below": 330,
+        "fullyInside": true
+      },
+      "askScrollTop": null,
+      "askTurns": null,
+      "draft": null,
+      "clicked": "app.py"
+    },
+    "i1-deep-link": {
+      "url": "/a/2/explore?node=1794&lines=300-305&ask=1",
+      "rightTab": "panel",
+      "tabs": [
+        "File*",
+        "Ask"
+      ],
+      "askVisible": false,
+      "panelVisible": true,
+      "panelScrollTop": 5593,
+      "highlightAria": "File contents, lines 300 to 305 highlighted",
+      "markInView": {
+        "panelTop": 319,
+        "panelBottom": 768,
+        "markTop": 479,
+        "markBottom": 594,
+        "above": 160,
+        "below": 174,
+        "fullyInside": true
+      },
+      "askScrollTop": 583,
+      "askTurns": 2,
+      "draft": ""
+    }
+  }
+}

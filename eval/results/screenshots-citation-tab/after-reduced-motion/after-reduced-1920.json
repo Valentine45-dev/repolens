@@ -1,0 +1,295 @@
+{
+  "base": "http://127.0.0.1:5173",
+  "viewport": [
+    1920,
+    1080
+  ],
+  "reducedMotion": true,
+  "browser": "msedge.exe",
+  "steps": {
+    "a0-ask": {
+      "url": "/a/2/explore?ask=1",
+      "rightTab": null,
+      "tabs": [],
+      "askVisible": true,
+      "panelVisible": false,
+      "panelScrollTop": null,
+      "highlightAria": null,
+      "markInView": null,
+      "askScrollTop": 249,
+      "askTurns": 2,
+      "draft": "half-typed question"
+    },
+    "a1-after-chip": {
+      "url": "/a/2/explore?node=1794&lines=53-56&ask=1",
+      "rightTab": null,
+      "tabs": [],
+      "askVisible": true,
+      "panelVisible": true,
+      "panelScrollTop": 720,
+      "highlightAria": "File contents, lines 53 to 56 highlighted",
+      "markInView": {
+        "panelTop": 407,
+        "panelBottom": 1080,
+        "markTop": 697,
+        "markBottom": 774,
+        "above": 290,
+        "below": 306,
+        "fullyInside": true
+      },
+      "askScrollTop": 249,
+      "askTurns": 2,
+      "draft": "half-typed question"
+    },
+    "a2-back-to-ask": {
+      "url": "/a/2/explore?node=1794&lines=53-56&ask=1",
+      "rightTab": null,
+      "tabs": [],
+      "askVisible": true,
+      "panelVisible": true,
+      "panelScrollTop": 720,
+      "highlightAria": "File contents, lines 53 to 56 highlighted",
+      "markInView": {
+        "panelTop": 407,
+        "panelBottom": 1080,
+        "markTop": 697,
+        "markBottom": 774,
+        "above": 290,
+        "below": 306,
+        "fullyInside": true
+      },
+      "askScrollTop": 249,
+      "askTurns": 2,
+      "draft": "half-typed question",
+      "askScrollBefore": 249,
+      "draftBefore": "half-typed question",
+      "askTurnsBefore": 2
+    },
+    "b1-same-file-chip": {
+      "url": "/a/2/explore?node=1794&lines=380-390&ask=1",
+      "rightTab": null,
+      "tabs": [],
+      "askVisible": true,
+      "panelVisible": true,
+      "panelScrollTop": 720,
+      "highlightAria": "File contents, lines 380 to 390 highlighted",
+      "markInView": {
+        "panelTop": 407,
+        "panelBottom": 1080,
+        "markTop": 6976,
+        "markBottom": 7187,
+        "above": 6569,
+        "below": -6107,
+        "fullyInside": false
+      },
+      "askScrollTop": 249,
+      "askTurns": 2,
+      "draft": "half-typed question",
+      "scrollTopAt60ms": 720
+    },
+    "b2-scrolled-away": {
+      "url": "/a/2/explore?node=1794&lines=380-390&ask=1",
+      "rightTab": null,
+      "tabs": [],
+      "askVisible": true,
+      "panelVisible": true,
+      "panelScrollTop": 0,
+      "highlightAria": "File contents, lines 380 to 390 highlighted",
+      "markInView": {
+        "panelTop": 407,
+        "panelBottom": 1080,
+        "markTop": 7696,
+        "markBottom": 7907,
+        "above": 7289,
+        "below": -6827,
+        "fullyInside": false
+      },
+      "askScrollTop": 249,
+      "askTurns": 2,
+      "draft": "half-typed question"
+    },
+    "b3-same-chip-again": {
+      "url": "/a/2/explore?node=1794&lines=380-390&ask=1",
+      "rightTab": null,
+      "tabs": [],
+      "askVisible": true,
+      "panelVisible": true,
+      "panelScrollTop": 7065,
+      "highlightAria": "File contents, lines 380 to 390 highlighted",
+      "markInView": {
+        "panelTop": 407,
+        "panelBottom": 1080,
+        "markTop": 631,
+        "markBottom": 842,
+        "above": 224,
+        "below": 238,
+        "fullyInside": true
+      },
+      "askScrollTop": 249,
+      "askTurns": 2,
+      "draft": "half-typed question"
+    },
+    "c1-other-file-chip": {
+      "url": "/a/2/explore?node=1767&lines=300-310&ask=1",
+      "rightTab": null,
+      "tabs": [],
+      "askVisible": true,
+      "panelVisible": true,
+      "panelScrollTop": 5529,
+      "highlightAria": "File contents, lines 300 to 310 highlighted",
+      "markInView": {
+        "panelTop": 407,
+        "panelBottom": 1080,
+        "markTop": 631,
+        "markBottom": 842,
+        "above": 224,
+        "below": 238,
+        "fullyInside": true
+      },
+      "askScrollTop": 249,
+      "askTurns": 2,
+      "draft": "half-typed question"
+    },
+    "d1-graph-site-chip": {
+      "url": "/a/2/explore?node=1794&lines=212-212&ask=1",
+      "rightTab": null,
+      "tabs": [],
+      "askVisible": true,
+      "panelVisible": true,
+      "panelScrollTop": 3744,
+      "highlightAria": "File contents, lines 212 to 212 highlighted",
+      "markInView": {
+        "panelTop": 407,
+        "panelBottom": 1080,
+        "markTop": 726,
+        "markBottom": 745,
+        "above": 319,
+        "below": 335,
+        "fullyInside": true
+      },
+      "askScrollTop": 174,
+      "askTurns": 2,
+      "draft": "half-typed question"
+    },
+    "e1-graph-result-row": {
+      "url": "/a/2/explore?node=1794&lines=103-230&ask=1",
+      "rightTab": null,
+      "tabs": [],
+      "askVisible": true,
+      "panelVisible": true,
+      "panelScrollTop": 3744,
+      "highlightAria": "File contents, lines 103 to 230 highlighted",
+      "markInView": {
+        "panelTop": 407,
+        "panelBottom": 1080,
+        "markTop": -1367,
+        "markBottom": 1091,
+        "above": -1774,
+        "below": -11,
+        "fullyInside": false
+      },
+      "askScrollTop": 118,
+      "askTurns": 2,
+      "draft": "half-typed question"
+    },
+    "f1-uses-site-chip": {
+      "url": "/a/2/explore?node=1767&ask=1&lines=11-11",
+      "rightTab": null,
+      "tabs": [],
+      "askVisible": true,
+      "panelVisible": true,
+      "panelScrollTop": 0,
+      "highlightAria": "File contents, lines 11 to 11 highlighted",
+      "markInView": {
+        "panelTop": 407,
+        "panelBottom": 1080,
+        "markTop": 611,
+        "markBottom": 630,
+        "above": 204,
+        "below": 450,
+        "fullyInside": true
+      },
+      "askScrollTop": 249,
+      "askTurns": 2,
+      "draft": "",
+      "clicked": "views.py:11"
+    },
+    "g0-finding-open": {
+      "url": "/a/2/findings?category=all&ask=1&finding=5429",
+      "rightTab": null,
+      "tabs": [],
+      "askVisible": true,
+      "panelVisible": true,
+      "panelScrollTop": 0,
+      "highlightAria": null,
+      "markInView": null,
+      "askScrollTop": 249,
+      "askTurns": 2,
+      "draft": ""
+    },
+    "g1-open-in-explorer": {
+      "url": "/a/2/explore?node=1662&lines=44-44",
+      "rightTab": null,
+      "tabs": [],
+      "askVisible": false,
+      "panelVisible": true,
+      "panelScrollTop": 518,
+      "highlightAria": "File contents, lines 44 to 44 highlighted",
+      "markInView": {
+        "panelTop": 407,
+        "panelBottom": 1080,
+        "markTop": 727,
+        "markBottom": 746,
+        "above": 320,
+        "below": 334,
+        "fullyInside": true
+      },
+      "askScrollTop": null,
+      "askTurns": null,
+      "draft": null
+    },
+    "h1-reach-chip": {
+      "url": "/a/2/explore?node=1662&lines=1-1",
+      "rightTab": null,
+      "tabs": [],
+      "askVisible": false,
+      "panelVisible": true,
+      "panelScrollTop": 0,
+      "highlightAria": "File contents, lines 1 to 1 highlighted",
+      "markInView": {
+        "panelTop": 407,
+        "panelBottom": 1080,
+        "markTop": 419,
+        "markBottom": 438,
+        "above": 12,
+        "below": 642,
+        "fullyInside": true
+      },
+      "askScrollTop": null,
+      "askTurns": null,
+      "draft": null,
+      "clicked": "app.py"
+    },
+    "i1-deep-link": {
+      "url": "/a/2/explore?node=1794&lines=300-305&ask=1",
+      "rightTab": null,
+      "tabs": [],
+      "askVisible": true,
+      "panelVisible": true,
+      "panelScrollTop": 5481,
+      "highlightAria": "File contents, lines 300 to 305 highlighted",
+      "markInView": {
+        "panelTop": 407,
+        "panelBottom": 1080,
+        "markTop": 679,
+        "markBottom": 794,
+        "above": 272,
+        "below": 286,
+        "fullyInside": true
+      },
+      "askScrollTop": 249,
+      "askTurns": 2,
+      "draft": ""
+    }
+  }
+}
