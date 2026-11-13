@@ -2035,3 +2035,11 @@ are deliberately not changed after seeing eval results; these stay as documented
   - **Environment:** the PC restarted during this round; Docker Desktop, the db, the API (8000)
     and the 5173 preview were started again. The A/B build without the warm-up was served on
     127.0.0.1:5175 from a scratch copy and stopped afterwards.
+  - **Owner's real-mouse test (14 Nov, Chrome and Firefox, `6be45ef`): passed.** A Python file
+    opened after waiting on the map coloured instantly (the warm-up works). **First JS colouring
+    after a hard refresh: ~4.5-5 s on this PC in both Chrome and Firefox** (owner's real-browser
+    measurement; `lab_manager.js`, code text shown at once); later files colour quickly. `!==`
+    shows as three characters; citations, quick A->B switch, copy-paste and theme switch fine.
+    The `@shikijs/langs-precompiled` dependency was accepted (measured gain, guarded by the
+    equality test); from now on any dependency not named in a brief is asked about first.
+  - **Merged into `main`** with a merge commit (not squashed).
