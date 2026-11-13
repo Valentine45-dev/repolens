@@ -1,18 +1,18 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-import { requestColours, resetForTests, TIMEOUT_MS } from "./codeColours";
+import { requestColours, resetForTests, scheduleWarmUp, TIMEOUT_MS, warmUpColours } from "./codeColours";
 import { isTooLarge, langForPath, MAX_BYTES, MAX_LINES, utf8Length, type ColouredLine } from "./codeRoles";
 
 /** A worker we answer by hand: records what was sent, and how many workers were made. */
 class FakeWorker {
   static made: FakeWorker[] = [];
-  sent: { id: number; code: string; lang: string }[] = [];
+  sent: { id: number; code?: string; lang: string; warm?: boolean }[] = [];
   terminated = false;
   listeners: Record<string, ((e: Event) => void)[]> = {};
   constructor() {
     FakeWorker.made.push(this);
   }
-  postMessage(m: { id: number; code: string; lang: string }) {
+  postMessage(m: { id: number; code?: string; lang: string; warm?: boolean }) {
     this.sent.push(m);
   }
   terminate() {
@@ -26,6 +26,9 @@ class FakeWorker {
   }
   crash() {
     for (const fn of this.listeners.error ?? []) fn({} as Event);
+  }
+  fail(id: number, error: string) {
+    for (const fn of this.listeners.message ?? []) fn({ data: { id, error } } as unknown as Event);
   }
 }
 const last = () => FakeWorker.made[FakeWorker.made.length - 1];
@@ -133,5 +136,59 @@ describe("requestColours", () => {
       throw new Error("Web Workers are not available");
     });
     await expect(requestColours("a", "python").promise).rejects.toThrow(/not available/);
+  });
+});
+
+describe("warm-up", () => {
+  it("warms Python by default", () => {
+    warmUpColours();
+    expect(last().sent).toEqual([{ id: last().sent[0].id, warm: true, lang: "python" }]);
+    last().reply(last().sent[0].id, []);
+    expect(last().sent).toHaveLength(1);
+  });
+
+  it("warms in the background, once, behind any file asked for", async () => {
+    warmUpColours(["python", "javascript"]);
+    warmUpColours(["python", "javascript"]); // a second map render: nothing more
+    const w = last();
+    expect(FakeWorker.made).toHaveLength(1);
+    expect(w.sent).toEqual([{ id: w.sent[0].id, warm: true, lang: "python" }]); // JS waits
+    const file = requestColours("x = 1", "python"); // the user opens a file during the warm-up
+    w.reply(w.sent[0].id, []);
+    expect(w.sent[1]).toMatchObject({ id: file.id, code: "x = 1", lang: "python" }); // ahead of JS
+    w.reply(file.id, LINES);
+    expect(await file.promise).toEqual(LINES);
+    expect(w.sent[2]).toMatchObject({ warm: true, lang: "javascript" });
+    w.reply(w.sent[2].id, []);
+    expect(w.sent).toHaveLength(3);
+    expect(FakeWorker.made).toHaveLength(1); // the same worker serves the files after it
+  });
+
+  it("never caches or reports a warm-up, and a failed one only notes it", async () => {
+    const info = vi.spyOn(console, "info").mockImplementation(() => {});
+    warmUpColours(["python"]);
+    last().fail(last().sent[0].id, "boom");
+    await Promise.resolve();
+    expect(info).toHaveBeenCalledTimes(1);
+    const after = requestColours("", "python"); // the warm-up's empty text was not remembered
+    expect(last().sent.at(-1)).toMatchObject({ id: after.id, code: "" });
+    info.mockRestore();
+  });
+
+  it("waits for the browser to be idle, and can be cancelled before then", () => {
+    let idle: (() => void) | null = null;
+    const ric = vi.fn((cb: () => void) => ((idle = cb), 7));
+    const cic = vi.fn();
+    Object.assign(globalThis, { requestIdleCallback: ric, cancelIdleCallback: cic });
+    const cancel = scheduleWarmUp();
+    expect(FakeWorker.made).toHaveLength(0); // nothing until idle
+    cancel();
+    expect(cic).toHaveBeenCalledWith(7);
+    scheduleWarmUp();
+    idle!();
+    expect(FakeWorker.made).toHaveLength(1);
+    expect(last().sent[0]).toMatchObject({ warm: true, lang: "python" });
+    expect(scheduleWarmUp()).toBeTypeOf("function"); // already warmed: a no-op
+    expect(ric).toHaveBeenCalledTimes(2);
   });
 });

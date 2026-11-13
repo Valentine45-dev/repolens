@@ -39,6 +39,7 @@ import {
   NODE_NEAR,
   NODE_SELECTED,
 } from "../focusStore";
+import { scheduleWarmUp } from "../codeColours";
 import { findingsHref } from "../links";
 import { createHoverIntent } from "../hoverIntent";
 import {
@@ -449,6 +450,8 @@ export function MapView({
   useEffect(() => () => onZoomedIn(false), [onZoomedIn]);
   const canvasRef = useRef<HTMLDivElement>(null);
   const [ready, setReady] = useState(false);
+  // Once the map has drawn, warm up code colours (Python) while the browser is idle (codeColours.ts).
+  useEffect(() => (ready ? scheduleWarmUp() : undefined), [ready]);
   const [canvasSize, setCanvasSize] = useState("");
   useEffect(() => {
     const canvas = canvasRef.current;

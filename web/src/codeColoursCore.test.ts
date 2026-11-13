@@ -66,3 +66,46 @@ describe("colourLines", () => {
     expect(text(await colourLines(code, "python"))).toBe(code);
   });
 });
+
+// JS, TS and TSX are coloured with Shiki's precompiled grammars (faster first file); that is only
+// sound while their colours equal the regex engine's. Checked on real files, character by character.
+describe("precompiled JS/TS/TSX grammars", () => {
+  it("colour exactly like the regex engine on real files", async () => {
+    // @ts-expect-error node:fs has no type declarations here; the tests run in Node
+    const { readFileSync } = await import("node:fs");
+    const { createHighlighterCore } = await import("shiki/core");
+    const { createJavaScriptRawEngine, createJavaScriptRegexEngine } = await import("shiki/engine/javascript");
+    const lightPlus = (await import("shiki/themes/light-plus.mjs")).default;
+    const langs = ["javascript", "typescript", "tsx"] as const;
+    const regex = await createHighlighterCore({
+      themes: [lightPlus],
+      langs: [import("shiki/langs/javascript.mjs"), import("shiki/langs/typescript.mjs"), import("shiki/langs/tsx.mjs")],
+      engine: createJavaScriptRegexEngine(),
+    });
+    const raw = await createHighlighterCore({
+      themes: [lightPlus],
+      langs: [
+        import("@shikijs/langs-precompiled/javascript"),
+        import("@shikijs/langs-precompiled/typescript"),
+        import("@shikijs/langs-precompiled/tsx"),
+      ],
+      engine: createJavaScriptRawEngine(),
+    });
+    const files: [string, (typeof langs)[number]][] = [
+      ["../../backend/tests/fixtures/detectors/js_positive.js", "javascript"],
+      ["../../backend/tests/fixtures/sample_repo/web/src/server.js", "javascript"],
+      ["./api.ts", "typescript"],
+      ["./codeColours.ts", "typescript"],
+      ["./components/NodePanel.tsx", "tsx"],
+    ];
+    const perChar = (hl: typeof regex, code: string, lang: string) =>
+      hl
+        .codeToTokens(code, { lang, theme: "light-plus", tokenizeTimeLimit: 5000 })
+        .tokens.flatMap((line) => line.flatMap((t) => [...t.content].map((ch) => (ch.trim() ? t.color : ""))));
+    for (const [path, lang] of files) {
+      const code: string = readFileSync(new URL(path, import.meta.url), "utf8");
+      expect(code.length, path).toBeGreaterThan(200);
+      expect(perChar(raw, code, lang), path).toEqual(perChar(regex, code, lang));
+    }
+  }, 120_000);
+});

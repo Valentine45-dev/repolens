@@ -23,10 +23,15 @@ interface WorkerLike {
   addEventListener(type: "message" | "error" | "messageerror", listener: (event: Event) => void): void;
 }
 
+/** A warm-up job runs our own sample, so it is allowed longer (a slow first start in Firefox). */
+const WARM_TIMEOUT_MS = 30_000;
+
 interface Job {
   id: number;
   code: string;
   lang: CodeLang;
+  /** Background warm-up: lowest priority, no result, failures only noted in the console. */
+  warm?: boolean;
   cancelled: boolean;
   resolve(lines: ColouredLine[] | null): void;
   reject(err: Error): void;
@@ -54,7 +59,56 @@ export function resetForTests(factory: () => WorkerLike = defaultWorker): void {
   timer = null;
   queue.length = 0;
   cache.clear();
+  warmedUp = false;
   makeWorker = factory;
+}
+
+let warmedUp = false;
+
+/** Start the worker and warm these grammars in the background, once per page session, so the first
+ * file opened colours without the start-up wait. A file asked for meanwhile goes first.
+ * Python only by default: measured on the eval PC (eval/results/screenshots-code-highlight/
+ * warmup.json), warming Python cut its first file from ~0.8-1.1 s to ~0.14 s in Edge and from
+ * ~1.2-2.3 s to ~0.5-0.7 s in Firefox, while warming JavaScript gave nothing (its precompiled
+ * grammar has no compile step left; the cost is running it over the file). Starting the worker
+ * still helps a JS-first repository. */
+export function warmUpColours(langs: CodeLang[] = ["python"]): void {
+  if (warmedUp) return;
+  warmedUp = true;
+  for (const lang of langs) {
+    const job: Job = {
+      id: nextId++,
+      code: "",
+      lang,
+      warm: true,
+      cancelled: false,
+      resolve() {},
+      reject(err) {
+        console.info("Code colours warm-up did not finish; colours will start on first use.", err);
+      },
+    };
+    queue.push(job);
+  }
+  pump();
+}
+
+/** Warm up once the browser is idle (after the map has drawn); never on a data-saver connection.
+ * Returns a cancel for an unmount before it ran. */
+export function scheduleWarmUp(): () => void {
+  if (warmedUp) return () => {};
+  const g = globalThis as {
+    navigator?: { connection?: { saveData?: boolean } };
+    requestIdleCallback?: (cb: () => void, opts?: { timeout: number }) => number;
+    cancelIdleCallback?: (handle: number) => void;
+  };
+  if (g.navigator?.connection?.saveData) return () => {};
+  const run = () => warmUpColours();
+  if (typeof g.requestIdleCallback === "function") {
+    const handle = g.requestIdleCallback(run, { timeout: 5000 });
+    return () => g.cancelIdleCallback?.(handle);
+  }
+  const handle = setTimeout(run, 1500);
+  return () => clearTimeout(handle);
 }
 
 const cacheKey = (code: string, lang: CodeLang) => `${lang}\u0000${code}`;
@@ -69,7 +123,9 @@ export function requestColours(code: string, lang: CodeLang): ColourRequest {
   const promise = new Promise<ColouredLine[] | null>((resolve, reject) => {
     job = { id, code, lang, cancelled: false, resolve, reject };
   });
-  queue.push(job);
+  const firstWarm = queue.findIndex((j) => j.warm);
+  if (firstWarm < 0) queue.push(job);
+  else queue.splice(firstWarm, 0, job); // ahead of warm-up jobs not yet sent
   pump();
   return {
     id,
@@ -95,8 +151,9 @@ function pump(): void {
     return;
   }
   current = job;
-  timer = setTimeout(() => fail(new Error(`Colouring took longer than ${TIMEOUT_MS / 1000} s`)), TIMEOUT_MS);
-  worker.postMessage({ id: job.id, code: job.code, lang: job.lang });
+  const limit = job.warm ? WARM_TIMEOUT_MS : TIMEOUT_MS;
+  timer = setTimeout(() => fail(new Error(`Colouring took longer than ${limit / 1000} s`)), limit);
+  worker.postMessage(job.warm ? { id: job.id, warm: true, lang: job.lang } : { id: job.id, code: job.code, lang: job.lang });
 }
 
 function startWorker(): WorkerLike {
@@ -108,7 +165,7 @@ function startWorker(): WorkerLike {
     if (!job || data.id !== job.id) return;
     finish();
     if (data.lines) {
-      remember(job, data.lines);
+      if (!job.warm) remember(job, data.lines);
       job.resolve(job.cancelled ? null : data.lines);
     } else {
       job.reject(new Error(data.error ?? "Colouring failed"));
