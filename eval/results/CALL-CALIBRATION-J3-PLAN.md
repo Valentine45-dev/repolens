@@ -61,6 +61,22 @@ Rows are matched to J1's labels by `id`.
    correct count per band (incorrect and unsure shown with it). Descriptive only: no intervals, no
    test, no claim that J3's precision differs from J1's.
 
+## Amendment 1 (13 Nov 2026, before J3's sheet was opened, read or hashed)
+Replaces the cell comparison in Step 2, item 2. Everything else stays as planned.
+- **Non-label cells** are compared after normalising only these:
+  - line endings (CRLF, LF and CR all become one line break; this includes line breaks at the very
+    end of the file, which a CSV reader sees as empty rows),
+  - a UTF-8 BOM at the start of the file,
+  - the CSV quoting style (cells are compared as parsed values, not as raw quoted text),
+  - leading and trailing whitespace of a cell.
+  Any other difference in a non-label cell (changed text or code, an added or removed column, a
+  changed id or order) still stops the run and is reported.
+- **Every normalisation that was needed is listed** in the received-labels record and the write-up,
+  with counts (for example "line endings changed in N cells", "BOM removed", "quoting differs from
+  the blank sheet"). "None needed" is recorded too.
+- **Labels:** trimmed and lower-cased as planned; must then be `correct`, `incorrect` or `unsure`.
+  Anything else is reported, never guessed.
+
 ## Not done
 - No relabelling, by anyone, after J3's sheet is opened. J1's labels are not changed.
 - `CALL-CALIBRATION.md` and the saved 7 Nov results are not edited; the J3 result goes in the new
