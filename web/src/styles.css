@@ -2985,6 +2985,7 @@ a {
   display: flex;
   flex: 1;
   flex-direction: column;
+  min-width: 0; /* a long row must not widen the dialog: the folder text is cut instead */
   min-height: 0;
 }
 
@@ -3095,12 +3096,16 @@ a {
 }
 
 .goto-message {
+  margin: 0;
+  padding: var(--space-3) var(--space-4);
+}
+
+/* The loading rows and the error with its button stack; a sentence stays one line of text. */
+div.goto-message {
   display: flex;
   flex-direction: column;
   align-items: flex-start;
   gap: var(--space-2);
-  margin: 0;
-  padding: var(--space-3) var(--space-4);
 }
 
 .goto-message p {

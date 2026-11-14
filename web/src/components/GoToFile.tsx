@@ -2,7 +2,7 @@
 // Loaded on first use (AnalysisShell), so pages without it never fetch this code.
 
 import { useQuery } from "@tanstack/react-query";
-import { type KeyboardEvent, useEffect, useId, useMemo, useRef, useState } from "react";
+import { type KeyboardEvent, useDeferredValue, useEffect, useId, useMemo, useRef, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 
 import { getGraph } from "../api";
@@ -84,10 +84,13 @@ export function GoToFile({ snapshotId, onClose }: { snapshotId: number; onClose:
   );
 
   const [query, setQuery] = useState("");
+  // The field shows each key at once; the list follows as a deferred render, which a faster next
+  // key can interrupt (drawing 50 rows is most of a keystroke's cost on a slow PC, not matching).
+  const shown = useDeferredValue(query);
   const [active, setActive] = useState(0);
-  const result = useMemo(() => (entries ? searchEntries(entries, query) : null), [entries, query]);
+  const result = useMemo(() => (entries ? searchEntries(entries, shown) : null), [entries, shown]);
   const matches = result?.matches ?? [];
-  useEffect(() => setActive(0), [query]);
+  useEffect(() => setActive(0), [shown]);
 
   // A modal dialog: the page behind it is inert, focus stays inside. Esc goes through the shared
   // Escape handler (escapeStack), which closes only the top layer: this dialog. The native
@@ -136,7 +139,9 @@ export function GoToFile({ snapshotId, onClose }: { snapshotId: number; onClose:
       setActive((i) => (i + step + matches.length) % matches.length);
     } else if (e.key === "Enter") {
       e.preventDefault();
-      const match = matches[active];
+      // The list may still show an earlier query: open the best match for what was typed.
+      const match =
+        shown === query ? matches[active] : entries ? searchEntries(entries, query, 1).matches[0] : undefined;
       if (match) open(match);
     } else if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "k") {
       e.preventDefault(); // the shortcut again: keep the browser's own Ctrl+K away
@@ -151,7 +156,7 @@ export function GoToFile({ snapshotId, onClose }: { snapshotId: number; onClose:
   const activeMatch = matches[active];
   const note = activeMatch && turnsOnTests(activeMatch.entry, page) ? TESTS_NOTE : "";
   const loading = !entries && !withTests.error;
-  const trimmed = query.trim();
+  const trimmed = shown.trim();
 
   return (
     <dialog

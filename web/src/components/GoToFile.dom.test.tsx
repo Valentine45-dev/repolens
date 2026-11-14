@@ -271,6 +271,20 @@ describe("in the dialog", () => {
     expect(document.activeElement).toBe(searchButton());
   });
 
+  it("Enter straight after typing opens the best match for what was typed, not the list on screen", async () => {
+    await visit("/a/7/explore");
+    await openDialog();
+    await search("linegen"); // the list on screen: linegen.py
+    const setter = Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, "value")!.set!;
+    act(() => {
+      // typed and Enter in one go: the deferred list has not caught up yet
+      setter.call(input(), "trans.py");
+      input().dispatchEvent(new Event("input", { bubbles: true }));
+      input().dispatchEvent(new KeyboardEvent("keydown", { key: "Enter", bubbles: true, cancelable: true }));
+    });
+    expect(params().get("node")).toBe("1");
+  });
+
   it("a mouse click opens a result", async () => {
     await visit("/a/7/explore");
     await openDialog();
