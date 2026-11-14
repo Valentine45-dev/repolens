@@ -74,7 +74,7 @@ Later: container hardening, blast radius, path trace, follow-ups.
 11. No retrieval or answer-pipeline change is measured on the tuning questions alone once a locked set exists.
 12. Eval branches change only `eval/`. Product branches don't edit saved eval results; adding new result files is allowed.
 13. Develop with `FakeProvider`. Real API calls only for evals and demos, with a stated cap.
-14. ESLint never loads a repo's config or plugins (`--no-config-lookup`); Ruff runs with `--isolated`. These linters read repo files as data; they are the only exception to "parse only" in rule 1.
+14. ESLint never loads a repo's config or plugins (`--no-config-lookup`); Ruff runs with `--isolated`. These linters read repo files as data; they are the only exception to "parse only" in rule 1. Start a linter as its own binary (never `python -m <tool>` or `node <tool>` from a folder that holds repo files: the interpreter would import a repo file named like a module), from an empty working directory, with the repo files passed as an absolute path and an allowlisted environment (no API key, database URL or proxy credential), and kill its whole process tree on timeout.
 15. Metric names: `citation_validity` (not "faithfulness"; every citation lies inside a snippet that was sent, which does not show that it supports the claim), `cited_sentence_rate` (sentences carrying a valid citation), `faithful_human` (a human judge's verdict per answer on whether every claim is supported by the lines it cites: yes / partly / no; the only metric that may be called faithfulness).
 
 ## System prompt (versioned)
