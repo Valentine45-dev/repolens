@@ -20,6 +20,10 @@
   --focus-ring: #0a0a0a;
   /* Behind a modal dialog (Go to file): dims the page, not a colour. */
   --backdrop: rgba(10, 10, 10, 0.32);
+  /* Go to file: the highlighter behind matched characters. 3:1 against a row (Paper) and the
+     active row (Sunk Grey) means a mid tone here; its text holds 4.5:1 (goToFileCss.test.ts). */
+  --match: #a58a1d;
+  --match-text: #0a0a0a;
 
   --danger: #b42318;
   --warning: #b54708;
@@ -111,6 +115,8 @@
   --focus-ring: #f4f4f5;
 
   --backdrop: rgba(0, 0, 0, 0.6);
+  --match: #cfa040;
+  --match-text: #111113;
   --danger: #f97066;
   --warning: #f5a524;
   --info: #7cacf8;
@@ -3080,15 +3086,12 @@ a {
   text-align: left;
 }
 
-/* A matched character: underlined Ink (500, the heaviest mono weight loaded), so colour is never
-   the only cue. */
+/* A matched character: a highlighter behind it, same weight as its neighbours. The hit is also in
+   the option's text for screen readers (it reads the whole name), so nothing rests on colour. */
 .goto-hit {
-  background: none;
-  color: var(--text);
-  font-weight: 500;
-  text-decoration: underline;
-  text-decoration-thickness: 1px;
-  text-underline-offset: 3px;
+  border-radius: 2px;
+  background: var(--match);
+  color: var(--match-text);
 }
 
 .goto-tag {

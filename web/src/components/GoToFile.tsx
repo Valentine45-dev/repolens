@@ -190,8 +190,12 @@ export function GoToFile({ snapshotId, onClose }: { snapshotId: number; onClose:
             aria-describedby={noteId}
             aria-label="File or folder name, or a path"
             placeholder="File or folder name, or a path"
+            // No browser or keyboard help in a file-name field: autofill, spelling, autocorrect,
+            // capitals. (Windows' own typing suggestions are an OS setting; see DESIGN.md.)
             autoComplete="off"
             spellCheck={false}
+            autoCorrect="off"
+            autoCapitalize="off"
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             onKeyDown={onKeyDown}
