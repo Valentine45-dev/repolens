@@ -1,5 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
-import { useMemo, useRef } from "react";
+import { lazy, Suspense, useEffect, useMemo, useRef, useState } from "react";
 import { Navigate, NavLink, Outlet, useParams, useSearchParams } from "react-router-dom";
 
 import {
@@ -10,12 +10,17 @@ import {
   repoName,
   type SnapshotStatus,
 } from "../api";
+import { isGoToFileShortcut, shortcutLabel } from "../goToFileShortcut";
 import { useRevealToken, useSetParams } from "../links";
 import { loadRecent } from "../recent";
 import { useRightTab } from "../rightTab";
 import { useMediaQuery } from "../useMediaQuery";
 import { AskDrawer } from "./AskDrawer";
 import { ConnectionNotice, isReconnecting } from "./ConnectionNotice";
+import { Icon } from "./Icon";
+
+// Loaded on first use: pages without the search never fetch it.
+const GoToFile = lazy(() => import("./GoToFile"));
 
 export interface AnalysisContext {
   snapshotId: number;
@@ -39,6 +44,7 @@ export function AnalysisShell() {
   const askOpen = params.get("ask") === "1";
   const setParams = useSetParams();
   const askButtonRef = useRef<HTMLButtonElement>(null);
+  const [searchOpen, setSearchOpen] = useState(false);
 
   // Below 1600px three docked columns leave the map or list too narrow, so with Ask open a file or
   // finding panel shares Ask's column as a tab (under 901px both overlay, as before). Which tab is
@@ -63,6 +69,18 @@ export function AnalysisShell() {
       ["embedding", "tests"].includes(query.state.data?.features.search ?? "") ? 2000 : false,
   });
   const done = status.data?.status === "done";
+
+  // Go to file: Ctrl+K (Cmd+K) or "/", never while typing in a field. Only on a finished analysis.
+  useEffect(() => {
+    if (!done) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (!isGoToFileShortcut(e)) return;
+      e.preventDefault(); // the browser's own Ctrl+K and Firefox's "/" quick find
+      setSearchOpen(true);
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [done]);
   const counts = useQuery({
     queryKey: ["findings", snapshotId, "count"],
     queryFn: ({ signal }) => getFindings(snapshotId, { limit: 1 }, signal),
@@ -122,6 +140,22 @@ export function AnalysisShell() {
           </NavLink>
         </nav>
         <button
+          type="button"
+          className="button button-secondary button-small analysis-search"
+          aria-haspopup="dialog"
+          aria-keyshortcuts="Control+K Meta+K /"
+          aria-label="Go to file"
+          title={`Go to file (${shortcutLabel().replace(" ", "+")} or /)`}
+          disabled={!done}
+          onClick={() => setSearchOpen(true)}
+        >
+          <Icon name="search" size={14} />
+          <span className="analysis-search-label">Go to file</span>
+          <kbd className="kbd" aria-hidden="true">
+            {shortcutLabel()}
+          </kbd>
+        </button>
+        <button
           ref={askButtonRef}
           type="button"
           className="button button-secondary button-small analysis-ask"
@@ -132,6 +166,11 @@ export function AnalysisShell() {
           Ask
         </button>
       </header>
+      {searchOpen && done ? (
+        <Suspense fallback={null}>
+          <GoToFile snapshotId={snapshotId} onClose={() => setSearchOpen(false)} />
+        </Suspense>
+      ) : null}
       {limitNotice ? <p className="analysis-notice caption">{limitNotice}</p> : null}
       {/* data-ask lets a file or finding panel overlay the main column while Ask is open on
           screens too narrow for three docked columns (styles.css). */}
