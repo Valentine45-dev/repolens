@@ -161,7 +161,10 @@ SIZE = 100_000
 
 def _worst(name: str, lined: bool) -> str:
     unit = WORST_CASES[name]
-    text = ("-----BEGIN " + "A " * SIZE)[:SIZE] if unit is None else (unit * (SIZE // len(unit) + 1))[:SIZE]
+    if unit is None:
+        text = ("-----BEGIN " + "A " * SIZE)[:SIZE]
+    else:
+        text = (unit * (SIZE // len(unit) + 1))[:SIZE]
     return "\n".join(text[i:i + 100] for i in range(0, len(text), 100)) if lined else text
 
 
