@@ -200,3 +200,111 @@ def test_line_numbers_of_many_matches():
     text = "".join(f"x{i} = 1\npassword = \"hunter2hunter{i}\"\n" for i in range(300))
     _, matches = redact(text)
     assert [m.line for m in matches] == list(range(2, 601, 2))
+
+
+# --- coverage (review S-03): what must and must not be redacted ---------------------------------
+_K = "PRIVATE " + "KEY-----"
+_AKIA = "AKIA" + "ABCDEFGHIJKLMNOP"
+MUST_REDACT = [  # (id, text, config, a fragment of the secret that must be gone)
+    ("py annotated", 'password: str = "hunter2-Real-Pass"\n', False, "hunter2"),
+    ("ts annotated", 'const apiKey: string = "abcd1234efgh5678";\n', False, "abcd1234"),
+    ("Optional annotation", 'token: Optional[str] = "tok-Real-9876"\n', False, "tok-Real"),
+    ("bytes prefix", "SECRET_KEY = b'0123456789abcdef-real'\n", False, "0123456789"),
+    ("raw prefix", 'SECRET_KEY = r"0123456789abcdef-real"\n', False, "0123456789"),
+    ("u prefix", "api_key = u'abcdef123456'\n", False, "abcdef123456"),
+    ("rb prefix", "secret = rb'abcdef123456'\n", False, "abcdef123456"),
+    ("f-string with a literal", 'token = f"tok_{env}_abcdef123456"\n', False, "abcdef123456"),
+    ("value with spaces", 'password = "correct horse battery staple"\n', False, "horse"),
+    ("other quote inside", 'password = "it\'s-my-pass-123"\n', False, "my-pass"),
+    ("escaped quote inside", 'password = "ab\\"cdef-123"\n', False, "cdef"),
+    ("subscript", 'config["password"] = "hunter2-Real-Pass"\n', False, "hunter2"),
+    ("flask config", "app.config['SECRET_KEY'] = 'dev-real-key-123'\n", False, "dev-real"),
+    ("environ subscript", 'os.environ["API_KEY"] = "abc123xyz789"\n', False, "abc123"),
+    ("attribute", 'settings.SECRET_KEY = "abc123xyz789"\n', False, "abc123"),
+    ("DB_PASS", 'DB_PASS = "hunter2-Real-Pass"\n', False, "hunter2"),
+    ("dbPass", 'const dbPass = "hunter2-Real-Pass";\n', False, "hunter2"),
+    ("passphrase", 'passphrase = "hunter2-Real-Pass"\n', False, "hunter2"),
+    ("credentials", 'credentials = "user:hunter2-Real"\n', False, "hunter2"),
+    ("powershell env", '$env:FLASK_SECRET_KEY = "abc123xyz789"\n', False, "abc123"),
+    ("nested in a string", 'body = b\'{"status": "ok", "token": "abc123def456"}\'\n', False,
+     "abc123def456"),
+    ("json value on the next line", '{"password":\n  "hunter2hunter2"}\n', False, "hunter2"),
+    ("yaml value starting with $", "DB_PASSWORD: $ecretPass99\n", True, "ecretPass99"),
+    ("yaml value starting with !", "db_password: !Passw0rd2026\n", True, "Passw0rd"),
+    ("overlap tail", f'api_key = "{_AKIA}+tailSECRETpart"\n', False, "tailSECRET"),
+    ("key without END",
+     f"-----BEGIN RSA {_K}\nMIIEowIBAAKCAQEAabcdefgh\nqrstuvwxyz0123456789ABCD\n", False, "MIIEow"),
+    ("key without END, escaped newlines", f'"-----BEGIN {_K}\\nMIIEvQIBADANBgkqhkiG9w0B\\nab"\n',
+     False, "MIIEvQ"),
+    ("PGP key block", "-----BEGIN PGP PRIVATE KEY BLOCK-----\nlQOYBGXabcdefghijklmnopq\n"
+     "-----END PGP PRIVATE KEY BLOCK-----\n", False, "lQOYBG"),
+    # shapes that worked before and must keep working
+    ("config unquoted", "password = hunter2pass\n", True, "hunter2pass"),
+    ("json", '"password": "hunter2hunter2"\n', False, "hunter2"),
+    ("keyword argument", 'connect(password="hunter2hunter2")\n', False, "hunter2"),
+    ("url", "DSN = 'postgres://app:s3cretpw@db/app'\n", False, "s3cretpw"),
+    ("cli flag", 'mysql --password="hunter2hunter2"\n', False, "hunter2"),
+    ("keyword inside a word", 'adminpassword = "hunter2hunter2"\n', False, "hunter2"),
+    ("template value in code", 'API_KEY = "${API_KEY}"\n', False, "${API_KEY}"),
+    ("mask value", 'password = "********"\n', False, "********"),
+    ("key with END", f"K = '''-----BEGIN RSA {_K}\nMIIEowIBAAKCAQEA\n-----END RSA {_K}'''\n",
+     False, "MIIEow"),
+]
+MUST_NOT_REDACT = [  # (id, text, config)
+    ("descriptor field", 'password_field = "password"\n', False),
+    ("min length", "PASSWORD_MIN_LENGTH = 8\n", False),
+    ("getter", "password = get_password()\n", False),
+    ("docs prose", 'Set `password = "your password here"` in the config.\n', False),
+    ("error message", 'INVALID_PASSWORD = "Invalid password, try again."\n', False),
+    ("help text", 'password_help_text = "Your password must contain 8 characters"\n', False),
+    ("token url", 'TOKEN_URL = "https://auth.example.com/oauth/token"\n', False),
+    ("token uri", '"token_uri": "https://oauth2.googleapis.com/token",\n', False),
+    ("api key url", 'APIKEY_URL = "https://secure.example.com/apikey"\n', False),
+    ("password env", 'password_env = "DB_PASSWORD"\n', False),
+    ("secret file", 'SECRET_KEY_FILE = "/run/secrets/django_key"\n', False),
+    ("password title", 'password_title = "Password"\n', False),
+    ("secret placeholder constant", 'SECRET_PLACEHOLDER = "--------"\n', False),
+    ("token type", 'jsonify(token_type="Bearer", expires_in=300)\n', False),
+    ("token name", 'self.token_name = "api-token"\n', False),
+    ("tokenizer", 'tokenizer_name = "bert-base-uncased"\n', False),
+    ("secretary", 'secretary_email = "office@example.com"\n', False),
+    ("bypass", 'bypass_mode = "always-allow"\n', False),
+    ("compass", 'compass_dir = "north-east"\n', False),
+    ("passenger", 'passenger_name = "Jane Doe"\n', False),
+    ("keyword in an earlier segment", 'send_password_mock.return_value = "sent-ok"\n', False),
+    ("constant name for a short keyword", 'PASS = "PASS_THROUGH"\n', False),
+    ("comparison", 'if password == "hunter2hunter2":\n', False),
+    ("short value", 'password = "abc"\n', False),
+    ("streamed word", 'data: {"token": "Gunicorn\'s "}\n', False),
+    ("leading space", 'data: {"token": " world"}\n', False),
+    ("punctuation table", 'RFC_TOKEN_SPECIALS = r"!#$%&\'*+-.^_`|~"\n', False),
+    ("github actions expression", 'password: "${{ secrets.DOCKER_PASSWORD }}"\n', False),
+    ("github actions expression, unquoted", "token: ${{secrets.ANACONDA_TOKEN}}\n", True),
+    ("fstring placeholder", 'sql = f"SELECT * FROM u WHERE password=\'{password}\'"\n', False),
+    ("placeholder dict", 'creds = {"password": "{user}{pw}"}\n', False),
+    ("config tag with an argument", "password: !secret db_password\n", True),
+    ("config lower-case tag", "secret: !vault_lookup\n", True),
+    ("config $VAR", "password: $DB_PASSWORD\n", True),
+    ("markdown prose", "The token: it expires after one hour.\n", False),
+]
+
+
+@pytest.mark.parametrize("case", MUST_REDACT, ids=[c[0] for c in MUST_REDACT])
+def test_must_redact(case):
+    _, text, config, fragment = case
+    redacted, matches = redact(text, config=config)
+    assert fragment not in redacted
+    assert redacted.count("\n") == text.count("\n")
+    assert matches
+
+
+@pytest.mark.parametrize("case", MUST_NOT_REDACT, ids=[c[0] for c in MUST_NOT_REDACT])
+def test_must_not_redact(case):
+    _, text, config = case
+    assert redact(text, config=config) == (text, [])
+
+
+def test_overlap_is_redacted_as_one_span_of_the_specific_kind():
+    redacted, matches = redact(f'api_key = "{_AKIA}+tailSECRETpart"\n')
+    assert redacted == f'api_key = "{REDACTED}"\n'
+    assert [m.kind for m in matches] == ["aws-access-key"]
