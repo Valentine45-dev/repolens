@@ -1,4 +1,8 @@
-from app.ingest.redact import REDACTED, redact
+import time
+
+import pytest
+
+from app.ingest.redact import MAX_LINE, REDACTED, redact
 
 # Fake secrets are assembled at runtime so the source never contains a full token
 # (keeps GitHub push protection and secret scanners quiet).
@@ -137,3 +141,59 @@ def test_config_placeholders_and_plain_values_are_not_secrets():
         "password: has spaces in it\n"
     )
     assert redact(text, config=True) == (text, [])
+
+
+# --- running time (review S-08) -----------------------------------------------------------------
+# Each unit repeated to 100 KB is a measured worst case of one pattern before the fix (a 4 KB line
+# of `token-` took over 30 s, 64 KB of `a.a.` 15 s, `eyJ-` 9 s, BEGIN markers without an END 5 s).
+_KEY_HEADER = "-----BEGIN RSA " + "PRIVATE KEY-----\n"
+WORST_CASES = {
+    "a-": "a-", "token-": "token-", "password": "password", "password.": "password.",
+    "a.": "a.", "eyJ-": "eyJ-", "key headers without END": _KEY_HEADER, "BEGIN A A": None,
+    "ghp_": "ghp_", "xoxb-": "xoxb-", "sk-": "sk-", "sk_live_": "sk_live_", "AKIA": "AKIA",
+    "AIza": "AIza", "a: ": "a: ", "x = 'x' ": "x = 'x' ", "p=": "p=", "pass: ": "pass: ",
+    "$a": "$a", "-": "-", "--a ": "--a ", 'a="': 'a="', "password: str": "password: str",
+    '["': '["', "{a}": "{a}", "many matches": 'password = "hunter2hunter2"\n',
+    "url user": "a://a:a",
+}
+SIZE = 100_000
+
+
+def _worst(name: str, lined: bool) -> str:
+    unit = WORST_CASES[name]
+    text = ("-----BEGIN " + "A " * SIZE)[:SIZE] if unit is None else (unit * (SIZE // len(unit) + 1))[:SIZE]
+    return "\n".join(text[i:i + 100] for i in range(0, len(text), 100)) if lined else text
+
+
+@pytest.mark.parametrize("lined", [False, True], ids=["one-line", "100-char-lines"])
+@pytest.mark.parametrize("name", list(WORST_CASES))
+def test_redaction_time_is_bounded(name, lined):
+    text = _worst(name, lined)
+    for config in (False, True):
+        started = time.perf_counter()
+        redacted, _ = redact(text, config=config)
+        assert time.perf_counter() - started < 1.0, f"{name} config={config}"
+        assert redacted.count("\n") == text.count("\n")
+
+
+def test_overlong_lines_are_never_stored_and_tokens_on_them_are_reported():
+    aws = "AKIA" + "Q" * 16
+    long_line = "x = [" + "1, " * (MAX_LINE // 3) + f"'{aws}']"
+    text = f"a = 1\n{long_line}\nb = 2\n"
+    redacted, matches = redact(text)
+    lines = redacted.split("\n")
+    assert lines[0] == "a = 1" and lines[2] == "b = 2" and len(lines) == 4
+    assert lines[1] == f"{REDACTED} (line of {len(long_line)} characters not stored)"
+    assert aws not in redacted and "1, 1, " not in redacted
+    assert [(m.line, m.kind) for m in matches] == [(2, "aws-access-key")]
+
+
+def test_a_line_at_the_limit_is_kept():
+    line = "y" * MAX_LINE
+    assert redact(line + "\n") == (line + "\n", [])
+
+
+def test_line_numbers_of_many_matches():
+    text = "".join(f"x{i} = 1\npassword = \"hunter2hunter{i}\"\n" for i in range(300))
+    _, matches = redact(text)
+    assert [m.line for m in matches] == list(range(2, 601, 2))
