@@ -24,7 +24,8 @@ type IconName =
   | "up"
   | "cycle"
   | "sun"
-  | "moon";
+  | "moon"
+  | "search";
 
 const PATHS: Record<IconName, ReactNode> = {
   check: <path d="M3.5 8.5l3 3 6-7" />,
@@ -86,6 +87,13 @@ const PATHS: Record<IconName, ReactNode> = {
     </>
   ),
   moon: <path d="M13.25 9.6A5.5 5.5 0 0 1 6.4 2.75a5.5 5.5 0 1 0 6.85 6.85z" />,
+  // "Go to file": a magnifier.
+  search: (
+    <>
+      <circle cx="7" cy="7" r="4.25" />
+      <path d="m10.25 10.25 3.25 3.25" />
+    </>
+  ),
 };
 
 export function Icon({ name, size = 16, label }: { name: IconName; size?: number; label?: string }) {
