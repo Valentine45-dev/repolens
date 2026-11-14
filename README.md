@@ -43,6 +43,13 @@ pattern checks, not a security verdict; they can miss issues and can flag safe c
 - Each pipeline stage deletes and re-inserts its own rows in one transaction; progress is written
   to the `jobs` row and polled by the UI.
 - Secrets are redacted (line numbers kept) before any file text, snippet or chunk is stored.
+  Redaction runs in time linear in the file on any input, and a line longer than 5,000
+  characters is never stored (it is replaced by a marker; tokens on it are still reported).
+- Repository code is never run. The only programs started on repository content are `git`
+  (hooks, filters and submodules off, host git config ignored) and the Ruff binary, run
+  directly (never `python -m ruff`) from an empty working directory on a copy of the redacted
+  `.py` files, with an environment that holds no API key, database URL or proxy credential. A
+  timeout kills its whole process tree.
 - If the LLM is unavailable (no key, timeout, token cap), the graph, findings and graph
   questions still work. Without a key or on an LLM failure, other questions list the matching
   code locations from search, with no generated text.
@@ -332,7 +339,9 @@ are from the run before the fix.
 - **Bug / Quality findings skip test and example code** and cover Python only (Ruff: `F811`,
   `F821`, `F822`, `F823`, `B006`, `B015`, `B023` and the Pylint error rules except `PLE0704`). They run on a copy of
   the redacted files with `--isolated --no-cache --no-fix --ignore-noqa`, so the repository
-  cannot change or silence them. "Broken import" misses a directory imported through the
+  cannot change or silence them. The Ruff binary is started directly from an empty folder, so
+  a file in the repository named like a Python module (`ruff.py`, `types.py`, ...) is only
+  ever read, never imported (before 14 Nov it could be run; see PROGRESS.md). "Broken import" misses a directory imported through the
   `main` field of its `package.json` (the file is not read) and can flag generated or compiled
   modules it does not know by name.
 - **Placeholder detection is by wording and shape only** (`changeme`, `<your-key>`, `xxxxxx`,
@@ -343,11 +352,19 @@ are from the run before the fix.
   Files named `.env*` and files ending in `.example` are not read at all.
 - **Syntactic rules, no taint tracking.** Constant arguments are flagged too (`eval("1 + 1")`,
   a fixed-string `shell=True`, SQL with a constant table name).
-- **Secrets passed inline are missed.** The secret check needs a named assignment
-  (`password = "..."`) or a known token format; `jwt.sign(payload, "literal")` is not found.
+- **Secrets passed inline are missed.** The secret check needs a named assignment or a known
+  token format; `jwt.sign(payload, "literal")` and `os.getenv("PW", "default-pass")` are not
+  found. Named assignments include annotated ones (`password: str = "..."`), string prefixes
+  (`b'...'`), subscripts (`app.config["SECRET_KEY"] = ...`), keys in dicts, JSON and YAML, and
+  names with password, passphrase, pass, secret, token, credential, api/access/private key.
 - **Redaction is pattern-based.** Unquoted values (`password: hunter2`) are caught only in
   YAML, INI/CFG, TOML and shell files; in code, Markdown and text only quoted values and known
-  token formats are.
+  token formats are. A quoted value with spaces is taken as a secret only when it does not read
+  like a message (more than 8 words, ending in `.!?:`, or naming the secret itself). A name that
+  ends in a describing word (`password_field`, `TOKEN_URL`, `SECRET_KEY_FILE`, `token_type`) is
+  not a secret. Names longer than about 40 characters on either side of the keyword are not
+  checked. A line longer than 5,000 characters is not stored at all, so the code view shows a
+  marker there.
 - **Server-side XSS through response writes is missed.** The JS HTML rule only checks
   assignments to `innerHTML` / `outerHTML`, not `res.send("<h1>" + input)`.
 - **Call edges are name-based guesses.** Dynamic calls and star imports are not resolved; calls

@@ -2096,3 +2096,116 @@ are deliberately not changed after seeing eval results; these stay as documented
     Typing; on for this PC), not from the app; Firefox does not pass the field's hints to it. Left as
     an OS setting, not an app bug.
   - **Merged into `main`** with a merge commit (not squashed).
+
+- **Security fixes, batch 1 (`fix/security-batch1`, 14 Nov; built, not merged).** From the backend
+  review `repolens-reviews/REVIEW-BACKEND-2026-11-14.md`: S-01, S-02, S-03, S-05 (Ruff part), S-08,
+  R-05 (Ruff copy), T-01, T-02. $0 API spend, no new dependencies.
+  - **Step 0 (read-only, reproduced outside the repo with dummy credentials):**
+    - **S-01/S-02 reproduced.** `run_ruff` with a planted `ruff.py` ran it as `argv[0]` in the copy
+      and returned `[]` (the real F821 of another file was lost); `ruff/__init__.py` and (Windows)
+      `subprocess.py` ran too. The child had `LLM_API_KEY`, `DATABASE_URL`, `TEST_DATABASE_URL`,
+      `HTTPS_PROXY` (102 variables). Shadowable names, measured with transparent proxies for every
+      module the launcher imports: Windows `__future__ fnmatch importlib subprocess sysconfig types`;
+      Linux (throwaway `repolens-api` container, no network) `__future__ fnmatch importlib sysconfig
+      types _sysconfigdata__linux_x86_64-linux-gnu`.
+    - **No analysed snapshot contained a file that could have triggered S-01:** none of the 10 dev
+      snapshots has one of those names (or `ruff.py` / `ruff/__init__.py`) at the top of the Ruff copy
+      (Python, not test code); none even has another stdlib module name there.
+    - **S-08 and the same class, timed:** `secret-assignment` (`token-` 4 KB > 30 s, `a-` 8 KB 12 s),
+      `url-password` (`a.a.` 64 KB 15 s), `jwt` (`eyJ-` 64 KB 9 s), private keys without END (64 KB
+      5 s), match line numbers and the overlap check (quadratic in matches), detector
+      `looks_like_sql` (64 KB `SELECT SELECT` 22 s), reach `_NODE_RUN` (exponential: 22 flags 14 s),
+      `_AS_VIEW` (1.2 s at 64 KB) and, found while fixing, `url_handler_names` (unclosed `path(`
+      calls: 12 KB over 5 minutes). 20 other patterns were linear at 1 MB.
+    - **Subprocess audit:** only `git` (allowlisted env; `git` is found from the API's own folder, the
+      clone is empty until the last command; hooks, fsmonitor, submodules off; no system/global
+      config, so no filter drivers) and Ruff. No other S-01 instance; nothing changes directory or
+      loads code dynamically.
+    - **Values stored unredacted before this fix: ~47** in 7 of the 10 snapshots, all public-repo
+      demo, lab or test values (PyGoat 19, certbot 19, express 3, flask 2, ipython 2, itsdangerous
+      1, redash 1); 8 stored lines were false-positive redactions (certbot 2, redash 4, gunicorn 2).
+      The re-analysis below cleans them.
+  - **Commits:** `226f5a1` Ruff launch; `0bd590b` + `6e42eee` redaction running time; `3f917ed`
+    redaction coverage; `8b40240` detector and reach running time. Each new test was run against
+    `main`'s code (revert check): Ruff 7 of the new tests fail there (shadowing marker written, env,
+    binary, copy error); `main`'s `redact()` at 100 KB takes 2 s to > 60 s on the worst cases (the
+    branch: < 1 s each); 37 of the 72 redaction table rows (24 must-redact, 13 must-not) and the
+    overlap test fail on `main`; `main`'s SQL check, node
+    script pattern and route scanner take > 30 s at 100 KB.
+  - **Ruff (S-01/S-02/S-05/R-05/T-01):** the Ruff binary (`ruff.find_ruff_bin()`, resolved by the API)
+    runs directly, never `python -m ruff`, with cwd = an empty temp folder and the `.py`-only copy as
+    an absolute path; flags unchanged. Environment: `SYSTEMROOT TEMP TMP TMPDIR` only (Ruff runs with
+    an empty one; same findings as before). `app/subproc.run_bounded`: own process group, on timeout
+    the whole tree is killed (`killpg` / `taskkill /T /F`). A copy `OSError` is the quality note
+    "did not run: the files could not be copied"; temp cleanup errors are ignored.
+  - **Redaction running time (S-08):** names start only where a name starts and are bounded; scheme,
+    user and JWT starts likewise; keys found by bisect over END positions (span <= 20 KB); overlaps
+    merged after one sort; line numbers counted incrementally. **Line cap 5,000 characters:** a longer
+    line is replaced by `[REDACTED] (line of N characters not stored)` (line count kept, never stored);
+    the fixed-format token patterns still run on it. Affects 7 lines today (4 redash `.geo.json` maps,
+    2 gunicorn test-data `.py` files).
+  - **Redaction coverage (S-03):** a regex finds `name <op> "value"` candidates, Python checks name and
+    value. Now caught: annotations, b/r/u/f prefixes, values with spaces or the other quote, subscripts,
+    pass / passphrase / credential / creds names, YAML `$`/`!` values that are not references, the
+    tail after an AWS key (union of overlaps), keys without END, PGP key blocks. No longer redacted:
+    descriptor names (`password_field`, `TOKEN_URL`, `token_uri`, `SECRET_KEY_FILE`, `token_type`,
+    `password_title`, ...), `tokenizer`/`secretary`, a streamed word cut at an apostrophe. Values of
+    the old shape keep their old treatment (template and placeholder values are still reported).
+  - **Detector and reach running time:** SQL check as two searches, `_NODE_RUN` flags `-[\w-]+`,
+    `.as_view(` stripped without a regex, `_split_args` <= 500 characters per call and <= 1,000 calls
+    per file. Same results: 20,000 random inputs each against the former regexes, and 0 differences
+    over 2,710 stored code files / 189,951 string literals.
+  - **Checks:** ruff clean; backend suite **639 passed, 3 skipped** (the opt-in model and network
+    tests; 491 before); CI green on `8b40240` (`0bd590b` failed on one E501, fixed in `6e42eee`).
+  - **Dev database backup before re-analysis:**
+    `C:\projects\repolens-eval-assets\db-backup-2026-11-14-pre-security-batch1.sql` (61,608,589 bytes,
+    `pg_dump --no-owner`), **SHA-256
+    `5106B861AA753F3D2B0159316E671B2000793C424D31578CBA55C62B47B0A87C`**. Restored into a throwaway
+    database: row counts of repos, snapshots, jobs, files, symbols, edges, findings, chunks equal;
+    dropped.
+  - **Re-analysis of all 10 snapshots (14 Nov, API restarted on `8b40240`, one at a time, nothing else
+    of mine running; the owner's other apps were not checked).** Each done job was marked
+    `Re-run: security batch 1 ...` and the snapshot re-submitted at its pinned commit. The fixture
+    snapshot 4 (`repolens-smoke/sample_repo`, not a GitHub repo: the first try failed at fetch) was
+    rebuilt the smoke eval's way (`fixture_snapshot()`, copy of the committed fixture).
+    hardcoded-secret findings before -> after (every other finding count unchanged, so Ruff's
+    findings from the binary equal those from `python -m ruff`; no quality note anywhere):
+
+    | snapshot | job | time | secrets | search |
+    |---|---|---|---|---|
+    | 4 sample_repo (fixture) | 24 | - | 1 -> 1 | ready |
+    | 1 itsdangerous @ 672971d | 15 | 134 s | 7 -> 8 | ready |
+    | 3 express @ 1c6f1b0 | 16 | 592 s | 1 -> 4 | ready (test chunks too: 129 -> 1,177 chunks) |
+    | 6 flask @ 49943b5 | 17 | 730 s | 14 -> 16 | ready (had none: 0 -> 1,403 chunks) |
+    | 2 PyGoat @ 46fef96 | 18 | 314 s | 48 -> 67 | ready (834 -> 832 chunks) |
+    | 14 ipython @ cf63afd | 19 | 658 s | 3 -> 5 | failed, 600 s cap (as on 8 Nov) |
+    | 7 black @ b4f1fca | 20 | 639 s | 0 -> 0 | **failed, 600 s cap** (had 4,803 chunks) |
+    | 11 gunicorn @ d93a59d | 21 | 615 s | 7 -> 5 | failed, 600 s cap (as on 8 Nov) |
+    | 12 certbot @ 138defe | 22 | 677 s | 21 -> 38 | failed, 600 s cap (as on 8 Nov) |
+    | 13 redash @ 09740ea | 23 | 625 s | 68 -> 65 | failed, 600 s cap (as on 8 Nov) |
+
+    Every change equals the Step 0 prediction. After the re-analysis the redactor changes none of
+    the 3,979 stored files and the longest stored line is 1,632 characters. **black lost Ask:** its
+    search stage hit the 600 s cap in the re-analysis and again in one "Retry preparing search";
+    the code it embeds did not change (black has no secrets), so this is this PC's speed. Retry
+    when the PC is idle (black is in no eval).
+  - **PyGoat (descriptive, pinned `46fef96`; the labelled precision sample was not redrawn or
+    re-run, the v1 result stays the v1 result):** 81 findings: hardcoded-secret 67 (64 high, 3 low),
+    py-bare-except 9, py-eval-exec 1, py-sql-string 1, py-subprocess-shell 1, ruff-F821 2. The 19
+    new secrets are the labs' `app.config["..."]` / `os.environ["..."]` / `"client_credentials"`
+    values, stored unredacted before.
+  - **Free evals vs BASELINE-v1:** detector fixtures
+    `detectors-20261114T152120Z-8b40240.json`: every score identical (Python RepoLens 11/6/0, Bandit
+    8/5/3; JS RepoLens 17/4/2, Semgrep 4/4/15; per fixture the same, false-positive and missed lists
+    the same). Retrieval `retrieval_context-security-batch1-20261114T152421Z-8b40240.json`: A 0.71,
+    B 0.86, C 0.93, every question's record (hits, first-hit rank, chunks sent per configuration)
+    identical to the re-baseline and the 6 Nov run. Expected: only code is chunked, the
+    itsdangerous change is in an `.rst` file and express's are in `examples/` (test code, left out of
+    retrieval). Both result files say "dirty": the docs edits of this entry were not committed yet;
+    the product code was `8b40240`. No number changed, so there is nothing to explain.
+  - **Leftover `%TEMP%\repolens-ruff-zefeultv`** (08:44 today): 6 files, all the committed fixture's
+    `sample_app/` (5 identical, `settings.py` differing only on its redacted line), i.e. a Ruff copy
+    left by a test run; deleted.
+  - **Later (not this branch):** `eval/reachability_bandit_count.py` passes the full environment,
+    including `LLM_API_KEY`, to Bandit (`uvx bandit` with cwd = a cloned repo); give it an allowlist
+    on an `eval/` branch. Git's half of S-05 (orphaned `git-remote-https` after a timeout) remains.
