@@ -2203,9 +2203,36 @@ are deliberately not changed after seeing eval results; these stay as documented
     itsdangerous change is in an `.rst` file and express's are in `examples/` (test code, left out of
     retrieval). Both result files say "dirty": the docs edits of this entry were not committed yet;
     the product code was `8b40240`. No number changed, so there is nothing to explain.
+  - **Graph unchanged (pre-merge check, 14 Nov).** The backup (SHA-256 re-checked) was restored into a
+    throwaway database and compared with the live one (read-only) on stable keys, since ids are new
+    after the re-analysis: a symbol is (path, kind, qualified name, lines), an edge is (source,
+    target, type, confidence, import scope, site count, its sites). **All 10 snapshots identical:**
+    files, symbols, edges by type and confidence band (calls 1.0 / 0.9 / 0.5, imports, defines),
+    edge_sites, and the symbol and edge-set hashes; for the 4 reachability snapshots the edge-set
+    hashes are gunicorn `0b605fe3f081d175`, certbot `6086f20f43ae9dce`, redash `87edffc873c3c97e`,
+    ipython `01b615d47dc118c4` (first 16 hex of SHA-256 over the sorted edges), equal before and
+    after. The over-long lines do not show in the graph: gunicorn's `tests/requests/valid/024.py`
+    and `026.py` (lines of 8,218 characters, now markers of 63 and 75) hold only a module symbol
+    and data, no imports, calls or definitions; the redash `.geo.json` maps are not parsed.
+    Throwaway database dropped.
+  - **PyGoat chunks 834 -> 832:** before, 755 non-test + 79 test; now 753 + 79. The 79 test chunks are
+    identical (path, symbol, lines, tokens, text hash). All 15 non-test chunks that changed are in the
+    13 lab `app.py` files that gained a redaction: the token count moves by -2 to +3 (a value
+    replaced by `[REDACTED]`; three bopla_lab windows keep their lines), and in two units the shorter text now fits the 256-token limit, so two
+    windows became one: `dockerized_labs/sde/app.py` 1-16 + 14-17 -> 1-17, and
+    `dockerized_labs/sec_misconfig/app.py` `page_not_found` 65-82 + 80-83 -> 65-83 (15 before, 13
+    after).
+  - **Retrieval used the same chunks:** the retrieval eval reads only itsdangerous and express, with
+    test code left out. Their 242 non-test chunks (113 + 129) are identical before and after in
+    path, symbol, lines, tokens, text hash and embedding (md5 of the vector). express's 1,048 new
+    test chunks are the background test embedding finishing this time (0 stored at BASELINE-v1);
+    retrieval only falls back to test code when nothing else matches, which no question needs, so
+    the records stay identical.
   - **Leftover `%TEMP%\repolens-ruff-zefeultv`** (08:44 today): 6 files, all the committed fixture's
     `sample_app/` (5 identical, `settings.py` differing only on its redacted line), i.e. a Ruff copy
     left by a test run; deleted.
   - **Later (not this branch):** `eval/reachability_bandit_count.py` passes the full environment,
     including `LLM_API_KEY`, to Bandit (`uvx bandit` with cwd = a cloned repo); give it an allowlist
     on an `eval/` branch. Git's half of S-05 (orphaned `git-remote-https` after a timeout) remains.
+    **black's search:** the 600 s cap was hit twice on 14 Nov (re-analysis job 20 and one "Retry
+    preparing search"), so Ask is off on black; retry when the PC is idle.
