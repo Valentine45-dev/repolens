@@ -117,11 +117,19 @@ def decorated_entry_lines(text: str) -> list[tuple[int, str]]:
     return sorted(found)
 
 
+# A route's argument list is short. Without these bounds a file of unclosed `path(` calls made
+# every call scan to the end of the file (quadratic; 12 KB took minutes, review S-08 class).
+MAX_ARGS_SCAN = 500  # characters scanned per call
+MAX_URL_CALLS = 1000  # calls read per file
+
+
 def _split_args(source: str, start: int) -> list[str]:
-    """Top-level comma-separated arguments of the call whose '(' is at source[start]."""
+    """Top-level comma-separated arguments of the call whose '(' is at source[start]. A call that
+    does not close within MAX_ARGS_SCAN characters gives the arguments seen so far."""
     args, depth, quote, current = [], 0, "", []
     i = start
-    while i < len(source):
+    stop = min(len(source), start + MAX_ARGS_SCAN)
+    while i < stop:
         ch = source[i]
         if quote:
             current.append(ch)
@@ -150,22 +158,37 @@ def _split_args(source: str, start: int) -> list[str]:
         else:
             current.append(ch)
         i += 1
-    return args
+    return args  # unclosed: only the complete arguments before the cut
 
 
 _URL_CALL = re.compile(r"\b(?:path|re_path|url)\s*\(")
-_AS_VIEW = re.compile(r"\.as_view\s*\(.*\)\s*$", re.DOTALL)
+_AS_VIEW = re.compile(r"\.as_view\s*\(")
+
+
+def _strip_as_view(view: str) -> str:
+    """`Home.as_view(...)` -> `Home`: cut from the first `.as_view(` when the text ends with `)`
+    after it. Same result as the former `re.sub(r"\\.as_view\\s*\\(.*\\)\\s*$", "", view, DOTALL)`
+    without its rescan per `.as_view(` (64 KB of them took 1.2 s)."""
+    m = _AS_VIEW.search(view)
+    if m is None:
+        return view
+    stripped = view.rstrip()
+    if stripped.endswith(")") and len(stripped) - 1 >= m.end():
+        return view[:m.start()]
+    return view
 
 
 def url_handler_names(text: str) -> list[str]:
     """Django `path('x', views.index)`, `url(r'^x$', views.Home.as_view())`: the handler's own name
     (the last dotted part, after `.as_view(...)` is removed). `include(...)` is not a handler."""
     names = []
-    for m in _URL_CALL.finditer(text):
+    for count, m in enumerate(_URL_CALL.finditer(text)):
+        if count >= MAX_URL_CALLS:
+            break
         args = _split_args(text, m.end() - 1)
         if len(args) < 2:
             continue
-        view = _AS_VIEW.sub("", args[1])
+        view = _strip_as_view(args[1])
         if view.startswith("include") or not re.fullmatch(r"[A-Za-z_][\w.]*", view):
             continue
         name = view.rsplit(".", 1)[-1]
@@ -334,8 +357,11 @@ def python_exports(
 
 # --- JavaScript / TypeScript ----------------------------------------------------------------
 
+# Flags are `-[\w-]+`: the former `--?[\w-]+` could read `--a` two ways, so a script with many
+# flags and no file at the end backtracked exponentially (22 flags: 14 s; review S-08 class).
+# The two forms match exactly the same strings.
 _NODE_RUN = re.compile(
-    r"\b(?:node|nodemon|ts-node|tsx|babel-node|bun|deno run)\s+(?:--?[\w-]+(?:=\S+)?\s+)*"
+    r"\b(?:node|nodemon|ts-node|tsx|babel-node|bun|deno run)\s+(?:-[\w-]+(?:=\S+)?\s+)*"
     r"(['\"]?)([\w./@-]+\.(?:[mc]?js|jsx|tsx?))\1")
 
 

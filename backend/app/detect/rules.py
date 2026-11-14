@@ -144,16 +144,29 @@ RULE_IDS_BY_CATEGORY = {c: [r.id for r in RULES.values() if r.category == c] for
 # SQL-shaped text: the statement keywords in their usual order. To keep prose like
 # "select an item from the list" out, the text must either start with the statement (any case)
 # or spell the keywords in upper case.
-_STATEMENT = (
-    r"select\s.+?\sfrom\s|insert\s+into\s|update\s+[\w.\"`\[\]]+\s+set\s|delete\s+from\s"
-)
-_SQL_AT_START = re.compile(rf"^[\s(]*(?:{_STATEMENT})", re.IGNORECASE | re.DOTALL)
-_SQL_UPPER = re.compile(
-    r"\bSELECT\s.+?\sFROM\s|\bINSERT\s+INTO\s|\bUPDATE\s+[\w.\"`\[\]]+\s+SET\s|\bDELETE\s+FROM\s",
-    re.DOTALL,
-)
+#
+# `SELECT … FROM` is checked as "a SELECT, then a FROM somewhere after it" with two searches, not
+# one lazy `SELECT\s.+?\sFROM\s` (which rescanned to the end of the string for every SELECT:
+# 64 KB of "SELECT SELECT …" took 22 s, review S-08 class). The first SELECT has the most room
+# for a FROM after it, so the answer is the same.
+_REST = r"insert\s+into\s|update\s+[\w.\"`\[\]]+\s+set\s|delete\s+from\s"
+_SELECT_AT_START = re.compile(r"^[\s(]*select\s", re.IGNORECASE)
+_FROM_ANY_CASE = re.compile(r"\sfrom\s", re.IGNORECASE)
+_REST_AT_START = re.compile(rf"^[\s(]*(?:{_REST})", re.IGNORECASE)
+_SELECT_UPPER = re.compile(r"\bSELECT\s")
+_FROM_UPPER = re.compile(r"\sFROM\s")
+_REST_UPPER = re.compile(r"\bINSERT\s+INTO\s|\bUPDATE\s+[\w.\"`\[\]]+\s+SET\s|\bDELETE\s+FROM\s")
 
 
 def looks_like_sql(text: str) -> bool:
     text += " "
-    return bool(_SQL_AT_START.search(text) or _SQL_UPPER.search(text))
+    # at least one character between "SELECT " and " FROM ": search from one past the SELECT
+    m = _SELECT_AT_START.match(text)
+    if m and _FROM_ANY_CASE.search(text, m.end() + 1):
+        return True
+    if _REST_AT_START.match(text):
+        return True
+    m = _SELECT_UPPER.search(text)
+    if m and _FROM_UPPER.search(text, m.end() + 1):
+        return True
+    return bool(_REST_UPPER.search(text))
