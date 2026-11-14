@@ -55,10 +55,11 @@ export function NodePanel({
   onClose: () => void;
 }) {
   const [tab, setTab] = useState<Tab>("code");
-  // New lines to show (a citation chip or a finding): open the code on them.
+  // New lines to show (a citation chip or a finding), or any link that opens a file (REVEAL, also
+  // "Go to file", which has no lines): open the code.
   const highlightKey = highlight ? `${highlight.start}-${highlight.end}` : null;
   useEffect(() => {
-    if (highlightKey) setTab("code");
+    if (highlightKey || reveal) setTab("code");
   }, [highlightKey, reveal]);
   const titleId = useId();
   const titleRef = useRef<HTMLHeadingElement>(null);

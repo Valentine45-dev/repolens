@@ -21,6 +21,9 @@ colors:
   node-external: "#71717a"
   edge: "#8a8a93"
   highlight: "#fdf3d3"
+  backdrop: "rgba(10, 10, 10, 0.32)"
+  match: "#a58a1d"
+  match-text: "#0a0a0a"
 colors-dark:
   ink: "#f4f4f5"
   ink-hover: "#d4d4d8"
@@ -42,6 +45,9 @@ colors-dark:
   node-external: "#94949e"
   edge: "#7c7c86"
   highlight: "#3b3214"
+  backdrop: "rgba(0, 0, 0, 0.6)"
+  match: "#cfa040"
+  match-text: "#111113"
 typography:
   headline:
     fontFamily: "Inter Variable, Inter, ui-sans-serif, system-ui, sans-serif"
@@ -317,7 +323,7 @@ The system is flat. No element carries a `box-shadow`. Depth is conveyed by 1px 
 
 Two radii and a pill. Controls (buttons, inputs) use gently rounded corners (6px). Grouped containers (the recent-analyses list, callouts) use slightly softer corners (10px) and clip their rows. Example chips are full pills (999px). Skeleton bars use 4px. The stage ledger has no container at all, only a top rule and a rule under each row.
 
-Icons are authored inline SVG on a 16px grid, one 1.5 stroke, round caps and joins, `currentColor`: check, x, circle, spinner, arrow-right, send, copy, the severity marks, and for the Ask drawer file, package, symbol (braces), graph (three nodes), spark (AI answer), expand and collapse. They inherit the state colour of their row.
+Icons are authored inline SVG on a 16px grid, one 1.5 stroke, round caps and joins, `currentColor`: check, x, circle, spinner, arrow-right, send, copy, the severity marks, and for the Ask drawer file, package, symbol (braces), graph (three nodes), spark (AI answer), expand and collapse, and search (a magnifier, "Go to file"). They inherit the state colour of their row.
 
 ## Components
 
@@ -351,7 +357,7 @@ Quiet and solid; one black button per screen.
 ### Navigation
 - **Top bar:** wordmark left (the logo mark is inline SVG in `currentColor`, so it follows the theme), links right of it at 24px gap, the theme toggle (a 32px icon button, sun or moon) at the far right. Links are Label weight in Graphite; hover goes Ink; the current page goes Ink with a 1px Ink underline (border-bottom). Only links to pages that exist.
 - **Browser tab title:** where you are, most specific first: "challenge · Explorer · adeyosemanputra/pygoat — RepoLens", "src/flask/cli.py:1022 · Findings · pallets/flask — RepoLens".
-- **Side panels:** file panel, finding panel and Ask share one close button (`CloseButton`: x, "Close (Esc)" on hover, a name per panel). Esc closes the panel that holds focus, else the most recently opened one that can be seen; one per press (`escapeStack.ts`).
+- **Side panels:** file panel, finding panel and Ask share one close button (`CloseButton`: x, "Close (Esc)" on hover, a name per panel). Esc closes the panel that holds focus, else the most recently opened one that can be seen; one per press (`escapeStack.ts`). The Go to file dialog takes part in the same stack, so with a panel behind it Esc closes only the dialog.
 
 - **File-limit notice:** one 12px Graphite line under the analysis header, Hairline bottom border, on every analysis tab, shown only when the file limit cut the analysis short. It says how many files were analysed and that the rest were not. Neutral: it reports coverage, not a state or a verdict.
 
@@ -398,6 +404,22 @@ The default map: folder, then file, then function. Never more than 60 nodes (the
 - **Code locations:** when the LLM could not answer, the failed line is followed by "Code that matches this question", the same chips as Sources, and "Ranked by search, not read by AI." in Ash, so they never read as an AI answer.
 - **Scroll area:** only the list of suggestions or turns scrolls; the header and the question box stay put. A soft fade into Paper (24px, `--bg` to transparent, either theme) sits on an edge only while the list continues past it (`useScrollEdges`); it fades in over 150ms, instantly under reduced motion, and never takes the pointer.
 - **Scope line:** above the input after "Ask about this": a file icon, "This question includes" in Ash, the path in mono, and an x to remove it. It applies to the next question only.
+
+### Go to file (analysis header, Explorer and Findings)
+Find a file or folder by name or path and open it, without clicking through folders.
+- **Button:** in the analysis header, left of Ask (the Explorer toolbar has ~27px left at 1366px with Ask open): a small secondary button, the search icon, "Go to file" and a key hint (`Ctrl K`, `⌘ K` on a Mac) in a `kbd` chip (Bench Grey fill, Strong Hairline, Ash mono 11px). The hint shows only with a fine pointer; under 560px the button is the icon alone (its name stays "Go to file"). Disabled until the analysis status is known.
+- **Shortcuts:** Ctrl+K, Cmd+K and `/` open it, never while focus is in a text field, textarea, select or editable content, or during IME composition (`goToFileShortcut.ts`). The page takes the key (`preventDefault`), so the browser's own Ctrl+K and Firefox's Quick Find stay away when the page has focus. Ctrl+K inside the dialog selects the field's text.
+- **Dialog:** a native modal `<dialog>` (the page behind is inert; focus stays inside), `min(640px, 100vw − 32px)` wide, 15vh from the top (16px on phones), at most `min(70vh, 560px)` tall. Paper, Strong Hairline, 10px radius, no shadow; the backdrop is `--backdrop` (Ink at 32% in light, black at 60% in dark): it dims, it is not a colour. A click on the backdrop closes it. No animation, so nothing changes under reduced motion.
+- **Field:** the URL input's style with a search icon inside the left edge; mono 13px; placeholder "File or folder name, or a path". `autocomplete="off"`, `spellcheck="false"`, `autocorrect="off"`, `autocapitalize="off"`. Windows' own typing suggestions ("Show text suggestions when typing on the physical keyboard", Settings › Time & language › Typing) are drawn by the OS, not the page; on the eval PC that setting is on. ARIA combobox (`aria-controls`, `aria-expanded`, `aria-activedescendant`, `aria-describedby` = the footer note); focus stays in it while Up/Down move through the list (wrapping), Enter opens, Esc closes and returns focus to what opened it.
+- **Rows:** a listbox of 40px options, 16px side padding: the graph's language mark (`py`/`js`/`ts`) or a folder icon, the name (mono 13/500), the folder (mono 12, Ash, cut from the left), and the "test or example" tag (the dashed `.tag`) at the right. The active row is Sunk Grey. A long row never widens the dialog (the folder text is cut); a long list scrolls down inside it. A mouse move makes a row active; a click opens it.
+- **Highlighter:** matched characters get `--match` behind them (light #a58a1d, dark #cfa040) and `--match-text` on top (Ink / near-black), same weight as their neighbours, no underline, 2px corners. Contrast (`goToFileCss.test.ts`): text on it 5.9 / 7.9; the highlight against a row (Paper) 3.4 / 7.9 and the active row (Sunk Grey) 3.1 / 6.5, light / dark. 3:1 against white needs a mid tone, so in light it reads as mustard, not a pale highlighter yellow.
+- **Matching** (`fileSearch.ts`, case-insensitive; `\` read as `/`, spaces and a leading `./` ignored): exact name or path, then name prefix, name substring, path substring (contiguous, a folder part too, preferring the start of a segment: "go" finds `pygoat/`), then in order **inside the name only**, every piece starting a word (after `_ - .` or a space, a camelCase capital, or where letters and digits meet): "tblack" finds `test_black.py`, "lrb" `line_ranges_basic.py`; "trans" does not find `fstring_quotations.py`, and "go" never matches `scoring/models.py` across folder and name. A query with "/" must be in the path as typed. Within a tier: fewer separate pieces (in-order only), files before folders, the shorter path, A to Z. At most 50 rows, then "N more — keep typing". The field echoes each key at once; the list follows as a deferred render. Enter always opens the best match for what was typed, even if the list has not caught up.
+- **What it searches:** every file the panel can open (the flat graph with tests: parsed Python, JavaScript and TypeScript) and every folder above one. Files that cannot be opened (Markdown, config) are left out, and the footer always says "Searches the Python, JavaScript and TypeScript files the analysis can open." The two lists come from the Explorer's own queries (cached), fetched only when the dialog opens.
+- **Test or example:** a file is tagged only when it is in the list with tests and not in the list without (the server's own rule); until both lists are there, nothing is tagged. A folder holding only such files is tagged too.
+- **Opening:** a file opens through the citation link (`exploreHref` + `REVEAL`): its folder in the map, the file selected, the File tab in front, the panel on its Code tab, focus on the panel heading. A folder opens in the map (in List view: the list under it). The Explorer's guessed calls, all edges, List view and Ask stay as they were. A test or example file while the map hides them turns Tests & examples on; the footer says so while that row is active ("Opens with Tests & examples turned on."). From Findings it goes to the Explorer.
+- **States:** before typing, "Type part of a file or folder name, or a path."; loading, three skeleton rows (`aria-busy`); `No files match "<text>"`; a failed list, the error and "Try again". Never a blank box.
+- **Footer:** Bench Grey, Hairline top: the note on the left, `↑ ↓ move · Enter open · Esc close` on the right (hidden under 560px).
+- **Loading cost:** the dialog is its own chunk (9.1 kB, 3.6 kB gzip), fetched on first open; Home and Progress load nothing of it. The page templates in `index.html` carry the button (disabled) so the header is the real one before the app runs.
 
 ### Loading
 Skeleton bars in Sunk Grey at 4px radius, sized to the text they replace, with one shared shimmer: a soft band (`--shimmer`, lighter than Sunk Grey; a faint light band in dark) moved by `transform` on a pseudo-element, 1.5s per sweep, every bar on the same start time so they sweep together; static under reduced motion. Containers carry `aria-busy`. Loaders shown over content that is already there (the "Opening `folder`…" pill over the dimmed map) appear after 200ms and stay at least 400ms (`useDelayedFlag`), so a fast load shows nothing and a slow one does not blink; layout-keeping skeletons show at once. The file panel's code area fills with placeholder lines at the code's line height and a gutter already as wide as the file's last line number; the Findings list loads as its own table (header and eight 40px rows); a link to a finding draws the panel frame at once; the reachability block keeps its shape. Ask says "Working on it…" and only after 1.5s "this can take up to 40 seconds". `REPOLENS_DEV_API_DELAY_MS` (dev and preview server only, README) slows the API to see all of this. Where a surface has a shape, the skeleton keeps it, and it is the real surface wherever the page already knows the answer: the Explorer draws its breadcrumb row (real Up button, real folder names from the address, only the repo name grey), toolbar, legend and notes row at once and only the repo name and counts are grey; the map placeholder is plain rows of grey cards at the real node size and gap (208×76, 14px), not a drawn graph; List view shows nine 36px ruled rows. `index.html` ships one page-shaped template per kind of page (home, Explorer, Findings) built from the real markup and class names, so every placeholder sits where its element will be: home is its real text (the recent list from this browser, only the status grey), an analysis started in this browser shows its real title, and the rest of the screen's room is reserved (the Findings count badge, the filter widths, the scrollbar gutter, the caption row). The three first-screen fonts are preloaded. Measured with `eval/layout_shift.mjs`: layout shift 0 on home and Findings, 0.0001 on the Explorer, every landmark within 0.5px of its placeholder. The words ("Laying out…", "Loading files…") stay for screen readers only. Skeletons are still: no shimmer.
