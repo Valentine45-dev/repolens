@@ -2043,3 +2043,47 @@ are deliberately not changed after seeing eval results; these stay as documented
     The `@shikijs/langs-precompiled` dependency was accepted (measured gain, guarded by the
     equality test); from now on any dependency not named in a brief is asked about first.
   - **Merged into `main`** with a merge commit (not squashed).
+
+- **Go to file (`feat/goto-file`, 14 Nov; built, pushed, waiting for the owner's Firefox and Chrome
+  test, not merged).** $0 API spend (status, graph, findings and file endpoints only; nothing asked).
+  - **What:** a "Go to file" button in the analysis header (left of Ask; the Explorer toolbar has
+    ~27px free at 1366 with Ask open), Ctrl+K / Cmd+K and `/` (never while typing in a field or during
+    IME composition). A native modal dialog (combobox + listbox) searches every file the panel can open
+    (the flat graph with tests: parsed Python/JS/TS) and every folder above one. Ranking: exact name or
+    path > name prefix > name substring > path substring > in order inside the name with every piece
+    at a word start; ties: fewer pieces, files before folders, shorter path, A-Z. 50 rows, then "N more
+    — keep typing"; `No files match "<text>"`; a hint before typing; the footer says what is searched.
+    Matched characters sit on a highlighter (`--match`, light #a58a1d / dark #cfa040; text 5.9 / 7.9:1,
+    against a row 3.4 / 7.9, against the active row 3.1 / 6.5). Works on Findings too.
+  - **Opening:** a file uses the citation link (`exploreHref` + `REVEAL`) and keeps the Explorer's
+    guessed calls, all edges, List view and Ask. A test or example file while tests are hidden turns
+    Tests & examples on (the footer says so while that row is active). A folder opens in the map. The
+    file panel now shows its Code tab on any REVEAL link, not only one with lines (`NodePanel`, one
+    condition; the citation tests stay green).
+  - **Test tag:** only when a file is in the list with tests and not in the one without (the server's
+    own rule); nothing is tagged until both lists are there. Both lists are the Explorer's own queries
+    (cached), fetched when the dialog opens.
+  - **Owner's Chrome notes (mid-build), all addressed:** highlighter instead of underline/bold (3:1 in
+    light needs a mustard tone, not a pale yellow); in-order matches only inside the name and only at
+    word starts ("go" no longer matches `scoring/models.py`, "trans" no longer `fstring_quotations.py`);
+    `autocorrect`/`autocapitalize` off too (the "good / go to / got" bubble is Windows' "Show text
+    suggestions when typing on the physical keyboard", on for this PC; whether Chrome suppresses it is
+    the owner's check); the cut-off light screenshot was a real layout bug (`.goto-inner` flex item with
+    `min-width: auto`), fixed and now measured on every evidence pass; the dark run's Findings failure
+    was the evidence script racing `index.html`'s placeholder (script fixed, placeholders now carry the
+    real button); the 22 s first list load was not reproduced (80 samples under the same backend-suite
+    load: max 0.86 s), and the script now records the request's Resource Timing.
+  - **Typing cost:** the field echoes at once (1.5-11 ms on redash); the list renders deferred
+    (8-114 ms for up to 50 rows; matching itself ~2-3 ms). Enter always opens the best match for
+    what was typed, even before the list catches up (tested).
+  - **Checks:** web 299/299 (38 files; new: `fileSearch.test.ts`, `goToFileShortcut.test.ts`,
+    `goToFileCss.test.ts`, `GoToFile.dom.test.tsx`), `tsc` clean; backend ruff clean, 491 passed,
+    3 network skips (backend unchanged); graph/API diff against `main` empty; 457-view check 457/457
+    identical (`ui_drawn_counts-after-goto-file-final-20261114T032501Z-03e742e.json`). One web run
+    while the backend suite ran beside it reported 35 files / 288 tests; three runs since: all files.
+  - **Bundle:** main JS 424.93 / 133.96 kB gzip -> 426.54 / 134.53; main CSS 65.74 / 22.57 ->
+    68.83 / 23.14; Explore 224.40 / 72.32 -> 224.43 / 72.33; new lazy `GoToFile` chunk 9.08 / 3.64.
+  - **Evidence:** `eval/results/screenshots-goto-file/` (README; `eval/goto_file_evidence.mjs`):
+    headless Edge, throwaway profile, 1366 light and dark plus 1920 light, real key events.
+  - **Not verified (owner's test):** Firefox's own Ctrl+K and Quick Find on `/` against the page, the
+    Windows suggestion bubble, real mouse and keyboard feel.

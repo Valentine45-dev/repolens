@@ -1,0 +1,242 @@
+{
+ "theme": "light",
+ "width": 1920,
+ "base": "http://127.0.0.1:5173",
+ "steps": {
+  "emptyQuery": {
+   "dialog": true,
+   "focus": "input goto-input",
+   "options": [],
+   "optionCount": 0,
+   "message": "Type part of a file or folder name, or a path.",
+   "note": "Searches the Python, JavaScript and TypeScript files the analysis can open.",
+   "url": "/a/7/explore",
+   "node": null,
+   "tests": null,
+   "panel": null,
+   "codeTab": null,
+   "code": false,
+   "testsChecked": false
+  },
+  "trans": {
+   "dialog": true,
+   "focus": "input goto-input",
+   "options": [
+    {
+     "path": "src/black/trans.py",
+     "selected": true,
+     "hits": [
+      "trans"
+     ],
+     "tag": null
+    },
+    {
+     "path": "tests/test_trans.py",
+     "selected": false,
+     "hits": [
+      "trans"
+     ],
+     "tag": "test or example"
+    }
+   ],
+   "optionCount": 2,
+   "message": null,
+   "note": "Searches the Python, JavaScript and TypeScript files the analysis can open.",
+   "url": "/a/7/explore",
+   "node": null,
+   "tests": null,
+   "panel": null,
+   "codeTab": null,
+   "code": false,
+   "testsChecked": false
+  },
+  "testBlack": {
+   "dialog": true,
+   "focus": "input goto-input",
+   "options": [
+    {
+     "path": "tests/test_black.py",
+     "selected": true,
+     "hits": [
+      "test_black"
+     ],
+     "tag": "test or example"
+    },
+    {
+     "path": "tests/test_blackd.py",
+     "selected": false,
+     "hits": [
+      "test_black"
+     ],
+     "tag": "test or example"
+    }
+   ],
+   "optionCount": 2,
+   "message": null,
+   "note": "Opens with Tests & examples turned on.",
+   "url": "/a/7/explore",
+   "node": null,
+   "tests": null,
+   "panel": null,
+   "codeTab": null,
+   "code": false,
+   "testsChecked": false
+  },
+  "empty": {
+   "dialog": true,
+   "focus": "input goto-input",
+   "options": [],
+   "optionCount": 0,
+   "message": "No files match “zzqx”",
+   "note": "Searches the Python, JavaScript and TypeScript files the analysis can open.",
+   "url": "/a/7/explore",
+   "node": null,
+   "tests": null,
+   "panel": null,
+   "codeTab": null,
+   "code": false,
+   "testsChecked": false
+  },
+  "opened": {
+   "dialog": false,
+   "focus": "panel-title panel-title-path mono",
+   "options": [],
+   "optionCount": 0,
+   "message": null,
+   "note": null,
+   "url": "/a/7/explore?node=997&tests=1",
+   "node": "997",
+   "tests": "1",
+   "panel": "teststest_black.py",
+   "codeTab": "Code",
+   "code": true,
+   "testsChecked": true
+  }
+ },
+ "checks": {
+  "home": {
+   "goToFileChunk": 0,
+   "graphRequests": 0
+  },
+  "explorerBeforeOpen": {
+   "goToFileChunk": 0,
+   "listWithTests": 0,
+   "button": "Go to fileCtrl K"
+  },
+  "firstOpen": {
+   "dialogMs": 706,
+   "listMs": 1455,
+   "note": "polled every 100 ms; includes 300 ms settle",
+   "listRequest": {
+    "totalMs": 651,
+    "waitingForServerMs": 645,
+    "downloadMs": 4,
+    "startedAfterNavigationMs": 8301
+   }
+  },
+  "overflowTrans": {
+   "dialogWidth": 640,
+   "innerSideways": false,
+   "resultsSideways": false,
+   "fieldOutside": false,
+   "rowsOutside": 0,
+   "tagsOutside": 0,
+   "rows": 2,
+   "scrollsDown": false,
+   "scrollbarShown": false
+  },
+  "escapeWithPanel": {
+   "dialog": false,
+   "panelStillOpen": true,
+   "node": "997",
+   "focus": "button button-secondary button-small analysis-search"
+  },
+  "slashFieldFocused": true,
+  "slashInField": {
+   "dialogOpened": false,
+   "fieldValue": "/"
+  },
+  "fromFindings": {
+   "url": "/a/7/explore?node=971",
+   "panel": "src/blacktrans.py",
+   "codeTab": "Code"
+  },
+  "redashKeystrokes": [
+   {
+    "q": "t",
+    "echoMs": 7.6,
+    "listMs": 114.2,
+    "options": 50,
+    "message": "1010 more — keep typing"
+   },
+   {
+    "q": "tr",
+    "echoMs": 6,
+    "listMs": 73.8,
+    "options": 40,
+    "message": null
+   },
+   {
+    "q": "tra",
+    "echoMs": 5,
+    "listMs": 54.1,
+    "options": 4,
+    "message": null
+   },
+   {
+    "q": "tran",
+    "echoMs": 2.1,
+    "listMs": 26.3,
+    "options": 1,
+    "message": null
+   },
+   {
+    "q": "trans",
+    "echoMs": 1.8,
+    "listMs": 18.8,
+    "options": 0,
+    "message": "No files match “trans”"
+   },
+   {
+    "q": "transf",
+    "echoMs": 1.5,
+    "listMs": 13.4,
+    "options": 0,
+    "message": "No files match “transf”"
+   },
+   {
+    "q": "zzq",
+    "echoMs": 1.6,
+    "listMs": 10.6,
+    "options": 0,
+    "message": "No files match “zzq”"
+   },
+   {
+    "q": "src/",
+    "echoMs": 1.5,
+    "listMs": 31.8,
+    "options": 50,
+    "message": "211 more — keep typing"
+   },
+   {
+    "q": "components/",
+    "echoMs": 5.5,
+    "listMs": 56.3,
+    "options": 50,
+    "message": "203 more — keep typing"
+   }
+  ],
+  "overflowRedash": {
+   "dialogWidth": 640,
+   "innerSideways": false,
+   "resultsSideways": false,
+   "fieldOutside": false,
+   "rowsOutside": 0,
+   "tagsOutside": 0,
+   "rows": 50,
+   "scrollsDown": true,
+   "scrollbarShown": true
+  },
+  "noSidewaysOverflow": true
+ }
+}
