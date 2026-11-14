@@ -2044,8 +2044,8 @@ are deliberately not changed after seeing eval results; these stay as documented
     equality test); from now on any dependency not named in a brief is asked about first.
   - **Merged into `main`** with a merge commit (not squashed).
 
-- **Go to file (`feat/goto-file`, 14 Nov; built, pushed, waiting for the owner's Firefox and Chrome
-  test, not merged).** $0 API spend (status, graph, findings and file endpoints only; nothing asked).
+- **Go to file (`feat/goto-file`, 14 Nov; owner's Firefox and Chrome test passed, merged into
+  `main`).** $0 API spend (status, graph, findings and file endpoints only; nothing asked).
   - **What:** a "Go to file" button in the analysis header (left of Ask; the Explorer toolbar has
     ~27px free at 1366 with Ask open), Ctrl+K / Cmd+K and `/` (never while typing in a field or during
     IME composition). A native modal dialog (combobox + listbox) searches every file the panel can open
@@ -2085,5 +2085,14 @@ are deliberately not changed after seeing eval results; these stay as documented
     68.83 / 23.14; Explore 224.40 / 72.32 -> 224.43 / 72.33; new lazy `GoToFile` chunk 9.08 / 3.64.
   - **Evidence:** `eval/results/screenshots-goto-file/` (README; `eval/goto_file_evidence.mjs`):
     headless Edge, throwaway profile, 1366 light and dark plus 1920 light, real key events.
-  - **Not verified (owner's test):** Firefox's own Ctrl+K and Quick Find on `/` against the page, the
-    Windows suggestion bubble, real mouse and keyboard feel.
+  - **Owner's real-mouse test (14 Nov, Firefox and Chrome, `77a826f`): passed.** Ctrl+K and `/` open
+    the dialog in both browsers (neither the browser's search nor Firefox's Quick Find takes them);
+    `test_black` + Enter on black turns on Tests & examples and opens `tests/test_black.py` with its
+    code; Esc closes only the dialog; a search from Findings opens the file in the Explorer; the
+    highlighter is clear in both themes, and the mustard light value is kept.
+  - **Windows suggestion bubble ("good / go to / got"):** gone in Chrome with `autocomplete`,
+    `spellcheck`, `autocorrect` and `autocapitalize` off; it still appears in Firefox. It comes from
+    Windows' "Show text suggestions when typing on the physical keyboard" (Settings › Time & language ›
+    Typing; on for this PC), not from the app; Firefox does not pass the field's hints to it. Left as
+    an OS setting, not an app bug.
+  - **Merged into `main`** with a merge commit (not squashed).
