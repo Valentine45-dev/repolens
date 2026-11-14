@@ -35,7 +35,7 @@ describe("ranking", () => {
       file(1, "a/xtransx.py"), // name substring
       file(2, "trans/zz.py"), // path substring (folder part)
       file(3, "a/transformer.py"), // name prefix
-      file(4, "t/r/a/n/s.py"), // in order only
+      file(4, "a/t_r_a_n_s.py"), // in order, each piece starting a word
       file(5, "deep/folder/trans"), // exact name (no extension)
     ];
     const ranked = searchEntries(buildEntries(list, list), "trans").matches;
@@ -45,7 +45,7 @@ describe("ranking", () => {
       ["a/transformer.py", 1],
       ["a/xtransx.py", 2],
       ["trans/zz.py", 3],
-      ["t/r/a/n/s.py", 4],
+      ["a/t_r_a_n_s.py", 4],
     ]);
   });
 
@@ -78,16 +78,41 @@ describe("ranking", () => {
     expect(paths("src/black/")[0]).toBe("src/black");
   });
 
-  it("prefers fewer separate runs among in-order matches", () => {
-    const list = [file(1, "x/a_b_c_d.py"), file(2, "x/abcd_zz_qq.py")];
-    // "abcdq": abcd together then q, against a,b,c,d,q apart
+  it("prefers fewer separate pieces among in-order matches", () => {
+    const list = [file(1, "x/a_b_c_d_q.py"), file(2, "x/abcd_zz_qq.py")];
+    // "abcdq": abcd together then q, against a, b, c, d, q apart
     const ranked = searchEntries(buildEntries(list, list), "abcdq").matches;
-    expect(ranked.map((m) => m.tier)).toEqual([4]);
-    expect(ranked[0].entry.path).toBe("x/abcd_zz_qq.py");
-    const two = [file(1, "q/w/e/r.py"), file(2, "qwer/zzzzzzzzzzzzzzzzzzzz.py")];
-    expect(searchEntries(buildEntries(two, two), "qw/r").matches.map((m) => m.entry.path)[0]).toBe(
-      "q/w/e/r.py",
-    );
+    expect(ranked.map((m) => [m.entry.path, m.tier, m.ranges.length])).toEqual([
+      ["x/abcd_zz_qq.py", 4, 2],
+      ["x/a_b_c_d_q.py", 4, 5],
+    ]);
+  });
+
+  it("keeps in-order matches inside the file name: never across folder and name", () => {
+    // "go": m-o-dels in the folder scoring/ + scorin-g would be "in order" across the path.
+    const list = [file(1, "scoring/models.py"), file(2, "pygoat/views.py")];
+    const found = searchEntries(buildEntries(list, list), "go").matches.map((m) => [m.entry.path, m.tier]);
+    expect(found).not.toContainEqual(["scoring/models.py", expect.anything()]);
+    // a contiguous match in a folder name is a path match, and stays
+    expect(found).toContainEqual(["pygoat/views.py", 3]);
+  });
+
+  it("drops scattered in-order matches: every piece has to start a word", () => {
+    const list = [file(1, "tests/data/cases/fstring_quotations.py"), file(2, "src/black/trans.py")];
+    expect(paths("trans", list, list)).toEqual(["src/black/trans.py"]);
+    // word starts: after _ - . or a space, camelCase, letters next to digits
+    const words = [file(3, "a/line_ranges_basic.py"), file(4, "a/HttpRequestParser.ts"), file(5, "a/v2Client.js")];
+    expect(paths("lrb", words, words)).toEqual(["a/line_ranges_basic.py"]);
+    expect(paths("hrp", words, words)).toEqual(["a/HttpRequestParser.ts"]);
+    expect(paths("v2c", words, words)).toEqual(["a/v2Client.js"]);
+    expect(paths("ttpar", words, words)).toEqual([]); // "ttp" is inside the word Http
+    expect(paths("tblack")[0]).toBe("tests/test_black.py");
+  });
+
+  it("finds a word-start placement even when the rightmost letters are inside words", () => {
+    // "tb": the t at the start of test_black, not the t at the end of "test"
+    const list = [file(1, "tests/test_black.py")];
+    expect(searchEntries(buildEntries(list, list), "tb").matches[0]?.ranges).toEqual([[6, 7], [11, 12]]);
   });
 
   it("caps the list and says how many matched", () => {
@@ -115,9 +140,9 @@ describe("highlight ranges", () => {
     expect(matchEntry(entry("xsrc/src/a.py"), "src")?.ranges).toEqual([[5, 8]]);
   });
 
-  it("matches in order from the right, so the hits gather in the name", () => {
-    // "t/test_black.py": the "t" right before "_black" (index 5), not the folder's or the first one.
-    expect(matchEntry(entry("t/test_black.py"), "tb")?.ranges).toEqual([[5, 6], [7, 8]]);
+  it("marks in-order pieces inside the name only, each at a word start", () => {
+    expect(matchEntry(entry("t/test_black.py"), "tb")?.ranges).toEqual([[2, 3], [7, 8]]);
+    expect(matchEntry(entry("t/test_black.py"), "t/tb")).toBeNull(); // a typed path must be contiguous
   });
 
   it("splits a path into hit and plain pieces for the name and the folder", () => {

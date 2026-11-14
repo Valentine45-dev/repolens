@@ -26,7 +26,8 @@ export type Range = [start: number, end: number]; // end exclusive, indexes into
 
 export interface SearchMatch {
   entry: SearchEntry;
-  /** 0 exact name or path, 1 name prefix, 2 name substring, 3 path substring, 4 in order. */
+  /** 0 exact name or path, 1 name prefix, 2 name substring, 3 path substring, 4 in order inside
+   * the name, each piece at the start of a word. */
   tier: number;
   ranges: Range[];
 }
@@ -95,18 +96,47 @@ export function buildEntries(withTests: ListedFile[], withoutTests: ListedFile[]
   return entries;
 }
 
-/** `q` in order inside `text`, matched from the right so the hits gather in the name. */
-function subsequence(text: string, q: string): Range[] | null {
+const SEPARATORS = new Set(["_", "-", ".", " "]);
+const isLetter = (c: string) => c.toLowerCase() !== c.toUpperCase();
+const isDigit = (c: string) => c >= "0" && c <= "9";
+
+/** Where a word starts in a name: its first character, after `_ - .` or a space, a capital after
+ * a small letter (camelCase), or where letters and digits meet. */
+export function isWordStart(name: string, i: number): boolean {
+  if (i === 0) return true;
+  const prev = name[i - 1];
+  const cur = name[i];
+  if (SEPARATORS.has(prev)) return true;
+  if (isLetter(prev) && isLetter(cur)) return prev === prev.toLowerCase() && cur !== cur.toLowerCase();
+  return (isDigit(prev) && isLetter(cur)) || (isLetter(prev) && isDigit(cur));
+}
+
+/** An in-order match inside the name only, in pieces that each start a word: "tblack" finds
+ * test_black.py, "lrb" finds line_ranges_basic.py, but "trans" does not find
+ * fstring_quotations.py (its letters are scattered inside words). Ranges index into the name. */
+function wordMatch(name: string, lowerName: string, q: string): Range[] | null {
+  const failed = new Set<string>(); // (query index, name index, inside a run) that cannot finish
   const hits: number[] = [];
-  let j = q.length - 1;
-  for (let i = text.length - 1; i >= 0 && j >= 0; i--) {
-    if (text[i] === q[j]) {
-      hits.push(i);
-      j--;
+  const place = (qi: number, from: number, runEnd: number): boolean => {
+    if (qi === q.length) return true;
+    const memo = `${qi}:${from}:${runEnd}`;
+    if (failed.has(memo)) return false;
+    // Continue the current run first (fewer pieces), then try each word start further on.
+    if (runEnd >= 0 && lowerName[runEnd] === q[qi]) {
+      hits.push(runEnd);
+      if (place(qi + 1, runEnd + 1, runEnd + 1)) return true;
+      hits.pop();
     }
-  }
-  if (j >= 0) return null;
-  hits.reverse();
+    for (let i = from; i < lowerName.length; i++) {
+      if (i === runEnd || lowerName[i] !== q[qi] || !isWordStart(name, i)) continue;
+      hits.push(i);
+      if (place(qi + 1, i + 1, i + 1)) return true;
+      hits.pop();
+    }
+    failed.add(memo);
+    return false;
+  };
+  if (!place(0, 0, -1)) return null;
   const ranges: Range[] = [];
   for (const i of hits) {
     const last = ranges[ranges.length - 1];
@@ -139,8 +169,9 @@ export function matchEntry(entry: SearchEntry, q: string): SearchMatch | null {
   if (inName >= 0) return { entry, tier: 2, ranges: [[nameAt + inName, nameAt + inName + q.length]] };
   const inPath = pathIndex(lower, q);
   if (inPath >= 0) return { entry, tier: 3, ranges: [[inPath, inPath + q.length]] };
-  const ranges = subsequence(lower, q);
-  return ranges ? { entry, tier: 4, ranges } : null;
+  if (q.includes("/")) return null; // a path was typed: it has to be in the path as typed
+  const inWords = wordMatch(entry.path.slice(nameAt), name, q);
+  return inWords ? { entry, tier: 4, ranges: inWords.map(([s, e]) => [s + nameAt, e + nameAt] as Range) } : null;
 }
 
 /** Best first: tier; then, for in-order matches, fewer separate runs; files before folders;
