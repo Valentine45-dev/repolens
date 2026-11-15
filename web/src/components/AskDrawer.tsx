@@ -1,5 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { useEffect, useId, useMemo, useRef, useState, type FormEvent } from "react";
+import { Component, useEffect, useId, useMemo, useRef, useState, type FormEvent, type ReactNode } from "react";
 import { Link, useSearchParams } from "react-router-dom";
 
 import {
@@ -12,7 +12,7 @@ import {
   type GraphResult,
   type SnapshotStatus,
 } from "../api";
-import { clearTurns, sendQuestion, setDraft, setScope, useAskSession } from "../askStore";
+import { clearTurns, removeTurn, sendQuestion, setDraft, setScope, useAskSession } from "../askStore";
 import { degrees } from "../graphModel";
 import { exploreHref, REVEAL, useSetParams } from "../links";
 import { SiteChips } from "./SiteChips";
@@ -65,7 +65,7 @@ export function AskDrawer({
   const inputId = useId();
   const [params] = useSearchParams();
   const setParams = useSetParams();
-  const { turns, draft, scope, pending } = useAskSession(snapshotId);
+  const { turns, draft, scope, pending, notice } = useAskSession(snapshotId);
   const busy = pending !== null;
   const [wide, setWide] = useState(loadWide);
   const inputRef = useRef<HTMLTextAreaElement>(null);
@@ -181,6 +181,11 @@ export function AskDrawer({
       <div className="drawer-scroll" data-more-above={edges.top || undefined} data-more-below={edges.bottom || undefined}>
       <div className="drawer-body" ref={bodyRef}>
         <DrawerBanner snapshotId={snapshotId} status={status} />
+        {notice ? (
+          <p className="caption drawer-hint" role="status">
+            {notice}
+          </p>
+        ) : null}
 
         {turns.length === 0 ? (
           <Suggestions snapshotId={snapshotId} aiReady={features.ai && features.ask} onPick={send} />
@@ -188,31 +193,33 @@ export function AskDrawer({
           <ol className="conversation" aria-label="Conversation">
             {turns.map((turn, i) => (
               <li key={turn.id} className="turn" ref={i === turns.length - 1 ? lastTurnRef : undefined}>
-                <p className="turn-question">
-                  <span className="visually-hidden">You asked: </span>
-                  {turn.question}
-                </p>
-                <div className="turn-answer" aria-live="polite">
-                  {turn.answer ? (
-                    <AnswerView
-                      snapshotId={snapshotId}
-                      question={turn.question}
-                      answer={turn.answer}
-                      onAsk={send}
-                      busy={busy}
-                    />
-                  ) : turn.error ? (
-                    <p className="turn-note" role="alert">
-                      <Icon name="x" size={14} /> {turn.error}
-                    </p>
-                  ) : turn.interrupted ? (
-                    <p className="turn-note">
-                      <Icon name="x" size={14} /> {INTERRUPTED}
-                    </p>
-                  ) : (
-                    <ThinkingNote since={pending?.id === turn.id ? pending.startedAt : undefined} />
-                  )}
-                </div>
+                <TurnBoundary onError={() => removeTurn(snapshotId, turn.id)}>
+                  <p className="turn-question">
+                    <span className="visually-hidden">You asked: </span>
+                    {turn.question}
+                  </p>
+                  <div className="turn-answer" aria-live="polite">
+                    {turn.answer ? (
+                      <AnswerView
+                        snapshotId={snapshotId}
+                        question={turn.question}
+                        answer={turn.answer}
+                        onAsk={send}
+                        busy={busy}
+                      />
+                    ) : turn.error ? (
+                      <p className="turn-note" role="alert">
+                        <Icon name="x" size={14} /> {turn.error}
+                      </p>
+                    ) : turn.interrupted ? (
+                      <p className="turn-note">
+                        <Icon name="x" size={14} /> {INTERRUPTED}
+                      </p>
+                    ) : (
+                      <ThinkingNote since={pending?.id === turn.id ? pending.startedAt : undefined} />
+                    )}
+                  </div>
+                </TurnBoundary>
               </li>
             ))}
           </ol>
@@ -278,6 +285,26 @@ export function AskDrawer({
       </form>
     </aside>
   );
+}
+
+/** A turn that still fails to draw (a shape the checks in askTurns let through) is removed from
+ * the conversation and from storage, and the drawer says so; the other turns stay. Without this
+ * the page's own error boundary would take the whole page, again on every reload. */
+class TurnBoundary extends Component<{ onError: () => void; children: ReactNode }, { failed: boolean }> {
+  state = { failed: false };
+
+  static getDerivedStateFromError() {
+    return { failed: true };
+  }
+
+  componentDidCatch(error: Error) {
+    console.error("RepoLens could not show an Ask turn", error);
+    this.props.onError();
+  }
+
+  render() {
+    return this.state.failed ? null : this.props.children;
+  }
 }
 
 /** Suggested questions built from this snapshot's data (spec 5.5): the most depended-on files

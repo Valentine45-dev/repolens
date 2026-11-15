@@ -40,6 +40,14 @@ vi.mock("../api", async (importOriginal) => ({
   askQuestion: vi.fn(() => new Promise<Answer>((resolve) => answers.push(resolve))),
 }));
 
+// The answer text "THROW" stands in for any answer that passes the checks and still fails to draw.
+vi.mock("./Markdown", () => ({
+  Markdown: ({ text }: { text: string }) => {
+    if (text === "THROW") throw new Error("cannot draw this answer");
+    return <p>{text}</p>;
+  },
+}));
+
 let host: HTMLDivElement;
 let root: Root;
 let client: QueryClient;
@@ -230,5 +238,54 @@ describe("a reload while a question was being answered", () => {
     expect($<HTMLButtonElement>("#ask-drawer button[type=submit]")!.disabled).toBe(false); // nothing is pending
     expect(askQuestion).not.toHaveBeenCalled();
     expect(JSON.parse(sessionStorage.getItem("repolens.ask.41")!)[1].interrupted).toBe(true);
+  });
+});
+
+describe("SEC-04: saved turns that do not fit", () => {
+  const boundaryPage = () => host.textContent?.includes("Something went wrong on this page.");
+  const quiet = () => vi.spyOn(console, "error").mockImplementation(() => {});
+
+  it("opens Ask with the valid turns and drops the rest from storage", async () => {
+    const old = { id: "old", question: "From an older build", answer: { kind: "ai", status: "answered", answer: "No citations here." } };
+    sessionStorage.setItem("repolens.ask.51", JSON.stringify([
+      { id: "ok", question: "A good question", answer: answer("A good answer.") },
+      old,
+      { id: "bad-cite", question: "Bad citation", answer: { ...answer("x"), citations: [{ path: 1 }] } },
+      "not a turn",
+      { question: "no id" },
+    ]));
+    const spy = quiet();
+    await open("/a/51/explore?ask=1");
+    spy.mockRestore();
+    expect(boundaryPage()).toBe(false);
+    expect(turns()).toHaveLength(1);
+    expect(turns()[0].textContent).toContain("A good answer.");
+    expect(JSON.parse(sessionStorage.getItem("repolens.ask.51")!).map((t: { id: string }) => t.id)).toEqual(["ok"]);
+  });
+
+  it("removes a turn that still fails to draw, keeps the others and says so", async () => {
+    sessionStorage.setItem("repolens.ask.52", JSON.stringify([
+      { id: "ok", question: "A good question", answer: answer("A good answer.") },
+      { id: "boom", question: "Breaks the drawer", answer: answer("THROW") },
+    ]));
+    const spy = quiet();
+    await open("/a/52/explore?ask=1");
+    await tick();
+    spy.mockRestore();
+    expect(boundaryPage()).toBe(false);
+    expect(turns()).toHaveLength(1);
+    expect(turns()[0].textContent).toContain("A good answer.");
+    expect(host.textContent).toContain("An answer could not be shown and was removed from this conversation.");
+    expect(JSON.parse(sessionStorage.getItem("repolens.ask.52")!).map((t: { id: string }) => t.id)).toEqual(["ok"]);
+  });
+
+  it("turns an answer from the server that it cannot read into one failed line", async () => {
+    await open("/a/53/explore?ask=1");
+    await ask("Anything?");
+    const spy = quiet();
+    await answerWith({ kind: "ai", status: "answered", answer: "half an answer" } as unknown as Answer);
+    spy.mockRestore();
+    expect(boundaryPage()).toBe(false);
+    expect(turns()[0].textContent).toContain("The answer could not be shown.");
   });
 });

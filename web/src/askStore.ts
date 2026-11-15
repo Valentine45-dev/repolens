@@ -7,16 +7,10 @@
 
 import { useSyncExternalStore } from "react";
 
-import { askQuestion, type Answer } from "./api";
+import { askQuestion } from "./api";
+import { isAnswer, parseStoredTurns, type Turn } from "./askTurns";
 
-export interface Turn {
-  id: string;
-  question: string;
-  answer?: Answer;
-  error?: string;
-  /** Saved while it was being answered and then the page reloaded: the answer never arrived. */
-  interrupted?: true;
-}
+export type { Turn } from "./askTurns";
 
 /** The file a question includes ("Ask about this"). */
 export interface Scope {
@@ -30,9 +24,11 @@ export interface AskSession {
   scope: Scope | null;
   /** The question being answered: one per analysis at a time. */
   pending: { id: string; startedAt: number } | null;
+  /** Said once above the conversation, e.g. that a turn could not be shown and was removed. */
+  notice: string | null;
 }
 
-const EMPTY: Omit<AskSession, "turns"> = { draft: "", scope: null, pending: null };
+const EMPTY: Omit<AskSession, "turns"> = { draft: "", scope: null, pending: null, notice: null };
 
 const sessions = new Map<number, AskSession>();
 const listeners = new Set<() => void>();
@@ -41,18 +37,20 @@ function storageKey(snapshotId: number) {
   return `repolens.ask.${snapshotId}`;
 }
 
-/** A question still unanswered in storage was cut off by a reload (the request died with the old
- * page): it is kept, marked as interrupted, so it does not vanish without a word. */
+/** Saved turns that do not fit what the drawer reads are left out (askTurns). A question still
+ * unanswered in storage was cut off by a reload (the request died with the old page): it is kept,
+ * marked as interrupted, so it does not vanish without a word. What was changed is saved back. */
 function loadTurns(snapshotId: number): Turn[] {
-  let turns: Turn[];
+  let raw: string | null;
   try {
-    const raw = sessionStorage.getItem(storageKey(snapshotId));
-    turns = raw ? (JSON.parse(raw) as Turn[]) : [];
+    raw = sessionStorage.getItem(storageKey(snapshotId));
   } catch {
     return [];
   }
-  const loaded = turns.map((t) => (t.answer || t.error || t.interrupted ? t : { ...t, interrupted: true as const }));
-  if (loaded.some((t, i) => t !== turns[i])) saveTurns(snapshotId, loaded);
+  const loaded = parseStoredTurns(raw).map((t) =>
+    t.answer || t.error || t.interrupted ? t : { ...t, interrupted: true as const },
+  );
+  if (raw !== null && JSON.stringify(loaded) !== raw) saveTurns(snapshotId, loaded);
   return loaded;
 }
 
@@ -105,7 +103,18 @@ export function setScope(snapshotId: number, scope: Scope | null) {
 /** Clear is offered only while nothing is being answered. */
 export function clearTurns(snapshotId: number) {
   if (getSession(snapshotId).pending) return;
-  update(snapshotId, { turns: [] });
+  update(snapshotId, { turns: [], notice: null });
+}
+
+/** A turn that still failed to draw (TurnBoundary in the drawer) is removed, from storage too. */
+export function removeTurn(snapshotId: number, turnId: string) {
+  const session = getSession(snapshotId);
+  if (!session.turns.some((t) => t.id === turnId)) return;
+  update(snapshotId, {
+    turns: session.turns.filter((t) => t.id !== turnId),
+    pending: session.pending?.id === turnId ? null : session.pending,
+    notice: "An answer could not be shown and was removed from this conversation.",
+  });
 }
 
 function settle(snapshotId: number, turnId: string, result: Pick<Turn, "answer" | "error">) {
@@ -128,9 +137,13 @@ export function sendQuestion(snapshotId: number, question: string, fileId?: numb
     draft: "",
     scope: null,
     pending: { id, startedAt: Date.now() },
+    notice: null,
   });
   askQuestion(snapshotId, text, fileId).then(
-    (answer) => settle(snapshotId, id, { answer }),
+    // The server's answer gets the same check as a saved one: a shape the drawer cannot read is
+    // one failed line, not a crash.
+    (answer) =>
+      settle(snapshotId, id, isAnswer(answer) ? { answer } : { error: "The answer could not be shown." }),
     (error: unknown) =>
       settle(snapshotId, id, { error: error instanceof Error ? error.message : "The question failed." }),
   );
