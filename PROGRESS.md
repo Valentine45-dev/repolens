@@ -2301,9 +2301,14 @@ are deliberately not changed after seeing eval results; these stay as documented
     for `web/` (frontend lint is "only if asked"), so lint before each commit was `tsc`. Main chunk
     426.54 -> 431.92 kB (gzip 134.53 -> 136.28, +1.75 kB); Explore chunk unchanged; CSS +51 B gzip.
   - **Served for the owner's test:** `vite preview` on 5173 with this branch's build (replaced the
-    14 Nov preview), started with `REPOLENS_DEV_API_DELAY_MS=10000 REPOLENS_DEV_API_DELAY_MATCH=/ask$`
+    14 Nov preview), started with `REPOLENS_DEV_API_DELAY_MS=10000 REPOLENS_DEV_API_DELAY_MATCH=ask$`
     so free graph questions stay pending for 10 s (the delay is in the preview server, nothing of it
-    is in `dist`). API on 8000 left as it was.
+    is in `dist`). API on 8000 left as it was. The first start used `/ask$` from Git Bash, which
+    MSYS path conversion rewrote into a Windows path, so nothing was delayed (the owner saw instant
+    graph answers; see the Git Bash note in the UI polish entry). From Git Bash the MATCH value must
+    not start with `/`. Restarted with `ask$` (Node printed `"ask$"`): through 5173 `/api/health`
+    0.07 s, `/api/snapshots/2/graph` 0.16 s, `GET /api/snapshots/2/ask` 405 in 10.05 s (GET is not
+    an allowed method there, so no question ran).
   - **Known:** the unread dot is not kept across a reload; the draft is kept across close/reopen
     and analysis switches, not across a reload. Duplicating a tab while a question is pending
     copies sessionStorage, so the copy shows the interrupted note while the original gets the
