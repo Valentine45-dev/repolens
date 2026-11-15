@@ -3,7 +3,6 @@ import { useEffect, useId, useMemo, useRef, useState, type FormEvent } from "rea
 import { Link, useSearchParams } from "react-router-dom";
 
 import {
-  askQuestion,
   getFindings,
   getGraph,
   repoName,
@@ -13,6 +12,7 @@ import {
   type GraphResult,
   type SnapshotStatus,
 } from "../api";
+import { clearTurns, sendQuestion, setDraft, setScope, useAskSession } from "../askStore";
 import { degrees } from "../graphModel";
 import { exploreHref, REVEAL, useSetParams } from "../links";
 import { SiteChips } from "./SiteChips";
@@ -28,38 +28,6 @@ import { PathText } from "./PathText";
 const MAX_CHARS = 1000; // the API's limit
 const SHOWN_RESULTS = 5; // graph results before "Show all N"
 const WIDE_KEY = "repolens.ask.wide";
-
-interface Turn {
-  id: string;
-  question: string;
-  answer?: Answer;
-  error?: string;
-}
-
-// The conversation is per snapshot and lives in this browser tab only (spec 5.5). Each question
-// is still answered on its own: no earlier turns are sent to the server.
-function storageKey(snapshotId: number) {
-  return `repolens.ask.${snapshotId}`;
-}
-
-function loadTurns(snapshotId: number): Turn[] {
-  try {
-    const raw = sessionStorage.getItem(storageKey(snapshotId));
-    const turns = raw ? (JSON.parse(raw) as Turn[]) : [];
-    return turns.filter((t) => t.answer || t.error); // a reload drops an unanswered question
-  } catch {
-    return [];
-  }
-}
-
-function saveTurns(snapshotId: number, turns: Turn[]) {
-  try {
-    if (turns.length) sessionStorage.setItem(storageKey(snapshotId), JSON.stringify(turns));
-    else sessionStorage.removeItem(storageKey(snapshotId));
-  } catch {
-    // Storage full or blocked: the conversation just does not survive a reload.
-  }
-}
 
 // The wide drawer is a per-viewer convenience, remembered in this browser when storage works.
 function loadWide(): boolean {
@@ -88,17 +56,16 @@ export function AskDrawer({
   snapshotId: number;
   status: SnapshotStatus;
   onClose: () => void;
-  /** Behind the file or finding tab: kept mounted (the conversation and draft stay), out of sight
-   * and out of the tab order. */
+  /** Behind the file or finding tab: kept mounted, out of sight and out of the tab order. (The
+   * conversation and draft live in askStore, so they also survive the drawer being closed.) */
   hidden?: boolean;
 }) {
   const titleId = useId();
   const inputId = useId();
   const [params] = useSearchParams();
   const setParams = useSetParams();
-  const [turns, setTurns] = useState<Turn[]>(() => loadTurns(snapshotId));
-  const [draft, setDraft] = useState("");
-  const [scope, setScope] = useState<{ fileId: number; path: string } | null>(null);
+  const { turns, draft, scope, pending } = useAskSession(snapshotId);
+  const busy = pending !== null;
   const [wide, setWide] = useState(loadWide);
   const inputRef = useRef<HTMLTextAreaElement>(null);
   const lastTurnRef = useRef<HTMLLIElement>(null);
@@ -107,11 +74,6 @@ export function AskDrawer({
   const { features } = status;
   const name = repoName(status.url);
 
-  // Block bodies: an effect may return only a cleanup function, and newer browsers make
-  // scrollIntoView return a Promise.
-  useEffect(() => {
-    saveTurns(snapshotId, turns);
-  }, [snapshotId, turns]);
   // Show the newest turn from its question down, so its "AI answer" / "From the graph" label is
   // read first; scrolling to the end would land a long answer mid-way.
   useEffect(() => {
@@ -127,9 +89,10 @@ export function AskDrawer({
   const prefillPath = params.get("askpath");
   useEffect(() => {
     if (prefill === null) return;
-    setDraft(prefill);
+    setDraft(snapshotId, prefill);
     const fileId = Number(prefillFile);
     setScope(
+      snapshotId,
       prefillPath && Number.isInteger(fileId) && fileId > 0 ? { fileId, path: prefillPath } : null,
     );
     setParams({ askq: null, askfile: null, askpath: null });
@@ -140,7 +103,7 @@ export function AskDrawer({
         el.setSelectionRange(el.value.length, el.value.length);
       }
     });
-  }, [prefill, prefillFile, prefillPath, setParams]);
+  }, [snapshotId, prefill, prefillFile, prefillPath, setParams]);
   // Focus the input when the drawer opens (the prefill effect focuses it in that case).
   useEffect(() => {
     if (prefill === null) inputRef.current?.focus();
@@ -149,25 +112,11 @@ export function AskDrawer({
   const drawerRef = useRef<HTMLElement>(null);
   useEscapeToClose(drawerRef, onClose);
 
-  const ask = useMutation({
-    mutationFn: ({ question, fileId }: { id: string; question: string; fileId?: number }) =>
-      askQuestion(snapshotId, question, fileId),
-    onSuccess: (answer, { id }) =>
-      setTurns((all) => all.map((t) => (t.id === id ? { ...t, answer } : t))),
-    onError: (error, { id }) =>
-      setTurns((all) => all.map((t) => (t.id === id ? { ...t, error: error.message } : t))),
-  });
-
   // A scope belongs to the one question typed with its chip showing, not to suggestions or
-  // re-asks, which call send without a file.
+  // re-asks, which call send without a file. The store does the asking, so closing the drawer
+  // while a question is answered loses nothing (and aborts nothing: it is paid either way).
   function send(question: string, fileId?: number) {
-    const text = question.trim();
-    if (!text || ask.isPending) return;
-    const id = `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
-    setTurns((all) => [...all, { id, question: text }]);
-    setDraft("");
-    setScope(null);
-    ask.mutate({ id, question: text, fileId });
+    sendQuestion(snapshotId, question, fileId);
   }
 
   function submit(e: FormEvent) {
@@ -207,8 +156,8 @@ export function AskDrawer({
           <button
             type="button"
             className="button button-secondary button-small"
-            onClick={() => setTurns([])}
-            disabled={ask.isPending}
+            onClick={() => clearTurns(snapshotId)}
+            disabled={busy}
           >
             Clear
           </button>
@@ -249,14 +198,14 @@ export function AskDrawer({
                       question={turn.question}
                       answer={turn.answer}
                       onAsk={send}
-                      busy={ask.isPending}
+                      busy={busy}
                     />
                   ) : turn.error ? (
                     <p className="turn-note" role="alert">
                       <Icon name="x" size={14} /> {turn.error}
                     </p>
                   ) : (
-                    <ThinkingNote />
+                    <ThinkingNote since={pending?.id === turn.id ? pending.startedAt : undefined} />
                   )}
                 </div>
               </li>
@@ -281,7 +230,7 @@ export function AskDrawer({
             <button
               type="button"
               className="icon-button"
-              onClick={() => setScope(null)}
+              onClick={() => setScope(snapshotId, null)}
               aria-label={`Stop including ${scope.path}`}
               title="Stop including this file"
             >
@@ -300,7 +249,7 @@ export function AskDrawer({
           maxLength={MAX_CHARS}
           value={draft}
           placeholder="Ask a question about this codebase…"
-          onChange={(e) => setDraft(e.target.value)}
+          onChange={(e) => setDraft(snapshotId, e.target.value)}
           onKeyDown={(e) => {
             if (e.key === "Enter" && !e.shiftKey && !e.nativeEvent.isComposing) {
               e.preventDefault();
@@ -315,9 +264,9 @@ export function AskDrawer({
           <button
             type="submit"
             className="button button-small"
-            disabled={!draft.trim() || ask.isPending}
+            disabled={!draft.trim() || busy}
           >
-            {ask.isPending ? <Icon name="spinner" size={14} /> : <Icon name="send" size={14} />}
+            {busy ? <Icon name="spinner" size={14} /> : <Icon name="send" size={14} />}
             Ask
           </button>
         </div>
@@ -678,9 +627,12 @@ const chunkCount = new Intl.NumberFormat("en-US");
 // what to do next), with "Retry preparing search" when that is the fix. Graph questions always
 // work, so the banner says so; each failed AI turn below then needs only one line.
 /** While a question is answered. Graph answers come back in well under a second, so the long
- * wait is only mentioned once it is actually long. */
-export function ThinkingNote() {
-  const slow = useDelayedFlag(true, 1500, 0);
+ * wait is only mentioned once it is actually long. `since` is when the question was sent: Ask
+ * reopened on a question that has already waited says so at once. */
+export function ThinkingNote({ since }: { since?: number }) {
+  const [delay] = useState(() => Math.max(0, 1500 - (since === undefined ? 0 : Date.now() - since)));
+  const late = useDelayedFlag(true, delay, 0);
+  const slow = late || delay === 0;
   return (
     <p className="turn-note thinking">
       <Icon name="spinner" size={14} />{" "}
