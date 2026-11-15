@@ -2612,6 +2612,14 @@ a {
   min-width: 0;
 }
 
+/* The path's room while a file named by a link is checked against the file index. */
+.ask-scope-skeleton {
+  display: inline-block;
+  width: 160px;
+  height: 12px;
+  vertical-align: middle;
+}
+
 .ask-input {
   width: 100%;
   height: auto;

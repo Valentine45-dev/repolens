@@ -1,4 +1,4 @@
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient, type QueryClient } from "@tanstack/react-query";
 import { Component, useEffect, useId, useMemo, useRef, useState, type FormEvent, type ReactNode } from "react";
 import { Link, useSearchParams } from "react-router-dom";
 
@@ -9,6 +9,7 @@ import {
   retrySearch,
   type Answer,
   type Citation,
+  type Graph,
   type GraphResult,
   type SnapshotStatus,
 } from "../api";
@@ -65,7 +66,7 @@ export function AskDrawer({
   const inputId = useId();
   const [params] = useSearchParams();
   const setParams = useSetParams();
-  const { turns, draft, scope, pending, notice } = useAskSession(snapshotId);
+  const { turns, draft, scope, scopeNote, pending, notice } = useAskSession(snapshotId);
   const busy = pending !== null;
   const [wide, setWide] = useState(loadWide);
   const inputRef = useRef<HTMLTextAreaElement>(null);
@@ -83,19 +84,21 @@ export function AskDrawer({
     if (list && turn) scrollToStart(list, turn);
   }, [turns]);
 
-  // "Ask about this" (node panel) arrives as ?askq=...&askfile=...&askpath=...: prefill once, keep
-  // the file as this question's scope (shown as a chip), then drop them from the URL.
+  // "Ask about this" (node panel) arrives as ?askq=...&askfile=...: prefill once, keep the file as
+  // this question's scope (shown as a chip), then drop them from the URL. Any address can carry
+  // these, so the chip's path is looked up by id in this analysis's file index; a path in the
+  // address (askpath, from older links) is ignored. A file an index on this page already has (the
+  // Explorer's own "Ask about this") is shown at once; otherwise Send waits for the check.
+  const queryClient = useQueryClient();
   const prefill = params.get("askq");
   const prefillFile = params.get("askfile");
-  const prefillPath = params.get("askpath");
   useEffect(() => {
     if (prefill === null) return;
     setDraft(snapshotId, prefill);
     const fileId = Number(prefillFile);
-    setScope(
-      snapshotId,
-      prefillPath && Number.isInteger(fileId) && fileId > 0 ? { fileId, path: prefillPath } : null,
-    );
+    if (prefillFile === null) setScope(snapshotId, null);
+    else if (!Number.isInteger(fileId) || fileId <= 0) setScope(snapshotId, null, "missing");
+    else setScope(snapshotId, { fileId, path: cachedPath(queryClient, snapshotId, fileId) });
     setParams({ askq: null, askfile: null, askpath: null });
     requestAnimationFrame(() => {
       const el = inputRef.current;
@@ -104,7 +107,28 @@ export function AskDrawer({
         el.setSelectionRange(el.value.length, el.value.length);
       }
     });
-  }, [snapshotId, prefill, prefillFile, prefillPath, setParams]);
+  }, [snapshotId, prefill, prefillFile, setParams, queryClient]);
+
+  // A link's file that no index on this page has yet: the full file list (tests included, the one
+  // Go to file uses) decides. Only this waits for it; a question without a file never does.
+  const checking = scope !== null && scope.path === null;
+  const showGuesses = params.get("guesses") === "1";
+  const index = useQuery({
+    queryKey: ["graph", snapshotId, true, showGuesses],
+    queryFn: ({ signal }) => getGraph(snapshotId, { showTests: true, showGuesses }, signal),
+    enabled: checking,
+    staleTime: Infinity,
+  });
+  useEffect(() => {
+    if (!checking) return;
+    if (index.data) {
+      const path = index.data.nodes.find((n) => n.id === scope.fileId)?.path;
+      if (path) setScope(snapshotId, { fileId: scope.fileId, path });
+      else setScope(snapshotId, null, "missing");
+    } else if (index.error) {
+      setScope(snapshotId, null, "failed");
+    }
+  }, [checking, index.data, index.error, scope, snapshotId]);
   // Focus the input when the drawer opens (the prefill effect focuses it in that case).
   useEffect(() => {
     if (prefill === null) inputRef.current?.focus();
@@ -122,7 +146,7 @@ export function AskDrawer({
 
   function submit(e: FormEvent) {
     e.preventDefault();
-    send(draft, scope?.fileId);
+    if (!checking) send(draft, scope?.fileId);
   }
 
   function toggleWide() {
@@ -231,20 +255,45 @@ export function AskDrawer({
 
       <form className="ask-form" onSubmit={submit}>
         {scope ? (
-          <p className="ask-scope">
+          <p className="ask-scope" aria-busy={checking || undefined}>
             <Icon name="file" size={14} />
             <span className="ask-scope-text">
               <span className="caption">This question includes</span>{" "}
-              <span className="mono">
-                <PathText path={scope.path} />
-              </span>
+              {scope.path !== null ? (
+                <span className="mono">
+                  <PathText path={scope.path} />
+                </span>
+              ) : (
+                <>
+                  <span className="skeleton ask-scope-skeleton" aria-hidden="true" />
+                  <span className="visually-hidden">a file that is being checked</span>
+                </>
+              )}
             </span>
             <button
               type="button"
               className="icon-button"
               onClick={() => setScope(snapshotId, null)}
-              aria-label={`Stop including ${scope.path}`}
+              aria-label={scope.path !== null ? `Stop including ${scope.path}` : "Stop including the file"}
               title="Stop including this file"
+            >
+              <Icon name="x" size={14} />
+            </button>
+          </p>
+        ) : scopeNote ? (
+          <p className="ask-scope" role="status">
+            <Icon name="file" size={14} />
+            <span className="ask-scope-text caption">
+              {scopeNote === "missing"
+                ? "The file in this link is not part of this analysis, so the question will not include it."
+                : "The file in this link could not be checked, so the question will not include it."}
+            </span>
+            <button
+              type="button"
+              className="icon-button"
+              onClick={() => setScope(snapshotId, null)}
+              aria-label="Dismiss"
+              title="Dismiss"
             >
               <Icon name="x" size={14} />
             </button>
@@ -265,7 +314,7 @@ export function AskDrawer({
           onKeyDown={(e) => {
             if (e.key === "Enter" && !e.shiftKey && !e.nativeEvent.isComposing) {
               e.preventDefault();
-              send(draft, scope?.fileId);
+              if (!checking) send(draft, scope?.fileId);
             }
           }}
         />
@@ -276,7 +325,7 @@ export function AskDrawer({
           <button
             type="submit"
             className="button button-small"
-            disabled={!draft.trim() || busy}
+            disabled={!draft.trim() || busy || checking}
           >
             {busy ? <Icon name="spinner" size={14} /> : <Icon name="send" size={14} />}
             Ask
@@ -285,6 +334,16 @@ export function AskDrawer({
       </form>
     </aside>
   );
+}
+
+/** The path of a file in any file index this page already holds for the analysis (each flat graph
+ * lists files by id; one that hides tests lists fewer, never other ones). Null if none has it. */
+function cachedPath(queryClient: QueryClient, snapshotId: number, fileId: number): string | null {
+  for (const [, graph] of queryClient.getQueriesData<Graph>({ queryKey: ["graph", snapshotId] })) {
+    const node = graph?.nodes?.find((n) => n.id === fileId);
+    if (node) return node.path;
+  }
+  return null;
 }
 
 /** A turn that still fails to draw (a shape the checks in askTurns let through) is removed from

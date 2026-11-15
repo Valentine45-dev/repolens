@@ -142,7 +142,7 @@ function ExploreInner() {
   );
   const askAbout = useCallback(
     (fileId: number, path: string) =>
-      setParams({ ask: "1", askq: `About ${path}: `, askfile: String(fileId), askpath: path }),
+      setParams({ ask: "1", askq: `About ${path}: `, askfile: String(fileId) }),
     [setParams],
   );
   const onAction = useCallback(

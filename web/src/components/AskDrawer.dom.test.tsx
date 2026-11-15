@@ -36,7 +36,7 @@ vi.mock("../api", async (importOriginal) => ({
   ...(await importOriginal<typeof import("../api")>()),
   getStatus: vi.fn(async (id: number) => status(id)),
   getFindings: vi.fn(async () => ({ total: 0, limit: 1, offset: 0, items: [], notes: [], counts: { total: 0 } })),
-  getGraph: vi.fn(async () => graph(node(12, "app/real.py"))),
+  getGraph: vi.fn(),
   askQuestion: vi.fn(() => new Promise<Answer>((resolve) => answers.push(resolve))),
 }));
 
@@ -77,7 +77,8 @@ beforeEach(() => {
   answers = [];
   midWidth = false;
   vi.mocked(askQuestion).mockClear();
-  vi.mocked(getGraph).mockClear();
+  vi.mocked(getGraph).mockReset();
+  vi.mocked(getGraph).mockImplementation(async () => graph(node(12, "app/real.py")));
   window.matchMedia = ((query: string) => ({
     matches: query === "(min-width: 901px) and (max-width: 1599px)" ? midWidth : false,
     media: query,
@@ -287,5 +288,72 @@ describe("SEC-04: saved turns that do not fit", () => {
     spy.mockRestore();
     expect(boundaryPage()).toBe(false);
     expect(turns()[0].textContent).toContain("The answer could not be shown.");
+  });
+});
+
+describe("SEC-05: a link that pre-fills a question about a file", () => {
+  const scopeLine = () => $(".ask-scope");
+  const submit = () => $<HTMLButtonElement>("#ask-drawer button[type=submit]")!;
+  const submitForm = () => act(async () => $<HTMLFormElement>("#ask-drawer form")!.requestSubmit());
+
+  it("names the file the id belongs to, not the path in the link, and drops askpath", async () => {
+    await open("/a/61/explore?ask=1&askq=About%20README.md%3A%20&askfile=12&askpath=README.md");
+    await until(() => !!scopeLine()?.textContent?.includes("app/real.py"));
+    expect(scopeLine()?.textContent).toContain("This question includes");
+    expect(scopeLine()?.textContent).toContain("app/real.py");
+    expect(scopeLine()?.textContent).not.toContain("README.md");
+    expect(window.location.search).toBe("?ask=1");
+    await submitForm();
+    expect(askQuestion).toHaveBeenCalledWith(61, "About README.md:", 12);
+  });
+
+  it("drops a file id that is not in this analysis and says so", async () => {
+    await open("/a/62/explore?ask=1&askq=Hi&askfile=99&askpath=app/real.py");
+    await until(() => !!scopeLine()?.textContent?.includes("not part of this analysis"));
+    expect(scopeLine()?.textContent).toContain(
+      "The file in this link is not part of this analysis, so the question will not include it.",
+    );
+    expect(scopeLine()?.textContent).not.toContain("app/real.py");
+    await submitForm();
+    expect(askQuestion).toHaveBeenCalledWith(62, "Hi", undefined);
+  });
+
+  it("waits to send while the link's file is checked against the file index", async () => {
+    let index!: (g: Graph) => void;
+    vi.mocked(getGraph).mockImplementation(() => new Promise<Graph>((resolve) => (index = resolve)));
+    await open("/a/63/explore?ask=1&askq=Hi&askfile=12");
+    expect(scopeLine()?.getAttribute("aria-busy")).toBe("true");
+    expect(scopeLine()?.textContent).toContain("a file that is being checked");
+    expect(submit().disabled).toBe(true);
+    await act(async () => textarea().dispatchEvent(new KeyboardEvent("keydown", { key: "Enter", bubbles: true, cancelable: true })));
+    await submitForm();
+    expect(askQuestion).not.toHaveBeenCalled();
+    await act(async () => index(graph(node(12, "app/real.py"))));
+    await tick();
+    expect(scopeLine()?.textContent).toContain("app/real.py");
+    expect(submit().disabled).toBe(false);
+    await submitForm();
+    expect(askQuestion).toHaveBeenCalledWith(63, "Hi", 12);
+  });
+
+  it("never waits for the file index for a question without a file", async () => {
+    vi.mocked(getGraph).mockImplementation(() => new Promise<Graph>(() => {})); // never answers
+    await open("/a/64/explore?ask=1");
+    await ask("What does this repo do?");
+    expect(askQuestion).toHaveBeenCalledWith(64, "What does this repo do?", undefined);
+  });
+
+  it("never waits for \"Ask about this\" on a file the Explorer's index already has", async () => {
+    vi.mocked(getGraph).mockImplementation(() => new Promise<Graph>(() => {})); // never answers
+    // The Explorer's own list (tests hidden) is already loaded, as it is when its panel shows a file.
+    await open("/a/65/explore?node=12", (c) => c.setQueryData(["graph", 65, false, false], graph(node(12, "app/real.py"))));
+    await act(async () => navigate("/a/65/explore?node=12&ask=1&askq=About%20app%2Freal.py%3A%20&askfile=12", { replace: true }));
+    await tick();
+    expect(scopeLine()?.getAttribute("aria-busy")).toBeNull();
+    expect(scopeLine()?.textContent).toContain("app/real.py");
+    typeDraft("About app/real.py: what is it?");
+    expect(submit().disabled).toBe(false);
+    await submitForm();
+    expect(askQuestion).toHaveBeenCalledWith(65, "About app/real.py: what is it?", 12);
   });
 });

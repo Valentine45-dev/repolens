@@ -12,23 +12,28 @@ import { isAnswer, parseStoredTurns, type Turn } from "./askTurns";
 
 export type { Turn } from "./askTurns";
 
-/** The file a question includes ("Ask about this"). */
+/** The file a question includes ("Ask about this"). The path always comes from the analysis's
+ * own file index, never from the address; null while a file id from a link is being checked. */
 export interface Scope {
   fileId: number;
-  path: string;
+  path: string | null;
 }
+
+/** Why a file named by a link was not included. */
+export type ScopeNote = "missing" | "failed";
 
 export interface AskSession {
   turns: Turn[];
   draft: string;
   scope: Scope | null;
+  scopeNote: ScopeNote | null;
   /** The question being answered: one per analysis at a time. */
   pending: { id: string; startedAt: number } | null;
   /** Said once above the conversation, e.g. that a turn could not be shown and was removed. */
   notice: string | null;
 }
 
-const EMPTY: Omit<AskSession, "turns"> = { draft: "", scope: null, pending: null, notice: null };
+const EMPTY: Omit<AskSession, "turns"> = { draft: "", scope: null, scopeNote: null, pending: null, notice: null };
 
 const sessions = new Map<number, AskSession>();
 const listeners = new Set<() => void>();
@@ -96,8 +101,8 @@ export function setDraft(snapshotId: number, draft: string) {
   update(snapshotId, { draft });
 }
 
-export function setScope(snapshotId: number, scope: Scope | null) {
-  update(snapshotId, { scope });
+export function setScope(snapshotId: number, scope: Scope | null, scopeNote: ScopeNote | null = null) {
+  update(snapshotId, { scope, scopeNote });
 }
 
 /** Clear is offered only while nothing is being answered. */
@@ -136,6 +141,7 @@ export function sendQuestion(snapshotId: number, question: string, fileId?: numb
     turns: [...session.turns, { id, question: text }],
     draft: "",
     scope: null,
+    scopeNote: null,
     pending: { id, startedAt: Date.now() },
     notice: null,
   });
