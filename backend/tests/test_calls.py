@@ -210,3 +210,24 @@ def test_imported_class_method_is_not_the_modules_same_named_function():
                     "views.js": "import { User } from './models';\n"
                                 "function signup() { User.create(); }\n"})
     assert js == {("views.js:signup", "models.js:User.create"): 1.0}
+
+
+# --- C-04: guesses never stand in for builtins or external packages ---
+
+
+def test_builtin_and_js_global_names_are_not_guessed():
+    py = edges_for({"store.py": "def open(p): pass\ndef read(): return open('x')\n",
+                    "other.py": "def load(p):\n    return open(p)\n"})
+    assert py == {("store.read", "store.open"): 1.0}  # its own file's open: still found
+    js = edges_for({"util.js": "function fetch() {}\nfunction setTimeout() {}\n",
+                    "app.js": "function go() { fetch('/x'); setTimeout(go, 1); }\n"})
+    assert js == {}
+
+
+def test_receiver_bound_to_an_external_package_or_a_builtin_type_is_not_guessed():
+    edges = edges_for({"store.py": "class Store:\n    def join(self, x): pass\n"
+                                   "    def fromkeys(self, x): pass\n",
+                       "other.py": "import os\ndef read(p):\n    return os.path.join('a', p)\n"
+                                   "def keys():\n    return dict.fromkeys([1])\n"
+                                   "def mine(s):\n    return s.join(1)\n"})
+    assert edges == {("other.mine", "store.Store.join"): 0.5}  # control: a plain receiver

@@ -13,6 +13,7 @@
 Plain calls only match functions/classes; x.f() only matches methods (incl. JS `app.f`).
 """
 
+import builtins
 from collections import defaultdict
 from collections.abc import Callable
 from dataclasses import dataclass
@@ -30,6 +31,20 @@ GLOBAL_RECEIVERS = {
     "Symbol", "Map", "Set", "console", "process", "Buffer", "globalThis", "window", "document",
 }
 OWNER_NOISE = {"prototype", "exports", "module"}
+# Never guessed as a repo function: Python's builtins and the functions JS gets from its runtime.
+PY_BUILTINS = frozenset(n for n in dir(builtins) if not n.startswith("_"))
+JS_GLOBAL_FUNCTIONS = frozenset({
+    "fetch", "setTimeout", "setInterval", "setImmediate", "clearTimeout", "clearInterval",
+    "clearImmediate", "queueMicrotask", "structuredClone", "requestAnimationFrame",
+    "cancelAnimationFrame", "parseInt", "parseFloat", "isNaN", "isFinite", "encodeURI",
+    "encodeURIComponent", "decodeURI", "decodeURIComponent", "escape", "unescape", "eval",
+    "alert", "confirm", "prompt", "atob", "btoa", "Symbol", "Number", "String", "Boolean",
+    "BigInt", "Array", "Object", "Date", "RegExp", "Error", "TypeError", "RangeError",
+    "SyntaxError", "ReferenceError", "EvalError", "URIError", "AggregateError", "Promise", "Map",
+    "Set", "WeakMap", "WeakSet", "WeakRef", "Proxy", "ArrayBuffer", "DataView", "URL",
+    "URLSearchParams", "TextEncoder", "TextDecoder", "AbortController", "Event", "EventTarget",
+    "Blob", "FormData", "Headers", "Request", "Response", "WebSocket", "Worker",
+})
 
 
 def is_member(s: ParsedSymbol) -> bool:
@@ -213,9 +228,12 @@ def _resolve(ix: _Index, path: str, caller: str, name: str, receiver: str | None
             if bound == "local" and len(same) == 1:
                 return (path, same[0].qualified_name), GUESS
             return None
+        if name in (JS_GLOBAL_FUNCTIONS if js else PY_BUILTINS):
+            return None  # open(), len(), fetch(): the runtime's, never a guess into the repo
         ref = _top_level_guess(ix, js, name)
         return (ref, GUESS) if ref else None
 
+    first = receiver.split(".")[0]
     if receiver in SELF_RECEIVERS:
         owner = parent(caller)
         s = ix.symbols.get(path, {}).get(f"{owner}.{name}") if owner else None
@@ -238,8 +256,13 @@ def _resolve(ix: _Index, path: str, caller: str, name: str, receiver: str | None
             cls = ix.find(target.key, orig, 1) if orig not in ("*", "default") else None
             if cls and f"{cls[1]}.{name}" in ix.symbols.get(cls[0], {}):
                 return (cls[0], f"{cls[1]}.{name}"), cap
-    if not receiver or receiver.split(".")[0] in GLOBAL_RECEIVERS:
+        elif first in binds and (binds[first][0] is None or binds[first][0].kind != "internal"):
+            return None  # os.path.join(): the first name is an external import
+    if not receiver or first in GLOBAL_RECEIVERS:
         return None  # "".join(), f().x(), Object.create(): not worth a guess
+    if (not js and first in PY_BUILTINS and first not in binds and bound is None
+            and ix.top_level(path, first) is None):
+        return None  # str.join(), dict.fromkeys(): a builtin type, not a repo class
     ref = ix.only(js, True, name)
     if ref is None or not _owner_matches(ix.symbols[ref[0]][ref[1]], receiver):
         return None
