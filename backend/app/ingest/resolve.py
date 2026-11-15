@@ -5,6 +5,7 @@ we can find? Name-based only; nothing from the repo is executed or installed.
 import json
 import posixpath
 import re
+import sys
 from dataclasses import dataclass
 from pathlib import PurePosixPath
 
@@ -40,6 +41,9 @@ class PythonModules:
     """Dotted module name -> file path, for every source root."""
 
     def __init__(self, paths: list[str]):
+        self.paths = set(paths)
+        self.package_dirs = {posixpath.dirname(p) for p in paths
+                             if PurePosixPath(p).name in ("__init__.py", "__init__.pyi")}
         self.by_name: dict[str, str] = {}
         # .py before .pyi, so a stub never hides the real module.
         ordered = sorted(paths, key=lambda p: (p.endswith(".pyi"), p))
@@ -50,6 +54,30 @@ class PythonModules:
                 rel = p[len(root) + 1:] if root else p
                 self.by_name.setdefault(module_name(rel), p)
         self.top_level = {name.split(".")[0] for name in self.by_name}
+
+    def lookup(self, name: str, importer: str, relative: bool = False) -> str | None:
+        """The file of module `name` as `importer` sees it, or None."""
+        found = self.by_name.get(name)
+        if found is None and not relative:
+            found = self._script_folders(name, importer)
+        return found
+
+    def _script_folders(self, name: str, importer: str) -> str | None:
+        """Only for a name no source root has: the importer's own folder, then the folders above
+        it, while none of them is a package (no __init__.py). That is where Python finds a module
+        next to a script it runs, and pytest one next to a test file. A standard-library name is
+        never taken from a folder (`import collections` beside a collections.py stays external)."""
+        if name.split(".")[0] in sys.stdlib_module_names:
+            return None
+        rel = name.replace(".", "/")
+        folder = posixpath.dirname(importer)
+        while folder and folder not in self.package_dirs:
+            for candidate in (f"{folder}/{rel}.py", f"{folder}/{rel}/__init__.py",
+                              f"{folder}/{rel}.pyi", f"{folder}/{rel}/__init__.pyi"):
+                if candidate in self.paths:
+                    return candidate
+            folder = posixpath.dirname(folder)
+        return None
 
     def missing(self, name: str, relative: bool) -> Target:
         # A relative import, or a missing submodule of one of our own packages, is unresolved;
@@ -73,19 +101,23 @@ def resolve_python(importer: str, imp: ParsedImport, modules: PythonModules) -> 
     else:
         base = spec
 
+    def find(name: str) -> str | None:
+        return modules.lookup(name, importer, relative) if name else None
+
     is_plain_import = not relative and all(n == "*" and local != "*" for n, local in imp.names)
     if is_plain_import:  # import a.b [as c]
-        path = modules.by_name.get(base)
+        path = find(base)
         return [Target("internal", path) if path else modules.missing(base, relative)]
 
     # from base import name: the submodule base.name first, then base itself.
     targets: list[Target] = []
     for name, _local in imp.names or (("*", "*"),):
-        sub = modules.by_name.get(_join(base, name)) if name != "*" else None
+        sub = find(_join(base, name)) if name != "*" else None
+        whole = None if sub else find(base)
         if sub:
             target = Target("internal", sub)
-        elif base in modules.by_name:
-            target = Target("internal", modules.by_name[base])
+        elif whole:
+            target = Target("internal", whole)
         else:
             target = modules.missing(base or spec, relative)
         if target not in targets:

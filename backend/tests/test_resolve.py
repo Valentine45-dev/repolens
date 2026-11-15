@@ -202,3 +202,47 @@ def test_bad_tsconfig_is_ignored():
     for source in ('{"compilerOptions": [1]}', '{"compilerOptions": "x"}', "[]", '"x"',
                    "[" * 5000 + "]" * 5000):
         assert read_tsconfig(source) == (None, []), source[:30]
+
+
+# --- C-01: folders without __init__.py (script folders, namespace packages) ---
+
+SCRIPT_PATHS = [
+    "scripts/main.py",
+    "scripts/helpers.py",
+    "scripts/collections.py",
+    "src/pkg/cli.py",
+    "src/pkg/core.py",
+    "app/__init__.py",
+    "app/views.py",
+    "app/helpers.py",
+]
+SCRIPTS = PythonModules(SCRIPT_PATHS)
+
+
+def script(importer: str, spec: str, *names: tuple[str, str]) -> list[Target]:
+    return resolve_python(importer, ParsedImport(spec, tuple(names), 1), SCRIPTS)
+
+
+def test_sibling_module_in_a_script_folder_is_internal():
+    assert script("scripts/main.py", "helpers", ("*", "helpers")) == [
+        internal("scripts/helpers.py")
+    ]
+    assert script("scripts/main.py", "helpers", ("run", "run")) == [
+        internal("scripts/helpers.py")
+    ]
+
+
+def test_namespace_package_under_a_folder_above_is_internal():
+    assert script("src/pkg/cli.py", "pkg.core", ("*", "pkg.core")) == [
+        internal("src/pkg/core.py")
+    ]
+    assert script("src/pkg/cli.py", "pkg", ("core", "core")) == [internal("src/pkg/core.py")]
+
+
+def test_folder_fallback_never_takes_a_stdlib_name_or_crosses_a_package():
+    # `import collections` next to a collections.py (black's test data) stays the stdlib's.
+    assert script("scripts/main.py", "collections", ("*", "collections")) == [
+        Target("external", "collections")
+    ]
+    # Inside a regular package Python 3 has no implicit relative import.
+    assert script("app/views.py", "helpers", ("*", "helpers")) == [Target("external", "helpers")]
