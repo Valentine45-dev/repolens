@@ -202,3 +202,90 @@ def test_bad_tsconfig_is_ignored():
     for source in ('{"compilerOptions": [1]}', '{"compilerOptions": "x"}', "[]", '"x"',
                    "[" * 5000 + "]" * 5000):
         assert read_tsconfig(source) == (None, []), source[:30]
+
+
+# --- C-01: folders without __init__.py (script folders, namespace packages) ---
+
+SCRIPT_PATHS = [
+    "scripts/main.py",
+    "scripts/helpers.py",
+    "scripts/collections.py",
+    "src/pkg/cli.py",
+    "src/pkg/core.py",
+    "app/__init__.py",
+    "app/views.py",
+    "app/helpers.py",
+]
+SCRIPTS = PythonModules(SCRIPT_PATHS)
+
+
+def script(importer: str, spec: str, *names: tuple[str, str]) -> list[Target]:
+    return resolve_python(importer, ParsedImport(spec, tuple(names), 1), SCRIPTS)
+
+
+def test_sibling_module_in_a_script_folder_is_internal():
+    assert script("scripts/main.py", "helpers", ("*", "helpers")) == [
+        internal("scripts/helpers.py")
+    ]
+    assert script("scripts/main.py", "helpers", ("run", "run")) == [
+        internal("scripts/helpers.py")
+    ]
+
+
+def test_namespace_package_under_a_folder_above_is_internal():
+    assert script("src/pkg/cli.py", "pkg.core", ("*", "pkg.core")) == [
+        internal("src/pkg/core.py")
+    ]
+    assert script("src/pkg/cli.py", "pkg", ("core", "core")) == [internal("src/pkg/core.py")]
+
+
+def test_folder_fallback_never_takes_a_stdlib_name_or_crosses_a_package():
+    # `import collections` next to a collections.py (black's test data) stays the stdlib's.
+    assert script("scripts/main.py", "collections", ("*", "collections")) == [
+        Target("external", "collections")
+    ]
+    # Inside a regular package Python 3 has no implicit relative import.
+    assert script("app/views.py", "helpers", ("*", "helpers")) == [Target("external", "helpers")]
+
+
+# --- C-02: two packages with the same name in one repository ---
+
+TWO_APPS = PythonModules([
+    "backend/app/__init__.py",
+    "backend/app/db.py",
+    "examples/demo/app/__init__.py",
+    "examples/demo/app/db.py",
+    "examples/demo/run.py",
+    "scripts/tool.py",
+])
+
+
+def two(importer: str, spec: str, *names: tuple[str, str]) -> list[Target]:
+    return resolve_python(importer, ParsedImport(spec, tuple(names), 1), TWO_APPS)
+
+
+def test_importers_own_source_root_wins():
+    assert two("examples/demo/run.py", "app", ("db", "db")) == [internal("examples/demo/app/db.py")]
+    assert two("examples/demo/run.py", "app.db", ("*", "app.db")) == [
+        internal("examples/demo/app/db.py")
+    ]
+    assert two("backend/app/__init__.py", "app.db", ("*", "app.db")) == [
+        internal("backend/app/db.py")
+    ]
+
+
+def test_same_name_in_two_other_roots_is_unresolved_not_a_guess():
+    assert two("scripts/tool.py", "app", ("db", "db")) == [Target("unresolved", "app.db")]
+    assert two("scripts/tool.py", "app", ("*", "app")) == [Target("unresolved", "app")]
+    # A full path from the repository root is still unique.
+    assert two("scripts/tool.py", "backend.app.db", ("*", "backend.app.db")) == [
+        internal("backend/app/db.py")
+    ]
+
+
+def test_ambiguous_import_is_not_a_broken_import():
+    from app.detect.imports import broken_imports
+
+    files = {p: ("python", []) for p in TWO_APPS.paths}
+    files["scripts/tool.py"] = ("python", [ParsedImport("app", (("db", "db"),), 1)])
+    assert broken_imports(files) == []

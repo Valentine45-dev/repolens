@@ -144,3 +144,25 @@ def test_js_simple_tsconfig_alias_misses_are_found_and_hits_are_not():
 def test_js_non_simple_alias_is_not_judged():
     tsconfig = {"compilerOptions": {"paths": {"@x/*": ["./a/*", "./b/*"]}}}
     assert run({**JS_REPO, "src/app.ts": "import a from '@x/foo';\n"}, tsconfig) == set()
+
+
+# --- C-06: files that exist but were not parsed ---------------------------------------------
+
+
+def test_imports_of_files_discover_left_out_are_not_broken():
+    files = {
+        "src/app.js": "import './vendor/lib.min.js';\nimport schema from './schema.graphql';\n"
+                      "import cfg from './config.yaml';\nimport big from './big-table';\n"
+                      "import gone from './gone';\n",
+        "pkg/__init__.py": "",
+        "pkg/main.py": "import pkg.late_module\nimport pkg.really_gone\n",
+    }
+    parsed = {}
+    for path, source in files.items():
+        language = "python" if path.endswith(".py") else "javascript"
+        parser = parse_python if language == "python" else parse_js
+        parsed[path] = (language, parser(path, source).imports)
+    unread = ["src/vendor/lib.min.js", "src/schema.graphql", "src/config.yaml", "src/big-table.js",
+              "pkg/late_module.py"]
+    found = {(b.path, b.line, b.target) for b in broken_imports(parsed, None, unread)}
+    assert found == {("src/app.js", 5, "src/gone"), ("pkg/main.py", 2, "pkg.really_gone")}

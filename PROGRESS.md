@@ -2236,3 +2236,34 @@ are deliberately not changed after seeing eval results; these stay as documented
     on an `eval/` branch. Git's half of S-05 (orphaned `git-remote-https` after a timeout) remains.
     **black's search:** the 600 s cap was hit twice on 14 Nov (re-analysis job 20 and one "Retry
     preparing search"), so Ask is off on black; retry when the PC is idle.
+- **Graph correctness fixes, batch 2 (`fix/graph-batch2`, 15 Nov; merged into `main` 16 Nov with the owner's approval).** From the backend review:
+  C-01 to C-06. Prediction committed first (`6f1ce68`, before every fix commit): `eval/results/graph_batch2_prediction-20261115-7917f12.json`
+  (SHA-256 `81b1350a74cbccd369637a8d99c66712b31317623f5a4d24e94d94c9d12c871a`).
+  - **Search lost in batch 1 (read from the pre-batch-1 backup, SHA-256 re-checked):** chunks before batch 1
+    (non-test / test): black 4,803 / 0, gunicorn 0 / 0, certbot 0 / 0, redash 0 / 0, ipython 0 / 0. After
+    batch 1 black has 0 / 0: **batch 1's re-analysis removed black's search** (Ask off on black since 14 Nov).
+    The other four had no chunks before batch 1 either, so they lost nothing.
+  - **Decisions (owner, 15 Nov):** calls through a parameter or local at 0.5; the nested-function edges a call
+    is provably bound to are included at 1.0 (hand check: 20 of 144 drawn at random, all correct); C-05
+    without `testing/` (IPython/testing is shipped code); C-06 as `jobs.unread_paths` with NULL = not recorded.
+  - **Commits:** `5e91682` C-01, `cf60e78` C-02, `068266a` C-03 (new `app/ingest/scopes.py`), `05e8c0a`
+    C-04, `a938c5f` + `88ee0c4` C-05, `e43f547` C-06 (migration `2026-11-15-unread-paths.sql`, applied to
+    the dev DB). Each with regression tests that fail with the fix reverted. Backend 693 passed, 3 skipped;
+    ruff clean; CI green on `88ee0c4`.
+  - **Backup:** `C:\projects\repolens-db-backups\db-backup-2026-11-15-pre-graph-batch2.sql` (48,348,086
+    bytes), SHA-256 `cf40783d91fa4ae5acfa16f7fea804ae7da19a96bde49b7e67850075f06eb243`; restore checked.
+  - **Re-analysis of all 10 (jobs 25-34, API on `88ee0c4`):** 592 of 592 changed edges equal the committed
+    prediction, nothing unpredicted; files, code symbols, the 434 findings and the chunk counts identical; 5
+    external placeholder symbols gone (C-01 resolved those imports). Reachability: every tier and path
+    unchanged, gunicorn -7 entry points (`benchmarks/`). Search state as before (black, gunicorn, certbot,
+    redash, ipython hit the 600 s cap again). Free evals: retrieval, detectors, PyGoat findings and
+    edge_lines_accuracy identical; ui_drawn_counts 13 views change, all from predicted edges. Full record:
+    `eval/results/REBASELINE-graph-batch2.md`.
+  - **Known:** `reach/load.py` uses `resolve_python` / `is_test_path`, so reachability output can change
+    through shared helpers while `app/reach` does not, and `reachability_guard.py` does not see that. The
+    prediction file's method note says 63,666 stored edges; the correct total is 55,666 (file left as
+    committed). itsdangerous's re-analysis time was not measured (the driver was resumed). redash's 1,101
+    unresolved alias imports are outside C-01..C-06.
+  - **Later (not this branch):** retry black's search when the PC is idle; `eval/ui_drawn_counts.py`
+    hashes symbol views by database ids, so its `drawn_sha1` changes on every re-analysis (102 views
+    on 15 Nov with identical counts): hash on stable keys (path, kind, qualified name) instead.

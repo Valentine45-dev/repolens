@@ -165,3 +165,34 @@ def test_rules_endpoint_carries_categories(client):
     assert rules["broken-internal-import"]["category"] == "quality"
     assert {r["category"] for r in rules.values() if r["id"].startswith(("py-eval", "js-"))} == {
         "security"}
+
+
+def test_broken_import_rule_uses_the_recorded_unread_paths_and_null_means_not_checked(
+        client, quality_repo):
+    """C-06. A finished analysis records discover's left-out files (an empty list here, not
+    NULL). NULL is "not recorded": the rule is skipped and the findings list says so, rather than
+    reporting every import of a skipped file as broken."""
+    from app.ingest import pipeline
+
+    job = query("SELECT id, unread_paths FROM jobs WHERE snapshot_id = %s ORDER BY id DESC",
+                quality_repo)[0]
+    assert job["unread_paths"] == []
+
+    def broken():
+        return {r["line"] for r in query(
+            "SELECT line FROM findings WHERE snapshot_id = %s"
+            " AND rule_id = 'broken-internal-import'", quality_repo)}
+
+    assert broken() == {1}  # src/app.py: from .gone import thing
+
+    query("UPDATE jobs SET unread_paths = %s WHERE id = %s RETURNING id",
+          ["src/gone.py"], job["id"])
+    pipeline.store_findings(quality_repo, pipeline.parse_stored(quality_repo), job["id"])
+    assert broken() == set()  # the file exists, it was only not analysed
+    note = query("SELECT quality_note FROM jobs WHERE id = %s", job["id"])[0]["quality_note"]
+    assert note is None
+
+    query("UPDATE jobs SET unread_paths = NULL WHERE id = %s RETURNING id", job["id"])
+    pipeline.store_findings(quality_repo, pipeline.parse_stored(quality_repo), job["id"])
+    assert broken() == set()
+    assert findings(client, quality_repo)["notes"] == [pipeline.BROKEN_IMPORTS_NOT_CHECKED]

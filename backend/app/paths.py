@@ -2,24 +2,34 @@
 
 from pathlib import PurePosixPath
 
-TEST_DIRS = {"test", "tests", "__tests__", "examples"}
+# Folder names (any case) that hold tests, examples or benchmarks. `testing/` is left out on
+# purpose: packages ship it as product code (IPython/testing), and hiding real findings there
+# would be worse than showing a few test helpers.
+TEST_DIRS = {"test", "tests", "__tests__", "spec", "e2e", "cypress", "examples", "example",
+             "samples", "benchmarks"}
 DOC_SUFFIXES = {".md", ".rst", ".txt"}
 TEMPLATE_MARKERS = {"example", "sample", "template", "dist"}
 TEST_FILES = {"tests.py", "conftest.py"}  # Django's default test module; pytest's fixtures
+CODE_SUFFIXES = {".py", ".pyi", ".js", ".jsx", ".mjs", ".cjs", ".ts", ".tsx"}
 
 
 def is_test_path(path: str) -> bool:
-    """test/, tests/, __tests__/, examples/ anywhere in the path, *.test.* / *.spec.*, or
-    Python test_*.py / *_test.py / tests.py / conftest.py."""
+    """A test/example/benchmark folder anywhere in the path (TEST_DIRS, any case),
+    *.test.* / *.spec.*, tests.py / conftest.py, or a code file named test / tests / spec,
+    test_*, *_test, *-test or *_spec (any language, any case)."""
     p = PurePosixPath(path)
-    parts = p.name.split(".")
-    if TEST_DIRS & set(p.parts[:-1]):
+    if TEST_DIRS & {d.lower() for d in p.parts[:-1]}:
         return True
-    if len(parts) > 2 and parts[-2] in ("test", "spec"):
+    parts = p.name.split(".")
+    if len(parts) > 2 and parts[-2].lower() in ("test", "spec"):
         return True
     if p.name in TEST_FILES:
         return True
-    return p.suffix == ".py" and (p.stem.startswith("test_") or p.stem.endswith("_test"))
+    if p.suffix.lower() not in CODE_SUFFIXES:
+        return False
+    stem = p.stem.lower()
+    return (stem in ("test", "tests", "spec") or stem.startswith("test_")
+            or stem.endswith(("_test", "-test", "_spec")))
 
 
 def is_doc_path(path: str) -> bool:

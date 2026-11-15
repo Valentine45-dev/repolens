@@ -343,7 +343,13 @@ are from the run before the fix.
   a file in the repository named like a Python module (`ruff.py`, `types.py`, ...) is only
   ever read, never imported (before 14 Nov it could be run; see PROGRESS.md). "Broken import" misses a directory imported through the
   `main` field of its `package.json` (the file is not read) and can flag generated or compiled
-  modules it does not know by name.
+  modules it does not know by name. Files RepoLens skipped (too large, minified, past the file
+  limit, not code) count as existing; an analysis from before 15 Nov has no list of them, so
+  re-running the detectors on it skips this rule and says so.
+- **Test code** is a file under a `test`, `tests`, `__tests__`, `spec`, `e2e`, `cypress`,
+  `examples`, `example`, `samples` or `benchmarks` folder (any case), a `*.test.*` / `*.spec.*`
+  file, `tests.py`, `conftest.py`, or a code file named `test`, `tests`, `spec`, `test_*`,
+  `*_test`, `*-test` or `*_spec`. A `testing/` folder is not test code: packages ship it.
 - **Placeholder detection is by wording and shape only** (`changeme`, `<your-key>`, `xxxxxx`,
   `your-...-here`). In documentation and in example or template files (`*.example.*`,
   `*.sample`, `*.template`, `*.dist`) such a value is shown as "probably placeholder": low, listed
@@ -369,7 +375,13 @@ are from the run before the fix.
   assignments to `innerHTML` / `outerHTML`, not `res.send("<h1>" + input)`.
 - **Call edges are name-based guesses.** Dynamic calls and star imports are not resolved; calls
   inside anonymous callbacks are attributed to the enclosing named function or the module.
-  Low-confidence edges are hidden by default.
+  A call through a parameter or local variable with a function's name (`def f(callback):
+  callback()`) is a guess (0.5), and a function nested inside another is linked only from where
+  it is visible. Low-confidence edges are hidden by default.
+- **Python import resolution** uses the repository's source roots (folders above a package),
+  then, for a name no root has, the importer's own folder and the folders above it while none is
+  a package. When two packages of the same name exist in different roots and neither contains
+  the importer, the import is marked unresolved instead of picking one.
 - **JS/TS import resolution** handles relative paths, extensions, `index` files, `import` and
   `require`; tsconfig path aliases that are not simple are marked unresolved.
 - **Retrieval** uses a small local embedding model (256-token window) and an exact scan; long

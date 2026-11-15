@@ -10,6 +10,8 @@ from dataclasses import dataclass, field
 import tree_sitter_python
 from tree_sitter import Language, Node, Parser
 
+from app.ingest.scopes import PythonScopes
+
 PYTHON_LANGUAGE = Language(tree_sitter_python.language())
 _LANGUAGE = PYTHON_LANGUAGE
 
@@ -52,6 +54,9 @@ class ParsedCall:
     name: str  # callee name: f in f(), x.f(), self.f(), new F()
     receiver: str | None  # None for f(); 'self', 'this', 'mod', 'a.b' for x.f(); '' if not a name
     line: int
+    # How an enclosing function binds the callee name (f()) or the receiver's first name (x.f()):
+    # "def", "import", "local", or None when no enclosing function binds it (app/ingest/scopes.py).
+    bound: str | None = None
 
 
 @dataclass
@@ -169,6 +174,10 @@ def parse_python(path: str, source: str) -> ParsedFile:
     out.symbols.append(
         ParsedSymbol("module", module.rsplit(".", 1)[-1], module, 1, line_count(source))
     )
+    scopes = PythonScopes()
+
+    def bound(node: Node, name: str) -> str | None:
+        return scopes.bound(node, name) if name and name not in ("self", "cls") else None
 
     def visit(node: Node, scope: str, in_class: bool, runs: str) -> None:
         """`runs`: the import scope of code at this point."""
@@ -195,14 +204,16 @@ def parse_python(path: str, source: str) -> ParsedFile:
             elif child.type == "call":
                 fn = child.child_by_field_name("function")
                 if fn is not None and fn.type == "identifier":
-                    out.calls.append(ParsedCall(scope, text(fn), None, fn.start_point.row + 1))
+                    out.calls.append(ParsedCall(scope, text(fn), None, fn.start_point.row + 1,
+                                                bound(child, text(fn))))
                 elif fn is not None and fn.type == "attribute":
                     # The callee name's line, not the call's start: in a chained call
                     # `a .b() .c()` over several lines the call node starts where `a` does.
                     name_node = fn.child_by_field_name("attribute")
+                    receiver = _receiver(fn.child_by_field_name("object"))
                     out.calls.append(ParsedCall(
-                        scope, text(name_node),
-                        _receiver(fn.child_by_field_name("object")), name_node.start_point.row + 1,
+                        scope, text(name_node), receiver, name_node.start_point.row + 1,
+                        bound(child, receiver.split(".")[0]),
                     ))
                 visit(child, scope, in_class, runs)
             else:

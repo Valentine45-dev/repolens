@@ -21,6 +21,7 @@ from app.ingest.parse import (
     line_count,
     text,
 )
+from app.ingest.scopes import JsScopes
 
 _JS = Language(tree_sitter_javascript.language())
 _TS = Language(tree_sitter_typescript.language_typescript())
@@ -167,6 +168,10 @@ def parse_js(path: str, source: str) -> ParsedFile:
     tree = Parser(grammar_for(path)).parse(source.encode("utf-8"))
     module = path
     out = ParsedFile()
+    scopes = JsScopes()
+
+    def bound(node: Node, name: str) -> str | None:
+        return scopes.bound(node, name) if name and name != "this" else None
     stem = path.rsplit("/", 1)[-1].split(".", 1)[0]
     out.symbols.append(ParsedSymbol("module", stem, module, 1, line_count(source)))
 
@@ -336,13 +341,15 @@ def parse_js(path: str, source: str) -> ParsedFile:
         if fn is None:
             return
         if fn.type == "identifier":
-            out.calls.append(ParsedCall(scope, text(fn), None, fn.start_point.row + 1))
+            out.calls.append(ParsedCall(scope, text(fn), None, fn.start_point.row + 1,
+                                        bound(node, text(fn))))
         elif fn.type == "member_expression":
             # The callee name's line, so a chained multi-line call points at the right line.
             prop = fn.child_by_field_name("property")
             line = (prop or fn).start_point.row + 1
+            receiver = _receiver(fn.child_by_field_name("object"))
             out.calls.append(ParsedCall(
-                scope, text(prop), _receiver(fn.child_by_field_name("object")), line,
+                scope, text(prop), receiver, line, bound(node, receiver.split(".")[0]),
             ))
 
     visit(tree.root_node, module)

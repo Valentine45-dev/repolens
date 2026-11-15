@@ -156,3 +156,24 @@ def test_an_unreadable_file_is_skipped_not_fatal(tmp_path, monkeypatch):
     result = discover(tmp_path, max_files=100, max_file_bytes=1_000_000)
     assert [f.path for f in result.files] == ["ok.py"]
     assert result.skipped == 1
+
+
+def test_files_left_out_are_listed_by_name_without_secret_files(tmp_path):
+    # C-06: the broken-import rule must know these exist.
+    write(tmp_path, "app.py", "x = 1\n")
+    write(tmp_path, "m1.py", "x = 1\n")
+    write(tmp_path, "src/vendor/lib.min.js", "x\n")
+    write(tmp_path, "src/schema.graphql", "type Q { a: Int }\n")
+    write(tmp_path, "src/big.js", "x" * 2000)
+    write(tmp_path, "src/blob.py", b"abc\0def")
+    write(tmp_path, "src/wide.js", "x" * 6000)  # minified by line length
+    write(tmp_path, "config/.env.local", "X=1\n")
+    write(tmp_path, "keys/id_rsa", "x\n")
+    write(tmp_path, "keys/server.pem", "x\n")
+    write(tmp_path, "node_modules/a/index.js", "x\n")  # a skipped folder is never walked
+    result = discover(tmp_path, max_files=1, max_file_bytes=1000)
+    assert paths(result) == ["app.py"]
+    assert sorted(result.unread_paths) == [
+        "m1.py", "src/big.js", "src/blob.py", "src/schema.graphql", "src/vendor/lib.min.js",
+        "src/wide.js",
+    ]

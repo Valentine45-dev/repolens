@@ -41,11 +41,12 @@ def test_is_test_path():
     for path in ["tests/x.py", "a/test/b.js", "src/__tests__/a.ts", "examples/app.js",
                  "src/a.test.ts", "src/a.spec.tsx", "lib/math.spec.ts",
                  "test_app.py", "pkg/test_models.py", "pkg/models_test.py",
-                 "tests.py", "introduction/tests.py", "conftest.py", "src/pkg/conftest.py"]:
+                 "tests.py", "introduction/tests.py", "conftest.py", "src/pkg/conftest.py",
+                 # C-05: the stem rules apply to every code language
+                 "test.js", "spec.ts", "test_utils.js", "pkg/tests.js"]:
         assert is_test_path(path), path
-    for path in ["src/app.ts", "test.js", "src/testing/x.py", "src/latest.py", "spec.ts",
-                 "pkg/testing.py", "pkg/contest.py", "test_utils.js",
-                 "pkg/tests.js", "pkg/mytests.py", "pkg/conftest.js"]:
+    for path in ["src/app.ts", "src/testing/x.py", "src/latest.py",
+                 "pkg/testing.py", "pkg/contest.py", "pkg/mytests.py", "pkg/conftest.js"]:
         assert not is_test_path(path), path
 
 
