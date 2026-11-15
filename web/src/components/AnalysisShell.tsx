@@ -217,6 +217,9 @@ export function AnalysisShell() {
         ) : null}
         {askOpen && status.data ? (
           <AskDrawer
+            // A new analysis gets a new drawer: nothing of the last one's view state carries over
+            // (the conversations themselves are kept apart by askStore).
+            key={snapshotId}
             hidden={tabbed && rightTab !== "ask"}
             snapshotId={snapshotId}
             status={status.data}

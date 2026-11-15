@@ -5,7 +5,7 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { act } from "react";
 import { createRoot, type Root } from "react-dom/client";
-import { BrowserRouter, Route, Routes, useLocation } from "react-router-dom";
+import { BrowserRouter, Route, Routes, useLocation, useNavigate, type NavigateFunction } from "react-router-dom";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { askQuestion, getGraph, type Answer, type Graph, type SnapshotStatus } from "../api";
@@ -43,6 +43,11 @@ vi.mock("../api", async (importOriginal) => ({
 let host: HTMLDivElement;
 let root: Root;
 let client: QueryClient;
+let navigate: NavigateFunction;
+function Navigator() {
+  navigate = useNavigate();
+  return null;
+}
 let midWidth = false;
 function App() {
   const location = useLocation();
@@ -92,6 +97,7 @@ async function open(url: string, prepare?: (client: QueryClient) => void) {
     root.render(
       <QueryClientProvider client={client}>
         <BrowserRouter>
+          <Navigator />
           <App />
         </BrowserRouter>
       </QueryClientProvider>,
@@ -168,5 +174,43 @@ describe("COR-01: closing Ask while a question is answered", () => {
     expect(drawer()).toBeNull();
     await toggleAsk();
     expect(textarea().value).toBe("about the settings");
+  });
+});
+
+describe("COR-08: switching from one analysis to another with the shell still mounted", () => {
+  const seed = (id: number, question: string) =>
+    sessionStorage.setItem(`repolens.ask.${id}`, JSON.stringify([{ id: `t${id}`, question, answer: answer(`Answer for ${id}.`) }]));
+  const go = async (url: string) => {
+    await act(async () => navigate(url));
+    await tick();
+  };
+
+  it("shows only the second analysis's turns, and leaves the first one's where they were", async () => {
+    seed(31, "Question about app31");
+    await open("/a/31/explore?ask=1", (c) => c.setQueryData(["status", 32], status(32)));
+    expect(turns()).toHaveLength(1);
+    const listOf31 = $("#ask-drawer .drawer-body")!;
+    listOf31.scrollTop = 120;
+    await go("/a/32/explore?ask=1");
+    expect($("#ask-drawer .drawer-body")).not.toBe(listOf31); // a fresh drawer: no scroll position carried over
+    expect($("#ask-drawer h2")?.textContent).toContain("example/app32");
+    expect(host.textContent).not.toContain("Question about app31");
+    expect(turns()).toHaveLength(0);
+    expect(sessionStorage.getItem("repolens.ask.32")).toBeNull();
+    expect(JSON.parse(sessionStorage.getItem("repolens.ask.31")!)[0].question).toBe("Question about app31");
+    await go("/a/31/explore?ask=1");
+    expect(turns()).toHaveLength(1);
+    expect(turns()[0].textContent).toContain("Question about app31");
+  });
+
+  it("files an answer under the analysis it was asked about, even after switching away", async () => {
+    await open("/a/33/explore?ask=1", (c) => c.setQueryData(["status", 34], status(34)));
+    await ask("Question about app33");
+    await go("/a/34/explore?ask=1");
+    await answerWith(answer("Answer for 33."));
+    expect(turns()).toHaveLength(0);
+    expect(host.textContent).not.toContain("Answer for 33.");
+    await go("/a/33/explore?ask=1");
+    expect(turns()[0].textContent).toContain("Answer for 33.");
   });
 });
