@@ -13,7 +13,15 @@ import {
   type GraphResult,
   type SnapshotStatus,
 } from "../api";
-import { clearTurns, removeTurn, sendQuestion, setDraft, setScope, useAskSession } from "../askStore";
+import {
+  clearTurns,
+  markViewing,
+  removeTurn,
+  sendQuestion,
+  setDraft,
+  setScope,
+  useAskSession,
+} from "../askStore";
 import { degrees } from "../graphModel";
 import { exploreHref, REVEAL, useSetParams } from "../links";
 import { SiteChips } from "./SiteChips";
@@ -136,6 +144,8 @@ export function AskDrawer({
 
   const drawerRef = useRef<HTMLElement>(null);
   useEscapeToClose(drawerRef, onClose);
+  // On screen (open and not behind the File or Finding tab): an answer that lands now is seen.
+  useEffect(() => (hidden ? undefined : markViewing(snapshotId)), [hidden, snapshotId]);
 
   // A scope belongs to the one question typed with its chip showing, not to suggestions or
   // re-asks, which call send without a file. The store does the asking, so closing the drawer

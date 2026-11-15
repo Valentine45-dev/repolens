@@ -10,6 +10,7 @@ import {
   repoName,
   type SnapshotStatus,
 } from "../api";
+import { useAskUnread } from "../askStore";
 import { isGoToFileShortcut, shortcutLabel } from "../goToFileShortcut";
 import { useRevealToken, useSetParams } from "../links";
 import { loadRecent } from "../recent";
@@ -32,6 +33,19 @@ export interface AnalysisContext {
   /** Undefined until the status has loaded: the page draws its chrome at once and waits for this
    * before it asks for data (an analysis that is not done redirects away). */
   status: SnapshotStatus | undefined;
+}
+
+const UNREAD_TITLE = { answer: "A new answer is in Ask", error: "A question in Ask failed" } as const;
+const UNREAD_SAID = { answer: "Answer ready in Ask.", error: "A question in Ask failed." } as const;
+
+/** Ink dot; its words are part of the button's or tab's name ("Ask, new answer"). */
+function UnreadDot({ kind }: { kind: "answer" | "error" }) {
+  return (
+    <>
+      <span className="unread-dot" aria-hidden="true" />
+      <span className="visually-hidden">{kind === "answer" ? ", new answer" : ", question failed"}</span>
+    </>
+  );
 }
 
 // Header on every tab (spec §3.4): repo, commit, tabs, Ask. The Ask drawer (?ask=1) stays open
@@ -58,6 +72,10 @@ export function AnalysisShell() {
   const [rightTab, setRightTab] = useRightTab(panelParam, askOpen, askPrefill, params.get("lines"), reveal);
   const panelHidden = tabbed && rightTab === "ask";
   const panelKind = params.get("finding") !== null ? "Finding" : "File";
+  // A question that finished while Ask was out of sight: a dot on whatever brings Ask back (the
+  // Ask button when Ask is closed, the Ask tab when it is behind the File or Finding tab).
+  const unread = useAskUnread(valid ? snapshotId : 0);
+  const unreadDot = unread ? <UnreadDot kind={unread} /> : null;
 
   const status = useQuery({
     queryKey: ["status", snapshotId],
@@ -162,8 +180,10 @@ export function AnalysisShell() {
           aria-pressed={askOpen}
           aria-controls="ask-drawer"
           onClick={() => setParams({ ask: askOpen ? null : "1" })}
+          title={unread && !askOpen ? UNREAD_TITLE[unread] : undefined}
         >
           Ask
+          {askOpen ? null : unreadDot}
         </button>
       </header>
       {searchOpen && done ? (
@@ -209,12 +229,18 @@ export function AnalysisShell() {
                 className="tab"
                 aria-selected={rightTab === tab}
                 onClick={() => setRightTab(tab)}
+                title={tab === "ask" && unread && rightTab !== "ask" ? UNREAD_TITLE[unread] : undefined}
               >
                 {label}
+                {tab === "ask" && rightTab !== "ask" ? unreadDot : null}
               </button>
             ))}
           </div>
         ) : null}
+        {/* Said once when a question finishes out of sight; Ask's own live region is not on screen. */}
+        <p className="visually-hidden" role="status">
+          {unread ? UNREAD_SAID[unread] : ""}
+        </p>
         {askOpen && status.data ? (
           <AskDrawer
             // A new analysis gets a new drawer: nothing of the last one's view state carries over

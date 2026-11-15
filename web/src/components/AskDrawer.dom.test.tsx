@@ -357,3 +357,62 @@ describe("SEC-05: a link that pre-fills a question about a file", () => {
     expect(askQuestion).toHaveBeenCalledWith(65, "About app/real.py: what is it?", 12);
   });
 });
+
+describe("the unread dot: a question that finishes while Ask is out of sight", () => {
+  const dot = (sel: string) => $(`${sel} .unread-dot`);
+  const said = () => [...host.querySelectorAll("[role=status]")].map((e) => e.textContent).join(" ");
+  const tab = (name: string) => [...host.querySelectorAll<HTMLElement>(".right-tabs [role=tab]")].find((t) => t.textContent?.startsWith(name))!;
+
+  it("shows on the Ask button when the answer lands with Ask closed, and clears when Ask is opened", async () => {
+    await open("/a/71/explore?ask=1");
+    await ask("Where is the login view?");
+    await toggleAsk();
+    expect(dot(".analysis-ask")).toBeNull(); // nothing yet: still being answered
+    await answerWith(answer("In app/views.py."));
+    expect(dot(".analysis-ask")).not.toBeNull();
+    expect(askButton().textContent).toBe("Ask, new answer"); // its accessible name
+    expect(askButton().title).toBe("A new answer is in Ask");
+    expect(said()).toContain("Answer ready in Ask.");
+    await toggleAsk();
+    expect(dot(".analysis-ask")).toBeNull();
+    expect(askButton().textContent).toBe("Ask");
+    expect(said()).not.toContain("Answer ready in Ask.");
+    await toggleAsk(); // closing again does not bring it back
+    expect(dot(".analysis-ask")).toBeNull();
+  });
+
+  it("does not show for an answer that lands while Ask is on screen", async () => {
+    await open("/a/72/explore?ask=1");
+    await ask("Where is the login view?");
+    await answerWith(answer("In app/views.py."));
+    await toggleAsk();
+    expect(dot(".analysis-ask")).toBeNull();
+  });
+
+  it("says when a question failed while Ask was closed", async () => {
+    let fail!: (e: Error) => void;
+    vi.mocked(askQuestion).mockImplementationOnce(() => new Promise<Answer>((_, reject) => (fail = reject)));
+    await open("/a/74/explore?ask=1");
+    await ask("Where is the login view?");
+    await toggleAsk();
+    await act(async () => fail(new Error("Request failed (500).")));
+    expect(askButton().textContent).toBe("Ask, question failed");
+    expect(said()).toContain("A question in Ask failed.");
+  });
+
+  it("below 1600px shows on the Ask tab while the File tab is in front, and clears when Ask is shown", async () => {
+    midWidth = true;
+    await open("/a/73/explore?ask=1&node=12");
+    expect(tab("File").getAttribute("aria-selected")).toBe("true"); // a link that opens both shows the file
+    await click(tab("Ask"));
+    await ask("What does app/real.py do?");
+    await click(tab("File")); // Ask goes behind the file while it is answered
+    await answerWith(answer("It serves the views."));
+    expect(dot(".right-tabs")).not.toBeNull();
+    expect(tab("Ask").textContent).toBe("Ask, new answer");
+    expect(dot(".analysis-ask")).toBeNull(); // the header button would close Ask: no dot there
+    await click(tab("Ask"));
+    expect(dot(".right-tabs")).toBeNull();
+    expect(tab("Ask").textContent).toBe("Ask");
+  });
+});

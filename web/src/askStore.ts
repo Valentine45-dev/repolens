@@ -31,11 +31,23 @@ export interface AskSession {
   pending: { id: string; startedAt: number } | null;
   /** Said once above the conversation, e.g. that a turn could not be shown and was removed. */
   notice: string | null;
+  /** A question finished while this analysis's Ask was not on screen (closed, or behind the
+   * File or Finding tab): the Ask button or tab shows a dot until Ask is seen again. */
+  unread: "answer" | "error" | null;
 }
 
-const EMPTY: Omit<AskSession, "turns"> = { draft: "", scope: null, scopeNote: null, pending: null, notice: null };
+const EMPTY: Omit<AskSession, "turns"> = {
+  draft: "",
+  scope: null,
+  scopeNote: null,
+  pending: null,
+  notice: null,
+  unread: null,
+};
 
 const sessions = new Map<number, AskSession>();
+/** How many drawers of each analysis are on screen now (a count: React may mount one twice). */
+const viewing = new Map<number, number>();
 const listeners = new Set<() => void>();
 
 function storageKey(snapshotId: number) {
@@ -97,6 +109,22 @@ export function useAskSession(snapshotId: number): AskSession {
   return useSyncExternalStore(subscribe, () => getSession(snapshotId));
 }
 
+export function useAskUnread(snapshotId: number): AskSession["unread"] {
+  return useSyncExternalStore(subscribe, () => getSession(snapshotId).unread);
+}
+
+/** The drawer of this analysis is on screen until the returned function is called. Seeing it is
+ * what clears the unread dot. */
+export function markViewing(snapshotId: number): () => void {
+  viewing.set(snapshotId, (viewing.get(snapshotId) ?? 0) + 1);
+  if (getSession(snapshotId).unread) update(snapshotId, { unread: null });
+  return () => {
+    const left = (viewing.get(snapshotId) ?? 1) - 1;
+    if (left > 0) viewing.set(snapshotId, left);
+    else viewing.delete(snapshotId);
+  };
+}
+
 export function setDraft(snapshotId: number, draft: string) {
   update(snapshotId, { draft });
 }
@@ -127,6 +155,7 @@ function settle(snapshotId: number, turnId: string, result: Pick<Turn, "answer" 
   update(snapshotId, {
     turns: session.turns.map((t) => (t.id === turnId ? { ...t, ...result } : t)),
     pending: session.pending?.id === turnId ? null : session.pending,
+    unread: viewing.has(snapshotId) ? session.unread : result.answer ? "answer" : "error",
   });
 }
 
@@ -158,4 +187,5 @@ export function sendQuestion(snapshotId: number, question: string, fileId?: numb
 /** Tests only: forget every analysis's conversation, as a page load would. */
 export function resetAskStore() {
   sessions.clear();
+  viewing.clear();
 }
