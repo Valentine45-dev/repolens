@@ -2236,3 +2236,10 @@ are deliberately not changed after seeing eval results; these stay as documented
     on an `eval/` branch. Git's half of S-05 (orphaned `git-remote-https` after a timeout) remains.
     **black's search:** the 600 s cap was hit twice on 14 Nov (re-analysis job 20 and one "Retry
     preparing search"), so Ask is off on black; retry when the PC is idle.
+- **Graph correctness fixes, batch 2 (`fix/graph-batch2`, 15 Nov; in progress).** From the backend review:
+  C-01 to C-06. Prediction committed first: `eval/results/graph_batch2_prediction-20261115-7917f12.json`
+  (SHA-256 `81b1350a74cbccd369637a8d99c66712b31317623f5a4d24e94d94c9d12c871a`).
+  - **Search lost in batch 1 (read from the pre-batch-1 backup, SHA-256 re-checked):** chunks before batch 1
+    (non-test / test): black 4,803 / 0, gunicorn 0 / 0, certbot 0 / 0, redash 0 / 0, ipython 0 / 0. After
+    batch 1 black has 0 / 0: **batch 1's re-analysis removed black's search** (Ask off on black since 14 Nov).
+    The other four had no chunks before batch 1 either, so they lost nothing.
