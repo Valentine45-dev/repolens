@@ -214,3 +214,21 @@ describe("COR-08: switching from one analysis to another with the shell still mo
     expect(turns()[0].textContent).toContain("Answer for 33.");
   });
 });
+
+describe("a reload while a question was being answered", () => {
+  it("keeps the question with a note that its answer was not received, and asks nothing again", async () => {
+    sessionStorage.setItem("repolens.ask.41", JSON.stringify([
+      { id: "a", question: "First question", answer: answer("First answer.") },
+      { id: "b", question: "Question cut off by the reload" },
+    ]));
+    await open("/a/41/explore?ask=1");
+    expect(turns()).toHaveLength(2);
+    expect(turns()[1].textContent).toContain("Question cut off by the reload");
+    expect(turns()[1].textContent).toContain("This question was interrupted by a page reload; the answer was not received.");
+    expect(turns()[1].querySelector(".thinking")).toBeNull();
+    typeDraft("A new question");
+    expect($<HTMLButtonElement>("#ask-drawer button[type=submit]")!.disabled).toBe(false); // nothing is pending
+    expect(askQuestion).not.toHaveBeenCalled();
+    expect(JSON.parse(sessionStorage.getItem("repolens.ask.41")!)[1].interrupted).toBe(true);
+  });
+});

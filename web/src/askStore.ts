@@ -14,6 +14,8 @@ export interface Turn {
   question: string;
   answer?: Answer;
   error?: string;
+  /** Saved while it was being answered and then the page reloaded: the answer never arrived. */
+  interrupted?: true;
 }
 
 /** The file a question includes ("Ask about this"). */
@@ -39,14 +41,19 @@ function storageKey(snapshotId: number) {
   return `repolens.ask.${snapshotId}`;
 }
 
+/** A question still unanswered in storage was cut off by a reload (the request died with the old
+ * page): it is kept, marked as interrupted, so it does not vanish without a word. */
 function loadTurns(snapshotId: number): Turn[] {
+  let turns: Turn[];
   try {
     const raw = sessionStorage.getItem(storageKey(snapshotId));
-    const turns = raw ? (JSON.parse(raw) as Turn[]) : [];
-    return turns.filter((t) => t.answer || t.error); // a reload drops an unanswered question
+    turns = raw ? (JSON.parse(raw) as Turn[]) : [];
   } catch {
     return [];
   }
+  const loaded = turns.map((t) => (t.answer || t.error || t.interrupted ? t : { ...t, interrupted: true as const }));
+  if (loaded.some((t, i) => t !== turns[i])) saveTurns(snapshotId, loaded);
+  return loaded;
 }
 
 function saveTurns(snapshotId: number, turns: Turn[]) {

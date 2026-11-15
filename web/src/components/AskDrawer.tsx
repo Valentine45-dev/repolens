@@ -28,6 +28,7 @@ import { PathText } from "./PathText";
 const MAX_CHARS = 1000; // the API's limit
 const SHOWN_RESULTS = 5; // graph results before "Show all N"
 const WIDE_KEY = "repolens.ask.wide";
+const INTERRUPTED = "This question was interrupted by a page reload; the answer was not received.";
 
 // The wide drawer is a per-viewer convenience, remembered in this browser when storage works.
 function loadWide(): boolean {
@@ -203,6 +204,10 @@ export function AskDrawer({
                   ) : turn.error ? (
                     <p className="turn-note" role="alert">
                       <Icon name="x" size={14} /> {turn.error}
+                    </p>
+                  ) : turn.interrupted ? (
+                    <p className="turn-note">
+                      <Icon name="x" size={14} /> {INTERRUPTED}
                     </p>
                   ) : (
                     <ThinkingNote since={pending?.id === turn.id ? pending.startedAt : undefined} />
