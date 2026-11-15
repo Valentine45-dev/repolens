@@ -46,6 +46,10 @@ CREATE TABLE jobs (
   -- Set when the code-quality checks (Ruff) did not complete; the findings list says so. NULL
   -- when they ran, and on old rows.
   quality_note       TEXT,
+  -- Paths of the files discover walked but did not keep (skipped, past the limit, binary,
+  -- minified; secret files left out), for the broken-import rule. NULL = not recorded (old
+  -- rows, or too many): the rule is then skipped with a note, never run against an empty list.
+  unread_paths       TEXT[],
   created_at    TIMESTAMPTZ DEFAULT now()
 );
 CREATE INDEX jobs_snapshot ON jobs (snapshot_id);

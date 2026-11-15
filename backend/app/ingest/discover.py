@@ -46,6 +46,13 @@ class DiscoverResult:
     skipped: int = 0
     hit_file_limit: bool = False
     beyond_limit: int = 0  # files past the limit that the skip rules would have kept
+    # Every file walked but not kept (skipped, past the limit, binary, minified), so the
+    # broken-import rule knows they exist. Names of secret files are left out. None when there
+    # were more than MAX_UNREAD_PATHS: not recorded, which is not the same as none.
+    unread_paths: list[str] | None = field(default_factory=list)
+
+
+MAX_UNREAD_PATHS = 50_000
 
 
 def _skip_dir(path: Path) -> bool:
@@ -56,9 +63,13 @@ def _skip_dir(path: Path) -> bool:
     )
 
 
-def _wanted(path: Path) -> bool:
+def _secret_file(path: Path) -> bool:
     name = path.name
-    if name.startswith(".env") or name in SECRET_NAMES or path.suffix.lower() in SECRET_SUFFIXES:
+    return name.startswith(".env") or name in SECRET_NAMES or path.suffix.lower() in SECRET_SUFFIXES
+
+
+def _wanted(path: Path) -> bool:
+    if _secret_file(path):
         return False
     if LANGUAGES.get(path.suffix) == "javascript" and path.stem.endswith(GENERATED_JS_MARKERS):
         return False
@@ -86,6 +97,12 @@ def _looks_minified(text: str) -> bool:
 def discover(root: Path, max_files: int, max_file_bytes: int) -> DiscoverResult:
     root = root.resolve()
     result = DiscoverResult(files=[])
+    unread: list[str] = []
+
+    def leave_out(path: Path) -> None:
+        if not _secret_file(path):
+            unread.append(path.relative_to(root).as_posix())
+
     for dirpath, dirnames, filenames in os.walk(root, followlinks=False):
         current = Path(dirpath)
         dirnames[:] = sorted(d for d in dirnames if not _skip_dir(current / d))
@@ -93,25 +110,30 @@ def discover(root: Path, max_files: int, max_file_bytes: int) -> DiscoverResult:
             path = current / name
             if not _candidate(path, root, max_file_bytes):
                 result.skipped += 1
+                leave_out(path)
                 continue
             if len(result.files) >= max_files:
                 # Keep walking, without reading: the notice says how much was left out.
                 result.hit_file_limit = True
                 result.beyond_limit += 1
+                leave_out(path)
                 continue
             try:
                 raw = path.read_bytes()
             except OSError:  # e.g. a path over 260 characters on Windows without long paths
                 result.skipped += 1
+                leave_out(path)
                 continue
             if b"\0" in raw[:8192]:
                 result.skipped += 1
+                leave_out(path)
                 continue
 
             text = raw.decode("utf-8", errors="replace").replace("\r\n", "\n")
             language = LANGUAGES.get(path.suffix)
             if language in ("javascript", "typescript") and _looks_minified(text):
                 result.skipped += 1
+                leave_out(path)
                 continue
             content, secrets = redact(text, config=path.suffix.lower() in CONFIG_SUFFIXES)
             result.files.append(
@@ -123,4 +145,5 @@ def discover(root: Path, max_files: int, max_file_bytes: int) -> DiscoverResult:
                     secrets=secrets,
                 )
             )
+    result.unread_paths = unread if len(unread) <= MAX_UNREAD_PATHS else None
     return result

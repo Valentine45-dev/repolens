@@ -8,7 +8,9 @@ expected to be missing:
   - Python namespace packages (a directory of modules with no __init__.py);
   - JS: only relative paths and simple tsconfig aliases count; `@/x`, `~/x`, bare names, and
     paths into generated folders do not; `./data` may be `data.json` or `data.node`.
-Nothing here reads anything but the parsed imports and the file list.
+Files that exist but were not parsed (skipped by discover, past the file limit, minified, or
+not code: `.graphql`, `.yaml`) count as existing: discover passes their names on. Nothing here
+reads anything but the parsed imports and the file lists.
 """
 
 import posixpath
@@ -41,8 +43,8 @@ class BrokenImport:
     target: str  # what was looked for: a dotted module name (Python) or a repo path (JS)
 
 
-def _python(files: dict[str, list[ParsedImport]]) -> list[BrokenImport]:
-    modules = PythonModules(list(files))
+def _python(files: dict[str, list[ParsedImport]], unread: list[str]) -> list[BrokenImport]:
+    modules = PythonModules(list(files) + [p for p in unread if p.endswith((".py", ".pyi"))])
     # Every dotted prefix of a known module is a package, a regular one or a namespace directory.
     packages = {
         ".".join(parts[:i])
@@ -73,8 +75,9 @@ def _probe(modules: JsModules, path: str) -> bool:
     )
 
 
-def _javascript(files: dict[str, list[ParsedImport]], tsconfig: str | None) -> list[BrokenImport]:
-    modules = JsModules(list(files), tsconfig)
+def _javascript(files: dict[str, list[ParsedImport]], tsconfig: str | None,
+                unread: list[str]) -> list[BrokenImport]:
+    modules = JsModules(list(files) + unread, tsconfig)
     found: dict[tuple[str, int, str], BrokenImport] = {}
     for path, imports in files.items():
         for imp in imports:
@@ -104,9 +107,11 @@ def _javascript(files: dict[str, list[ParsedImport]], tsconfig: str | None) -> l
 
 
 def broken_imports(
-    files: dict[str, tuple[str, list[ParsedImport]]], tsconfig: str | None = None
+    files: dict[str, tuple[str, list[ParsedImport]]], tsconfig: str | None = None,
+    unread: list[str] = (),
 ) -> list[BrokenImport]:
-    """`files`: path -> (language, imports) for every parsed code file."""
+    """`files`: path -> (language, imports) for every parsed code file; `unread`: the paths of
+    the other files in the repository (discover's `unread_paths`)."""
     python = {p: imps for p, (lang, imps) in files.items() if lang == "python"}
     js = {p: imps for p, (lang, imps) in files.items() if lang != "python"}
-    return _python(python) + _javascript(js, tsconfig)
+    return _python(python, list(unread)) + _javascript(js, tsconfig, list(unread))

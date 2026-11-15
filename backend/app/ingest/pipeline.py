@@ -67,9 +67,9 @@ def _set_receipt(job_id: int, result: DiscoverResult) -> None:
     with pool().connection() as conn:
         conn.execute(
             "UPDATE jobs SET files_kept = %s, files_skipped = %s, files_beyond_limit = %s,"
-            " hit_file_limit = %s WHERE id = %s",
+            " hit_file_limit = %s, unread_paths = %s WHERE id = %s",
             (len(result.files), result.skipped, result.beyond_limit, result.hit_file_limit,
-             job_id),
+             result.unread_paths, job_id),
         )
 
 
@@ -347,6 +347,12 @@ def _innermost_symbol(symbols: list[ParsedSymbol], line: int) -> ParsedSymbol | 
     return min(containing, key=lambda s: s.end_line - s.start_line, default=None)
 
 
+BROKEN_IMPORTS_NOT_CHECKED = (
+    "Broken imports were not checked: this analysis has no list of the files it left out."
+    " Analyse the repository again to check them."
+)
+
+
 def store_findings(snapshot_id: int, parsed: dict[str, Parsed],
                    job_id: int | None = None) -> int:
     """Detect stage: rule findings for every code file, Ruff's code-quality findings for the
@@ -382,13 +388,24 @@ def store_findings(snapshot_id: int, parsed: dict[str, Parsed],
             "SELECT content FROM files WHERE snapshot_id = %s AND path = 'tsconfig.json'",
             (snapshot_id,),
         ).fetchone()
-    for b in broken_imports({path: (p.language, p.result.imports) for path, p in parsed.items()},
-                            tsconfig["content"] if tsconfig else None):
-        if is_test_path(b.path):
-            continue  # test data imports things that do not exist on purpose (black: 28 of 28)
-        rule = RULES[BROKEN_IMPORT_RULE]
-        rows.append((b.path, b.line, rule.id, rule.severity,
-                     f"Import of `{b.target}` matches no file in this repository."))
+        job = conn.execute("SELECT unread_paths FROM jobs WHERE id = %s",
+                           (job_id,)).fetchone() if job_id is not None else None
+    unread = job["unread_paths"] if job else None
+    if unread is None:
+        # NULL is "not recorded" (an analysis from before the list existed), never "nothing was
+        # left out": without it, every import of a skipped file would look broken.
+        notes = [quality_note, BROKEN_IMPORTS_NOT_CHECKED]
+        quality_note = " ".join(n for n in notes if n)
+    else:
+        for b in broken_imports(
+            {path: (p.language, p.result.imports) for path, p in parsed.items()},
+            tsconfig["content"] if tsconfig else None, unread,
+        ):
+            if is_test_path(b.path):
+                continue  # test data imports things that do not exist on purpose (black: 28/28)
+            rule = RULES[BROKEN_IMPORT_RULE]
+            rows.append((b.path, b.line, rule.id, rule.severity,
+                         f"Import of `{b.target}` matches no file in this repository."))
 
     with pool().connection() as conn, conn.transaction():
         conn.execute(
