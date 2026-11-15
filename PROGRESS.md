@@ -2267,3 +2267,45 @@ are deliberately not changed after seeing eval results; these stay as documented
   - **Later (not this branch):** retry black's search when the PC is idle; `eval/ui_drawn_counts.py`
     hashes symbol views by database ids, so its `drawn_sha1` changes on every re-analysis (102 views
     on 15 Nov with identical counts): hash on stable keys (path, kind, qualified name) instead.
+- **FE1: Ask drawer (`fix/fe1-ask-drawer`, 16 Nov; built, pushed, waiting for the owner's real-mouse
+  test, not merged).** From the frontend review (`REVIEW-FRONTEND-2026-11-14.md`): COR-01, COR-08,
+  SEC-04, SEC-05, STA-01, TEST-01 for Ask, plus the unread dot (HANDOFF's later list). $0 API spend:
+  mocked API only, no `/ask` call made. Backend, eval, `api.ts` and the graph/map code untouched
+  (`git diff main -- backend/ eval/ web/src/api.ts web/src/graphModel.ts web/src/mapModel.ts
+  web/src/mapLayout.ts` empty). No new dependencies.
+  - **Step 0 (read-only):** all six reproduced on `main` with a throwaway mocked test. Two things the
+    review missed: `/ask` never had an abort signal (closing aborted nothing; the result went into
+    an unmounted drawer), and the answer was also lost through "Open in Explorer", the reachability
+    chip and going Home (none keep `ask=1`).
+  - **Design:** `web/src/askStore.ts`, a module store keyed by snapshot id (`useSyncExternalStore`),
+    holds turns, draft, scope, the one pending question and the unread state; it does the asking,
+    so an answer is filed under its analysis whether or not a drawer is mounted. Nothing aborts a
+    question (paid either way). Storage is read once per analysis per page load.
+  - **Commits:** `f048eb3` STA-01 (Esc ignored while `isComposing` / keyCode 229), `1aa7009` COR-01,
+    `3ab0bfd` COR-08 (`key={snapshotId}` too), `eecbb34` reload while pending (kept, marked
+    `interrupted`: "This question was interrupted by a page reload; the answer was not received."),
+    `dc7a24f` SEC-04 (`askTurns.ts` checks every field the drawer reads; misfits dropped and the
+    cleaned list saved; live answers checked too, "The answer could not be shown."; a turn that
+    still throws is removed by its own boundary with a caption, the rest stay), `04dfe7a` SEC-05
+    (chip path from the file index by id, `askpath` ignored and no longer written; Send waits only
+    while a link's file id is not in any index already on the page; unknown id or failed list drops
+    the scope with a note), `b4f7278` unread dot (Ink, 6px; header button when Ask is closed, Ask
+    tab when Ask is behind; "Ask, new answer" / "Ask, question failed"; polite "Answer ready in
+    Ask."; clears when that analysis's Ask is on screen).
+  - **Revert checks:** every new test was run with its commit's source files put back to the
+    previous commit (or `main`): each fails there except two guards that pass there by design
+    ("no dot while Ask is on screen"; "a question without a file never waits"). The "Ask about
+    this never waits" test also fails on a variant that always waits for the file list.
+  - **Checks:** web **40 files, 323 tests passed** (`main`: 38 / 300; new: `AskDrawer.dom.test.tsx`
+    18, `askTurns.test.ts` 4, escape stack 1), `tsc` clean, `npm run build` ok. No ESLint is set up
+    for `web/` (frontend lint is "only if asked"), so lint before each commit was `tsc`. Main chunk
+    426.54 -> 431.92 kB (gzip 134.53 -> 136.28, +1.75 kB); Explore chunk unchanged; CSS +51 B gzip.
+  - **Served for the owner's test:** `vite preview` on 5173 with this branch's build (replaced the
+    14 Nov preview), started with `REPOLENS_DEV_API_DELAY_MS=10000 REPOLENS_DEV_API_DELAY_MATCH=/ask$`
+    so free graph questions stay pending for 10 s (the delay is in the preview server, nothing of it
+    is in `dist`). API on 8000 left as it was.
+  - **Known:** the unread dot is not kept across a reload; the draft is kept across close/reopen
+    and analysis switches, not across a reload. Duplicating a tab while a question is pending
+    copies sessionStorage, so the copy shows the interrupted note while the original gets the
+    answer. The vitest jsdom start takes ~16-40 s per file on this PC; two runs at once time out
+    the workers ("Failed to start forks worker"), so never run vitest in parallel here.
