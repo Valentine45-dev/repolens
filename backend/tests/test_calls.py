@@ -142,3 +142,71 @@ def test_commonjs_module_members():
         ("lib/app.js:app.init", "lib/util.js:exports.trim"): 1.0,
         ("lib/app.js:app.init", "lib/util.js:module.exports.pad"): 1.0,
     }
+
+
+# --- C-03: confidence 1.0 only for what the call site can see ---
+
+
+def test_parameter_or_local_with_a_functions_name_is_a_guess():
+    py = edges_for({"m.py": "def callback(): pass\ndef register(callback):\n    callback()\n"
+                            "def plain():\n    callback()\n"})
+    assert py[("m.register", "m.callback")] == 0.5
+    assert py[("m.plain", "m.callback")] == 1.0  # control: no parameter in the way
+    js = edges_for({"a.js": "function next() {}\nfunction handler(req, res, next) { next(); }\n"
+                            "function other() { const done = 1; next(); }\n"})
+    assert js[("a.js:handler", "a.js:next")] == 0.5
+    assert js[("a.js:other", "a.js:next")] == 1.0
+
+
+def test_nested_function_is_only_visible_inside_its_enclosing_function():
+    py = edges_for({"m.py": "def a():\n    def helper(): pass\n    helper()\n"
+                            "def b():\n    helper()\n"})
+    assert py == {("m.a", "m.a.helper"): 1.0}
+    js = edges_for({"a.js": "function a() { function helper() {} helper(); }\n"
+                            "function b() { helper(); }\n"})
+    assert js == {("a.js:a", "a.js:a.helper"): 1.0}
+
+
+def test_nearest_definition_wins_over_a_top_level_one_and_reaches_closures():
+    src = ("def gen(): pass\n"
+           "def a():\n    def gen(): pass\n    def inner():\n        gen()\n    gen()\n"
+           "def b():\n    def gen(): pass\n    gen()\n")
+    edges = edges_for({"m.py": src})
+    assert edges[("m.a", "m.a.gen")] == 1.0
+    assert edges[("m.a.inner", "m.a.gen")] == 1.0
+    assert edges[("m.b", "m.b.gen")] == 1.0
+    assert ("m.a", "m.gen") not in edges
+
+
+def test_js_declaration_inside_an_anonymous_callback_is_still_found():
+    src = ("describe('x', () => {\n  function expectIt(v) {}\n  it('y', () => { expectIt(1); });\n"
+           "});\n")
+    assert edges_for({"a.test.js": src}) == {("a.test.js", "a.test.js:expectIt"): 1.0}
+
+
+def test_local_holding_a_factorys_nested_function_is_a_guess():
+    src = ("def make():\n    def check(i): pass\n    return check\n"
+           "def use():\n    check = make()\n    check(1)\n")
+    edges = edges_for({"m.py": src})
+    assert edges[("m.use", "m.make.check")] == 0.5
+
+
+def test_import_inside_the_function_wins_over_a_same_file_definition():
+    edges = edges_for({"m.py": "def helper(): pass\ndef f():\n    from other import helper\n"
+                               "    helper()\n",
+                       "other.py": "def helper(): pass\n"})
+    assert edges[("m.f", "other.helper")] == 1.0
+    assert ("m.f", "m.helper") not in edges
+
+
+def test_imported_class_method_is_not_the_modules_same_named_function():
+    py = edges_for({"models.py": "def create(): pass\nclass User:\n    def create(self): pass\n",
+                    "views.py": "from models import User\nimport models\n"
+                                "def signup():\n    User.create()\n    models.create()\n"})
+    assert py[("views.signup", "models.User.create")] == 1.0
+    assert py[("views.signup", "models.create")] == 1.0  # module receiver: the function
+    js = edges_for({"models.js": "export function create() {}\n"
+                                 "export class User { static create() {} }\n",
+                    "views.js": "import { User } from './models';\n"
+                                "function signup() { User.create(); }\n"})
+    assert js == {("views.js:signup", "models.js:User.create"): 1.0}

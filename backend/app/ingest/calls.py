@@ -1,17 +1,22 @@
 """Call edges: best-effort, name-based, each with a confidence.
 
-  1.0  f() defined in the same file or explicitly imported; X.f() with X.f in the same file;
-       mod.f() where mod is an imported module of ours
+  1.0  f() visible at the call: defined at the top of the file, inside an enclosing function,
+       or explicitly imported; X.f() with X.f in the same file; mod.f() where mod is an
+       imported module of ours; Cls.f() where Cls is an imported class of ours
   0.9  self.f() / this.f() hitting a method of the caller's own class (or JS object)
   0.5  exactly one candidate in the whole snapshot; for x.f() only when x is a plain name, not
-       a JS global, and (for JS object members like `app.f`) x names the owner
-  Ambiguous names, and calls into external packages, get no edge.
+       a JS global, and (for JS object members like `app.f`) x names the owner. Also any 1.0
+       match above when the name (or the receiver's first name) is a parameter or local
+       variable of an enclosing function: it may hold that function, or anything else.
+  Ambiguous names, and calls into external packages, get no edge. A function nested inside
+  another function is never the target of a call it is not visible from.
 Plain calls only match functions/classes; x.f() only matches methods (incl. JS `app.f`).
 """
 
 from collections import defaultdict
 from collections.abc import Callable
 from dataclasses import dataclass
+from pathlib import PurePosixPath
 
 from app.ingest.parse import ParsedFile, ParsedImport, ParsedSymbol
 from app.ingest.resolve import Target
@@ -125,24 +130,91 @@ class _Index:
         return refs[0] if len(refs) == 1 else None
 
 
-def _resolve(ix: _Index, path: str, caller: str, name: str, receiver: str | None):
+GUESS = 0.5
+
+
+def _child(ix: _Index, path: str, scope: str, name: str) -> str:
+    if ix.is_js(path) and scope == path:
+        return f"{path}:{name}"
+    return f"{scope}.{name}"
+
+
+def _visible_def(ix: _Index, path: str, caller: str, name: str) -> Ref | None:
+    """`name` is defined inside an enclosing function of `caller`: the definition in the nearest
+    one (the caller itself, then enclosing functions; class bodies do not count). JS: a
+    declaration inside an anonymous callback is named after the nearest named scope, so at the
+    top of the file it looks like a top-level symbol, and that one counts too."""
+    qmap = ix.symbols.get(path, {})
+    js = ix.is_js(path)
+    module = path if js else ix.prefix.get(path, ".")[:-1]
+    scope: str | None = caller
+    first = True
+    while scope is not None:
+        if scope == module:
+            s = qmap.get(f"{path}:{name}") if js else None
+            return (path, s.qualified_name) if s is not None and not is_member(s) else None
+        own = qmap.get(scope)
+        if first or (own is not None and own.kind in ("function", "method")):
+            s = qmap.get(_child(ix, path, scope, name))
+            if s is not None and not is_member(s):
+                return (path, s.qualified_name)
+        first = False
+        scope = parent(scope) or (module if js else None)
+    return None
+
+
+def _is_module_binding(target: Target, orig: str, js: bool) -> bool:
+    """`orig` names the imported file itself, not a class or function inside it. JS default
+    imports keep counting as the module (CommonJS `module.exports = {...}` objects)."""
+    if orig == "*":
+        return True
+    if js:
+        return orig == "default"
+    p = PurePosixPath(target.key)
+    return p.stem == orig or (p.stem == "__init__" and p.parent.name == orig)
+
+
+def _top_level_guess(ix: _Index, js: bool, name: str) -> Ref | None:
+    """The single function/class with this name in the snapshot, if it is a top-level one: a
+    function nested inside another is not visible from any other place."""
+    ref = ix.only(js, False, name)
+    if ref is None:
+        return None
+    top = ix.top_level(ref[0], name)
+    return ref if top is not None and top.qualified_name == ref[1] else None
+
+
+def _resolve(ix: _Index, path: str, caller: str, name: str, receiver: str | None,
+             bound: str | None = None):
     binds = ix.bindings.get(path, {})
+    js = ix.is_js(path)
+    # A parameter or local variable with this name: whatever it holds, it is not provably the
+    # same-named function, so any match is a guess.
+    cap = GUESS if bound == "local" or (receiver and bound == "def") else 1.0
+    imported_here = bound == "import"  # imported inside the function: the import wins
     if receiver is None:
         same = [s for s in ix.by_name.get(path, {}).get(name, []) if not is_member(s)]
-        if len(same) > 1:
-            top = ix.top_level(path, name)
-            return ((path, top.qualified_name), 1.0) if top else None
-        if same:
-            return (path, same[0].qualified_name), 1.0
+        if bound == "def":
+            ref = _visible_def(ix, path, caller, name)
+            return (ref, 1.0) if ref else None
+        top = ix.top_level(path, name)
+        if top is not None and not imported_here:
+            return (path, top.qualified_name), cap
         if name in binds:
             target, orig = binds[name]
             if target is None or target.kind != "internal":
                 return None  # an external package: not ours to link
             found = ix.find(target.key, orig, 1) if orig not in ("*", "default") else None
             if found:
-                return found, 1.0
-        ref = ix.only(ix.is_js(path), False, name)
-        return (ref, 0.5) if ref else None
+                return found, cap
+        if same:
+            # Defined only inside other functions here. A local variable may hold one of them
+            # (a factory's result): a guess when there is just one; a plain global name never.
+            if bound == "local" and len(same) == 1:
+                return (path, same[0].qualified_name), GUESS
+            return None
+        ref = _top_level_guess(ix, js, name)
+        return (ref, GUESS) if ref else None
 
     if receiver in SELF_RECEIVERS:
         owner = parent(caller)
@@ -152,25 +224,26 @@ def _resolve(ix: _Index, path: str, caller: str, name: str, receiver: str | None
     elif receiver:
         # X.f() with X.f defined in this file (a class, or a JS object like `app`).
         s = ix.symbols.get(path, {}).get(f"{ix.prefix.get(path, '')}{receiver}.{name}")
-        if s is not None:
-            return (path, s.qualified_name), 1.0
+        if s is not None and not imported_here:
+            return (path, s.qualified_name), cap
         if receiver in binds:
             target, orig = binds[receiver]
             if target is None or target.kind != "internal":
                 return None
-            found = ix.find(target.key, name, 1)
-            if found:
-                return found, 1.0
+            if _is_module_binding(target, orig, js):
+                found = ix.find(target.key, name, 1)
+                if found:
+                    return found, cap
             # An imported class: Foo.create() -> Foo.create in Foo's file.
             cls = ix.find(target.key, orig, 1) if orig not in ("*", "default") else None
             if cls and f"{cls[1]}.{name}" in ix.symbols.get(cls[0], {}):
-                return (cls[0], f"{cls[1]}.{name}"), 1.0
+                return (cls[0], f"{cls[1]}.{name}"), cap
     if not receiver or receiver.split(".")[0] in GLOBAL_RECEIVERS:
         return None  # "".join(), f().x(), Object.create(): not worth a guess
-    ref = ix.only(ix.is_js(path), True, name)
+    ref = ix.only(js, True, name)
     if ref is None or not _owner_matches(ix.symbols[ref[0]][ref[1]], receiver):
         return None
-    return ref, 0.5
+    return ref, GUESS
 
 
 def _owner_matches(s: ParsedSymbol, receiver: str) -> bool:
@@ -188,7 +261,7 @@ def resolve_calls(files: dict[str, ParsedFile], resolve_import: ImportResolver) 
     sites: dict[tuple[Ref, Ref], dict[int, float]] = defaultdict(dict)
     for path, pf in files.items():
         for call in pf.calls:
-            hit = _resolve(ix, path, call.caller, call.name, call.receiver)
+            hit = _resolve(ix, path, call.caller, call.name, call.receiver, call.bound)
             if hit is None:
                 continue
             dst, confidence = hit
