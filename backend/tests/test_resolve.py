@@ -246,3 +246,46 @@ def test_folder_fallback_never_takes_a_stdlib_name_or_crosses_a_package():
     ]
     # Inside a regular package Python 3 has no implicit relative import.
     assert script("app/views.py", "helpers", ("*", "helpers")) == [Target("external", "helpers")]
+
+
+# --- C-02: two packages with the same name in one repository ---
+
+TWO_APPS = PythonModules([
+    "backend/app/__init__.py",
+    "backend/app/db.py",
+    "examples/demo/app/__init__.py",
+    "examples/demo/app/db.py",
+    "examples/demo/run.py",
+    "scripts/tool.py",
+])
+
+
+def two(importer: str, spec: str, *names: tuple[str, str]) -> list[Target]:
+    return resolve_python(importer, ParsedImport(spec, tuple(names), 1), TWO_APPS)
+
+
+def test_importers_own_source_root_wins():
+    assert two("examples/demo/run.py", "app", ("db", "db")) == [internal("examples/demo/app/db.py")]
+    assert two("examples/demo/run.py", "app.db", ("*", "app.db")) == [
+        internal("examples/demo/app/db.py")
+    ]
+    assert two("backend/app/__init__.py", "app.db", ("*", "app.db")) == [
+        internal("backend/app/db.py")
+    ]
+
+
+def test_same_name_in_two_other_roots_is_unresolved_not_a_guess():
+    assert two("scripts/tool.py", "app", ("db", "db")) == [Target("unresolved", "app.db")]
+    assert two("scripts/tool.py", "app", ("*", "app")) == [Target("unresolved", "app")]
+    # A full path from the repository root is still unique.
+    assert two("scripts/tool.py", "backend.app.db", ("*", "backend.app.db")) == [
+        internal("backend/app/db.py")
+    ]
+
+
+def test_ambiguous_import_is_not_a_broken_import():
+    from app.detect.imports import broken_imports
+
+    files = {p: ("python", []) for p in TWO_APPS.paths}
+    files["scripts/tool.py"] = ("python", [ParsedImport("app", (("db", "db"),), 1)])
+    assert broken_imports(files) == []

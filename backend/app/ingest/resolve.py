@@ -37,30 +37,56 @@ def python_source_roots(paths: list[str]) -> list[str]:
     return sorted(roots, key=lambda r: (r.count("/"), r))
 
 
+# lookup() result when two source roots that do not contain the importer both have the module.
+AMBIGUOUS = "<ambiguous>"
+
+
 class PythonModules:
-    """Dotted module name -> file path, for every source root."""
+    """Dotted module name -> file path, for every source root. `by_name` keeps one path per
+    name (the shallowest root wins); `lookup` answers for a given importer."""
 
     def __init__(self, paths: list[str]):
         self.paths = set(paths)
         self.package_dirs = {posixpath.dirname(p) for p in paths
                              if PurePosixPath(p).name in ("__init__.py", "__init__.pyi")}
         self.by_name: dict[str, str] = {}
+        self.by_root: dict[str, dict[str, str]] = {}
         # .py before .pyi, so a stub never hides the real module.
         ordered = sorted(paths, key=lambda p: (p.endswith(".pyi"), p))
         for root in python_source_roots(paths):
+            names: dict[str, str] = {}
             for p in ordered:
                 if root and not p.startswith(root + "/"):
                     continue
                 rel = p[len(root) + 1:] if root else p
-                self.by_name.setdefault(module_name(rel), p)
+                names.setdefault(module_name(rel), p)
+            self.by_root[root] = names
+            for name, p in names.items():
+                self.by_name.setdefault(name, p)
         self.top_level = {name.split(".")[0] for name in self.by_name}
 
     def lookup(self, name: str, importer: str, relative: bool = False) -> str | None:
-        """The file of module `name` as `importer` sees it, or None."""
-        found = self.by_name.get(name)
-        if found is None and not relative:
-            found = self._script_folders(name, importer)
-        return found
+        """The file of module `name` as `importer` sees it, None, or AMBIGUOUS.
+
+        Relative names are dotted from the repository root, so the root's map answers them.
+        Otherwise the source roots that contain the importer come first, deepest first (Python
+        puts a script's own root first on sys.path); then the other roots, but only when exactly
+        one of them has the module. Two packages with the same name elsewhere (`backend/app`,
+        `examples/demo/app`) give AMBIGUOUS instead of a guess."""
+        if relative:
+            return self.by_root[""].get(name)
+        own = [r for r in self.by_root if not r or importer.startswith(r + "/")]
+        for root in sorted(own, key=lambda r: -r.count("/") - bool(r)):
+            found = self.by_root[root].get(name)
+            if found:
+                return found
+        others = {names[name] for r, names in self.by_root.items()
+                  if r not in own and name in names}
+        if len(others) > 1:
+            return AMBIGUOUS
+        if others:
+            return others.pop()
+        return self._script_folders(name, importer)
 
     def _script_folders(self, name: str, importer: str) -> str | None:
         """Only for a name no source root has: the importer's own folder, then the folders above
@@ -107,6 +133,8 @@ def resolve_python(importer: str, imp: ParsedImport, modules: PythonModules) -> 
     is_plain_import = not relative and all(n == "*" and local != "*" for n, local in imp.names)
     if is_plain_import:  # import a.b [as c]
         path = find(base)
+        if path == AMBIGUOUS:
+            return [Target("unresolved", base)]
         return [Target("internal", path) if path else modules.missing(base, relative)]
 
     # from base import name: the submodule base.name first, then base itself.
@@ -114,8 +142,12 @@ def resolve_python(importer: str, imp: ParsedImport, modules: PythonModules) -> 
     for name, _local in imp.names or (("*", "*"),):
         sub = find(_join(base, name)) if name != "*" else None
         whole = None if sub else find(base)
-        if sub:
+        if sub == AMBIGUOUS:
+            target = Target("unresolved", _join(base, name))
+        elif sub:
             target = Target("internal", sub)
+        elif whole == AMBIGUOUS:
+            target = Target("unresolved", base)
         elif whole:
             target = Target("internal", whole)
         else:
