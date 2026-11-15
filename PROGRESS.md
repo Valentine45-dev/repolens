@@ -2236,8 +2236,8 @@ are deliberately not changed after seeing eval results; these stay as documented
     on an `eval/` branch. Git's half of S-05 (orphaned `git-remote-https` after a timeout) remains.
     **black's search:** the 600 s cap was hit twice on 14 Nov (re-analysis job 20 and one "Retry
     preparing search"), so Ask is off on black; retry when the PC is idle.
-- **Graph correctness fixes, batch 2 (`fix/graph-batch2`, 15 Nov; built and re-analysed, not merged).** From the backend review:
-  C-01 to C-06. Prediction committed first: `eval/results/graph_batch2_prediction-20261115-7917f12.json`
+- **Graph correctness fixes, batch 2 (`fix/graph-batch2`, 15 Nov; merged into `main` 16 Nov with the owner's approval).** From the backend review:
+  C-01 to C-06. Prediction committed first (`6f1ce68`, before every fix commit): `eval/results/graph_batch2_prediction-20261115-7917f12.json`
   (SHA-256 `81b1350a74cbccd369637a8d99c66712b31317623f5a4d24e94d94c9d12c871a`).
   - **Search lost in batch 1 (read from the pre-batch-1 backup, SHA-256 re-checked):** chunks before batch 1
     (non-test / test): black 4,803 / 0, gunicorn 0 / 0, certbot 0 / 0, redash 0 / 0, ipython 0 / 0. After
@@ -2264,4 +2264,6 @@ are deliberately not changed after seeing eval results; these stay as documented
     prediction file's method note says 63,666 stored edges; the correct total is 55,666 (file left as
     committed). itsdangerous's re-analysis time was not measured (the driver was resumed). redash's 1,101
     unresolved alias imports are outside C-01..C-06.
-  - **Next:** ask before merging; then retry black's search when the PC is idle.
+  - **Later (not this branch):** retry black's search when the PC is idle; `eval/ui_drawn_counts.py`
+    hashes symbol views by database ids, so its `drawn_sha1` changes on every re-analysis (102 views
+    on 15 Nov with identical counts): hash on stable keys (path, kind, qualified name) instead.
