@@ -50,6 +50,40 @@ const sessions = new Map<number, AskSession>();
 const viewing = new Map<number, number>();
 const listeners = new Set<() => void>();
 
+// A reload or a move to another page cancels the question's request, and the browser reports
+// that as a failed fetch ("Could not reach the RepoLens server"). Saved as such, the question
+// would come back after the reload as a server error. So once the page starts to go
+// (beforeunload, pagehide) a failure is held back: the turn stays saved as unanswered and the
+// next page shows it as interrupted. If the page is still here after LEAVING_GRACE_MS, it did not
+// go after all (a download link also fires beforeunload), so the failure was real and is shown.
+const LEAVING_GRACE_MS = 3000;
+let leaving = false;
+const heldFailures = new Set<ReturnType<typeof setTimeout>>();
+if (typeof window !== "undefined") {
+  const leave = () => {
+    leaving = true;
+  };
+  window.addEventListener("beforeunload", leave);
+  window.addEventListener("pagehide", leave);
+  window.addEventListener("pageshow", () => {
+    leaving = false; // back from the back-forward cache: the page is here again
+  });
+}
+
+/** Records a failure now, or after the grace period while the page may be going away. */
+function reportFailure(record: () => void) {
+  if (!leaving) {
+    record();
+    return;
+  }
+  const timer = setTimeout(() => {
+    heldFailures.delete(timer);
+    leaving = false; // still here: the page did not go
+    record();
+  }, LEAVING_GRACE_MS);
+  heldFailures.add(timer);
+}
+
 function storageKey(snapshotId: number) {
   return `repolens.ask.${snapshotId}`;
 }
@@ -180,12 +214,18 @@ export function sendQuestion(snapshotId: number, question: string, fileId?: numb
     (answer) =>
       settle(snapshotId, id, isAnswer(answer) ? { answer } : { error: "The answer could not be shown." }),
     (error: unknown) =>
-      settle(snapshotId, id, { error: error instanceof Error ? error.message : "The question failed." }),
+      reportFailure(() =>
+        settle(snapshotId, id, { error: error instanceof Error ? error.message : "The question failed." }),
+      ),
   );
 }
 
-/** Tests only: forget every analysis's conversation, as a page load would. */
+/** Tests only: forget every analysis's conversation, as a page load would (a held failure dies
+ * with the old page). */
 export function resetAskStore() {
   sessions.clear();
   viewing.clear();
+  for (const timer of heldFailures) clearTimeout(timer);
+  heldFailures.clear();
+  leaving = false;
 }

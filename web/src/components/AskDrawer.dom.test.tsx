@@ -8,7 +8,8 @@ import { createRoot, type Root } from "react-dom/client";
 import { BrowserRouter, Route, Routes, useLocation, useNavigate, type NavigateFunction } from "react-router-dom";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-import { askQuestion, getGraph, type Answer, type Graph, type SnapshotStatus } from "../api";
+import { ApiError, askQuestion, getGraph, type Answer, type Graph, type SnapshotStatus } from "../api";
+import { resetAskStore } from "../askStore";
 import { AnalysisShell } from "./AnalysisShell";
 import { ErrorBoundary } from "./ErrorBoundary";
 
@@ -91,6 +92,7 @@ afterEach(() => {
   act(() => root.unmount());
   host.remove();
   sessionStorage.clear();
+  resetAskStore(); // as a new page would; the tests also use their own ids
 });
 
 const tick = () => act(async () => new Promise((r) => setTimeout(r, 10)));
@@ -414,5 +416,67 @@ describe("the unread dot: a question that finishes while Ask is out of sight", (
     await click(tab("Ask"));
     expect(dot(".right-tabs")).toBeNull();
     expect(tab("Ask").textContent).toBe("Ask");
+  });
+});
+
+describe("a reload while the browser cancels the question's request", () => {
+  const UNREACHABLE = "Could not reach the RepoLens server. Check that the API is running.";
+  // What the browser does on a reload: the page starts to go, then the request fails (fetch
+  // rejects, which api.ts reports as the server being unreachable).
+  async function askThenFail(id: number, leaving: string[]) {
+    let fail!: (e: Error) => void;
+    vi.mocked(askQuestion).mockImplementationOnce(() => new Promise<Answer>((_, reject) => (fail = reject)));
+    await open(`/a/${id}/explore?ask=1`);
+    await ask("Question cut off by the reload");
+    for (const type of leaving) act(() => window.dispatchEvent(new Event(type)));
+    await act(async () => fail(new ApiError(UNREACHABLE, 0, true)));
+  }
+  /** The old page is gone (memory too); the new one reads what was saved. */
+  async function reload(id: number) {
+    act(() => root.unmount());
+    resetAskStore();
+    root = createRoot(host);
+    await open(`/a/${id}/explore?ask=1`);
+  }
+
+  it.each([["beforeunload"], ["pagehide"]])("is not saved as a failure when the request fails after %s", async (type) => {
+    const id = type === "beforeunload" ? 81 : 82;
+    await askThenFail(id, [type]);
+    const saved = JSON.parse(sessionStorage.getItem(`repolens.ask.${id}`)!);
+    expect(saved[0].error).toBeUndefined();
+    await reload(id);
+    expect(turns()).toHaveLength(1);
+    expect(turns()[0].textContent).toContain("This question was interrupted by a page reload; the answer was not received.");
+    expect(host.textContent).not.toContain(UNREACHABLE);
+  });
+
+  it("still shows the server error when the request fails while the page stays open", async () => {
+    await askThenFail(83, []);
+    expect(turns()[0].textContent).toContain(UNREACHABLE);
+    expect(JSON.parse(sessionStorage.getItem("repolens.ask.83")!)[0].error).toBe(UNREACHABLE);
+  });
+
+  it("shows the server error after a short wait if the page did not go after all", async () => {
+    // e.g. a download link: beforeunload fires but the page stays
+    let fail!: (e: Error) => void;
+    vi.mocked(askQuestion).mockImplementationOnce(() => new Promise<Answer>((_, reject) => (fail = reject)));
+    await open("/a/84/explore?ask=1");
+    await ask("Question asked before a download");
+    act(() => window.dispatchEvent(new Event("beforeunload")));
+    vi.useFakeTimers({ toFake: ["setTimeout", "clearTimeout"] });
+    try {
+      await act(async () => fail(new ApiError(UNREACHABLE, 0, true)));
+      expect(turns()[0].textContent).not.toContain(UNREACHABLE); // still "Working on it…"
+      await act(async () => vi.advanceTimersByTime(3000));
+    } finally {
+      vi.useRealTimers();
+    }
+    await tick();
+    expect(turns()[0].textContent).toContain(UNREACHABLE);
+    // The page did not go, so the next failure is reported at once again.
+    vi.mocked(askQuestion).mockImplementationOnce(() => Promise.reject(new ApiError(UNREACHABLE, 0, true)));
+    await ask("Next question");
+    await tick();
+    expect(turns()[1].textContent).toContain(UNREACHABLE);
   });
 });
