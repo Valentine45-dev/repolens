@@ -2267,10 +2267,10 @@ are deliberately not changed after seeing eval results; these stay as documented
   - **Later (not this branch):** retry black's search when the PC is idle; `eval/ui_drawn_counts.py`
     hashes symbol views by database ids, so its `drawn_sha1` changes on every re-analysis (102 views
     on 15 Nov with identical counts): hash on stable keys (path, kind, qualified name) instead.
-- **FE1: Ask drawer (`fix/fe1-ask-drawer`, 16 Nov; built, pushed, waiting for the owner's real-mouse
-  test, not merged).** From the frontend review (`REVIEW-FRONTEND-2026-11-14.md`): COR-01, COR-08,
-  SEC-04, SEC-05, STA-01, TEST-01 for Ask, plus the unread dot (HANDOFF's later list). $0 API spend:
-  mocked API only, no `/ask` call made. Backend, eval, `api.ts` and the graph/map code untouched
+- **FE1: Ask drawer (`fix/fe1-ask-drawer`, 16-19 Nov; owner's real-mouse test passed, merged into
+  `main` 19 Nov).** From the frontend review (`REVIEW-FRONTEND-2026-11-14.md`): COR-01, COR-08,
+  SEC-04, SEC-05, STA-01, TEST-01 for Ask, plus the unread dot (HANDOFF's later list). $0 API spend
+  from the agent's own work: mocked API only, no `/ask` call made (owner's own testing below). Backend, eval, `api.ts` and the graph/map code untouched
   (`git diff main -- backend/ eval/ web/src/api.ts web/src/graphModel.ts web/src/mapModel.ts
   web/src/mapLayout.ts` empty). No new dependencies.
   - **Step 0 (read-only):** all six reproduced on `main` with a throwaway mocked test. Two things the
@@ -2309,6 +2309,38 @@ are deliberately not changed after seeing eval results; these stay as documented
     not start with `/`. Restarted with `ask$` (Node printed `"ask$"`): through 5173 `/api/health`
     0.07 s, `/api/snapshots/2/graph` 0.16 s, `GET /api/snapshots/2/ask` 405 in 10.05 s (GET is not
     an allowed method there, so no question ran).
+  - **Owner's test, first round (Firefox, 1366 px):** test 9 (hard reload while a question is
+    pending) failed: after the reload the turn said "Could not reach the RepoLens server. Check that
+    the API is running." instead of the interrupted note (twice, API running). Cause: the browser
+    cancels the pending fetch while the page unloads, and askStore saved the rejection as an error
+    before the page went.
+  - **`0c10342` unload handling:** once the page starts to go (`beforeunload`, `pagehide`) a failed
+    request is held back for 3 s instead of saved; the turn stays saved as unanswered, so the next
+    page shows it as interrupted. If the page is still there after 3 s (a download link also fires
+    `beforeunload`), the failure was real and is shown, and the flag is cleared; `pageshow` (back
+    from the back-forward cache) clears it too. A failure while the page stays open is shown at
+    once, as before. Four new DOM tests (fetch rejected after `beforeunload` / after `pagehide`,
+    then a simulated reload: interrupted, no error saved; page stays: error after the hold, the next
+    failure at once; plain network failure: error at once); the first three fail on `98d4663`'s
+    store, the last passes there by design.
+  - **Chrome check (`0c10342`):** the real built bundle in headless Chrome 139 (throwaway profile)
+    against a stub server on 127.0.0.1 that never answers `POST /ask` ($0; nothing reached the
+    API). Before the fix: after a hard reload the turn read "Could not reach the RepoLens
+    server..." and was stored as an error, so Chrome behaves as Firefox did. After: "This question
+    was interrupted by a page reload; the answer was not received.", stored `interrupted: true`,
+    unchanged 4 s later; a connection dropped while the page stays open still shows the server
+    error at once. One headless renderer from that check (no window) would not stop; a reboot clears
+    it.
+  - **Checks after `0c10342`:** web **40 files, 327 tests passed** (run with `--pool=threads
+    --testTimeout=30000`: the PC was at 100% CPU after a reboot and forked workers timed out at
+    start; no config change), `tsc` clean, build ok. Main chunk gzip 136.28 -> 136.39 kB.
+  - **Owner's test, second round: passed** in Firefox and Chrome at 1366 px and at 80% zoom: tests
+    1-12, 15 and P (a real AI question closed while it was answered). **Not tested by hand:** 13
+    and 14 (Esc during IME composition in Ask and in Go to file; covered by the escape-stack test
+    only). The Go to file `<dialog>` cancel during composition is therefore still unchecked in a
+    real browser.
+  - **Owner testing spend (not part of any evaluation):** about 3 real AI questions on PyGoat
+    (snapshot 2) across both rounds, a few cents.
   - **Known:** the unread dot is not kept across a reload; the draft is kept across close/reopen
     and analysis switches, not across a reload. Duplicating a tab while a question is pending
     copies sessionStorage, so the copy shows the interrupted note while the original gets the
