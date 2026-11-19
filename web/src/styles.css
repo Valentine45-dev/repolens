@@ -916,6 +916,22 @@ a {
   margin: 0 0 var(--space-2) auto;
 }
 
+/* A question finished while Ask was out of sight (AnalysisShell). Ink, the one emphasis colour;
+   no motion. */
+.unread-dot {
+  display: inline-block;
+  flex: none;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--text);
+}
+
+.tab .unread-dot {
+  margin-left: 6px;
+  vertical-align: middle;
+}
+
 .analysis-ask[aria-pressed="true"] {
   background: var(--surface-2);
   border-color: var(--text);
@@ -2610,6 +2626,14 @@ a {
 .ask-scope-text {
   flex: 1;
   min-width: 0;
+}
+
+/* The path's room while a file named by a link is checked against the file index. */
+.ask-scope-skeleton {
+  display: inline-block;
+  width: 160px;
+  height: 12px;
+  vertical-align: middle;
 }
 
 .ask-input {

@@ -25,6 +25,9 @@ export function topLayer(active: Element | null): Layer | null {
 
 function onKey(e: KeyboardEvent) {
   if (e.key !== "Escape" || e.defaultPrevented) return;
+  // With an input method (Chinese, Japanese, Korean), Esc first cancels the text being composed;
+  // that press must not also close a panel. 229 is what some browsers report during composition.
+  if (e.isComposing || e.keyCode === 229) return;
   const layer = topLayer(document.activeElement);
   if (layer) {
     e.preventDefault();

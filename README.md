@@ -18,6 +18,9 @@ it clones the repo, parses the Python and JavaScript/TypeScript files, and gives
 - an **Ask panel**: structural questions ("which files import signer.py?") are answered from the
   graph without an LLM; other questions go to an LLM with retrieved code, and only citations
   that the server can match to a snippet it sent (`path:start-end`) are shown as source chips.
+  The conversation is kept per analysis in this browser tab: closing the panel while a question
+  is answered loses neither the question nor its answer (a dot on the Ask button says it
+  arrived), and a half-typed question waits in the box.
 
 RepoLens never runs the code it analyses: no installs, no scripts, parse only. Findings are
 pattern checks, not a security verdict; they can miss issues and can flag safe code.

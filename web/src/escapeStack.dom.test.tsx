@@ -60,6 +60,21 @@ describe("Esc closes the top-most side panel, one per press", () => {
     expect(ask).not.toHaveBeenCalled();
   });
 
+  it("ignores Esc while an input method is composing text, and closes on a plain Esc after it", () => {
+    const ask = vi.fn();
+    act(() => root.render(<Panel name="ask" onClose={ask} />));
+    const composing = new KeyboardEvent("keydown", { key: "Escape", isComposing: true, cancelable: true });
+    act(() => window.dispatchEvent(composing));
+    // keyCode 229 ("Process") is how some browsers mark a key the input method takes
+    const processKey = new KeyboardEvent("keydown", { key: "Escape", cancelable: true });
+    Object.defineProperty(processKey, "keyCode", { value: 229 });
+    act(() => window.dispatchEvent(processKey));
+    expect(ask).not.toHaveBeenCalled();
+    expect(composing.defaultPrevented).toBe(false); // left to the input method
+    esc();
+    expect(ask).toHaveBeenCalledOnce();
+  });
+
   it("does nothing once every panel is closed", () => {
     act(() => root.render(<></>));
     expect(() => esc()).not.toThrow();

@@ -2267,3 +2267,82 @@ are deliberately not changed after seeing eval results; these stay as documented
   - **Later (not this branch):** retry black's search when the PC is idle; `eval/ui_drawn_counts.py`
     hashes symbol views by database ids, so its `drawn_sha1` changes on every re-analysis (102 views
     on 15 Nov with identical counts): hash on stable keys (path, kind, qualified name) instead.
+- **FE1: Ask drawer (`fix/fe1-ask-drawer`, 16-19 Nov; owner's real-mouse test passed, merged into
+  `main` 19 Nov).** From the frontend review (`REVIEW-FRONTEND-2026-11-14.md`): COR-01, COR-08,
+  SEC-04, SEC-05, STA-01, TEST-01 for Ask, plus the unread dot (HANDOFF's later list). $0 API spend
+  from the agent's own work: mocked API only, no `/ask` call made (owner's own testing below). Backend, eval, `api.ts` and the graph/map code untouched
+  (`git diff main -- backend/ eval/ web/src/api.ts web/src/graphModel.ts web/src/mapModel.ts
+  web/src/mapLayout.ts` empty). No new dependencies.
+  - **Step 0 (read-only):** all six reproduced on `main` with a throwaway mocked test. Two things the
+    review missed: `/ask` never had an abort signal (closing aborted nothing; the result went into
+    an unmounted drawer), and the answer was also lost through "Open in Explorer", the reachability
+    chip and going Home (none keep `ask=1`).
+  - **Design:** `web/src/askStore.ts`, a module store keyed by snapshot id (`useSyncExternalStore`),
+    holds turns, draft, scope, the one pending question and the unread state; it does the asking,
+    so an answer is filed under its analysis whether or not a drawer is mounted. Nothing aborts a
+    question (paid either way). Storage is read once per analysis per page load.
+  - **Commits:** `f048eb3` STA-01 (Esc ignored while `isComposing` / keyCode 229), `1aa7009` COR-01,
+    `3ab0bfd` COR-08 (`key={snapshotId}` too), `eecbb34` reload while pending (kept, marked
+    `interrupted`: "This question was interrupted by a page reload; the answer was not received."),
+    `dc7a24f` SEC-04 (`askTurns.ts` checks every field the drawer reads; misfits dropped and the
+    cleaned list saved; live answers checked too, "The answer could not be shown."; a turn that
+    still throws is removed by its own boundary with a caption, the rest stay), `04dfe7a` SEC-05
+    (chip path from the file index by id, `askpath` ignored and no longer written; Send waits only
+    while a link's file id is not in any index already on the page; unknown id or failed list drops
+    the scope with a note), `b4f7278` unread dot (Ink, 6px; header button when Ask is closed, Ask
+    tab when Ask is behind; "Ask, new answer" / "Ask, question failed"; polite "Answer ready in
+    Ask."; clears when that analysis's Ask is on screen).
+  - **Revert checks:** every new test was run with its commit's source files put back to the
+    previous commit (or `main`): each fails there except two guards that pass there by design
+    ("no dot while Ask is on screen"; "a question without a file never waits"). The "Ask about
+    this never waits" test also fails on a variant that always waits for the file list.
+  - **Checks:** web **40 files, 323 tests passed** (`main`: 38 / 300; new: `AskDrawer.dom.test.tsx`
+    18, `askTurns.test.ts` 4, escape stack 1), `tsc` clean, `npm run build` ok. No ESLint is set up
+    for `web/` (frontend lint is "only if asked"), so lint before each commit was `tsc`. Main chunk
+    426.54 -> 431.92 kB (gzip 134.53 -> 136.28, +1.75 kB); Explore chunk unchanged; CSS +51 B gzip.
+  - **Served for the owner's test:** `vite preview` on 5173 with this branch's build (replaced the
+    14 Nov preview), started with `REPOLENS_DEV_API_DELAY_MS=10000 REPOLENS_DEV_API_DELAY_MATCH=ask$`
+    so free graph questions stay pending for 10 s (the delay is in the preview server, nothing of it
+    is in `dist`). API on 8000 left as it was. The first start used `/ask$` from Git Bash, which
+    MSYS path conversion rewrote into a Windows path, so nothing was delayed (the owner saw instant
+    graph answers; see the Git Bash note in the UI polish entry). From Git Bash the MATCH value must
+    not start with `/`. Restarted with `ask$` (Node printed `"ask$"`): through 5173 `/api/health`
+    0.07 s, `/api/snapshots/2/graph` 0.16 s, `GET /api/snapshots/2/ask` 405 in 10.05 s (GET is not
+    an allowed method there, so no question ran).
+  - **Owner's test, first round (Firefox, 1366 px):** test 9 (hard reload while a question is
+    pending) failed: after the reload the turn said "Could not reach the RepoLens server. Check that
+    the API is running." instead of the interrupted note (twice, API running). Cause: the browser
+    cancels the pending fetch while the page unloads, and askStore saved the rejection as an error
+    before the page went.
+  - **`0c10342` unload handling:** once the page starts to go (`beforeunload`, `pagehide`) a failed
+    request is held back for 3 s instead of saved; the turn stays saved as unanswered, so the next
+    page shows it as interrupted. If the page is still there after 3 s (a download link also fires
+    `beforeunload`), the failure was real and is shown, and the flag is cleared; `pageshow` (back
+    from the back-forward cache) clears it too. A failure while the page stays open is shown at
+    once, as before. Four new DOM tests (fetch rejected after `beforeunload` / after `pagehide`,
+    then a simulated reload: interrupted, no error saved; page stays: error after the hold, the next
+    failure at once; plain network failure: error at once); the first three fail on `98d4663`'s
+    store, the last passes there by design.
+  - **Chrome check (`0c10342`):** the real built bundle in headless Chrome 139 (throwaway profile)
+    against a stub server on 127.0.0.1 that never answers `POST /ask` ($0; nothing reached the
+    API). Before the fix: after a hard reload the turn read "Could not reach the RepoLens
+    server..." and was stored as an error, so Chrome behaves as Firefox did. After: "This question
+    was interrupted by a page reload; the answer was not received.", stored `interrupted: true`,
+    unchanged 4 s later; a connection dropped while the page stays open still shows the server
+    error at once. One headless renderer from that check (no window) would not stop; a reboot clears
+    it.
+  - **Checks after `0c10342`:** web **40 files, 327 tests passed** (run with `--pool=threads
+    --testTimeout=30000`: the PC was at 100% CPU after a reboot and forked workers timed out at
+    start; no config change), `tsc` clean, build ok. Main chunk gzip 136.28 -> 136.39 kB.
+  - **Owner's test, second round: passed** in Firefox and Chrome at 1366 px and at 80% zoom: tests
+    1-12, 15 and P (a real AI question closed while it was answered). **Not tested by hand:** 13
+    and 14 (Esc during IME composition in Ask and in Go to file; covered by the escape-stack test
+    only). The Go to file `<dialog>` cancel during composition is therefore still unchecked in a
+    real browser.
+  - **Owner testing spend (not part of any evaluation):** about 3 real AI questions on PyGoat
+    (snapshot 2) across both rounds, a few cents.
+  - **Known:** the unread dot is not kept across a reload; the draft is kept across close/reopen
+    and analysis switches, not across a reload. Duplicating a tab while a question is pending
+    copies sessionStorage, so the copy shows the interrupted note while the original gets the
+    answer. The vitest jsdom start takes ~16-40 s per file on this PC; two runs at once time out
+    the workers ("Failed to start forks worker"), so never run vitest in parallel here.

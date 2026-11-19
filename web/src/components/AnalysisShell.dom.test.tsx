@@ -6,6 +6,7 @@ import { MemoryRouter, Route, Routes, useOutletContext, useSearchParams } from "
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import type { Answer, SnapshotStatus } from "../api";
+import { resetAskStore } from "../askStore";
 import { parseLines, useRevealToken } from "../links";
 import { AnalysisShell, type AnalysisContext } from "./AnalysisShell";
 import { CodeView } from "./NodePanel";
@@ -77,6 +78,7 @@ afterEach(() => {
   act(() => root.unmount());
   host.remove();
   sessionStorage.clear();
+  resetAskStore();
 });
 
 async function open(url: string) {
