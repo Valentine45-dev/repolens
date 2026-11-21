@@ -97,3 +97,26 @@ describe("severity menu while the counts are not known (COR-07)", () => {
     expect(options("Severity")).toEqual(["All", "High", "Medium", "Low"]);
   });
 });
+
+describe("a page past the end of the list (COR-06)", () => {
+  it("says so, never 'No Security findings', shows no pager, and offers the last page", async () => {
+    respond = async (f) => page((f.offset ?? 0) >= 70 ? [] : [finding((f.offset ?? 0) + 1)], 70, { offset: f.offset ?? 0 });
+    await open("/a/2/findings?page=99");
+    const message = host.querySelector(".empty-state")?.textContent ?? "";
+    expect(message).toContain("Page 100 is past the end of this list (70 findings, 2 pages).");
+    expect(message).not.toContain("No Security findings");
+    expect(host.querySelector(".pager")).toBeNull();
+    const last = [...host.querySelectorAll<HTMLButtonElement>(".empty-state button")].find((b) => b.textContent === "Go to the last page")!;
+    act(() => last.click());
+    await settle();
+    expect(new URLSearchParams(window.location.search).get("page")).toBe("1");
+    expect(host.querySelector(".finding-row")?.textContent).toContain("Finding 51");
+    expect(host.querySelector(".pager")?.textContent).toContain("51–70 of 70");
+  });
+
+  it("an empty category still says it has none (no change)", async () => {
+    respond = async () => page([], 0);
+    await open("/a/2/findings");
+    expect(host.querySelector(".empty-state")?.textContent).toContain("No Security findings.");
+  });
+});

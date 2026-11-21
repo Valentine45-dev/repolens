@@ -24,6 +24,7 @@ import { CloseButton } from "../components/CloseButton";
 import { useEscapeToClose } from "../escapeStack";
 import { findingsCountLabel } from "../findingsCount";
 import { exploreHref, REVEAL, useSetParams } from "../links";
+import { plural } from "../mapModel";
 
 const PAGE = 50;
 const SECRET_RULE = "hardcoded-secret";
@@ -117,6 +118,12 @@ export function Findings() {
     status ? repoName(status.url) : null,
   ]);
   const counts = findings.data?.counts;
+  // An edited or stale link to a page after the last one: never "No findings" (COR-06).
+  const pages = findings.data ? Math.ceil(findings.data.total / PAGE) : 0;
+  const pastEnd =
+    findings.data && findings.data.items.length === 0 && findings.data.total > 0
+      ? { page: page + 1, pages, total: findings.data.total, onLast: () => setParams({ page: pages > 1 ? String(pages - 1) : null, finding: null }) }
+      : null;
   const filtered = Boolean(
     severity || rule || language || path || hideTests || hidePlaceholders || category !== "all",
   );
@@ -263,11 +270,12 @@ export function Findings() {
           }
           categoryLabel={category === "security" ? "Security" : category === "quality" ? "Bug / Quality" : null}
           showReach={byReach}
+          pastEnd={pastEnd}
           selectedId={selectedId}
           onSelect={(id) => setParams({ finding: String(id) }, false)}
         />
 
-        {findings.data && findings.data.total > PAGE ? (
+        {findings.data && findings.data.total > PAGE && !pastEnd ? (
           <div className="pager">
             <button
               type="button"
@@ -387,6 +395,7 @@ export function FindingsList({
   emptyAction,
   categoryLabel,
   showReach,
+  pastEnd = null,
   selectedId,
   onSelect,
 }: {
@@ -395,6 +404,8 @@ export function FindingsList({
   emptyAction: { label: string; run: () => void } | null;
   categoryLabel: string | null;
   showReach: boolean;
+  /** The page asked for is after the last one (the list itself is not empty). */
+  pastEnd?: { page: number; pages: number; total: number; onLast: () => void } | null;
   selectedId: number | null;
   onSelect: (id: number) => void;
 }) {
@@ -437,6 +448,19 @@ export function FindingsList({
             ))}
           </tbody>
         </table>
+      </div>
+    );
+  }
+  if (query.data.items.length === 0 && pastEnd) {
+    return (
+      <div className="panel-message empty-state" role="status">
+        <p>
+          Page {pastEnd.page} is past the end of this list ({plural(pastEnd.total, "finding")},{" "}
+          {plural(pastEnd.pages, "page")}).
+        </p>
+        <button type="button" className="button button-secondary button-small" onClick={pastEnd.onLast}>
+          Go to the last page
+        </button>
       </div>
     );
   }
