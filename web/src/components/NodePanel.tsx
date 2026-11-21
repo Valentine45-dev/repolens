@@ -32,6 +32,8 @@ export function NodePanel({
   reveal = null,
   hidden = false,
   isInGraph,
+  testsHidden = false,
+  onShowTests,
   onSelectFile,
   onShowLines,
   onAsk,
@@ -48,6 +50,9 @@ export function NodePanel({
   /** Behind the Ask tab (display: none): focus and scrolling wait until it is shown. */
   hidden?: boolean;
   isInGraph: (fileId: number) => boolean;
+  /** Test and example files are hidden in the Explorer now: they are not in `isInGraph`. */
+  testsHidden?: boolean;
+  onShowTests?: () => void;
   onSelectFile: (fileId: number, lines?: LineRange) => void;
   onShowLines: (lines: LineRange) => void;
   onAsk: (fileId: number, path: string) => void;
@@ -111,6 +116,16 @@ export function NodePanel({
     queryFn: ({ signal }) => getNeighbours(node.symbol_id, "dependencies", minConfidence, signal),
     staleTime: Infinity,
   });
+  // With tests hidden, the map and the List view count only the files they show; so do Used by
+  // and Uses here, and say how many test or example files were left out (COR-05).
+  const usedBySplit = useMemo(
+    () => (usedBy.data ? splitHidden(usedBy.data.items, node.id, isInGraph) : null),
+    [usedBy.data, node.id, isInGraph],
+  );
+  const usesSplit = useMemo(
+    () => (uses.data ? splitHidden(uses.data.items, node.id, isInGraph) : null),
+    [uses.data, node.id, isInGraph],
+  );
   // Under the line limit but over the byte limit: only known once the text is here.
   const coloursOff = useMemo(
     () => (file.data ? utf8Length(file.data.content) > MAX_BYTES : false),
@@ -151,11 +166,11 @@ export function NodePanel({
       <dl className="panel-facts">
         <div>
           <dt>Used by</dt>
-          <dd className="mono num">{usedBy.data ? files(usedBy.data.files) : "…"}</dd>
+          <dd className="mono num">{usedBySplit ? files(countFiles(usedBySplit.shown)) : "…"}</dd>
         </div>
         <div>
           <dt>Uses</dt>
-          <dd className="mono num">{uses.data ? files(countFiles(uses.data.items)) : "…"}</dd>
+          <dd className="mono num">{usesSplit ? files(countFiles(usesSplit.shown)) : "…"}</dd>
         </div>
         <div>
           <dt>External imports</dt>
@@ -204,15 +219,18 @@ export function NodePanel({
             <PanelState query={file} codeLines={node.loc} />
           )
         ) : tab === "usedBy" ? (
-          usedBy.data ? (
-            <NeighbourList
-              items={usedBy.data.items}
-              empty="No other file imports or calls this one."
-              isInGraph={isInGraph}
-              onSelectFile={onSelectFile}
-              canOpenSite={canOpenSite}
-              onOpenSite={openSite}
-            />
+          usedBySplit ? (
+            <>
+              <NeighbourList
+                items={usedBySplit.shown}
+                empty={usedBySplit.hidden > 0 ? null : "No other file imports or calls this one."}
+                isInGraph={isInGraph}
+                onSelectFile={onSelectFile}
+                canOpenSite={canOpenSite}
+                onOpenSite={openSite}
+              />
+              <HiddenNote count={usedBySplit.hidden} testsHidden={testsHidden} direction="usedBy" onShowTests={onShowTests} />
+            </>
           ) : (
             <PanelState query={usedBy} />
           )
@@ -222,15 +240,18 @@ export function NodePanel({
           ) : (
             <PanelState query={file} />
           )
-        ) : uses.data ? (
-          <NeighbourList
-            items={uses.data.items}
-            empty="This file imports nothing and calls nothing outside itself."
-            isInGraph={isInGraph}
-            onSelectFile={onSelectFile}
-            canOpenSite={canOpenSite}
-            onOpenSite={openSite}
-          />
+        ) : usesSplit ? (
+          <>
+            <NeighbourList
+              items={usesSplit.shown}
+              empty={usesSplit.hidden > 0 ? null : "This file imports nothing and calls nothing outside itself."}
+              isInGraph={isInGraph}
+              onSelectFile={onSelectFile}
+              canOpenSite={canOpenSite}
+              onOpenSite={openSite}
+            />
+            <HiddenNote count={usesSplit.hidden} testsHidden={testsHidden} direction="uses" onShowTests={onShowTests} />
+          </>
         ) : (
           <PanelState query={uses} />
         )}
@@ -245,6 +266,57 @@ function files(n: number): string {
 
 function countFiles(items: Neighbour[]): number {
   return new Set(items.filter((i) => i.symbol.file_id !== null).map((i) => i.symbol.file_id)).size;
+}
+
+/** Neighbours in files the Explorer shows now, and how many files it does not (with tests hidden,
+ * those are the test and example files: the file list holds every other code file). External and
+ * unresolved imports have no file and always stay. */
+function splitHidden(
+  items: Neighbour[],
+  self: number,
+  isInGraph: (fileId: number) => boolean,
+): { shown: Neighbour[]; hidden: number } {
+  const shown: Neighbour[] = [];
+  const hidden = new Set<number>();
+  for (const item of items) {
+    const id = item.symbol.file_id;
+    if (id === null || id === self || isInGraph(id)) shown.push(item);
+    else hidden.add(id);
+  }
+  return { shown, hidden: hidden.size };
+}
+
+function HiddenNote({
+  count,
+  testsHidden,
+  direction,
+  onShowTests,
+}: {
+  count: number;
+  testsHidden: boolean;
+  direction: "usedBy" | "uses";
+  onShowTests?: () => void;
+}) {
+  if (count === 0) return null;
+  const what = `${count} test or example file${count === 1 ? "" : "s"}`;
+  const they = count === 1 ? "it's" : "they're";
+  const text =
+    direction === "usedBy"
+      ? `${what} also ${count === 1 ? "uses" : "use"} this file; ${they} hidden.`
+      : `This file also uses ${what}; ${they} hidden.`;
+  return (
+    <p className="panel-message caption neighbour-hidden">
+      {testsHidden ? text : text.replace(" test or example", "")}
+      {testsHidden && onShowTests ? (
+        <>
+          {" "}
+          <button type="button" className="link-button" onClick={onShowTests}>
+            Show tests &amp; examples
+          </button>
+        </>
+      ) : null}
+    </p>
+  );
 }
 
 function PanelState({
@@ -557,7 +629,7 @@ function NeighbourList({
   onOpenSite,
 }: {
   items: Neighbour[];
-  empty: string;
+  empty: string | null; // null: say nothing when there are none (a note below says why)
   isInGraph: (fileId: number) => boolean;
   onSelectFile: (fileId: number) => void;
   canOpenSite: (fileId: number | null | undefined) => boolean;
@@ -572,7 +644,7 @@ function NeighbourList({
       onOpen={canOpenSite(ref.fileId) ? (line) => onOpenSite(ref.fileId!, line) : undefined}
     />
   );
-  if (groups.length === 0) return <p className="panel-message">{empty}</p>;
+  if (groups.length === 0) return empty === null ? null : <p className="panel-message">{empty}</p>;
   return (
     <ul className="neighbours">
       {groups.map((g) => (

@@ -550,6 +550,8 @@ function ExploreInner() {
             reveal={reveal}
             hidden={panelHidden}
             isInGraph={isInGraph}
+            testsHidden={!showTests}
+            onShowTests={() => setParam("tests", "1")}
             onSelectFile={select}
             onShowLines={showLines}
             onAsk={askAbout}
