@@ -321,7 +321,7 @@ def summarise(questions: list[dict], outs: dict, recs: dict, configs: list[str])
     s["status"] = dict(Counter(o[i]["status"] for i in o))
     r = [recs[i] for i in o]
     secs = sorted(x["latency_s"] for x in r)
-    s["latency_s"] = {"median": statistics.median(secs) if secs else None,
+    s["latency_s"] = {"median": round(statistics.median(secs), 2) if secs else None,
                       "max": secs[-1] if secs else None}
     s["tokens_in"] = sum(x["tokens_in"] for x in r)
     s["tokens_out"] = sum(x["tokens_out"] for x in r)
