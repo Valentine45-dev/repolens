@@ -94,8 +94,12 @@ function ExploreInner() {
   const isInGraph = useCallback((fileId: number) => allIds.has(fileId), [allIds]);
 
   // A node= that is not in the file list: say why instead of showing nothing (COR-03). A hidden
-  // test or example file can be shown with one click; a file that is not code, or an id this
-  // analysis does not have, never can, so that parameter is dropped and the reason stays on screen.
+  // test or example file can be shown with one click, so its link stays; a file that is not code,
+  // or an id this analysis does not have, never can, so that parameter is dropped and the reason
+  // stays on screen until the next selection. Nothing is said until both file lists (tests shown
+  // and hidden) are known, and "isn't code" only for a file the server says has no language: the
+  // file's text may already be loaded (its panel was open), which proves nothing about why it is
+  // not in this list.
   const missingId =
     selectedId !== null && graph.data && !graph.isPlaceholderData && !selected ? selectedId : null;
   const withTests = useQuery({
@@ -104,12 +108,14 @@ function ExploreInner() {
     enabled: missingId !== null && !showTests,
     staleTime: Infinity,
   });
+  const listsKnown = missingId !== null && (showTests || withTests.data !== undefined);
   const hiddenTest =
-    missingId !== null && !showTests ? (withTests.data?.nodes.find((n) => n.id === missingId) ?? null) : null;
+    listsKnown && !showTests ? (withTests.data?.nodes.find((n) => n.id === missingId) ?? null) : null;
+  const mustCheck = listsKnown && hiddenTest === null; // in neither list: ask the server why
   const fileCheck = useQuery({
     queryKey: ["file", snapshotId, missingId],
     queryFn: ({ signal }) => getFile(snapshotId, missingId!, signal),
-    enabled: missingId !== null && (showTests || (withTests.data !== undefined && hiddenTest === null)),
+    enabled: mustCheck,
     staleTime: Infinity,
   });
   const [notice, setNotice] = useState<{ kind: "not-code"; path: string } | { kind: "unknown" } | null>(null);
@@ -117,16 +123,17 @@ function ExploreInner() {
     if (selectedId !== null) setNotice(null); // a new selection replaces the last reason
   }, [selectedId]);
   useEffect(() => {
-    if (missingId === null) return;
-    const gone = fileCheck.data
-      ? ({ kind: "not-code", path: fileCheck.data.path } as const)
-      : fileCheck.error instanceof ApiError && fileCheck.error.status === 404
-        ? ({ kind: "unknown" } as const)
-        : null;
+    if (!mustCheck) return;
+    const gone =
+      fileCheck.data && fileCheck.data.language === null
+        ? ({ kind: "not-code", path: fileCheck.data.path } as const)
+        : fileCheck.error instanceof ApiError && fileCheck.error.status === 404
+          ? ({ kind: "unknown" } as const)
+          : null;
     if (!gone) return;
     setParams({ node: null, lines: null }, true);
     setNotice(gone);
-  }, [missingId, fileCheck.data, fileCheck.error, setParams]);
+  }, [mustCheck, fileCheck.data, fileCheck.error, setParams]);
   const nodeParam = params.get("node");
   const panelState: PanelState =
     selected !== null ? "shown" : selectedId !== null && !graph.data && !graph.error ? "pending" : "none";
@@ -415,25 +422,6 @@ function ExploreInner() {
               )}
             </p>
           ) : null}
-          {hiddenTest ? (
-            <p className="canvas-hint caption" role="status">
-              <span className="mono">{hiddenTest.path}</span> is a test or example file, hidden on the
-              map.{" "}
-              <button type="button" className="link-button" onClick={() => setParam("tests", "1")}>
-                Show tests &amp; examples
-              </button>
-            </p>
-          ) : notice ? (
-            <p className="canvas-hint caption" role="status">
-              {notice.kind === "not-code" ? (
-                <>
-                  <span className="mono">{notice.path}</span> isn&apos;t code, so it isn&apos;t on the map.
-                </>
-              ) : (
-                "The link pointed to a file that isn't in this analysis."
-              )}
-            </p>
-          ) : null}
           {hardError && !hasData ? (
             <div className="canvas-message" role="alert">
               <p>{hardError.message}</p>
@@ -538,6 +526,26 @@ function ExploreInner() {
                 ) : null}
               </>
             )
+          ) : null}
+          {/* After the map: its background is opaque, so a hint placed before it is painted under it. */}
+          {hiddenTest ? (
+            <p className="canvas-hint caption" role="status">
+              <span className="mono">{hiddenTest.path}</span> is a test or example file, hidden on the
+              map.{" "}
+              <button type="button" className="link-button" onClick={() => setParam("tests", "1")}>
+                Show tests &amp; examples
+              </button>
+            </p>
+          ) : notice ? (
+            <p className="canvas-hint caption" role="status">
+              {notice.kind === "not-code" ? (
+                <>
+                  <span className="mono">{notice.path}</span> isn&apos;t code, so it isn&apos;t on the map.
+                </>
+              ) : (
+                "The link pointed to a file that isn't in this analysis."
+              )}
+            </p>
           ) : null}
         </div>
 

@@ -2402,3 +2402,22 @@ are deliberately not changed after seeing eval results; these stay as documented
     allowed this session); the COR-10 tooltip has no PyGoat or flask view to show it (the only
     symbol view with "+ N more" is black's `pytree.py`), so it rests on its unit test; COR-07 shows
     only while the first findings request is slow.
+  - **Owner's manual test, round 1 (21 Nov, real mouse, 1366 px):** 1-6 and 9-14 pass. Two COR-03
+    failures in the Explorer canvas messages, fixed in one commit:
+    - Unticking "Tests & examples" with a test file open dropped `node=` and said "tests/... isn't
+      code". Cause: the "not code" check read the file query's cache, which the open file panel had
+      filled (`["file", id, node]`), and did not look at whether the file was a hidden test. Now
+      nothing is said until both file lists (tests shown and hidden) are known, "isn't code" needs
+      the server's `language: null`, and a hidden test file keeps `node=` and its message + button.
+    - The messages vanished: they were placed before the map in the page and React Flow's opaque
+      background (`--xy-background-color`) was painted over them; they showed only while the map
+      was dimmed (pending). They now come after the map, like the other canvas hints.
+    - Tests: 3 new or extended DOM tests in `PanelTruth.dom.test.tsx` (hint after the map for the
+      hidden test, unknown id and not-code cases; untick with the file's text loaded; lists not
+      known yet). All failed on `779660e`.
+    - Not changed: with tests hidden the view still opens at the root (the file is in no drawn
+      folder), as before.
+  - **Separate check, PyGoat `introduction/tests.py:63` (read-only):** two Low `secret-assignment`
+    rows (ids 6297, 6298) are two values on one line (`"password1": …, "password2": …`), one
+    finding per redacted span; the row keeps no column or key name, so they look identical. Not a
+    double insert. No change in FE2.

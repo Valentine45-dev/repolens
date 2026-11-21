@@ -59,12 +59,24 @@ const PAGE: FindingsPage = {
     by_category: { security: 1, quality: 0 }, placeholders: 0, documentation: 0, template_values: 0 },
 };
 
+// The tests-on list with guessed calls on, answered only when a test says so (round 1: the lists
+// are not both known yet).
+let held: { promise: Promise<Graph>; resolve: (g: Graph) => void } | null = null;
+function hold() {
+  let resolve!: (g: Graph) => void;
+  const promise = new Promise<Graph>((r) => (resolve = r));
+  held = { promise, resolve };
+  return held;
+}
+
 vi.mock("../api", async (importOriginal) => {
   const real = await importOriginal<typeof import("../api")>();
   return {
     ...real,
     getStatus: vi.fn(async () => STATUS),
-    getGraph: vi.fn(async (_s: number, o: { showTests: boolean }) => graph(o.showTests)),
+    getGraph: vi.fn(async (_s: number, o: { showTests: boolean; showGuesses: boolean }) =>
+      held && o.showTests && o.showGuesses ? held.promise : graph(o.showTests),
+    ),
     getMapView: vi.fn(async (_s: number, o: { showTests: boolean }) => map(o.showTests)),
     getFindings: vi.fn(async () => PAGE),
     getFindingReach: vi.fn(async () => ({ tier: "none", entry: null, path: [] })),
@@ -100,6 +112,7 @@ afterEach(() => {
   restoreFlow();
   resetAskStore();
   sessionStorage.clear();
+  held = null;
 });
 
 async function open(url: string) {
@@ -133,6 +146,18 @@ const askShown = () => {
 };
 const hint = () => host.querySelector(".canvas-hint[role=status]")?.textContent ?? null;
 const search = () => new URLSearchParams(window.location.search);
+// The map's background is opaque (--xy-background-color), so a hint that comes before the map in
+// the page is painted under it: visible only while the map is dimmed for a moment (round 1).
+const hintAboveMap = () => {
+  const h = host.querySelector(".canvas-hint[role=status]");
+  const flow = host.querySelector(".react-flow");
+  return h !== null && flow !== null && Boolean(flow.compareDocumentPosition(h) & Node.DOCUMENT_POSITION_FOLLOWING);
+};
+const checkbox = (label: string) =>
+  [...host.querySelectorAll("label.check")].find((l) => l.textContent?.trim() === label)!.querySelector("input")!;
+const HIDDEN_TEST = "tests/test_app.py is a test or example file, hidden on the map. Show tests & examples";
+const showTestsButton = () =>
+  [...host.querySelectorAll<HTMLButtonElement>(".canvas-hint button")].find((b) => b.textContent === "Show tests & examples")!;
 
 describe("a file or finding in the URL that cannot be shown (COR-03)", () => {
   it("a hidden test file: no empty File tab, Ask stays in view, and one click shows it", async () => {
@@ -140,7 +165,8 @@ describe("a file or finding in the URL that cannot be shown (COR-03)", () => {
     expect(tabs()).toEqual([]);
     expect(askShown()).toBe(true);
     expect(host.querySelector("aside.panel")).toBeNull();
-    expect(hint()).toBe("tests/test_app.py is a test or example file, hidden on the map. Show tests & examples");
+    expect(hint()).toBe(HIDDEN_TEST);
+    expect(hintAboveMap()).toBe(true);
     const button = [...host.querySelectorAll<HTMLButtonElement>(".canvas-hint button")].find(
       (b) => b.textContent === "Show tests & examples",
     )!;
@@ -159,6 +185,10 @@ describe("a file or finding in the URL that cannot be shown (COR-03)", () => {
     expect(search().get("ask")).toBe("1");
     expect(tabs()).toEqual([]);
     expect(askShown()).toBe(true);
+    // It stays, on top of the map, after node= has left the address (round 1, test 8).
+    await settle();
+    expect(hint()).toBe("The link pointed to a file that isn't in this analysis.");
+    expect(hintAboveMap()).toBe(true);
   });
 
   it("a file that is not code: says so and drops it", async () => {
@@ -166,6 +196,42 @@ describe("a file or finding in the URL that cannot be shown (COR-03)", () => {
     expect(hint()).toBe("lab/docker-compose.yml isn't code, so it isn't on the map.");
     expect(search().get("node")).toBeNull();
     expect(search().get("lines")).toBeNull();
+    await settle();
+    expect(hint()).toBe("lab/docker-compose.yml isn't code, so it isn't on the map.");
+    expect(hintAboveMap()).toBe(true);
+  });
+
+  it("unticking Tests & examples with a test file open keeps the link, the reason and the button", async () => {
+    await open("/a/2/explore?ask=1&tests=1&node=9");
+    expect(host.querySelector("aside.panel")?.textContent).toContain("test_app.py"); // its text is now loaded
+    act(() => checkbox("Tests & examples").click());
+    await settle();
+    expect(search().get("node")).toBe("9");
+    expect(hint()).toBe(HIDDEN_TEST);
+    expect(hintAboveMap()).toBe(true);
+    expect(tabs()).toEqual([]);
+    expect(askShown()).toBe(true);
+    await settle();
+    expect(hint()).toBe(HIDDEN_TEST); // until the user acts
+    act(() => showTestsButton().click());
+    await settle();
+    expect(search().get("tests")).toBe("1");
+    expect(host.querySelector("aside.panel")?.textContent).toContain("test_app.py");
+  });
+
+  it("says nothing until both file lists are known, never 'isn't code' for a test file", async () => {
+    const tests = hold();
+    await open("/a/2/explore?tests=1&node=9");
+    act(() => checkbox("Guessed calls").click()); // the tests-on list with guesses is not known yet
+    await settle();
+    act(() => checkbox("Tests & examples").click());
+    await settle();
+    expect(hint()).toBeNull();
+    expect(search().get("node")).toBe("9");
+    await act(async () => tests.resolve(graph(true)));
+    await settle();
+    expect(hint()).toBe(HIDDEN_TEST);
+    expect(search().get("node")).toBe("9");
   });
 
   it("a file that can be shown still opens in the File tab in front (no change)", async () => {
