@@ -1,0 +1,4 @@
+# Question files and their hashes are stored byte for byte: the SHA-256 check needs the
+# exact bytes, and a CRLF checkout would change them.
+*.yaml -text
+*.sha256 -text
