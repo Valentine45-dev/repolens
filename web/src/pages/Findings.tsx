@@ -92,6 +92,21 @@ export function Findings() {
   const ruleById = new Map((rules.data ?? []).map((r) => [r.id, r]));
 
   // A filter change starts again at the first page and closes the detail panel.
+  // Closing a finding (button or Esc) puts focus back on its row's button, where the keyboard
+  // user was; if that row is not on the page, on the list's heading (A11Y-01).
+  const headingRef = useRef<HTMLHeadingElement>(null);
+  const refocus = useRef<number | null>(null);
+  const closeFinding = () => {
+    refocus.current = selectedId;
+    setParams({ finding: null }, false);
+  };
+  useEffect(() => {
+    if (selectedId !== null || refocus.current === null) return;
+    const id = refocus.current;
+    refocus.current = null;
+    const row = document.querySelector<HTMLElement>(`[data-finding-id="${id}"] .row-button`);
+    (row ?? headingRef.current)?.focus();
+  }, [selectedId]);
   const setFilter = (key: string, value: string | null) =>
     setParams({ [key]: value, page: null, finding: null });
   const selected = findings.data?.items.find((f) => f.id === selectedId) ?? null;
@@ -132,7 +147,7 @@ export function Findings() {
     <div className="findings">
       <div className="findings-main">
         <div className="findings-head">
-          <h2 className="section-title">
+          <h2 className="section-title" ref={headingRef} tabIndex={-1}>
             Findings
             {counts && findings.data ? (
               <span className="mono num"> {findingsCountLabel(findings.data.total, counts.total)}</span>
@@ -307,12 +322,12 @@ export function Findings() {
           finding={selected}
           rule={ruleById.get(selected.rule_id)}
           reach={reachView}
-          onClose={() => setParams({ finding: null }, false)}
+          onClose={closeFinding}
         />
       ) : selectedId !== null && !findings.data ? (
         // A link to a finding: the panel's frame is there at once, so the list does not narrow
         // (and its filters re-wrap) when the data arrives.
-        <FindingPanelSkeleton onClose={() => setParams({ finding: null }, false)} />
+        <FindingPanelSkeleton onClose={closeFinding} />
       ) : null}
     </div>
   );
@@ -500,6 +515,7 @@ export function FindingsList({
             <tr
               key={f.id}
               className="finding-row"
+              data-finding-id={f.id}
               aria-selected={f.id === selectedId}
               // The whole row opens the finding with a mouse; the message button is the one
               // keyboard and screen-reader target, so there is one tab stop per row.

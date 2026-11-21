@@ -120,3 +120,34 @@ describe("a page past the end of the list (COR-06)", () => {
     expect(host.querySelector(".empty-state")?.textContent).toContain("No Security findings.");
   });
 });
+
+describe("closing a finding gives focus back to its row (A11Y-01)", () => {
+  const rowButton = (id: number) => host.querySelector<HTMLButtonElement>(`[data-finding-id="${id}"] .row-button`)!;
+  it("with the close button", async () => {
+    await open("/a/2/findings");
+    act(() => rowButton(2).click());
+    await settle();
+    expect(document.activeElement?.classList.contains("panel-title")).toBe(true);
+    const close = [...host.querySelectorAll<HTMLButtonElement>("aside.panel button")].find((b) =>
+      b.getAttribute("aria-label")?.startsWith("Close"),
+    )!;
+    act(() => close.click());
+    await settle();
+    expect(host.querySelector("aside.panel")).toBeNull();
+    expect(document.activeElement).toBe(rowButton(2));
+  });
+
+  it("with Esc, after moving from one finding to another: the row of the one that was open", async () => {
+    await open("/a/2/findings");
+    act(() => rowButton(1).click());
+    await settle();
+    act(() => rowButton(2).click());
+    await settle();
+    act(() => {
+      document.activeElement!.dispatchEvent(new KeyboardEvent("keydown", { key: "Escape", bubbles: true, cancelable: true }));
+    });
+    await settle();
+    expect(host.querySelector("aside.panel")).toBeNull();
+    expect(document.activeElement).toBe(rowButton(2));
+  });
+});
