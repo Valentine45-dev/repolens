@@ -16,8 +16,10 @@ Commands:
                             the false-premise rule; shuffled, no configuration or pass labels
   judge RESULTS --sheet CSV --key JSON
                             read the filled sheet, save the verdicts, print the final summary
-  analyse PINS [--label L]  analyse pinned repos through the API (POST /repos), one at a time,
-                            timing each stage; stops if search is not ready on one of them
+  analyse PINS [--in-process] [--label L]
+                            analyse pinned repos one at a time, timing each stage, through the
+                            API (POST /repos) or in this process (the API's own functions, the
+                            job in a thread; no API needed); stops if search is not ready
 
 How a question runs: the same function as POST /snapshots/{id}/ask (`app.api.ask.ask`), in this
 process, so routing, retrieval (the live configuration is C), the prompt and citation validation
@@ -445,10 +447,51 @@ def _http(method: str, url: str, body: dict | None = None) -> dict:
         return json.loads(r.read())
 
 
-def analyse(pin: dict, api: str, poll_s: float = 2.0, wait_tests: bool = True) -> dict:
+class OverHttp:
+    """Analyse through a running API (POST /repos, GET status)."""
+
+    def __init__(self, api: str):
+        self.api, self.threads = api, []
+
+    def submit(self, url: str, commit: str) -> dict:
+        return _http("POST", f"{self.api}/repos", {"url": url, "commit": commit})
+
+    def status(self, snapshot_id: int) -> dict:
+        return _http("GET", f"{self.api}/snapshots/{snapshot_id}/status")
+
+
+class InProcess:
+    """The API's own submit and status functions, called in this process; the job runs in a
+    thread here. No API needs to run (and none is started, so no running job anywhere is marked
+    "Interrupted by server restart"). MAX_ANALYSIS_S is this process's environment."""
+
+    def __init__(self):
+        self.threads: list = []
+
+    def submit(self, url: str, commit: str) -> dict:
+        import threading
+
+        from app.api.repos import SubmitRepo, submit_repo
+        from fastapi import BackgroundTasks
+
+        background = BackgroundTasks()
+        sub = submit_repo(SubmitRepo(url=url, commit=commit), background)
+        for task in background.tasks:
+            t = threading.Thread(target=task.func, args=task.args, kwargs=task.kwargs)
+            t.start()
+            self.threads.append(t)
+        return sub
+
+    def status(self, snapshot_id: int) -> dict:
+        from app.api.snapshots import snapshot_status
+
+        return snapshot_status(snapshot_id)
+
+
+def analyse(pin: dict, via, poll_s: float = 2.0, wait_tests: bool = True) -> dict:
     url = f"https://github.com/{pin['repo']}"
     t0 = time.monotonic()
-    sub = _http("POST", f"{api}/repos", {"url": url, "commit": pin["commit"]})
+    sub = via.submit(url, pin["commit"])
     rec = {"repo": pin["repo"], "commit": pin["commit"], "snapshot_id": sub["snapshot_id"],
            "job_id": sub["job_id"], "submitted_status": sub["status"],
            "timing_only": bool(pin.get("timing_only")), "stages": []}
@@ -456,7 +499,7 @@ def analyse(pin: dict, api: str, poll_s: float = 2.0, wait_tests: bool = True) -
         rec["note"] = "already analysed: the existing job was reused, nothing was timed"
     last = None
     while True:
-        st = _http("GET", f"{api}/snapshots/{sub['snapshot_id']}/status")
+        st = via.status(sub["snapshot_id"])
         now = round(time.monotonic() - t0, 1)
         state = (st["status"], st["stage"], st["features"]["search"])
         if state != last:
@@ -685,24 +728,38 @@ def cmd_judge(args) -> None:
 
 
 def cmd_analyse(args) -> None:
+    from app import config, db
+
     pins = yaml.safe_load(args.pins.read_text(encoding="utf-8"))["repos"]
     info = run_info(llm_used=False)
     info["notes"] = args.notes
-    print(header(info), f"| MAX_ANALYSIS_S in this process's config: {info['max_analysis_s']}"
-          " (the API's own environment decides)")
+    info["analysed"] = "in this process" if args.in_process else f"through the API at {args.api}"
+    if args.in_process:
+        db.open_pool()
+        via = InProcess()
+        print(header(info), f"| in process, MAX_ANALYSIS_S {config.MAX_ANALYSIS_S}")
+    else:
+        via = OverHttp(args.api)
+        print(header(info), "| through the API (its own MAX_ANALYSIS_S applies)")
     out = []
     try:
         for pin in pins:
-            rec = analyse(pin, args.api, wait_tests=not args.no_wait_tests)
+            rec = analyse(pin, via, wait_tests=not args.no_wait_tests)
             out.append(rec)
+            for t in via.threads:  # in process: the job (and its test-code embedding) ends here
+                t.join()
+            via.threads.clear()
             if rec["final_status"] != "done" or rec["search"] not in ("ready", "tests"):
                 print(f"STOP: {pin['repo']} ended {rec['final_status']} with search"
                       f" {rec['search']}: {rec['error'] or rec['search_error']}")
                 break
     except urllib.error.URLError as e:
         print(f"API not reachable at {args.api}: {e}")
+    finally:
+        if args.in_process:
+            db.close_pool()
     path = save_results("analysis_timing" + (f"-{args.label}" if args.label else ""), info,
-                        {"pins": _rel(args.pins), "api": args.api, "analyses": out})
+                        {"pins": _rel(args.pins), "analyses": out})
     for r in out:
         print(f"{r['repo']}: analysis {r['analysis_s']} s, with test code"
               f" {r['total_with_tests_s']} s, search {r['search']}, receipt {r['receipt']}")
@@ -746,6 +803,8 @@ def main(argv=None) -> None:
     s.add_argument("--api", default="http://127.0.0.1:8000")
     s.add_argument("--label", default="")
     s.add_argument("--notes", default="")
+    s.add_argument("--in-process", action="store_true",
+                   help="run the pipeline in this process (no API, none restarted)")
     s.add_argument("--no-wait-tests", action="store_true",
                    help="stop when Ask is ready instead of after test-code embedding")
     args = p.parse_args(argv)
