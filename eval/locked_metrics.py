@@ -31,8 +31,10 @@ Q&A:
   with no dropped citation; citation level too.
 - cited_sentence_rate: eval/score_claims.py's frozen splitting rules (31 Oct), over AI answers.
 - unanswerable_ok (unanswerable, false_premise): automatic PASS = AI route, the "could not find"
-  sentence and zero citations. Automatic FAIL = no answer (any status other than answered /
-  unverified). Everything else waits for a human: PASS when the judge says it rejects the
+  sentence and zero citations in the model's raw output (validated + dropped: an attempted
+  citation the server removed still counts, and sends the answer to the judge). Automatic
+  FAIL = no answer (any status other than answered / unverified). Everything else waits for
+  a human: PASS when the judge says it rejects the
   premise (or says it could not find it) and that no citation supports a false claim.
 - faithful_human: the judge's yes / partly / no per AI answer, from the blind sheet.
 """
@@ -213,10 +215,15 @@ def says_could_not_find(answer: str) -> bool:
     return COULD_NOT_FIND in " ".join(answer.lower().split())
 
 
+def raw_citations(rec: dict) -> int:
+    """Citations the model wrote, before the server dropped the invalid ones."""
+    return len(rec["citations"]) + rec["dropped"]
+
+
 def unanswerable_auto(rec: dict) -> str:
     if rec["route"] == "ai" and rec["status"] not in ANSWERED:
         return FAIL
-    if rec["route"] == "ai" and says_could_not_find(rec["answer"]) and not rec["citations"]:
+    if rec["route"] == "ai" and says_could_not_find(rec["answer"]) and raw_citations(rec) == 0:
         return PASS
     return PENDING
 

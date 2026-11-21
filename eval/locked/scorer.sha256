@@ -1,6 +1,6 @@
 # Frozen scorer for the locked runs (SHA-256 of each file, CRLF read as LF).
 # A locked run refuses if a scoring file differs; the runner may differ only with
 # --runner-changed (v2.1 retrieval configurations), and the diff is recorded.
-ded00ca2febe74c5bd99fe62efe128e4bf147f0803c0762f80fff911b8358fd6  eval/locked_metrics.py
+bb39b5818e6749a40ebc191ae032da462940900f147c5ed5ae3fcd9ea1ce4fba  eval/locked_metrics.py
 1d4df5bfc43ba6c83d409bd395d500f50b0e9bc0a22461f9e0dfeb237644d474  eval/score_claims.py
 b8be4fd773b1ac66ea2bddb50150092559b1f6eb5e79ea39783cac695a908dd7  eval/locked_eval.py

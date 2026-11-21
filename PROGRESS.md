@@ -2349,7 +2349,7 @@ are deliberately not changed after seeing eval results; these stay as documented
   owner's 9 pre-freeze decisions). No locked question, label or key seen; the locked repos were not
   fetched, cloned or analysed (GitHub tree metadata only).
   - **Built:** `eval/locked_metrics.py` (pure scoring rules, frozen by hash), `eval/locked_eval.py`
-    (validate, estimate, run, summary, sheet, judge, analyse [--in-process]), 76 unit tests in
+    (validate, estimate, run, summary, sheet, judge, analyse [--in-process]), 79 unit tests in
     `eval/test_locked_*.py`, run by the new CI job `eval-unit`. Locked runs refuse unless the
     question file matches `eval/locked/v2.0.sha256`, the scoring files match
     `eval/locked/scorer.sha256`, tracked files are clean, 2 passes, real provider, cap <= $1 per
@@ -2370,7 +2370,9 @@ are deliberately not changed after seeing eval results; these stay as documented
     process (no API start); flask re-analysed (job 36) with 713 / 690 chunks and 1,976 edges as
     before. Backup first: `C:\projects\repolens-db-backups\db-backup-2026-11-21-pre-locked-timing.sql`
     (SHA-256 `F46065BC...43C40C`, restore checked). The FE2 session's API is still on 8000.
-  - **Open (owner, before the locked run):** commit `eval/locked/v2.0.sha256`; decide whether an
-    unanswerable answer with a dropped citation should still pass automatically (the approved rule
-    passes it; changing it means regenerating `scorer.sha256`).
+  - **Rule revised before the freeze (owner):** the unanswerable / false-premise automatic pass needs
+    zero citations in the model's raw output (validated + dropped); any attempted citation goes to the
+    judge. `scorer.sha256` regenerated. Run-day checklist: close every other Claude Code session (FE2
+    included; it auto-restarts its API), no RepoLens API running for the in-process analysis.
+  - **Open (owner, before the locked run):** commit `eval/locked/v2.0.sha256`.
   - Backend 701 passed, 3 skipped; ruff clean (backend and the new eval files).

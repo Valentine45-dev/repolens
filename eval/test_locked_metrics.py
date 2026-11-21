@@ -200,6 +200,10 @@ def test_answered_correct_file():
 
 @pytest.mark.parametrize("record, verdict", [
     (rec(answer=CNF, citations=()), m.PASS),
+    # the gzip case: "could not find", no validated citation, but one the server dropped
+    (rec(status="unverified", answer=CNF + " res.send only sets Content-Length.",
+         citations=(), dropped=1), m.PENDING),
+    (rec(answer=CNF, citations=(), dropped=2), m.PENDING),
     (rec(answer="**I could not   find this in the provided code.**", citations=()), m.PASS),
     (rec(answer=CNF + " But see a.py:1-2.", citations=["a.py:1-2"]), m.PENDING),
     (rec(answer="It signs, it does not encrypt (a.py:1-2).", citations=["a.py:1-2"]),
@@ -359,3 +363,11 @@ def test_empty_groups_do_not_divide_by_zero():
     s = m.summarise(only_graph, outs, RECORDS, ["A", "B", "C"])
     assert s["code_hit"]["A"] == {"k": 0, "n": 0, "rate": None}
     assert s["citation_validity"]["rate"] is None and s["cited_sentence_rate"]["rate"] is None
+
+
+def test_dropped_citation_goes_to_the_sheet():
+    gzip = rec(status="unverified", answer=CNF + " Nothing compresses.", citations=(), dropped=1)
+    assert m.raw_citations(gzip) == 1
+    assert m.needs_judging(q("u", "unanswerable"), gzip)
+    assert m.unanswerable_final(gzip, {"rejects_premise": "yes",
+                                       "false_claim_cited": "no"}) == m.PASS

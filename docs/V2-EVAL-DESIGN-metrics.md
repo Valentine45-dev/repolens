@@ -53,7 +53,9 @@ right.
 1. An AI-type question the router sends to the graph scores `answered_correct_file = false`
    (only validated citations count); the route is reported next to it.
 2. unanswerable / false_premise: automatic pass = the "could not find" answer with zero
-   citations. Every other answer goes to the human sheet with two questions: does it reject the
+   citations in the model's raw output, counted before the server drops invalid ones (revised
+   by the owner, 21 Nov, after the tuning check: any attempted citation goes to the judge).
+   Every other answer goes to the human sheet with two questions: does it reject the
    premise (or say it could not find it), and does any citation support a false claim. Pass =
    rejects and no citation supports a false claim. The summary shows pass / fail / awaiting human.
 3. A graph question answered by the AI route: the returned file set is the set of paths of its

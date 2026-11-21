@@ -11,7 +11,7 @@ only, Part B step 1).
 |---|---|
 | `eval/locked_metrics.py` | Pure scoring rules (schema check, code_hit/doc_hit, McNemar, graph sets, answered_correct_file, citation_validity, cited_sentence_rate via `score_claims.py`, unanswerable_ok with the revised false-premise rule, summary, agreement). Frozen by hash. |
 | `eval/locked_eval.py` | Runner: `validate`, `estimate`, `run`, `summary`, `sheet`, `judge`, `analyse [--in-process]`. Guards for locked runs (question-file hash, scorer hash, clean tree, two passes, real provider, $1 cap per pass). |
-| `eval/test_locked_metrics.py`, `eval/test_locked_eval.py` | 76 unit tests, no database or LLM; run in CI (`eval-unit` job). |
+| `eval/test_locked_metrics.py`, `eval/test_locked_eval.py` | 79 unit tests, no database or LLM; run in CI (`eval-unit` job). |
 | `eval/tuning_locked_format.yaml` | 11 tuning questions (every type) on itsdangerous, express and flask, written before any run. |
 | `eval/locked/` | `pins.yaml` (5 repos + commits), `README.md` (agents never open the question file or locked results), `.gitattributes` (question and hash files stored byte for byte), `scorer.sha256` (the freeze). |
 | `eval/locked_tree_check.py`, `eval/timing_pins.yaml` | Part B steps 1 and 2. |
@@ -51,12 +51,14 @@ Paid check, 11 questions, per pass (pass 1 / pass 2):
   7/8; unanswerable_ok 0/0 with 3 pending left out.
 - These are 11 tuning questions written by the agent: they test the scorer, not the system.
 
-**Point for the owner before the freeze (not changed):** in pass 1 the express gzip question
+**Rule changed before the freeze (owner, 21 Nov).** In pass 1 the express gzip question
 (unanswerable) came back `unverified`: the "could not find" sentence, an explanation, and one
-citation the server dropped (it pointed outside the snippets sent). Its validated citations are
-empty, so the approved automatic rule passes it. If an answer with a dropped citation should go
-to the judge instead, the rule needs `and no dropped citation`; say so and it is changed before
-`scorer.sha256` is regenerated.
+citation the server dropped (it pointed outside the snippets sent). Its validated citations were
+empty, so the first rule passed it automatically. The automatic pass now needs zero citations in
+the model's raw output (validated + dropped); any attempted citation sends the answer to the
+judge (unit test `test_dropped_citation_goes_to_the_sheet`). `scorer.sha256` was regenerated
+after the change. Re-scored offline under the new rule (information only; the recorded result
+above stays as it is): unanswerable_ok in pass 1 becomes 0 automatic passes, 3 awaiting human.
 
 **Tuning API spend to date (from result files):** final_qa 28 Oct $0.223, rebaseline Q&A 31 Oct
 $0.218, smoke runs 28 Oct $0.0039 + $0.0002 + $0.085, today's check $0.191: **$0.721 recorded**
@@ -121,8 +123,11 @@ prices per MTok from the provider's pricing page. Keep every output; never re-ru
    ```
 
 **Run day:**
-1. Close other apps. Make sure no API and no other Claude session is running against the
-   database (a second API start marks running jobs "Interrupted by server restart"):
+1. Close other apps, and **close every other Claude Code session, the FE2 session included**:
+   a session that saw its background API exit restarts it on its own. Then make sure **no
+   RepoLens API process is running**: the run-day analysis is in process, so none is needed (if an
+   API is used for anything, exactly one, never two: a second API start marks running jobs
+   "Interrupted by server restart"). This must list nothing:
    ```powershell
    Get-CimInstance Win32_Process -Filter "Name='python.exe'" | Where-Object { $_.CommandLine -match 'uvicorn' } | Select-Object ProcessId, CommandLine
    ```
@@ -179,8 +184,8 @@ results. The scoring files must be byte-identical (after line endings), or the r
 
 ## 6. Incidents and limits
 - **A second API start interrupted a timing run (my mistake).** I stopped the native API (free
-  RAM 0.74 GB) for the in-process runs; another Claude session (the idle FE2 session) started a
-  new API on port 8000 about a minute later. My own API for the timing (MAX_ANALYSIS_S=3600) then
+  RAM 0.74 GB) for the in-process runs; the idle FE2 session restarted its API on port 8000 about
+  a minute later (it saw its background task exit; confirmed by the owner). My own API for the timing (MAX_ANALYSIS_S=3600) then
   failed to bind, but its startup hook still marked the running flask job 35 "Interrupted by
   server restart". The other API kept running the job, which finished with search failed at its
   600 s cap. The first timing file is kept as invalid (`analysis_timing-part-b-timing-
