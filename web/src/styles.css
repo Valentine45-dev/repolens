@@ -1333,6 +1333,11 @@ a {
   color: var(--text-muted);
 }
 
+/* Why the file in the link is not shown (Explore): in the strip, never over the map. */
+.legend-notice {
+  color: var(--text);
+}
+
 /* "Show: Tests & examples · Guessed calls · All edges" */
 .toolbar-group {
   display: inline-flex;

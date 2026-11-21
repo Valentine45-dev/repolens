@@ -10,7 +10,13 @@ import { ConnectionNotice, isReconnecting } from "../components/ConnectionNotice
 import { FileList } from "../components/FileList";
 import { CrumbSkeleton, GraphSkeleton, ListSkeleton } from "../components/GraphSkeleton";
 import { FIT_OPTIONS, firstViewHub, GraphView } from "../components/GraphView";
-import { ALL_EDGES_SHOWN_TITLE, ExploreLegend, SHOW_ALL_EDGES_TITLE, ShowGroup } from "../components/ExploreLegend";
+import {
+  ALL_EDGES_SHOWN_TITLE,
+  ExploreLegend,
+  LegendNotice,
+  SHOW_ALL_EDGES_TITLE,
+  ShowGroup,
+} from "../components/ExploreLegend";
 import { MapHint } from "../components/MapHint";
 import { MapView } from "../components/MapView";
 import { NodePanel } from "../components/NodePanel";
@@ -270,6 +276,25 @@ function ExploreInner() {
   const legendStatus = statusText(selection ? densityText(selection, showAllEdges) : null, zoomedIn);
   const canShowAll = showAllEdges || (selection !== null && selection.mode !== "all");
 
+  // Why the file in the link is not shown: a line of the strip above the map, never on the canvas,
+  // so it cannot cover a node at any zoom or layout.
+  const linkNotice = hiddenTest ? (
+    <>
+      <span className="mono">{hiddenTest.path}</span> is a test or example file, hidden on the map.{" "}
+      <button type="button" className="link-button" onClick={() => setParam("tests", "1")}>
+        Show tests &amp; examples
+      </button>
+    </>
+  ) : notice ? (
+    notice.kind === "not-code" ? (
+      <>
+        <span className="mono">{notice.path}</span> isn&apos;t code, so it isn&apos;t on the map.
+      </>
+    ) : (
+      "The link pointed to a file that isn't in this analysis."
+    )
+  ) : null;
+
   return (
     <div className="explore">
       {mapMode && !phone ? (
@@ -397,6 +422,7 @@ function ExploreInner() {
           showGuesses={showGuesses}
           cycle={view ? viewHasCycle(view) : false}
           status={view ? legendStatus : null}
+          notice={linkNotice}
         />
       ) : flatMode && (!graph.data || graph.data.nodes.length > 0) ? (
         <ExploreLegend
@@ -405,7 +431,12 @@ function ExploreInner() {
           facts={
             updating ? "Updating…" : graph.data ? graphNote(graph.data, capped, false) : <FactsSkeleton />
           }
+          notice={linkNotice}
         />
+      ) : linkNotice ? (
+        <div className="legend">
+          <LegendNotice>{linkNotice}</LegendNotice>
+        </div>
       ) : null}
 
       <div className="explore-body">
@@ -526,26 +557,6 @@ function ExploreInner() {
                 ) : null}
               </>
             )
-          ) : null}
-          {/* After the map: its background is opaque, so a hint placed before it is painted under it. */}
-          {hiddenTest ? (
-            <p className="canvas-hint caption" role="status">
-              <span className="mono">{hiddenTest.path}</span> is a test or example file, hidden on the
-              map.{" "}
-              <button type="button" className="link-button" onClick={() => setParam("tests", "1")}>
-                Show tests &amp; examples
-              </button>
-            </p>
-          ) : notice ? (
-            <p className="canvas-hint caption" role="status">
-              {notice.kind === "not-code" ? (
-                <>
-                  <span className="mono">{notice.path}</span> isn&apos;t code, so it isn&apos;t on the map.
-                </>
-              ) : (
-                "The link pointed to a file that isn't in this analysis."
-              )}
-            </p>
           ) : null}
         </div>
 

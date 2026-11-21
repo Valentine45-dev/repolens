@@ -2421,3 +2421,10 @@ are deliberately not changed after seeing eval results; these stay as documented
     rows (ids 6297, 6298) are two values on one line (`"password1": …, "password2": …`), one
     finding per redacted span; the row keeps no column or key name, so they look identical. Not a
     double insert. No change in FE2.
+  - **Round 2 (21 Nov):** 7 and 8 pass. One UX fix: the three link messages (hidden test file,
+    not code, not in this analysis) covered node boxes (flask `testing.py`, the PyGoat folder box).
+    They are now a third line of the legend strip above the map (`LegendNotice`, `role="status"`,
+    same wording and button); List view and empty views, which have no legend, get the line in a
+    strip of its own. The older canvas notes (most connected file, outside the drawn files, not
+    drawn in this view) are unchanged. DOM tests: the message is outside `.canvas` and inside a
+    `.legend` strip, also in List view; 6 fail on `c618ac7` (the 2 "no change" guards pass).

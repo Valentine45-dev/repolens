@@ -144,20 +144,23 @@ const askShown = () => {
   const drawer = document.getElementById("ask-drawer");
   return drawer !== null && drawer.getAttribute("aria-hidden") !== "true";
 };
-const hint = () => host.querySelector(".canvas-hint[role=status]")?.textContent ?? null;
+const hint = () => host.querySelector(".legend-notice[role=status]")?.textContent ?? null;
 const search = () => new URLSearchParams(window.location.search);
-// The map's background is opaque (--xy-background-color), so a hint that comes before the map in
-// the page is painted under it: visible only while the map is dimmed for a moment (round 1).
-const hintAboveMap = () => {
-  const h = host.querySelector(".canvas-hint[role=status]");
-  const flow = host.querySelector(".react-flow");
-  return h !== null && flow !== null && Boolean(flow.compareDocumentPosition(h) & Node.DOCUMENT_POSITION_FOLLOWING);
+// The message is a line of the strip above the map, never on the canvas, so it cannot cover a
+// node at any zoom or layout (round 2). Nothing with a role of status is left on the canvas.
+const noticeOffCanvas = () => {
+  const notice = host.querySelector(".legend-notice[role=status]");
+  const canvas = host.querySelector(".canvas");
+  return (
+    notice !== null && canvas !== null && !canvas.contains(notice) && notice.closest(".legend") !== null &&
+    canvas.querySelector("[role=status]:not(.canvas-pending)") === null
+  );
 };
 const checkbox = (label: string) =>
   [...host.querySelectorAll("label.check")].find((l) => l.textContent?.trim() === label)!.querySelector("input")!;
 const HIDDEN_TEST = "tests/test_app.py is a test or example file, hidden on the map. Show tests & examples";
 const showTestsButton = () =>
-  [...host.querySelectorAll<HTMLButtonElement>(".canvas-hint button")].find((b) => b.textContent === "Show tests & examples")!;
+  [...host.querySelectorAll<HTMLButtonElement>(".legend-notice button")].find((b) => b.textContent === "Show tests & examples")!;
 
 describe("a file or finding in the URL that cannot be shown (COR-03)", () => {
   it("a hidden test file: no empty File tab, Ask stays in view, and one click shows it", async () => {
@@ -166,11 +169,8 @@ describe("a file or finding in the URL that cannot be shown (COR-03)", () => {
     expect(askShown()).toBe(true);
     expect(host.querySelector("aside.panel")).toBeNull();
     expect(hint()).toBe(HIDDEN_TEST);
-    expect(hintAboveMap()).toBe(true);
-    const button = [...host.querySelectorAll<HTMLButtonElement>(".canvas-hint button")].find(
-      (b) => b.textContent === "Show tests & examples",
-    )!;
-    act(() => button.click());
+    expect(noticeOffCanvas()).toBe(true);
+    act(() => showTestsButton().click());
     await settle();
     expect(search().get("tests")).toBe("1");
     expect(search().get("node")).toBe("9");
@@ -188,7 +188,7 @@ describe("a file or finding in the URL that cannot be shown (COR-03)", () => {
     // It stays, on top of the map, after node= has left the address (round 1, test 8).
     await settle();
     expect(hint()).toBe("The link pointed to a file that isn't in this analysis.");
-    expect(hintAboveMap()).toBe(true);
+    expect(noticeOffCanvas()).toBe(true);
   });
 
   it("a file that is not code: says so and drops it", async () => {
@@ -198,7 +198,15 @@ describe("a file or finding in the URL that cannot be shown (COR-03)", () => {
     expect(search().get("lines")).toBeNull();
     await settle();
     expect(hint()).toBe("lab/docker-compose.yml isn't code, so it isn't on the map.");
-    expect(hintAboveMap()).toBe(true);
+    expect(noticeOffCanvas()).toBe(true);
+  });
+
+  it("in List view too, the message is in a strip above the list, not over it", async () => {
+    await open("/a/2/explore?view=list&node=99999");
+    expect(hint()).toBe("The link pointed to a file that isn't in this analysis.");
+    const notice = host.querySelector(".legend-notice[role=status]")!;
+    expect(host.querySelector(".canvas")!.contains(notice)).toBe(false);
+    expect(notice.closest(".legend")).not.toBeNull();
   });
 
   it("unticking Tests & examples with a test file open keeps the link, the reason and the button", async () => {
@@ -208,7 +216,7 @@ describe("a file or finding in the URL that cannot be shown (COR-03)", () => {
     await settle();
     expect(search().get("node")).toBe("9");
     expect(hint()).toBe(HIDDEN_TEST);
-    expect(hintAboveMap()).toBe(true);
+    expect(noticeOffCanvas()).toBe(true);
     expect(tabs()).toEqual([]);
     expect(askShown()).toBe(true);
     await settle();
