@@ -114,6 +114,9 @@ export interface FindingsPage {
   };
   /** Things the list cannot promise, in words (for example the quality checks did not finish). */
   notes: string[];
+  /** For the filter menus, under this request's filters each leaving out its own: what picking a
+   * severity (or a rule) would list. A rule with no row is absent (0). */
+  facets?: { severity: Record<Severity, number>; rule: Record<string, number> };
 }
 
 export interface FindingsFilter {

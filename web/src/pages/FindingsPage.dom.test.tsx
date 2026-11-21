@@ -151,3 +151,36 @@ describe("closing a finding gives focus back to its row (A11Y-01)", () => {
     expect(document.activeElement).toBe(rowButton(2));
   });
 });
+
+describe("menu numbers are what each choice lists (COR-04)", () => {
+  // PyGoat: Security has High 67, Medium 0, Low 3 (Low 1 with test code hidden); the whole
+  // snapshot has Medium 2 and Low 12 because of the Bug / Quality findings.
+  beforeEach(() => {
+    respond = async (f) =>
+      page([finding(1)], 70, {
+        facets: f.in_test === false
+          ? { severity: { high: 67, medium: 0, low: 1 }, rule: { "hardcoded-secret": 48 } }
+          : f.category === "security"
+            ? { severity: { high: 67, medium: 0, low: 3 }, rule: { "hardcoded-secret": 50 } }
+            : { severity: { high: 67, medium: 2, low: 12 }, rule: { "hardcoded-secret": 50, "ruff-F821": 2 } },
+      });
+  });
+
+  it("the Security tab counts Security findings only, not the snapshot's", async () => {
+    await open("/a/2/findings");
+    expect(options("Severity")).toEqual(["All", "High (67)", "Medium (0)", "Low (3)"]);
+    expect(options("Rule")).toEqual(["All", "Hardcoded secret (50)"]);
+  });
+
+  it("follows the other filters too: hiding test code changes Low (3) to Low (1)", async () => {
+    await open("/a/2/findings?tests=hide");
+    expect(options("Severity")).toEqual(["All", "High (67)", "Medium (0)", "Low (1)"]);
+    expect(options("Rule")).toEqual(["All", "Hardcoded secret (48)"]);
+  });
+
+  it("All categories: the snapshot's numbers, and every rule", async () => {
+    await open("/a/2/findings?category=all");
+    expect(options("Severity")).toEqual(["All", "High (67)", "Medium (2)", "Low (12)"]);
+    expect(options("Rule")).toEqual(["All", "Hardcoded secret (50)", "Undefined name (2)"]);
+  });
+});

@@ -133,6 +133,8 @@ export function Findings() {
     status ? repoName(status.url) : null,
   ]);
   const counts = findings.data?.counts;
+  // The menus' numbers are what each choice would list now (COR-04); none while a new list loads.
+  const facets = findings.isPlaceholderData ? undefined : findings.data?.facets;
   // An edited or stale link to a page after the last one: never "No findings" (COR-06).
   const pages = findings.data ? Math.ceil(findings.data.total / PAGE) : 0;
   const pastEnd =
@@ -187,7 +189,7 @@ export function Findings() {
             options={(["high", "medium", "low"] as const).map((s) => ({
               value: s,
               // No number until it is known: unknown is never shown as 0.
-              label: `${s[0].toUpperCase()}${s.slice(1)}${counts ? ` (${counts.by_severity[s]})` : ""}`,
+              label: `${s[0].toUpperCase()}${s.slice(1)}${facets ? ` (${facets.severity[s]})` : ""}`,
             }))}
           />
           <FilterSelect
@@ -197,9 +199,9 @@ export function Findings() {
             onChange={(v) => setFilter("rule", v || null)}
             options={Object.entries(counts?.by_rule ?? {})
               .filter(([id]) => category === "all" || ruleById.get(id)?.category === category)
-              .map(([id, n]) => ({
+              .map(([id]) => ({
                 value: id,
-                label: `${ruleById.get(id)?.title ?? id} (${n})`,
+                label: `${ruleById.get(id)?.title ?? id}${facets ? ` (${facets.rule[id] ?? 0})` : ""}`,
               }))}
           />
           <FilterSelect
