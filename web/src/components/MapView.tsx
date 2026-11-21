@@ -506,7 +506,7 @@ export function MapView({
             hideTests,
             hiddenEdges,
             descId,
-            description: nodeDescription(n, view.level, hiddenEdges),
+            description: nodeDescription(n, view.level, hiddenEdges, view.view_limit),
           },
           draggable: false,
           connectable: false,
@@ -514,7 +514,7 @@ export function MapView({
           domAttributes: { "aria-describedby": descId },
         };
       }),
-    [view.nodes, view.level, positions, snapshotId, hideTests, hiddenByNode, descPrefix],
+    [view.nodes, view.level, view.view_limit, positions, snapshotId, hideTests, hiddenByNode, descPrefix],
   );
 
   const flowEdges = useMemo<MapFlowEdge[]>(() => {
@@ -638,7 +638,7 @@ export function MapView({
       {tipState?.kind === "node" && nodesById.has(tipState.id) && positions.has(tipState.id) ? (
         <NodeTipView
           box={{ ...positions.get(tipState.id)!, width, height }}
-          {...nodeTip(nodesById.get(tipState.id)!, view.level, hiddenByNode.get(tipState.id) ?? 0)}
+          {...nodeTip(nodesById.get(tipState.id)!, view.level, hiddenByNode.get(tipState.id) ?? 0, view.view_limit)}
           canvas={canvasRef.current}
           api={tip}
         />

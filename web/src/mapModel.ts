@@ -351,6 +351,7 @@ export function nodeTip(
   n: MapNode,
   level: "folder" | "file" | "symbol",
   hiddenEdges = 0,
+  viewLimit: number | null = null, // the server's node limit for the view (MapView.view_limit)
 ): { head: string | null; lines: string[] } {
   const lines: string[] = [];
   if (n.kind === "more") {
@@ -358,7 +359,7 @@ export function nodeTip(
       head: null,
       lines:
         level === "symbol"
-          ? [`${plural(n.hidden_count ?? 0, "more symbol")} are not drawn: this view shows the 60 best connected.`]
+          ? [`${plural(n.hidden_count ?? 0, "more symbol")} are not drawn: this view shows ${viewLimit === null ? "only the best connected" : `the ${viewLimit} best connected`}.`]
           : [`${plural(n.hidden_count ?? 0, "item")} not drawn, ${plural(n.file_count ?? 0, "file")} in all.`, "Click to open them in List view."],
     };
   }
@@ -400,15 +401,25 @@ export function nodeTip(
   return { head, lines };
 }
 
-export function nodeTooltip(n: MapNode, level: "folder" | "file" | "symbol", hiddenEdges = 0): string {
-  const { head, lines } = nodeTip(n, level, hiddenEdges);
+export function nodeTooltip(
+  n: MapNode,
+  level: "folder" | "file" | "symbol",
+  hiddenEdges = 0,
+  viewLimit: number | null = null,
+): string {
+  const { head, lines } = nodeTip(n, level, hiddenEdges, viewLimit);
   return [head, ...lines].filter((l) => l !== null).join("\n");
 }
 
 /** What a screen reader hears after the node's name (its path): the tip's other lines and what
  * Enter does. Replaces React Flow's default description, which talks of moving and deleting. */
-export function nodeDescription(n: MapNode, level: "folder" | "file" | "symbol", hiddenEdges = 0): string {
-  const { head, lines } = nodeTip(n, level, hiddenEdges);
+export function nodeDescription(
+  n: MapNode,
+  level: "folder" | "file" | "symbol",
+  hiddenEdges = 0,
+  viewLimit: number | null = null,
+): string {
+  const { head, lines } = nodeTip(n, level, hiddenEdges, viewLimit);
   const named = n.kind === "folder" || n.kind === "file"; // the path is already the name
   const action = nodeAction(level, n);
   const enter =
