@@ -1,0 +1,176 @@
+{
+  "run": {
+    "commit_sha": "81a41f03a5b1f0e355d9b27f59cd4720b210af82",
+    "dirty": false,
+    "run_at": "2026-11-21T17:06:45+00:00",
+    "machine": "LAPTOP-4C2E555R",
+    "cpu": "Intel(R) Pentium(R) Silver N5030 CPU @ 1.10GHz",
+    "cpu_threads": 4,
+    "ram_gb": 7.8,
+    "os": "Windows 11 (10.0.26300)",
+    "python": "3.12.16",
+    "packages": {
+      "torch": "2.14.1+cpu",
+      "sentence-transformers": "6.2.0",
+      "transformers": "5.21.0",
+      "tree-sitter": "0.25.2",
+      "anthropic": "2.3.0"
+    },
+    "max_analysis_s": 600,
+    "tool_pins": {
+      "bandit": "bandit==1.9.4",
+      "semgrep": "semgrep==1.182.1"
+    },
+    "notes": "GitHub tree metadata only (no contents, no clone)",
+    "embedder": "sentence-transformers",
+    "embed_model": "sentence-transformers/all-MiniLM-L6-v2",
+    "embed_revision": "1110a243fdf4706b3f48f1d95db1a4f5529b4d41",
+    "llm_used": false,
+    "llm": {
+      "provider": "anthropic",
+      "model": null,
+      "effort": "low",
+      "thinking": "between_tools",
+      "max_tokens": 4000,
+      "prompt_version": "2026-10-28.2"
+    },
+    "retrieval": {
+      "top_k": 8,
+      "graph_expansion": true,
+      "expand_max": 8,
+      "context_tokens": 6000
+    }
+  },
+  "ratios": {
+    "chunks_per_kb": [
+      2.0,
+      2.8
+    ],
+    "embed_s_per_chunk": [
+      0.35,
+      0.65
+    ]
+  },
+  "limits": {
+    "max_files": 2000,
+    "max_bytes": 20000000,
+    "max_file_bytes": 1000000
+  },
+  "repos": [
+    {
+      "repo": "sindresorhus/p-limit",
+      "commit": "a8a6fbec4e0e866d6d779b10889bb4f5567e70eb",
+      "truncated": false,
+      "files": 16,
+      "bytes": 48914,
+      "submodules": 0,
+      "kept_upper_bound": 11,
+      "kept_bytes": 47561,
+      "code_files": 6,
+      "code_nontest_files": 5,
+      "code_nontest_kb": 23.7,
+      "doc_files": 3,
+      "est_chunks_nontest": [
+        47,
+        66
+      ],
+      "est_embed_s": [
+        16,
+        43
+      ],
+      "under_limits": true
+    },
+    {
+      "repo": "jd/tenacity",
+      "commit": "aac059c906170ee7b6ce1aa086a226f3aded5c99",
+      "truncated": false,
+      "files": 97,
+      "bytes": 258504,
+      "submodules": 0,
+      "kept_upper_bound": 92,
+      "kept_bytes": 246718,
+      "code_files": 20,
+      "code_nontest_files": 13,
+      "code_nontest_kb": 83.5,
+      "doc_files": 3,
+      "est_chunks_nontest": [
+        167,
+        234
+      ],
+      "est_embed_s": [
+        58,
+        152
+      ],
+      "under_limits": true
+    },
+    {
+      "repo": "tkem/cachetools",
+      "commit": "07bb96086794ca6e2f70f32b7cc759fe91c08651",
+      "truncated": false,
+      "files": 44,
+      "bytes": 257634,
+      "submodules": 0,
+      "kept_upper_bound": 40,
+      "kept_bytes": 256391,
+      "code_files": 24,
+      "code_nontest_files": 10,
+      "code_nontest_kb": 66.2,
+      "doc_files": 9,
+      "est_chunks_nontest": [
+        132,
+        185
+      ],
+      "est_embed_s": [
+        46,
+        120
+      ],
+      "under_limits": true
+    },
+    {
+      "repo": "encode/httpx",
+      "commit": "3ba5fe0d7ac70222590e759c31442b1cab263791",
+      "truncated": false,
+      "files": 117,
+      "bytes": 2996451,
+      "submodules": 0,
+      "kept_upper_bound": 92,
+      "kept_bytes": 778979,
+      "code_files": 63,
+      "code_nontest_files": 26,
+      "code_nontest_kb": 313.4,
+      "doc_files": 22,
+      "est_chunks_nontest": [
+        627,
+        878
+      ],
+      "est_embed_s": [
+        219,
+        571
+      ],
+      "under_limits": true
+    },
+    {
+      "repo": "axios/axios",
+      "commit": "84a9f3b9a4f3244b8c8e818f557d64c7b964fb25",
+      "truncated": false,
+      "files": 466,
+      "bytes": 3618227,
+      "submodules": 0,
+      "kept_upper_bound": 427,
+      "kept_bytes": 3239904,
+      "code_files": 239,
+      "code_nontest_files": 84,
+      "code_nontest_kb": 298.9,
+      "doc_files": 160,
+      "est_chunks_nontest": [
+        598,
+        837
+      ],
+      "est_embed_s": [
+        209,
+        544
+      ],
+      "under_limits": true
+    }
+  ]
+}
