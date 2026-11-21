@@ -1,0 +1,194 @@
+{
+  "run": {
+    "commit_sha": "14d439b9cd7a9fab93cf474e22289ef7ad91e226",
+    "dirty": false,
+    "run_at": "2026-11-21T17:15:00+00:00",
+    "machine": "LAPTOP-4C2E555R",
+    "cpu": "Intel(R) Pentium(R) Silver N5030 CPU @ 1.10GHz",
+    "cpu_threads": 4,
+    "ram_gb": 7.8,
+    "os": "Windows 11 (10.0.26300)",
+    "python": "3.12.16",
+    "packages": {
+      "torch": "2.14.1+cpu",
+      "sentence-transformers": "6.2.0",
+      "transformers": "5.21.0",
+      "tree-sitter": "0.25.2",
+      "anthropic": "2.3.0"
+    },
+    "max_analysis_s": 3600,
+    "tool_pins": {
+      "bandit": "bandit==1.9.4",
+      "semgrep": "semgrep==1.182.1"
+    },
+    "notes": "in-process pipeline at 1814ea8+ with MAX_ANALYSIS_S=3600 (env); the other session's API on 8000 idle (holds its own model); owner's Chrome and Firefox open; agent idle during the run",
+    "embedder": "sentence-transformers",
+    "embed_model": "sentence-transformers/all-MiniLM-L6-v2",
+    "embed_revision": "1110a243fdf4706b3f48f1d95db1a4f5529b4d41",
+    "llm_used": false,
+    "llm": {
+      "provider": "anthropic",
+      "model": "claude-sonnet-5-5",
+      "effort": "low",
+      "thinking": "between_tools",
+      "max_tokens": 4000,
+      "prompt_version": "2026-10-28.2"
+    },
+    "retrieval": {
+      "top_k": 8,
+      "graph_expansion": true,
+      "expand_max": 8,
+      "context_tokens": 6000
+    },
+    "analysed": "in this process"
+  },
+  "pins": "eval/timing_pins.yaml",
+  "analyses": [
+    {
+      "repo": "pallets/flask",
+      "commit": "49943b5a94413a530761350f04e896f76e8d620e",
+      "snapshot_id": 6,
+      "job_id": 36,
+      "submitted_status": "queued",
+      "timing_only": false,
+      "stages": [
+        {
+          "t_s": 24.5,
+          "status": "running",
+          "stage": "fetch",
+          "search": "ready"
+        },
+        {
+          "t_s": 26.5,
+          "status": "running",
+          "stage": "discover",
+          "search": "ready"
+        },
+        {
+          "t_s": 54.8,
+          "status": "running",
+          "stage": "parse",
+          "search": "ready"
+        },
+        {
+          "t_s": 56.8,
+          "status": "running",
+          "stage": "edges",
+          "search": "ready"
+        },
+        {
+          "t_s": 71.2,
+          "status": "running",
+          "stage": "detect",
+          "search": "ready"
+        },
+        {
+          "t_s": 73.2,
+          "status": "running",
+          "stage": "embed",
+          "search": "embedding"
+        },
+        {
+          "t_s": 509.3,
+          "status": "done",
+          "stage": "done",
+          "search": "tests"
+        },
+        {
+          "t_s": 767.3,
+          "status": "done",
+          "stage": "done",
+          "search": "ready"
+        }
+      ],
+      "final_status": "done",
+      "error": null,
+      "receipt": {
+        "files_kept": 194,
+        "files_skipped": 42,
+        "files_beyond_limit": 0,
+        "hit_file_limit": false
+      },
+      "search": "ready",
+      "search_error": null,
+      "analysis_s": 509.3,
+      "total_with_tests_s": 767.3
+    },
+    {
+      "repo": "mochajs/mocha",
+      "commit": "5b5afa7b12e3f76f4e0c6afa12e960c0b378358c",
+      "snapshot_id": 39,
+      "job_id": 37,
+      "submitted_status": "queued",
+      "timing_only": true,
+      "stages": [
+        {
+          "t_s": 0.1,
+          "status": "queued",
+          "stage": "queued",
+          "search": "ready"
+        },
+        {
+          "t_s": 2.1,
+          "status": "running",
+          "stage": "fetch",
+          "search": "ready"
+        },
+        {
+          "t_s": 8.1,
+          "status": "running",
+          "stage": "discover",
+          "search": "ready"
+        },
+        {
+          "t_s": 46.6,
+          "status": "running",
+          "stage": "parse",
+          "search": "ready"
+        },
+        {
+          "t_s": 52.8,
+          "status": "running",
+          "stage": "edges",
+          "search": "ready"
+        },
+        {
+          "t_s": 69.1,
+          "status": "running",
+          "stage": "detect",
+          "search": "ready"
+        },
+        {
+          "t_s": 75.9,
+          "status": "running",
+          "stage": "embed",
+          "search": "embedding"
+        },
+        {
+          "t_s": 426.0,
+          "status": "done",
+          "stage": "done",
+          "search": "tests"
+        },
+        {
+          "t_s": 1164.5,
+          "status": "done",
+          "stage": "done",
+          "search": "ready"
+        }
+      ],
+      "final_status": "done",
+      "error": null,
+      "receipt": {
+        "files_kept": 557,
+        "files_skipped": 142,
+        "files_beyond_limit": 0,
+        "hit_file_limit": false
+      },
+      "search": "ready",
+      "search_error": null,
+      "analysis_s": 426.0,
+      "total_with_tests_s": 1164.5
+    }
+  ]
+}

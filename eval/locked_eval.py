@@ -60,6 +60,9 @@ CONFIGS = {
 LIVE_CONFIG = "C"  # what /ask uses with the default settings (QA_TOP_K 8, expansion on, 8)
 PAIRS = [("C", "B"), ("C", "A"), ("B", "A")]
 PASS_CAP_USD = 1.0
+# Frozen in Part B step 2 (eval/results/LOCKED-FREEZE-CHECKS.md): >= 2.5x the slowest
+# measured full analysis of a similar-size repo on the eval PC, rounded up to 300 s.
+LOCKED_MAX_ANALYSIS_S = 2100
 OUT_TOKENS_ESTIMATE = 700  # per AI answer, for the estimate (BASELINE-v1 max was 681)
 LOCKED_PASSES = 2
 LOCKED_DIR = ROOT / "eval" / "locked"
@@ -154,6 +157,14 @@ def locked_guard(path: Path, *, dirty: bool, runner_changed_ok: bool,
     if problems:
         raise SystemExit("locked run refused:\n  " + "\n  ".join(problems))
     return {"questions_sha256": file_sha256(path), "runner_changed": runner_changed}
+
+
+def check_analysis_cap(pins: Path, max_analysis_s: int) -> None:
+    """Analysing the locked pins needs the frozen time limit, so search is not lost."""
+    locked = pins.resolve() == (LOCKED_DIR / "pins.yaml").resolve()
+    if locked and max_analysis_s != LOCKED_MAX_ANALYSIS_S:
+        raise SystemExit(f"locked pins: MAX_ANALYSIS_S must be {LOCKED_MAX_ANALYSIS_S}"
+                         f" (it is {max_analysis_s}); set $env:MAX_ANALYSIS_S first")
 
 
 def check_cap(estimate_usd: float, cap: float) -> None:
@@ -745,6 +756,9 @@ def cmd_analyse(args) -> None:
     from app import config, db
 
     pins = yaml.safe_load(args.pins.read_text(encoding="utf-8"))["repos"]
+    if not args.in_process and args.pins.resolve() == (LOCKED_DIR / "pins.yaml").resolve():
+        raise SystemExit("locked pins: use --in-process (the API's time limit cannot be checked)")
+    check_analysis_cap(args.pins, config.MAX_ANALYSIS_S)
     info = run_info(llm_used=False)
     info["notes"] = args.notes
     info["analysed"] = "in this process" if args.in_process else f"through the API at {args.api}"

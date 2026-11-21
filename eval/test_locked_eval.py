@@ -109,6 +109,14 @@ def test_locked_guard_without_hash_or_manifest(tmp_path):
     assert "not committed" in str(e.value) and "scorer freeze" in str(e.value)
 
 
+def test_locked_pins_need_the_frozen_analysis_cap(tmp_path):
+    pins = le.LOCKED_DIR / "pins.yaml"
+    le.check_analysis_cap(pins, le.LOCKED_MAX_ANALYSIS_S)
+    with pytest.raises(SystemExit, match="MAX_ANALYSIS_S must be"):
+        le.check_analysis_cap(pins, 600)
+    le.check_analysis_cap(tmp_path / "timing_pins.yaml", 3600)  # other pins: any value
+
+
 def test_check_cap():
     le.check_cap(0.99, 1.0)
     with pytest.raises(SystemExit, match="over the"):
