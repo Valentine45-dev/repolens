@@ -29,6 +29,7 @@ const PAGE = 50;
 const SECRET_RULE = "hardcoded-secret";
 const NO_PLACEHOLDERS = "This analysis has no probable placeholders.";
 const MISS_NOTE = "These checks can still miss issues.";
+export const NOT_ON_MAP = "This file isn't code, so it isn't on the map.";
 const SKELETON_ROWS = [[62, 70], [48, 55], [70, 64], [55, 72], [66, 50], [44, 68], [58, 60], [50, 66]];
 
 // Spec §5.6. Filters live in the URL:
@@ -600,17 +601,23 @@ export function FindingPanel({
           </figure>
         ) : null}
         <div className="callout-actions">
-          <Link
-            className="button button-secondary button-small"
-            state={REVEAL}
-            to={exploreHref(snapshotId, {
-              fileId: finding.file_id,
-              lines: { start: finding.line, end: finding.line },
-              tests: finding.in_test,
-            })}
-          >
-            Open in Explorer
-          </Link>
+          {/* The Explorer holds only Python, JavaScript and TypeScript files (the ones with a
+              language); a secret in docker-compose.yml or a README has no place there. */}
+          {finding.language ? (
+            <Link
+              className="button button-secondary button-small"
+              state={REVEAL}
+              to={exploreHref(snapshotId, {
+                fileId: finding.file_id,
+                lines: { start: finding.line, end: finding.line },
+                tests: finding.in_test,
+              })}
+            >
+              Open in Explorer
+            </Link>
+          ) : (
+            <p className="caption">{NOT_ON_MAP}</p>
+          )}
           <button type="button" className="button button-secondary button-small" onClick={copy}>
             <Icon name="copy" size={14} />
             {copied ? "Copied" : "Copy location"}

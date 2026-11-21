@@ -96,3 +96,20 @@ describe("FindingPanel notes", () => {
     expect(host.textContent).toContain("Working out reachability");
   });
 });
+
+describe("Open in Explorer (COR-02)", () => {
+  const link = () => [...host.querySelectorAll("a")].find((a) => a.textContent === "Open in Explorer");
+  it("is offered for a finding in code, and opens that line", () => {
+    show(SECRET);
+    expect(link()?.getAttribute("href")).toBe("/a/2/explore?node=10&lines=16-16");
+  });
+
+  it("is not offered for a file that is not code; the panel says why, and Copy location stays", () => {
+    show({ ...SECRET, path: "dockerized_labs/sec_misconfig/docker-compose.yml", language: null, line: 12 });
+    expect(link()).toBeUndefined();
+    expect(host.querySelector(".callout-actions")?.textContent).toContain(
+      "This file isn't code, so it isn't on the map.",
+    );
+    expect([...host.querySelectorAll("button")].some((b) => b.textContent?.includes("Copy location"))).toBe(true);
+  });
+});

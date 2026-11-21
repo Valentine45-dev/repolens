@@ -59,7 +59,7 @@ export interface Finding {
   message: string;
   file_id: number;
   path: string;
-  language: string;
+  language: string | null; // null: not code (YAML, a README...), so not in the Explorer
   line: number;
   symbol: string | null;
   snippet: string | null; // masked
