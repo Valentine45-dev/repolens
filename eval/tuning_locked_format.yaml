@@ -1,0 +1,166 @@
+# Tuning questions in the locked-run format (eval/locked_eval.py). Written 21 Nov 2026, before any run.
+# Written by the agent from tuning repos only (code read from the stored, redacted file text of
+# the analysed snapshots; same line numbers as the pinned commit). RepoLens's own retrieval and
+# graph were not used to find any label. Do not edit after seeing results (first result counts).
+schema: 1
+questions:
+  - id: T01
+    set: tuning
+    repo: pallets/flask
+    commit: 49943b5a94413a530761350f04e896f76e8d620e
+    question: "How are flashed messages kept until the next request and then read back?"
+    type: code_how
+    expected:
+      - {path: src/flask/helpers.py, start: 326, end: 357, source: code}   # flash(): appends to session["_flashes"]
+      - {path: src/flask/helpers.py, start: 360, end: 399, source: code}   # get_flashed_messages(): pops them once per request
+    author: T
+    written_from: code
+    labeller: agent
+    notes: ""
+
+  - id: T02
+    set: tuning
+    repo: pallets/itsdangerous
+    commit: 672971d66a2ef9f85151e53283113f33d642dabd
+    question: "How does it still accept tokens signed with an older secret key after the key has been changed?"
+    type: code_how
+    expected:
+      - {path: src/itsdangerous/signer.py, start: 67, end: 73, source: code}    # _make_keys_list
+      - {path: src/itsdangerous/signer.py, start: 227, end: 242, source: code}  # verify_signature tries every key, newest first
+    author: T
+    written_from: code
+    labeller: agent
+    notes: ""
+
+  - id: T03
+    set: tuning
+    repo: pallets/flask
+    commit: 49943b5a94413a530761350f04e896f76e8d620e
+    question: "Where is the session cookie signed and written to the response?"
+    type: locate
+    expected:
+      - {path: src/flask/sessions.py, start: 337, end: 385, source: code}   # SecureCookieSessionInterface.save_session
+      - {path: src/flask/sessions.py, start: 303, end: 321, source: code}   # get_signing_serializer
+    author: T
+    written_from: code
+    labeller: agent
+    notes: ""
+
+  - id: T04
+    set: tuning
+    repo: expressjs/express
+    commit: 1c6f1b0fe4000977b9a7b4f34097e4d527dd9824
+    question: "Where is the query string of a request URL turned into an object?"
+    type: locate
+    expected:
+      - {path: lib/request.js, start: 230, end: 241, source: code}   # req.query getter
+      - {path: lib/utils.js, start: 162, end: 184, source: code}     # compileQueryParser
+      - {path: lib/application.js, start: 367, end: 369, source: code} # 'query parser' setting -> fn
+    author: T
+    written_from: code
+    labeller: agent
+    notes: ""
+
+  - id: T05
+    set: tuning
+    repo: pallets/flask
+    commit: 49943b5a94413a530761350f04e896f76e8d620e
+    question: "What is this project for, and which libraries does it build on?"
+    type: purpose
+    expected:
+      - {path: README.md, start: 5, end: 14, source: doc}
+      - {path: src/flask/app.py, start: 108, end: 113, source: code}   # class Flask docstring: WSGI app, central object
+    author: T
+    written_from: README
+    labeller: agent
+    notes: "v2.0 chunks code only, so doc_hit is 0 by construction until docs are in Ask"
+
+  - id: T06
+    set: tuning
+    repo: pallets/itsdangerous
+    commit: 672971d66a2ef9f85151e53283113f33d642dabd
+    question: "Which files import signer.py?"
+    type: graph
+    expected: []
+    expected_files_with_tests:
+      - src/itsdangerous/__init__.py
+      - src/itsdangerous/serializer.py
+      - src/itsdangerous/timed.py
+      - tests/test_itsdangerous/test_serializer.py
+      - tests/test_itsdangerous/test_signer.py
+      - tests/test_itsdangerous/test_timed.py
+    expected_files_without_tests:
+      - src/itsdangerous/__init__.py
+      - src/itsdangerous/serializer.py
+      - src/itsdangerous/timed.py
+    author: T
+    written_from: code
+    labeller: agent
+    notes: "from grep of import lines; docs/*.rst examples are not code"
+
+  - id: T07
+    set: tuning
+    repo: pallets/itsdangerous
+    commit: 672971d66a2ef9f85151e53283113f33d642dabd
+    question: "What calls _make_keys_list?"
+    type: graph
+    expected: []
+    expected_files_with_tests: [src/itsdangerous/signer.py, src/itsdangerous/serializer.py]
+    expected_files_without_tests: [src/itsdangerous/signer.py, src/itsdangerous/serializer.py]
+    author: T
+    written_from: code
+    labeller: agent
+    notes: "Signer.__init__ (signer.py:143), Serializer.__init__ (serializer.py:208)"
+
+  - id: T08
+    set: tuning
+    repo: expressjs/express
+    commit: 1c6f1b0fe4000977b9a7b4f34097e4d527dd9824
+    question: "What does lib/express.js import?"
+    type: graph
+    expected: []
+    expected_files_with_tests: [lib/application.js, lib/request.js, lib/response.js]
+    expected_files_without_tests: [lib/application.js, lib/request.js, lib/response.js]
+    author: T
+    written_from: code
+    labeller: agent
+    notes: "internal files only; body-parser, node:events, merge-descriptors, router are packages"
+
+  - id: T09
+    set: tuning
+    repo: expressjs/express
+    commit: 1c6f1b0fe4000977b9a7b4f34097e4d527dd9824
+    question: "How does it compress response bodies with gzip before sending them?"
+    type: unanswerable
+    expected: []
+    premise_truth: "Response compression is not in this repository; it is the separate compression middleware package (History.md only mentions it as a former dependency)."
+    author: T
+    written_from: README
+    labeller: agent
+    notes: ""
+
+  - id: T10
+    set: tuning
+    repo: pallets/flask
+    commit: 49943b5a94413a530761350f04e896f76e8d620e
+    question: "How does Flask's built-in ORM map model classes to database tables?"
+    type: false_premise
+    expected: []
+    premise_truth: "Flask has no built-in ORM; database access comes from extensions (for example Flask-SQLAlchemy) that are not in this repository."
+    author: T
+    written_from: README
+    labeller: agent
+    notes: ""
+
+  - id: T11
+    set: tuning
+    repo: pallets/itsdangerous
+    commit: 672971d66a2ef9f85151e53283113f33d642dabd
+    question: "How does it push a timed token's expiry further into the future each time the token is verified?"
+    type: false_premise
+    expected: []
+    premise_truth: "Verifying never changes a token: TimestampSigner.unsign only compares the stored timestamp's age with max_age (timed.py:137-153); there is no sliding expiry."
+    author: T
+    written_from: code
+    labeller: agent
+    notes: ""
