@@ -233,7 +233,7 @@ export function GoToFile({ snapshotId, onClose }: { snapshotId: number; onClose:
             <p className="goto-message caption">Type part of a file or folder name, or a path.</p>
           ) : result && result.total === 0 ? (
             <p className="goto-message" role="status">
-              No files match “<span className="mono">{trimmed}</span>”
+              No Python, JavaScript or TypeScript file matches “<span className="mono">{trimmed}</span>”
             </p>
           ) : result && result.total > matches.length ? (
             <p className="goto-message caption" role="status">
