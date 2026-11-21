@@ -2346,3 +2346,59 @@ are deliberately not changed after seeing eval results; these stay as documented
     copies sessionStorage, so the copy shows the interrupted note while the original gets the
     answer. The vitest jsdom start takes ~16-40 s per file on this PC; two runs at once time out
     the workers ("Failed to start forks worker"), so never run vitest in parallel here.
+- **FE2: show what's true (`fix/fe2-show-whats-true`, 19-21 Nov; awaiting the owner's real-mouse
+  test, not merged).** From the frontend review (`REVIEW-FRONTEND-2026-11-14.md`): UX-02, COR-02,
+  COR-03, COR-04, COR-05, COR-06, COR-07, COR-10, UX-01, A11Y-01, with DOM tests (TEST-01 for the
+  Explorer and Findings pages). $0 API spend: mocked API only, no `/ask` call. No new dependencies.
+  - **Step 0 (read-only, 19 Nov):** all ten reproduced on `main` (throwaway mocked tests, read-only
+    API GETs on PyGoat and flask); COR-07, COR-10 and UX-01 by reading as well.
+  - **Decisions (owner):** UX-02 keeps the app's white tooltip, no native ones, no new colour, node
+    and edge tips told apart by content and position; node tip 400 ms after hover, at once on
+    keyboard focus. COR-02 hides the link (not a panel for any text file). COR-04 counts with every
+    current filter except the menu's own, for Severity and Rule. COR-05 filters on the frontend.
+  - **Commits:** `ae29433` ui_drawn_counts baseline; `d61e74a` UX-02 map (new `CanvasTip.tsx`,
+    `mapModel.nodeTip` / `nodeDescription`); `4b9f51d` UX-02 flat graph; `2b126a1` COR-10;
+    `1354da8` COR-02; `c519988` COR-03 (`reportPanel` in the shell's context: pending / shown /
+    none); `8c48348` COR-07; `dd9d934` COR-05; `87576da` UX-01; `60c511b` COR-06; `906347f`
+    A11Y-01; `1235c61` COR-04 backend; `5fc5046` COR-04 frontend; `6b1bc0b` DESIGN.md.
+  - **UX-02:** no `title=` or SVG `<title>` on map or flat-graph nodes and edges (the findings link's
+    hover text became its `aria-label`; the cycle tag, "N connections not drawn" and boundary texts
+    moved into the node tip). Node tip under the box (above when no room), path first in mono, kept
+    while the pointer moves onto it; Esc hides only the tip (a capture listener prevents the default,
+    which the escape stack skips). Screen readers: each node's `aria-describedby` is its tip text plus
+    what Enter does (replaces React Flow's "move/delete" description); each edge's label is its tip.
+    Toolbar and breadcrumb titles are off the canvas and stay ("Already at the top" is the only name
+    of that span). `testFlow.ts` gives React Flow sizes and a ResizeObserver in jsdom, so the map
+    renders nodes and edges in tests.
+  - **COR-04 backend:** `GET /snapshots/{id}/findings` adds a top-level `facets` ({severity, rule}),
+    not a key inside `counts`: `eval/findings_capture_diff.py` compares `counts` key by key, and
+    nothing in `eval/` reads `facets`. Additive only: items, total, counts and stored data unchanged.
+    PyGoat Security: High 67 / Medium 0 / Low 3 (Low 1 with test code hidden); before the menu said
+    Medium 2 / Low 12.
+  - **Revert checks:** each commit's new tests were run with its source files put back to the
+    previous commit: all fail there, except guards that pass by design (a code file still opens in
+    the File tab; "Open in Explorer" still offered for code; with tests shown Used by lists all; an
+    empty category still says so; All categories shows the snapshot's numbers). The 8 facet pytest
+    cases fail on the previous `findings.py`.
+  - **Checks:** web **45 files, 356 tests passed** (`main`: 40 / 327), run with `--pool=threads
+    --maxWorkers=1`: two runs with the default worker count lost 6 and 17 files to "Timeout waiting
+    for worker to respond" while the PC sat at 100% CPU with ~570 MB free (Docker Desktop stuck, see
+    below); those runs reported only the files that started, so read the file count. `tsc` clean,
+    `npm run build` ok. Bundle (gzip -9, `main` -> branch): main chunk 134,550 -> 135,376 B (+0.8 kB),
+    Explore chunk 71,289 -> 72,983 B (+1.7 kB), CSS 23,936 -> 23,957 B. Backend **701 passed, 3
+    skipped** locally and in CI (693 before: +8 facet cases); ruff clean. CI green on `6b1bc0b`.
+  - **Map unchanged:** `ui_drawn_counts` before (`...before-fe2-20261119T024647Z-9c9d6fc.json`) and
+    after (`...after-fe2-20261121T140241Z-6b1bc0b.json`): 457 views, 0 differ in counts, budget,
+    mode or dashed edges; `drawn_sha1` also equal for all 457 (no re-analysis in between).
+  - **Docker Desktop (21 Nov):** stuck at "starting" for ~3 h, then after a reboot
+    `Wsl/Service/AttachDisk/CreateVm/ERROR_TIMEOUT` mounting `docker_data.vhdx` while the PC was at
+    74-100% CPU (McAfee `mfemms` among the busy processes). WSL itself was fine (`wsl -d
+    docker-desktop -e true` booted). Fixed by Quit from the tray (closing the window left the
+    18:08 backend waiting), `wsl --shutdown`, start again. If it recurs, a McAfee exclusion for
+    `%LOCALAPPDATA%\Docker\wsl` is the next thing to try (owner's call).
+  - **Served for the owner's test:** this branch's build by `vite preview` on 5173 (no
+    `REPOLENS_DEV_*` delay; `/api/health` ~0.1 s); API on 8000 (uvicorn, natively).
+  - **Not checked:** no visual check in a real browser by the agent (the built-in browser was not
+    allowed this session); the COR-10 tooltip has no PyGoat or flask view to show it (the only
+    symbol view with "+ N more" is black's `pytree.py`), so it rests on its unit test; COR-07 shows
+    only while the first findings request is slow.
