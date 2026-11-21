@@ -2376,3 +2376,27 @@ are deliberately not changed after seeing eval results; these stay as documented
     included; it auto-restarts its API), no RepoLens API running for the in-process analysis.
   - **Open (owner, before the locked run):** commit `eval/locked/v2.0.sha256`.
   - Backend 701 passed, 3 skipped; ruff clean (backend and the new eval files).
+- **Startup hook: per-job advisory lock (`fix/startup-interrupt-lock`, 22 Nov; not merged).** Cause (21 Nov
+  incident): the `lifespan` hook (`app/main.py`) marked every queued/running job "Interrupted by server
+  restart", and uvicorn binds only after startup, so a second API that never bound still failed a job
+  another process was running.
+  - **Fix:** `app/ingest/joblock.py`. `run_job` and `run_search_retry` hold a session-level
+    `pg_try_advisory_lock` (key `0x524C << 48 | job_id`) on a connection of their own for the job's whole
+    life, test-code embedding included; taken before waiting on the in-process queue. The hook is now
+    `pipeline.recover_interrupted_jobs()`: it fails only jobs (and searches) whose lock no live session
+    holds, and logs the ones it leaves. In-process evaluation runs (`locked_eval.py analyse --in-process`)
+    are protected too, through `run_job`, without changing `eval/`. Lock connection not possible (or no
+    DATABASE_URL): WARNING with job id and reason, the job runs unlocked as before. No schema change.
+  - **Tests:** `tests/test_job_lock_db.py` (9). Revert check: with main's `pipeline.py` and `main.py`, 7
+    fail; the other 2 (pure `joblock` tests) fail to collect without `joblock.py`.
+  - **Manual (two APIs):** API 1 on 8000 running a mocha analysis (job 39); API 2 on 8000: hook logged
+    "jobs [39] are still run by another process", bind failed (10048), exit 3, job kept running. API 3 on
+    8001 during mocha's search retry: same log line, bound, job untouched; stopped. The first try with
+    itsdangerous (job 38) finished before API 2 had started (inconclusive, kept as a note). The extra model
+    loads slowed the CPU so much that mocha's first search hit API 1's 600 s cap; "Retry preparing search"
+    restored it (1,006 / 1,849 chunks, as before). itsdangerous re-analysed: 113 / 68 chunks, as before.
+  - **Checks:** free retrieval eval before (`2d8171c`) and after (`1af7c98`): summary and every question
+    record identical (A 0.71, B 0.86, C 0.93). `eval/locked/scorer.sha256` self-check passes (no eval/
+    file changed). Backend 710 passed, 3 skipped; ruff clean.
+  - **Locked run:** unaffected (scorer and runner unchanged; analysis output unchanged; only job-status
+    bookkeeping). The run-day checklist still requires no other session and no API.

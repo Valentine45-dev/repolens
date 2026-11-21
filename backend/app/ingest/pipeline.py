@@ -17,7 +17,7 @@ from app.detect import detect
 from app.detect.imports import broken_imports
 from app.detect.ruff import RuffError, run_ruff
 from app.detect.rules import BROKEN_IMPORT_RULE, RULES, SECRET_RULE
-from app.ingest import clone
+from app.ingest import clone, joblock
 from app.ingest.calls import resolve_calls
 from app.ingest.discover import DiscoveredFile, DiscoverResult, discover
 from app.ingest.parse import (
@@ -629,8 +629,9 @@ def claim_search_retry(snapshot_id: int) -> int | None:
 
 def run_search_retry(job_id: int, snapshot_id: int) -> None:
     """"Retry preparing search": re-embed from the stored files with a fresh time budget (this
-    run does no clone, parse-to-database or detection, so it gets the whole budget)."""
-    with _JOB_LOCK:
+    run does no clone, parse-to-database or detection, so it gets the whole budget). The job's
+    advisory lock is taken before waiting for the in-process queue (joblock)."""
+    with joblock.held(job_id), _JOB_LOCK:
         _run_search_retry(job_id, snapshot_id)
 
 
@@ -649,8 +650,35 @@ def _run_search_retry(job_id: int, snapshot_id: int) -> None:
 
 
 def run_job(job_id: int, snapshot_id: int, url: str, sha: str) -> None:
-    with _JOB_LOCK:
+    """The whole job, test-code embedding included, under the job's advisory lock (taken before
+    waiting for the in-process queue, so a queued job of a live process is not taken for dead)."""
+    with joblock.held(job_id), _JOB_LOCK:
         _run_job(job_id, snapshot_id, url, sha)
+
+
+def recover_interrupted_jobs() -> dict:
+    """At API start: mark failed the jobs, and the searches, whose runner is gone (no live
+    session holds their lock). Jobs still run by another process are left as they are."""
+    with pool().connection() as conn:
+        rows = conn.execute(
+            "SELECT id FROM jobs WHERE status IN ('queued', 'running')"
+            " OR search_state IN ('embedding', 'tests') ORDER BY id"
+        ).fetchall()
+        gone = [r["id"] for r in rows if joblock.is_orphaned(conn, r["id"])]
+        left = [r["id"] for r in rows if r["id"] not in gone]
+        if gone:
+            # Background tasks do not survive a restart; there is no requeue in this build.
+            conn.execute(
+                "UPDATE jobs SET status = 'failed', error = 'Interrupted by server restart.'"
+                " WHERE id = ANY(%s) AND status IN ('queued', 'running')", (gone,))
+            # A search run (or test code in the background) stopped too: offer the retry.
+            conn.execute(
+                "UPDATE jobs SET search_state = 'failed',"
+                " search_error = 'Search for questions was interrupted by a server restart.'"
+                " WHERE id = ANY(%s) AND search_state IN ('embedding', 'tests')", (gone,))
+    if left:
+        log.info("jobs %s are still run by another process; left as they are", left)
+    return {"failed": gone, "left": left}
 
 
 def _run_job(job_id: int, snapshot_id: int, url: str, sha: str) -> None:
