@@ -1,10 +1,10 @@
 import { keepPreviousData, useQuery } from "@tanstack/react-query";
 import { ReactFlowProvider, useReactFlow } from "@xyflow/react";
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useLocation, useOutletContext, useSearchParams } from "react-router-dom";
 
-import { ApiError, getGraph, getMapView, type MapView as MapViewData, repoName } from "../api";
-import type { AnalysisContext } from "../components/AnalysisShell";
+import { ApiError, getFile, getGraph, getMapView, type MapView as MapViewData, repoName } from "../api";
+import type { AnalysisContext, PanelState } from "../components/AnalysisShell";
 import { Breadcrumbs } from "../components/Breadcrumbs";
 import { ConnectionNotice, isReconnecting } from "../components/ConnectionNotice";
 import { FileList } from "../components/FileList";
@@ -53,7 +53,7 @@ export function Explore() {
 }
 
 function ExploreInner() {
-  const { snapshotId, status, panelHidden } = useOutletContext<AnalysisContext>();
+  const { snapshotId, status, panelHidden, reportPanel } = useOutletContext<AnalysisContext>();
   const reveal = useRevealToken();
   const ready = status !== undefined; // no data is asked for before the analysis is known to be done
   const [params] = useSearchParams();
@@ -92,6 +92,45 @@ function ExploreInner() {
   const allIds = useMemo(() => new Set(graph.data?.nodes.map((n) => n.id) ?? []), [graph.data]);
   const selected = graph.data?.nodes.find((n) => n.id === selectedId) ?? null;
   const isInGraph = useCallback((fileId: number) => allIds.has(fileId), [allIds]);
+
+  // A node= that is not in the file list: say why instead of showing nothing (COR-03). A hidden
+  // test or example file can be shown with one click; a file that is not code, or an id this
+  // analysis does not have, never can, so that parameter is dropped and the reason stays on screen.
+  const missingId =
+    selectedId !== null && graph.data && !graph.isPlaceholderData && !selected ? selectedId : null;
+  const withTests = useQuery({
+    queryKey: ["graph", snapshotId, true, showGuesses], // the same list Go to file uses
+    queryFn: ({ signal }) => getGraph(snapshotId, { showTests: true, showGuesses }, signal),
+    enabled: missingId !== null && !showTests,
+    staleTime: Infinity,
+  });
+  const hiddenTest =
+    missingId !== null && !showTests ? (withTests.data?.nodes.find((n) => n.id === missingId) ?? null) : null;
+  const fileCheck = useQuery({
+    queryKey: ["file", snapshotId, missingId],
+    queryFn: ({ signal }) => getFile(snapshotId, missingId!, signal),
+    enabled: missingId !== null && (showTests || (withTests.data !== undefined && hiddenTest === null)),
+    staleTime: Infinity,
+  });
+  const [notice, setNotice] = useState<{ kind: "not-code"; path: string } | { kind: "unknown" } | null>(null);
+  useEffect(() => {
+    if (selectedId !== null) setNotice(null); // a new selection replaces the last reason
+  }, [selectedId]);
+  useEffect(() => {
+    if (missingId === null) return;
+    const gone = fileCheck.data
+      ? ({ kind: "not-code", path: fileCheck.data.path } as const)
+      : fileCheck.error instanceof ApiError && fileCheck.error.status === 404
+        ? ({ kind: "unknown" } as const)
+        : null;
+    if (!gone) return;
+    setParams({ node: null, lines: null }, true);
+    setNotice(gone);
+  }, [missingId, fileCheck.data, fileCheck.error, setParams]);
+  const nodeParam = params.get("node");
+  const panelState: PanelState =
+    selected !== null ? "shown" : selectedId !== null && !graph.data && !graph.error ? "pending" : "none";
+  useEffect(() => reportPanel(nodeParam, panelState), [reportPanel, nodeParam, panelState]);
 
   // Which view: the URL wins; with no level and no root the start rule picks files for a small
   // repo and folders for a big one; a link to a file opens that file's folder.
@@ -187,7 +226,8 @@ function ExploreInner() {
   const hub = hubId === null ? null : (graph.data?.nodes.find((n) => n.id === hubId) ?? null);
   const [fittedAt, setFittedAt] = useState<number | null>(null);
   const [zoomedIn, setZoomedIn] = useState(false);
-  const showHubNote = hub !== null && selectedId === null && fittedAt !== graph.dataUpdatedAt;
+  const showHubNote =
+    hub !== null && selectedId === null && fittedAt !== graph.dataUpdatedAt && notice === null;
 
   // --- the map ---
   const selection = useMemo(
@@ -372,6 +412,25 @@ function ExploreInner() {
                 </span>
               ) : (
                 <span>Updating…</span>
+              )}
+            </p>
+          ) : null}
+          {hiddenTest ? (
+            <p className="canvas-hint caption" role="status">
+              <span className="mono">{hiddenTest.path}</span> is a test or example file, hidden on the
+              map.{" "}
+              <button type="button" className="link-button" onClick={() => setParam("tests", "1")}>
+                Show tests &amp; examples
+              </button>
+            </p>
+          ) : notice ? (
+            <p className="canvas-hint caption" role="status">
+              {notice.kind === "not-code" ? (
+                <>
+                  <span className="mono">{notice.path}</span> isn&apos;t code, so it isn&apos;t on the map.
+                </>
+              ) : (
+                "The link pointed to a file that isn't in this analysis."
               )}
             </p>
           ) : null}

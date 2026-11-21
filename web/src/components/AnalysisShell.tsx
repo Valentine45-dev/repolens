@@ -1,5 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
-import { lazy, Suspense, useEffect, useMemo, useRef, useState } from "react";
+import { lazy, Suspense, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Navigate, NavLink, Outlet, useParams, useSearchParams } from "react-router-dom";
 
 import {
@@ -33,7 +33,13 @@ export interface AnalysisContext {
   /** Undefined until the status has loaded: the page draws its chrome at once and waits for this
    * before it asks for data (an analysis that is not done redirects away). */
   status: SnapshotStatus | undefined;
+  /** The page says whether the file or finding in the URL (`param`, the node= or finding= value)
+   * is really on screen: "pending" while it does not know yet, "none" when it cannot be shown
+   * (the page then says why). Until a page reports, a panel in the URL counts as pending. */
+  reportPanel: (param: string | null, state: PanelState) => void;
 }
+
+export type PanelState = "pending" | "shown" | "none";
 
 const UNREAD_TITLE = { answer: "A new answer is in Ask", error: "A question in Ask failed" } as const;
 const UNREAD_SAID = { answer: "Answer ready in Ask.", error: "A question in Ask failed." } as const;
@@ -64,7 +70,19 @@ export function AnalysisShell() {
   // finding panel shares Ask's column as a tab (under 901px both overlay, as before). Which tab is
   // in front is view state only: both stay in the URL and both stay mounted.
   const panelParam = params.get("node") ?? params.get("finding");
-  const panelOpen = panelParam !== null;
+  // A panel in the URL is not always one on screen (a hidden test file, an old link): only then
+  // does Ask share its column, so an empty File tab never stands in front of Ask.
+  const [reported, setReported] = useState<{ param: string | null; state: PanelState }>({
+    param: null,
+    state: "pending",
+  });
+  const reportPanel = useCallback(
+    (param: string | null, state: PanelState) =>
+      setReported((old) => (old.param === param && old.state === state ? old : { param, state })),
+    [],
+  );
+  const panelState: PanelState = reported.param === panelParam ? reported.state : "pending";
+  const panelOpen = panelParam !== null && panelState !== "none";
   const midWidth = useMediaQuery("(min-width: 901px) and (max-width: 1599px)");
   const tabbed = askOpen && panelOpen && midWidth;
   const askPrefill = params.get("askq");
@@ -210,7 +228,9 @@ export function AnalysisShell() {
             </div>
           ) : (
             <Outlet
-              context={{ snapshotId, tabbed, panelHidden, status: status.data } satisfies AnalysisContext}
+              context={
+                { snapshotId, tabbed, panelHidden, status: status.data, reportPanel } satisfies AnalysisContext
+              }
             />
           )}
         </div>

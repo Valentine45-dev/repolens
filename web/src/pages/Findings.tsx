@@ -13,7 +13,7 @@ import {
   type Rule,
   type Severity,
 } from "../api";
-import type { AnalysisContext } from "../components/AnalysisShell";
+import type { AnalysisContext, PanelState } from "../components/AnalysisShell";
 import { useDocumentTitle } from "../documentTitle";
 import { Icon } from "../components/Icon";
 import { PathText } from "../components/PathText";
@@ -30,13 +30,14 @@ const SECRET_RULE = "hardcoded-secret";
 const NO_PLACEHOLDERS = "This analysis has no probable placeholders.";
 const MISS_NOTE = "These checks can still miss issues.";
 export const NOT_ON_MAP = "This file isn't code, so it isn't on the map.";
+export const NOT_IN_LIST = "The finding in this link isn't in this list (another page, or hidden by a filter).";
 const SKELETON_ROWS = [[62, 70], [48, 55], [70, 64], [55, 72], [66, 50], [44, 68], [58, 60], [50, 66]];
 
 // Spec §5.6. Filters live in the URL:
 // ?category=quality|all (Security when absent)&severity=&rule=&language=&path=&tests=hide
 // &placeholders=hide&page=&finding=
 export function Findings() {
-  const { snapshotId, status } = useOutletContext<AnalysisContext>();
+  const { snapshotId, status, reportPanel } = useOutletContext<AnalysisContext>();
   const ready = status !== undefined;
   const [params] = useSearchParams();
   const setParams = useSetParams();
@@ -93,6 +94,23 @@ export function Findings() {
   const setFilter = (key: string, value: string | null) =>
     setParams({ [key]: value, page: null, finding: null });
   const selected = findings.data?.items.find((f) => f.id === selectedId) ?? null;
+  // A finding= that is not on this page of the list (an old link, another page, a filter): say so
+  // and drop it, rather than an empty panel or an empty Finding tab in front of Ask (COR-03).
+  const [notOnPage, setNotOnPage] = useState(false);
+  const missing = selectedId !== null && findings.data !== undefined && !findings.isPlaceholderData && !selected;
+  useEffect(() => {
+    if (selectedId !== null && !missing) setNotOnPage(false);
+  }, [selectedId, missing]);
+  useEffect(() => {
+    if (!missing) return;
+    setParams({ finding: null }, true);
+    setNotOnPage(true);
+  }, [missing, setParams]);
+  const filterKey = JSON.stringify(filter);
+  useEffect(() => setNotOnPage(false), [filterKey]); // another list: the note was about the last one
+  const findingParam = params.get("finding");
+  const panelState: PanelState = selected ? "shown" : selectedId !== null && !findings.data ? "pending" : "none";
+  useEffect(() => reportPanel(findingParam, panelState), [reportPanel, findingParam, panelState]);
   useDocumentTitle([
     selected ? `${selected.path}:${selected.line}` : null,
     "Findings",
@@ -219,6 +237,11 @@ export function Findings() {
             {note}
           </p>
         ))}
+        {notOnPage ? (
+          <p className="note findings-caption" role="status">
+            {NOT_IN_LIST}
+          </p>
+        ) : null}
 
         <FindingsList
           query={findings}
@@ -580,7 +603,9 @@ export function FindingPanel({
             Looks like a template value; if deployed as-is, it&apos;s a publicly known key.
           </p>
         ) : null}
-        {reach ? <ReachBlock snapshotId={snapshotId} view={reach} /> : null}
+        {reach ? (
+          <ReachBlock snapshotId={snapshotId} view={reach} testFileId={finding.in_test ? finding.file_id : null} />
+        ) : null}
         {rule ? (
           <dl className="finding-facts">
             <dt>What this rule looks for</dt>

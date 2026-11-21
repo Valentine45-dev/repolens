@@ -36,12 +36,12 @@ const step = (id: number, name: string, over: Partial<ReachStep> = {}): ReachSte
 
 const ENTRY = { kind: "console-script", label: "console script `black`", detail: "pyproject.toml: black:main" };
 
-function show(data: FindingReach) {
+function show(data: FindingReach, testFileId: number | null = null) {
   const view: ReachView = { status: "ready", data };
   act(() =>
     root.render(
       <MemoryRouter>
-        <ReachBlock snapshotId={7} view={view} />
+        <ReachBlock snapshotId={7} view={view} testFileId={testFileId} />
       </MemoryRouter>,
     ),
   );
@@ -50,6 +50,12 @@ const text = () => host.textContent ?? "";
 const chips = () => [...host.querySelectorAll<HTMLAnchorElement>("a.site-chip")];
 
 describe("ReachBlock", () => {
+  it("COR-03: a step in the finding's own test file opens with tests shown; the others do not", () => {
+    show({ tier: "solid", entry: ENTRY, path: [step(1, "main"), step(2, "helper")] }, 102);
+    expect(chips()[0].getAttribute("href")).toBe("/a/7/explore?node=101&lines=10-10");
+    expect(chips()[1].getAttribute("href")).toBe("/a/7/explore?node=102&lines=20-20&tests=1");
+  });
+
   it("solid: names the entry point and lists the path as clickable chips", () => {
     show({ tier: "solid", entry: ENTRY, path: [step(1, "main"), step(2, "run"), step(3, "helper")] });
     expect(text()).toContain("Reachable from console script black via");
