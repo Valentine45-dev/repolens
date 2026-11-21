@@ -115,6 +115,18 @@ def manifest_problems(manifest: dict[str, str], root: Path = ROOT) -> tuple[list
     return bad, runner_changed
 
 
+def read_hash_file(path: Path) -> str | None:
+    """The 64-hex SHA-256 in a hash file, lower case. UTF-8 (with or without BOM) or UTF-16
+    (what PowerShell's Out-File writes); Get-FileHash's upper case and `sha256sum` lines too."""
+    raw = path.read_bytes()
+    if raw[:2] in (b"\xff\xfe", b"\xfe\xff"):
+        text = raw.decode("utf-16")
+    else:
+        text = raw.decode("utf-8-sig", errors="replace")
+    m = re.search(r"\b[0-9a-fA-F]{64}\b", text)
+    return m[0].lower() if m else None
+
+
 def locked_guard(path: Path, *, dirty: bool, runner_changed_ok: bool,
                  manifest_path: Path = MANIFEST, root: Path = ROOT) -> dict:
     """Refuse a locked run unless everything is as frozen. Returns what to record."""
@@ -123,8 +135,10 @@ def locked_guard(path: Path, *, dirty: bool, runner_changed_ok: bool,
     if not expected_file.exists():
         problems.append(f"{expected_file.name} is not committed")
     else:
-        want = expected_file.read_text(encoding="utf-8").split()[0].lower()
-        if want != file_sha256(path):
+        want = read_hash_file(expected_file)
+        if want is None:
+            problems.append(f"{expected_file.name} holds no SHA-256")
+        elif want != file_sha256(path):
             problems.append(f"{path.name} SHA-256 does not match {expected_file.name}")
     if not manifest_path.exists():
         problems.append("eval/locked/scorer.sha256 (the scorer freeze) is missing")

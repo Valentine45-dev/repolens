@@ -66,6 +66,16 @@ def test_locked_guard_accepts_the_frozen_state(tmp_path):
                    "runner_changed": False}
 
 
+@pytest.mark.parametrize("encoding", ["utf-8", "utf-8-sig", "utf-16"])
+def test_hash_file_formats(tmp_path, encoding):
+    digest = hashlib.sha256(b"x").hexdigest()
+    f = tmp_path / "v.sha256"
+    f.write_text(f"{digest.upper()}  v2.0.yaml\r\n", encoding=encoding)
+    assert le.read_hash_file(f) == digest
+    f.write_text("no hash here", encoding=encoding)
+    assert le.read_hash_file(f) is None
+
+
 def test_locked_guard_refuses(tmp_path):
     root, manifest, questions = frozen_tree(tmp_path)
     questions.write_bytes(b"schema: 1\n")  # one byte different from the committed hash
