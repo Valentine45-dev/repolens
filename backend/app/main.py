@@ -6,6 +6,7 @@ from starlette.middleware.trustedhost import TrustedHostMiddleware
 
 from app import config, db
 from app.api import ask, findings, graph, reach, repos, snapshots
+from app.ingest import pipeline
 from app.qa.embed import get_embedder
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(name)s: %(message)s")
@@ -23,18 +24,9 @@ async def lifespan(_app: FastAPI):
         log.error("embedder failed to load: %s", type(e).__name__)
     if config.DATABASE_URL:
         db.open_pool()
-        # Background tasks do not survive a restart; there is no requeue in this build.
-        with db.pool().connection() as conn:
-            conn.execute(
-                "UPDATE jobs SET status = 'failed', error = 'Interrupted by server restart.'"
-                " WHERE status IN ('queued', 'running')"
-            )
-            # A search run (or test code in the background) stopped too: offer the retry.
-            conn.execute(
-                "UPDATE jobs SET search_state = 'failed',"
-                " search_error = 'Search for questions was interrupted by a server restart.'"
-                " WHERE search_state IN ('embedding', 'tests')"
-            )
+        # Jobs (and searches) whose runner is gone are marked failed; a job still run by another
+        # process (another API, an in-process evaluation) holds its lock and is left alone.
+        pipeline.recover_interrupted_jobs()
     yield
     db.close_pool()
 
