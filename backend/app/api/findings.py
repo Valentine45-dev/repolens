@@ -110,23 +110,25 @@ def findings(
     if rule is not None and rule not in RULES:
         raise HTTPException(status_code=422, detail=f"Unknown rule: {rule}")
 
-    where = ["f.snapshot_id = %s"]
-    args: list = [snapshot_id]
-    for column, value in (("f.severity", severity), ("f.rule_id", rule),
-                          ("fi.language", language), ("f.in_test", in_test)):
+    # (filter name, SQL, argument); the name lets a facet leave its own filter out.
+    clauses: list[tuple[str, str, object]] = [("snapshot", "f.snapshot_id = %s", snapshot_id)]
+    for name, column, value in (("severity", "f.severity", severity), ("rule", "f.rule_id", rule),
+                                ("language", "fi.language", language),
+                                ("in_test", "f.in_test", in_test)):
         if value is not None:
-            where.append(f"{column} = %s")
-            args.append(value)
+            clauses.append((name, f"{column} = %s", value))
     if category is not None:
-        where.append("f.rule_id = ANY(%s)")
-        args.append(RULE_IDS_BY_CATEGORY[category])
+        clauses.append(("category", "f.rule_id = ANY(%s)", RULE_IDS_BY_CATEGORY[category]))
     if placeholder is not None:
-        where.append("f.placeholder = %s")
-        args.append(placeholder)
+        clauses.append(("placeholder", "f.placeholder = %s", placeholder))
     if path_prefix:
-        where.append("starts_with(fi.path, %s)")
-        args.append(path_prefix)
-    where_sql = " AND ".join(where)
+        clauses.append(("path", "starts_with(fi.path, %s)", path_prefix))
+
+    def where_without(skip: str | None) -> tuple[str, list]:
+        kept = [c for c in clauses if c[0] != skip]
+        return " AND ".join(c[1] for c in kept), [c[2] for c in kept]
+
+    where_sql, args = where_without(None)
 
     with pool().connection() as conn:
         _require_detected(conn, snapshot_id)
@@ -179,6 +181,18 @@ def findings(
             "SELECT quality_note FROM jobs WHERE snapshot_id = %s ORDER BY id DESC LIMIT 1",
             (snapshot_id,),
         ).fetchone()
+        # Facets for the filter menus: what each choice would list with every other current
+        # filter kept, so the number beside "Low" is the number of rows "Low" shows.
+        facets: dict[str, dict[str, int]] = {}
+        for facet, column in (("severity", "f.severity"), ("rule", "f.rule_id")):
+            facet_where, facet_args = where_without(facet)
+            rows = conn.execute(
+                f"SELECT {column} AS key, count(*) AS n FROM findings f"
+                f" JOIN files fi ON fi.id = f.file_id WHERE {facet_where} GROUP BY 1 ORDER BY 1",
+                facet_args,
+            ).fetchall()
+            facets[facet] = {r["key"]: r["n"] for r in rows}
+        facets["severity"] = {s: facets["severity"].get(s, 0) for s in ("high", "medium", "low")}
 
     for item in items:
         item["category"] = RULES[item["rule_id"]].category if item["rule_id"] in RULES else None
@@ -204,6 +218,9 @@ def findings(
             "documentation": flags["documentation"],
             "template_values": flags["template_values"],
         },
+        # Under the request's filters, each leaving out its own: severity counts ignore
+        # `severity`, rule counts ignore `rule` (a rule with no row is absent: 0).
+        "facets": facets,
         # Things the list cannot promise, in words (for example Ruff did not finish).
         "notes": ([note["quality_note"]] if note and note["quality_note"] else [])
         + (["Reachability could not be worked out for this analysis, so the list is in the usual"

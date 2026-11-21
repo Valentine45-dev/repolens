@@ -151,3 +151,39 @@ def test_rules_catalogue(client):
                           "false_positive"}
         assert r["category"] in ("security", "quality")
         assert r["false_positive"].startswith("Possible false positive if ")
+
+
+@pytest.mark.parametrize(
+    "params",
+    [
+        {},
+        {"category": "security"},
+        {"category": "security", "in_test": "false"},
+        {"category": "security", "in_test": "false", "severity": "low"},
+        {"category": "quality", "language": "python", "path_prefix": "py"},
+        {"rule": "hardcoded-secret", "in_test": "true"},
+        {"severity": "high", "rule": "js-eval", "placeholder": "false"},
+    ],
+)
+def test_facets_count_what_each_menu_choice_lists(client, detector_repo, params):
+    """COR-04: the number beside a severity (or a rule) in the filter menu is the number of rows
+    that choice lists, with every other current filter kept; the counts stay whole-snapshot."""
+    url = f"/snapshots/{detector_repo}/findings"
+    body = client.get(url, params=params).json()
+    facets = body["facets"]
+    assert set(facets["severity"]) == {"high", "medium", "low"}
+    for severity, n in facets["severity"].items():
+        assert n == client.get(url, params={**params, "severity": severity}).json()["total"]
+    rules = {r["id"] for r in client.get("/rules").json()}
+    for rule in rules:
+        n = client.get(url, params={**params, "rule": rule}).json()["total"]
+        assert facets["rule"].get(rule, 0) == n
+        assert rule not in facets["rule"] or n > 0  # a rule with no row is absent, not 0
+    # Additive only: the old counts are the whole snapshot, as before.
+    assert body["counts"] == client.get(url).json()["counts"]
+
+
+def test_facets_without_filters_are_the_snapshot_counts(client, detector_repo):
+    body = client.get(f"/snapshots/{detector_repo}/findings").json()
+    assert body["facets"]["severity"] == body["counts"]["by_severity"]
+    assert body["facets"]["rule"] == body["counts"]["by_rule"]

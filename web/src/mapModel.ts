@@ -344,28 +344,40 @@ export function boundaryTitle(n: MapNode): string {
   );
 }
 
-/** Hover text for a node: what it is and what it holds, not its name again. */
-export function nodeTooltip(n: MapNode, level: "folder" | "file" | "symbol"): string {
+/** Hover text for a node: what it is and what it holds. `head` is its path (or qualified name),
+ * shown in mono on the first line; null for a "N more" node. `hiddenEdges`: its connections that
+ * are not drawn at rest. */
+export function nodeTip(
+  n: MapNode,
+  level: "folder" | "file" | "symbol",
+  hiddenEdges = 0,
+  viewLimit: number | null = null, // the server's node limit for the view (MapView.view_limit)
+): { head: string | null; lines: string[] } {
   const lines: string[] = [];
   if (n.kind === "more") {
-    return level === "symbol"
-      ? `${plural(n.hidden_count ?? 0, "more symbol")} are not drawn: this view shows the 60 best connected.`
-      : `${plural(n.hidden_count ?? 0, "item")} not drawn, ${plural(n.file_count ?? 0, "file")} in all.\nClick to open them in List view.`;
+    return {
+      head: null,
+      lines:
+        level === "symbol"
+          ? [`${plural(n.hidden_count ?? 0, "more symbol")} are not drawn: this view shows ${viewLimit === null ? "only the best connected" : `the ${viewLimit} best connected`}.`]
+          : [`${plural(n.hidden_count ?? 0, "item")} not drawn, ${plural(n.file_count ?? 0, "file")} in all.`, "Click to open them in List view."],
+    };
   }
+  let head: string;
   if (n.kind === "folder") {
-    lines.push(`${n.path}/`);
+    head = `${n.path}/`;
     const parts = [plural(n.file_count ?? 0, "file")];
     if (n.test_file_count) parts.push(`${n.test_file_count} of them tests or examples`);
     if (n.finding_count) parts.push(plural(n.finding_count, "finding"));
     lines.push(parts.join(" · "));
   } else if (n.kind === "file") {
-    lines.push(n.path);
+    head = n.path;
     const parts = [languageName(n.language), n.loc != null ? plural(n.loc, "line") : ""].filter(Boolean);
     if (n.finding_count) parts.push(plural(n.finding_count, "finding"));
     if (n.external_imports) parts.push(`${plural(n.external_imports, "external import")}`);
     lines.push(parts.join(" · "));
   } else {
-    lines.push(n.qualified_name ?? n.label);
+    head = n.qualified_name ?? n.label;
     const where = n.start_line != null ? `${n.path}:${n.start_line}-${n.end_line}` : n.path;
     lines.push(`${n.kind} · ${where}`);
     if (n.finding_count) lines.push(plural(n.finding_count, "finding"));
@@ -374,8 +386,56 @@ export function nodeTooltip(n: MapNode, level: "folder" | "file" | "symbol"): st
     const crossing = boundaryText(n);
     if (crossing) lines.push(`${crossing}: ${boundaryTitle(n)}`);
   }
-  if (n.in_cycle === true) lines.push("Part of a circular import (top-level imports only).");
-  return lines.join("\n");
+  if (n.in_cycle === true) {
+    lines.push(
+      n.kind === "folder" && n.cycle_files
+        ? `${plural(n.cycle_files, "file")} here take part in a circular import. Open the folder to see which.`
+        : "Part of a circular import (top-level imports only).",
+    );
+  }
+  if (hiddenEdges > 0) {
+    lines.push(
+      `${plural(hiddenEdges, "connection")} drawn only while it is hovered, focused or selected, or with “All edges” on.`,
+    );
+  }
+  return { head, lines };
+}
+
+export function nodeTooltip(
+  n: MapNode,
+  level: "folder" | "file" | "symbol",
+  hiddenEdges = 0,
+  viewLimit: number | null = null,
+): string {
+  const { head, lines } = nodeTip(n, level, hiddenEdges, viewLimit);
+  return [head, ...lines].filter((l) => l !== null).join("\n");
+}
+
+/** What a screen reader hears after the node's name (its path): the tip's other lines and what
+ * Enter does. Replaces React Flow's default description, which talks of moving and deleting. */
+export function nodeDescription(
+  n: MapNode,
+  level: "folder" | "file" | "symbol",
+  hiddenEdges = 0,
+  viewLimit: number | null = null,
+): string {
+  const { head, lines } = nodeTip(n, level, hiddenEdges, viewLimit);
+  const named = n.kind === "folder" || n.kind === "file"; // the path is already the name
+  const action = nodeAction(level, n);
+  const enter =
+    action.type === "open"
+      ? "Enter opens the folder."
+      : action.type === "select"
+        ? n.kind === "file"
+          ? "Enter opens the file."
+          : "Enter opens its code."
+        : action.type === "list"
+          ? "Enter opens them in List view."
+          : null;
+  const said = lines.filter((l) => !l.startsWith("Click to open")).map((l) => l.replace(/\.?$/, "."));
+  return [...(named || !head ? [] : [head]), ...said, enter]
+    .filter(Boolean)
+    .join(" ");
 }
 
 function languageName(language: string | undefined): string {

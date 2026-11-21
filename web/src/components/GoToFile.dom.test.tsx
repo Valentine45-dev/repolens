@@ -191,7 +191,7 @@ async function openDialog() {
 const codeShows = (text: string) => waitFor(() => $(".code")?.textContent?.includes(text), `the code of ${text}`);
 async function search(text: string) {
   type(text);
-  await waitFor(() => options().length > 0 || $(".goto-message")?.textContent?.includes("No files"), "results");
+  await waitFor(() => options().length > 0 || $(".goto-message")?.textContent?.includes("file matches"), "results");
 }
 
 describe("opening the dialog", () => {
@@ -234,7 +234,8 @@ describe("in the dialog", () => {
     await openDialog();
     expect($(".goto-message")?.textContent).toBe("Type part of a file or folder name, or a path.");
     await search("zzzz");
-    expect($(".goto-message")?.textContent).toBe("No files match “zzzz”");
+    // UX-01: says which files were searched, so "README" finding nothing never reads as "no README".
+    expect($(".goto-message")?.textContent).toBe("No Python, JavaScript or TypeScript file matches “zzzz”");
     expect(options()).toHaveLength(0);
     expect($(".goto-note")?.textContent).toBe(SCOPE_NOTE);
   });

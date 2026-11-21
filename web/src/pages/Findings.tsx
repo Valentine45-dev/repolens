@@ -13,7 +13,7 @@ import {
   type Rule,
   type Severity,
 } from "../api";
-import type { AnalysisContext } from "../components/AnalysisShell";
+import type { AnalysisContext, PanelState } from "../components/AnalysisShell";
 import { useDocumentTitle } from "../documentTitle";
 import { Icon } from "../components/Icon";
 import { PathText } from "../components/PathText";
@@ -24,18 +24,21 @@ import { CloseButton } from "../components/CloseButton";
 import { useEscapeToClose } from "../escapeStack";
 import { findingsCountLabel } from "../findingsCount";
 import { exploreHref, REVEAL, useSetParams } from "../links";
+import { plural } from "../mapModel";
 
 const PAGE = 50;
 const SECRET_RULE = "hardcoded-secret";
 const NO_PLACEHOLDERS = "This analysis has no probable placeholders.";
 const MISS_NOTE = "These checks can still miss issues.";
+export const NOT_ON_MAP = "This file isn't code, so it isn't on the map.";
+export const NOT_IN_LIST = "The finding in this link isn't in this list (another page, or hidden by a filter).";
 const SKELETON_ROWS = [[62, 70], [48, 55], [70, 64], [55, 72], [66, 50], [44, 68], [58, 60], [50, 66]];
 
 // Spec §5.6. Filters live in the URL:
 // ?category=quality|all (Security when absent)&severity=&rule=&language=&path=&tests=hide
 // &placeholders=hide&page=&finding=
 export function Findings() {
-  const { snapshotId, status } = useOutletContext<AnalysisContext>();
+  const { snapshotId, status, reportPanel } = useOutletContext<AnalysisContext>();
   const ready = status !== undefined;
   const [params] = useSearchParams();
   const setParams = useSetParams();
@@ -89,15 +92,55 @@ export function Findings() {
   const ruleById = new Map((rules.data ?? []).map((r) => [r.id, r]));
 
   // A filter change starts again at the first page and closes the detail panel.
+  // Closing a finding (button or Esc) puts focus back on its row's button, where the keyboard
+  // user was; if that row is not on the page, on the list's heading (A11Y-01).
+  const headingRef = useRef<HTMLHeadingElement>(null);
+  const refocus = useRef<number | null>(null);
+  const closeFinding = () => {
+    refocus.current = selectedId;
+    setParams({ finding: null }, false);
+  };
+  useEffect(() => {
+    if (selectedId !== null || refocus.current === null) return;
+    const id = refocus.current;
+    refocus.current = null;
+    const row = document.querySelector<HTMLElement>(`[data-finding-id="${id}"] .row-button`);
+    (row ?? headingRef.current)?.focus();
+  }, [selectedId]);
   const setFilter = (key: string, value: string | null) =>
     setParams({ [key]: value, page: null, finding: null });
   const selected = findings.data?.items.find((f) => f.id === selectedId) ?? null;
+  // A finding= that is not on this page of the list (an old link, another page, a filter): say so
+  // and drop it, rather than an empty panel or an empty Finding tab in front of Ask (COR-03).
+  const [notOnPage, setNotOnPage] = useState(false);
+  const missing = selectedId !== null && findings.data !== undefined && !findings.isPlaceholderData && !selected;
+  useEffect(() => {
+    if (selectedId !== null && !missing) setNotOnPage(false);
+  }, [selectedId, missing]);
+  useEffect(() => {
+    if (!missing) return;
+    setParams({ finding: null }, true);
+    setNotOnPage(true);
+  }, [missing, setParams]);
+  const filterKey = JSON.stringify(filter);
+  useEffect(() => setNotOnPage(false), [filterKey]); // another list: the note was about the last one
+  const findingParam = params.get("finding");
+  const panelState: PanelState = selected ? "shown" : selectedId !== null && !findings.data ? "pending" : "none";
+  useEffect(() => reportPanel(findingParam, panelState), [reportPanel, findingParam, panelState]);
   useDocumentTitle([
     selected ? `${selected.path}:${selected.line}` : null,
     "Findings",
     status ? repoName(status.url) : null,
   ]);
   const counts = findings.data?.counts;
+  // The menus' numbers are what each choice would list now (COR-04); none while a new list loads.
+  const facets = findings.isPlaceholderData ? undefined : findings.data?.facets;
+  // An edited or stale link to a page after the last one: never "No findings" (COR-06).
+  const pages = findings.data ? Math.ceil(findings.data.total / PAGE) : 0;
+  const pastEnd =
+    findings.data && findings.data.items.length === 0 && findings.data.total > 0
+      ? { page: page + 1, pages, total: findings.data.total, onLast: () => setParams({ page: pages > 1 ? String(pages - 1) : null, finding: null }) }
+      : null;
   const filtered = Boolean(
     severity || rule || language || path || hideTests || hidePlaceholders || category !== "all",
   );
@@ -106,7 +149,7 @@ export function Findings() {
     <div className="findings">
       <div className="findings-main">
         <div className="findings-head">
-          <h2 className="section-title">
+          <h2 className="section-title" ref={headingRef} tabIndex={-1}>
             Findings
             {counts && findings.data ? (
               <span className="mono num"> {findingsCountLabel(findings.data.total, counts.total)}</span>
@@ -145,7 +188,8 @@ export function Findings() {
             onChange={(v) => setFilter("severity", v || null)}
             options={(["high", "medium", "low"] as const).map((s) => ({
               value: s,
-              label: `${s[0].toUpperCase()}${s.slice(1)} (${counts?.by_severity[s] ?? 0})`,
+              // No number until it is known: unknown is never shown as 0.
+              label: `${s[0].toUpperCase()}${s.slice(1)}${facets ? ` (${facets.severity[s]})` : ""}`,
             }))}
           />
           <FilterSelect
@@ -155,9 +199,9 @@ export function Findings() {
             onChange={(v) => setFilter("rule", v || null)}
             options={Object.entries(counts?.by_rule ?? {})
               .filter(([id]) => category === "all" || ruleById.get(id)?.category === category)
-              .map(([id, n]) => ({
+              .map(([id]) => ({
                 value: id,
-                label: `${ruleById.get(id)?.title ?? id} (${n})`,
+                label: `${ruleById.get(id)?.title ?? id}${facets ? ` (${facets.rule[id] ?? 0})` : ""}`,
               }))}
           />
           <FilterSelect
@@ -218,6 +262,11 @@ export function Findings() {
             {note}
           </p>
         ))}
+        {notOnPage ? (
+          <p className="note findings-caption" role="status">
+            {NOT_IN_LIST}
+          </p>
+        ) : null}
 
         <FindingsList
           query={findings}
@@ -238,11 +287,12 @@ export function Findings() {
           }
           categoryLabel={category === "security" ? "Security" : category === "quality" ? "Bug / Quality" : null}
           showReach={byReach}
+          pastEnd={pastEnd}
           selectedId={selectedId}
           onSelect={(id) => setParams({ finding: String(id) }, false)}
         />
 
-        {findings.data && findings.data.total > PAGE ? (
+        {findings.data && findings.data.total > PAGE && !pastEnd ? (
           <div className="pager">
             <button
               type="button"
@@ -274,12 +324,12 @@ export function Findings() {
           finding={selected}
           rule={ruleById.get(selected.rule_id)}
           reach={reachView}
-          onClose={() => setParams({ finding: null }, false)}
+          onClose={closeFinding}
         />
       ) : selectedId !== null && !findings.data ? (
         // A link to a finding: the panel's frame is there at once, so the list does not narrow
         // (and its filters re-wrap) when the data arrives.
-        <FindingPanelSkeleton onClose={() => setParams({ finding: null }, false)} />
+        <FindingPanelSkeleton onClose={closeFinding} />
       ) : null}
     </div>
   );
@@ -362,6 +412,7 @@ export function FindingsList({
   emptyAction,
   categoryLabel,
   showReach,
+  pastEnd = null,
   selectedId,
   onSelect,
 }: {
@@ -370,6 +421,8 @@ export function FindingsList({
   emptyAction: { label: string; run: () => void } | null;
   categoryLabel: string | null;
   showReach: boolean;
+  /** The page asked for is after the last one (the list itself is not empty). */
+  pastEnd?: { page: number; pages: number; total: number; onLast: () => void } | null;
   selectedId: number | null;
   onSelect: (id: number) => void;
 }) {
@@ -415,6 +468,19 @@ export function FindingsList({
       </div>
     );
   }
+  if (query.data.items.length === 0 && pastEnd) {
+    return (
+      <div className="panel-message empty-state" role="status">
+        <p>
+          Page {pastEnd.page} is past the end of this list ({plural(pastEnd.total, "finding")},{" "}
+          {plural(pastEnd.pages, "page")}).
+        </p>
+        <button type="button" className="button button-secondary button-small" onClick={pastEnd.onLast}>
+          Go to the last page
+        </button>
+      </div>
+    );
+  }
   if (query.data.items.length === 0) {
     // Never a verdict (spec §5.6): no rows says what was looked at and that checks can miss things.
     const what =
@@ -451,6 +517,7 @@ export function FindingsList({
             <tr
               key={f.id}
               className="finding-row"
+              data-finding-id={f.id}
               aria-selected={f.id === selectedId}
               // The whole row opens the finding with a mouse; the message button is the one
               // keyboard and screen-reader target, so there is one tab stop per row.
@@ -579,7 +646,9 @@ export function FindingPanel({
             Looks like a template value; if deployed as-is, it&apos;s a publicly known key.
           </p>
         ) : null}
-        {reach ? <ReachBlock snapshotId={snapshotId} view={reach} /> : null}
+        {reach ? (
+          <ReachBlock snapshotId={snapshotId} view={reach} testFileId={finding.in_test ? finding.file_id : null} />
+        ) : null}
         {rule ? (
           <dl className="finding-facts">
             <dt>What this rule looks for</dt>
@@ -600,17 +669,23 @@ export function FindingPanel({
           </figure>
         ) : null}
         <div className="callout-actions">
-          <Link
-            className="button button-secondary button-small"
-            state={REVEAL}
-            to={exploreHref(snapshotId, {
-              fileId: finding.file_id,
-              lines: { start: finding.line, end: finding.line },
-              tests: finding.in_test,
-            })}
-          >
-            Open in Explorer
-          </Link>
+          {/* The Explorer holds only Python, JavaScript and TypeScript files (the ones with a
+              language); a secret in docker-compose.yml or a README has no place there. */}
+          {finding.language ? (
+            <Link
+              className="button button-secondary button-small"
+              state={REVEAL}
+              to={exploreHref(snapshotId, {
+                fileId: finding.file_id,
+                lines: { start: finding.line, end: finding.line },
+                tests: finding.in_test,
+              })}
+            >
+              Open in Explorer
+            </Link>
+          ) : (
+            <p className="caption">{NOT_ON_MAP}</p>
+          )}
           <button type="button" className="button button-secondary button-small" onClick={copy}>
             <Icon name="copy" size={14} />
             {copied ? "Copied" : "Copy location"}

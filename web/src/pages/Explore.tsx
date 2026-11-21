@@ -1,16 +1,22 @@
 import { keepPreviousData, useQuery } from "@tanstack/react-query";
 import { ReactFlowProvider, useReactFlow } from "@xyflow/react";
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useLocation, useOutletContext, useSearchParams } from "react-router-dom";
 
-import { ApiError, getGraph, getMapView, type MapView as MapViewData, repoName } from "../api";
-import type { AnalysisContext } from "../components/AnalysisShell";
+import { ApiError, getFile, getGraph, getMapView, type MapView as MapViewData, repoName } from "../api";
+import type { AnalysisContext, PanelState } from "../components/AnalysisShell";
 import { Breadcrumbs } from "../components/Breadcrumbs";
 import { ConnectionNotice, isReconnecting } from "../components/ConnectionNotice";
 import { FileList } from "../components/FileList";
 import { CrumbSkeleton, GraphSkeleton, ListSkeleton } from "../components/GraphSkeleton";
 import { FIT_OPTIONS, firstViewHub, GraphView } from "../components/GraphView";
-import { ALL_EDGES_SHOWN_TITLE, ExploreLegend, SHOW_ALL_EDGES_TITLE, ShowGroup } from "../components/ExploreLegend";
+import {
+  ALL_EDGES_SHOWN_TITLE,
+  ExploreLegend,
+  LegendNotice,
+  SHOW_ALL_EDGES_TITLE,
+  ShowGroup,
+} from "../components/ExploreLegend";
 import { MapHint } from "../components/MapHint";
 import { MapView } from "../components/MapView";
 import { NodePanel } from "../components/NodePanel";
@@ -53,7 +59,7 @@ export function Explore() {
 }
 
 function ExploreInner() {
-  const { snapshotId, status, panelHidden } = useOutletContext<AnalysisContext>();
+  const { snapshotId, status, panelHidden, reportPanel } = useOutletContext<AnalysisContext>();
   const reveal = useRevealToken();
   const ready = status !== undefined; // no data is asked for before the analysis is known to be done
   const [params] = useSearchParams();
@@ -92,6 +98,52 @@ function ExploreInner() {
   const allIds = useMemo(() => new Set(graph.data?.nodes.map((n) => n.id) ?? []), [graph.data]);
   const selected = graph.data?.nodes.find((n) => n.id === selectedId) ?? null;
   const isInGraph = useCallback((fileId: number) => allIds.has(fileId), [allIds]);
+
+  // A node= that is not in the file list: say why instead of showing nothing (COR-03). A hidden
+  // test or example file can be shown with one click, so its link stays; a file that is not code,
+  // or an id this analysis does not have, never can, so that parameter is dropped and the reason
+  // stays on screen until the next selection. Nothing is said until both file lists (tests shown
+  // and hidden) are known, and "isn't code" only for a file the server says has no language: the
+  // file's text may already be loaded (its panel was open), which proves nothing about why it is
+  // not in this list.
+  const missingId =
+    selectedId !== null && graph.data && !graph.isPlaceholderData && !selected ? selectedId : null;
+  const withTests = useQuery({
+    queryKey: ["graph", snapshotId, true, showGuesses], // the same list Go to file uses
+    queryFn: ({ signal }) => getGraph(snapshotId, { showTests: true, showGuesses }, signal),
+    enabled: missingId !== null && !showTests,
+    staleTime: Infinity,
+  });
+  const listsKnown = missingId !== null && (showTests || withTests.data !== undefined);
+  const hiddenTest =
+    listsKnown && !showTests ? (withTests.data?.nodes.find((n) => n.id === missingId) ?? null) : null;
+  const mustCheck = listsKnown && hiddenTest === null; // in neither list: ask the server why
+  const fileCheck = useQuery({
+    queryKey: ["file", snapshotId, missingId],
+    queryFn: ({ signal }) => getFile(snapshotId, missingId!, signal),
+    enabled: mustCheck,
+    staleTime: Infinity,
+  });
+  const [notice, setNotice] = useState<{ kind: "not-code"; path: string } | { kind: "unknown" } | null>(null);
+  useEffect(() => {
+    if (selectedId !== null) setNotice(null); // a new selection replaces the last reason
+  }, [selectedId]);
+  useEffect(() => {
+    if (!mustCheck) return;
+    const gone =
+      fileCheck.data && fileCheck.data.language === null
+        ? ({ kind: "not-code", path: fileCheck.data.path } as const)
+        : fileCheck.error instanceof ApiError && fileCheck.error.status === 404
+          ? ({ kind: "unknown" } as const)
+          : null;
+    if (!gone) return;
+    setParams({ node: null, lines: null }, true);
+    setNotice(gone);
+  }, [mustCheck, fileCheck.data, fileCheck.error, setParams]);
+  const nodeParam = params.get("node");
+  const panelState: PanelState =
+    selected !== null ? "shown" : selectedId !== null && !graph.data && !graph.error ? "pending" : "none";
+  useEffect(() => reportPanel(nodeParam, panelState), [reportPanel, nodeParam, panelState]);
 
   // Which view: the URL wins; with no level and no root the start rule picks files for a small
   // repo and folders for a big one; a link to a file opens that file's folder.
@@ -187,7 +239,8 @@ function ExploreInner() {
   const hub = hubId === null ? null : (graph.data?.nodes.find((n) => n.id === hubId) ?? null);
   const [fittedAt, setFittedAt] = useState<number | null>(null);
   const [zoomedIn, setZoomedIn] = useState(false);
-  const showHubNote = hub !== null && selectedId === null && fittedAt !== graph.dataUpdatedAt;
+  const showHubNote =
+    hub !== null && selectedId === null && fittedAt !== graph.dataUpdatedAt && notice === null;
 
   // --- the map ---
   const selection = useMemo(
@@ -222,6 +275,25 @@ function ExploreInner() {
   const pending = useDelayedFlag(updating);
   const legendStatus = statusText(selection ? densityText(selection, showAllEdges) : null, zoomedIn);
   const canShowAll = showAllEdges || (selection !== null && selection.mode !== "all");
+
+  // Why the file in the link is not shown: a line of the strip above the map, never on the canvas,
+  // so it cannot cover a node at any zoom or layout.
+  const linkNotice = hiddenTest ? (
+    <>
+      <span className="mono">{hiddenTest.path}</span> is a test or example file, hidden on the map.{" "}
+      <button type="button" className="link-button" onClick={() => setParam("tests", "1")}>
+        Show tests &amp; examples
+      </button>
+    </>
+  ) : notice ? (
+    notice.kind === "not-code" ? (
+      <>
+        <span className="mono">{notice.path}</span> isn&apos;t code, so it isn&apos;t on the map.
+      </>
+    ) : (
+      "The link pointed to a file that isn't in this analysis."
+    )
+  ) : null;
 
   return (
     <div className="explore">
@@ -350,6 +422,7 @@ function ExploreInner() {
           showGuesses={showGuesses}
           cycle={view ? viewHasCycle(view) : false}
           status={view ? legendStatus : null}
+          notice={linkNotice}
         />
       ) : flatMode && (!graph.data || graph.data.nodes.length > 0) ? (
         <ExploreLegend
@@ -358,7 +431,12 @@ function ExploreInner() {
           facts={
             updating ? "Updating…" : graph.data ? graphNote(graph.data, capped, false) : <FactsSkeleton />
           }
+          notice={linkNotice}
         />
+      ) : linkNotice ? (
+        <div className="legend">
+          <LegendNotice>{linkNotice}</LegendNotice>
+        </div>
       ) : null}
 
       <div className="explore-body">
@@ -491,6 +569,8 @@ function ExploreInner() {
             reveal={reveal}
             hidden={panelHidden}
             isInGraph={isInGraph}
+            testsHidden={!showTests}
+            onShowTests={() => setParam("tests", "1")}
             onSelectFile={select}
             onShowLines={showLines}
             onAsk={askAbout}

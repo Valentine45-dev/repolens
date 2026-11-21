@@ -1333,6 +1333,11 @@ a {
   color: var(--text-muted);
 }
 
+/* Why the file in the link is not shown (Explore): in the strip, never over the map. */
+.legend-notice {
+  color: var(--text);
+}
+
 /* "Show: Tests & examples · Guessed calls · All edges" */
 .toolbar-group {
   display: inline-flex;
@@ -1610,6 +1615,16 @@ a {
   line-height: 1.45;
   white-space: pre-line;
   pointer-events: none;
+}
+
+/* A node's tip sits under its box and stays while the pointer moves onto it (CanvasTip.tsx). Same
+   look as the edge tip; the first line is the path in mono. */
+.map-tip[data-kind="node"] {
+  pointer-events: auto;
+}
+
+.map-tip-head {
+  overflow-wrap: anywhere;
 }
 
 .edge-label[data-active],

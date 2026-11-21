@@ -52,7 +52,7 @@ const VIA_NOTE: Record<string, string> = {
   imports: "an import inside a function that is reached",
 };
 
-function Chip({ snapshotId, step }: { snapshotId: number; step: ReachStep }) {
+function Chip({ snapshotId, step, testFileId }: { snapshotId: number; step: ReachStep; testFileId: number | null }) {
   const where = step.path ? `${step.path}:${step.start_line}` : step.name;
   const title = step.guess
     ? `${where} (best guess: ${VIA_NOTE[step.via ?? ""] ?? "not confirmed"})`
@@ -66,6 +66,7 @@ function Chip({ snapshotId, step }: { snapshotId: number; step: ReachStep }) {
       to={exploreHref(snapshotId, {
         fileId: step.file_id,
         lines: { start: step.start_line, end: step.start_line },
+        tests: step.file_id === testFileId, // the finding's own test file: open it with tests shown
       })}
     >
       {stepName(step)}
@@ -74,7 +75,17 @@ function Chip({ snapshotId, step }: { snapshotId: number; step: ReachStep }) {
 }
 
 /** Where the finding's code can be reached from, as a sentence and a path of clickable chips. */
-export function ReachBlock({ snapshotId, view }: { snapshotId: number; view: ReachView }) {
+/** `testFileId`: the finding's file when it is test or example code, so a step there opens with
+ * tests shown (entry points and the steps to them are never in tests). */
+export function ReachBlock({
+  snapshotId,
+  view,
+  testFileId = null,
+}: {
+  snapshotId: number;
+  view: ReachView;
+  testFileId?: number | null;
+}) {
   const [expanded, setExpanded] = useState(false);
   if (view.status === "loading") {
     // The shape of the answer (a sentence, a row of chips, a caption), so the rule text below it
@@ -120,7 +131,7 @@ export function ReachBlock({ snapshotId, view }: { snapshotId: number; view: Rea
       {hasPath ? (
         <>
           <div className="reach-path" aria-label="Path from the entry point to this code">
-            <Chip snapshotId={snapshotId} step={path[0]} />
+            <Chip snapshotId={snapshotId} step={path[0]} testFileId={testFileId} />
             {items.map((step, i) => (
               <span key={step === "fold" ? "fold" : `${step.symbol_id}-${i}`} className="reach-step">
                 <span className="reach-arrow" aria-hidden="true">
@@ -136,7 +147,7 @@ export function ReachBlock({ snapshotId, view }: { snapshotId: number; view: Rea
                     +{hidden} more
                   </button>
                 ) : (
-                  <Chip snapshotId={snapshotId} step={step} />
+                  <Chip snapshotId={snapshotId} step={step} testFileId={testFileId} />
                 )}
               </span>
             ))}

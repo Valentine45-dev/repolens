@@ -2300,49 +2300,47 @@ are deliberately not changed after seeing eval results; these stay as documented
     18, `askTurns.test.ts` 4, escape stack 1), `tsc` clean, `npm run build` ok. No ESLint is set up
     for `web/` (frontend lint is "only if asked"), so lint before each commit was `tsc`. Main chunk
     426.54 -> 431.92 kB (gzip 134.53 -> 136.28, +1.75 kB); Explore chunk unchanged; CSS +51 B gzip.
-  - **Served for the owner's test:** `vite preview` on 5173 with this branch's build (replaced the
-    14 Nov preview), started with `REPOLENS_DEV_API_DELAY_MS=10000 REPOLENS_DEV_API_DELAY_MATCH=ask$`
-    so free graph questions stay pending for 10 s (the delay is in the preview server, nothing of it
-    is in `dist`). API on 8000 left as it was. The first start used `/ask$` from Git Bash, which
-    MSYS path conversion rewrote into a Windows path, so nothing was delayed (the owner saw instant
-    graph answers; see the Git Bash note in the UI polish entry). From Git Bash the MATCH value must
-    not start with `/`. Restarted with `ask$` (Node printed `"ask$"`): through 5173 `/api/health`
-    0.07 s, `/api/snapshots/2/graph` 0.16 s, `GET /api/snapshots/2/ask` 405 in 10.05 s (GET is not
-    an allowed method there, so no question ran).
-  - **Owner's test, first round (Firefox, 1366 px):** test 9 (hard reload while a question is
-    pending) failed: after the reload the turn said "Could not reach the RepoLens server. Check that
-    the API is running." instead of the interrupted note (twice, API running). Cause: the browser
-    cancels the pending fetch while the page unloads, and askStore saved the rejection as an error
-    before the page went.
-  - **`0c10342` unload handling:** once the page starts to go (`beforeunload`, `pagehide`) a failed
-    request is held back for 3 s instead of saved; the turn stays saved as unanswered, so the next
-    page shows it as interrupted. If the page is still there after 3 s (a download link also fires
-    `beforeunload`), the failure was real and is shown, and the flag is cleared; `pageshow` (back
-    from the back-forward cache) clears it too. A failure while the page stays open is shown at
-    once, as before. Four new DOM tests (fetch rejected after `beforeunload` / after `pagehide`,
-    then a simulated reload: interrupted, no error saved; page stays: error after the hold, the next
-    failure at once; plain network failure: error at once); the first three fail on `98d4663`'s
-    store, the last passes there by design.
-  - **Chrome check (`0c10342`):** the real built bundle in headless Chrome 139 (throwaway profile)
-    against a stub server on 127.0.0.1 that never answers `POST /ask` ($0; nothing reached the
-    API). Before the fix: after a hard reload the turn read "Could not reach the RepoLens
-    server..." and was stored as an error, so Chrome behaves as Firefox did. After: "This question
-    was interrupted by a page reload; the answer was not received.", stored `interrupted: true`,
-    unchanged 4 s later; a connection dropped while the page stays open still shows the server
-    error at once. One headless renderer from that check (no window) would not stop; a reboot clears
-    it.
-  - **Checks after `0c10342`:** web **40 files, 327 tests passed** (run with `--pool=threads
-    --testTimeout=30000`: the PC was at 100% CPU after a reboot and forked workers timed out at
-    start; no config change), `tsc` clean, build ok. Main chunk gzip 136.28 -> 136.39 kB.
-  - **Owner's test, second round: passed** in Firefox and Chrome at 1366 px and at 80% zoom: tests
-    1-12, 15 and P (a real AI question closed while it was answered). **Not tested by hand:** 13
-    and 14 (Esc during IME composition in Ask and in Go to file; covered by the escape-stack test
-    only). The Go to file `<dialog>` cancel during composition is therefore still unchecked in a
-    real browser.
-  - **Owner testing spend (not part of any evaluation):** about 3 real AI questions on PyGoat
-    (snapshot 2) across both rounds, a few cents.
-  - **Known:** the unread dot is not kept across a reload; the draft is kept across close/reopen
-    and analysis switches, not across a reload. Duplicating a tab while a question is pending
-    copies sessionStorage, so the copy shows the interrupted note while the original gets the
-    answer. The vitest jsdom start takes ~16-40 s per file on this PC; two runs at once time out
-    the workers ("Failed to start forks worker"), so never run vitest in parallel here.
+  - **Owner's manual test (21 Nov, real mouse; Firefox and Chrome, 1366 px and 80% zoom; PyGoat
+    /a/2 and flask /a/6; 14 cases).** Served by `vite preview` on 5173 (no `REPOLENS_DEV_*` delay),
+    API on 8000 (uvicorn, natively).
+    - **Round 1 (Firefox, 1366 px):** 1-6 and 9-14 pass; 7 and 8 fail, both in the Explorer's
+      COR-03 messages. Fixed in `c618ac7`:
+      - *Test 7:* unticking "Tests & examples" with `tests/test_basic.py` open dropped `node=`, the
+        view jumped to the root, and once it said "tests/test_basic.py isn't code". Cause: the
+        "not code" check read the file query's cache (`["file", id, node]`, filled by the open
+        file panel) without looking at whether the file was a hidden test. Now nothing is said
+        until both file lists (tests shown and hidden) are known, "isn't code" needs the server's
+        `language: null`, and a hidden test file keeps `node=` with its message and button.
+      - *Test 8:* "…isn't in this analysis" and "…isn't code" vanished when `node=` was dropped.
+        Cause: the message came before the map in the page and React Flow's opaque background
+        (`--xy-background-color`) was painted over it; it showed only while the map was dimmed
+        (pending), hence the flash.
+      - Tests (`PanelTruth.dom.test.tsx`): untick with the file's text loaded; tests-on list not
+        known yet (reproduced the "isn't code" capture); the message visible after `node=` is
+        dropped. All failed on `779660e`.
+      - Not changed: with tests hidden the view opens at the root (the file is in no drawn folder).
+    - **Round 2:** 7 and 8 pass. One UX fix (`b26c20c`): the three link messages (hidden test
+      file, not code, not in this analysis) floated over the map and covered node boxes (flask
+      `testing.py`, the PyGoat folder box). They are now a third line of the legend strip above
+      the map (`LegendNotice`, `role="status"`, same wording and "Show tests & examples" button);
+      List view and empty views, which have no legend, get the line in a strip of its own. The
+      older canvas notes (most connected file, outside the drawn files, not drawn in this view)
+      are unchanged. Tests: the message is outside `.canvas` and inside a `.legend` strip, also in
+      List view; 6 fail on `c618ac7` (the 2 "no change" guards pass).
+    - **Final:** all 14 cases pass in Firefox and Chrome at 1366 px and 80%, with both fixes
+      re-checked in both browsers.
+  - **Final checks (on `b26c20c`):** web **45 files, 359 tests passed** (`main`: 40 / 327), one
+    worker (`--pool=threads --maxWorkers=1`), no worker timeouts; `tsc` clean; build ok. Backend
+    **701 passed, 3 skipped** (unchanged since `1235c61`); ruff clean. CI green on `b26c20c`.
+  - **PyGoat `introduction/tests.py:63` (owner's separate question, read-only):** the two
+    identical Low rows "Possible hardcoded secret (secret-assignment) in test or example code"
+    (finding ids 6297 and 6298) are not a double insert. The line holds two values,
+    `"password1": [REDACTED], "password2": [REDACTED]`, and `redact()` makes one `SecretMatch` per
+    redacted span; a finding keeps only line, kind and the line's snippet (no column or key name),
+    so the two rows look the same. Whether the two values were equal cannot be told: only the
+    redacted text is stored. No change in FE2; a column or key name per row would tell them apart.
+  - **Not checked by the agent:** no visual check in a real browser by the agent (the built-in
+    browser was not allowed); the owner's manual test above is the browser check. The COR-10
+    tooltip has no PyGoat or flask view (the only symbol view with "+ N more" is black's
+    `pytree.py`), so it rests on its unit test; COR-07 shows only while the first findings request
+    is slow.

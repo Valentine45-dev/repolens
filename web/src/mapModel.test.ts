@@ -565,6 +565,13 @@ describe("node tooltips say something the label does not", () => {
     expect(nodeTooltip(more, "folder")).toContain("13 items not drawn, 13 files in all.");
     expect(nodeTooltip(more, "folder")).toContain("List view");
   });
+
+  it("COR-10: the symbol view's '+ N more' says the server's limit, not a fixed 60", () => {
+    const more = node("more:x", { kind: "more", label: "3 more", hidden_count: 3 });
+    const t = nodeTooltip(more, "symbol", 0, 40);
+    expect(t).toBe("3 more symbols are not drawn: this view shows the 40 best connected.");
+    expect(t).not.toContain("60");
+  });
 });
 
 describe("first view", () => {

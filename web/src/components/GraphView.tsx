@@ -3,6 +3,7 @@ import "@xyflow/react/dist/style.css";
 import {
   BaseEdge,
   type Edge,
+  type EdgeMouseHandler,
   type EdgeProps,
   type FitViewOptions,
   getBezierPath,
@@ -14,7 +15,7 @@ import {
   ReactFlow,
   useReactFlow,
 } from "@xyflow/react";
-import { memo, useEffect, useMemo, useRef, useState } from "react";
+import { memo, useCallback, useEffect, useId, useMemo, useRef, useState } from "react";
 
 import type { GraphEdge, GraphNode } from "../api";
 import { scheduleWarmUp } from "../codeColours";
@@ -26,12 +27,16 @@ import {
   type Positioned,
   splitPath,
 } from "../graphModel";
+import { EdgeTipView, focusFromKeyboard, NodeTipView, useCanvasTip } from "./CanvasTip";
 
 type FileNodeData = {
   path: string;
   language: string;
   selected: boolean;
   dimmed: boolean;
+  /** The node's tooltip text for screen readers (its aria-describedby points here). */
+  descId: string;
+  description: string;
 };
 type FileFlowNode = Node<FileNodeData, "file">;
 
@@ -48,8 +53,10 @@ const FileNode = memo(function FileNode({ data }: NodeProps<FileFlowNode>) {
       data-lang={data.language}
       data-selected={data.selected || undefined}
       data-dimmed={data.dimmed || undefined}
-      title={`${data.path} · ${languageLabel(data.language)}`}
     >
+      <span id={data.descId} hidden>
+        {data.description}
+      </span>
       <Handle type="target" position={Position.Left} isConnectable={false} className="graph-handle" />
       <span className="graph-node-lang" aria-hidden="true">
         {LANG_MARK[data.language] ?? "··"}
@@ -74,7 +81,6 @@ function DepEdge(props: EdgeProps<DepFlowEdge>) {
   const [path] = getBezierPath({ sourceX, sourceY, targetX, targetY, sourcePosition, targetPosition });
   return (
     <g className="graph-edge" data-active={data?.active || undefined} data-dimmed={data?.dimmed || undefined}>
-      <title>{data?.label}</title>
       <BaseEdge
         path={path}
         markerEnd={markerEnd}
@@ -136,14 +142,25 @@ export function firstViewHub(positions: Map<number, Positioned>, edges: GraphEdg
 const nodeTypes = { file: FileNode };
 const edgeTypes = { dep: DepEdge };
 
-function edgeLabel(e: GraphEdge): string {
+/** "src/a.py → src/b.py: imports + 3 calls": the edge's tooltip and its accessible name. */
+function edgeLabel(e: GraphEdge, paths: Map<number, string>): string {
   const parts = [];
   if (e.import) parts.push("imports");
   if (e.calls) parts.push(`${e.calls} call${e.calls === 1 ? "" : "s"}`);
-  const text = parts.join(" + ");
+  const text = `${paths.get(e.source) ?? e.source} → ${paths.get(e.target) ?? e.target}: ${parts.join(" + ")}`;
   return isGuess(e)
     ? `${text} (best guess: dynamic code makes some calls hard to resolve)`
     : text;
+}
+
+/** A file's tooltip: the path (mono), then what it is and holds. */
+export function fileTip(n: GraphNode): { head: string; lines: string[] } {
+  const parts = [languageLabel(n.language), `${n.loc} line${n.loc === 1 ? "" : "s"}`];
+  if (n.findings) parts.push(`${n.findings} finding${n.findings === 1 ? "" : "s"}`);
+  if (n.external_imports) {
+    parts.push(`${n.external_imports} external import${n.external_imports === 1 ? "" : "s"}`);
+  }
+  return { head: n.path, lines: [parts.join(" · ")] };
 }
 
 export function GraphView({
@@ -220,10 +237,15 @@ export function GraphView({
     return ids;
   }, [edges, selectedId]);
 
+  const [tip, tipApi] = useCanvasTip(canvasRef);
+  const descPrefix = useId();
+  const byId = useMemo(() => new Map(nodes.map((n) => [String(n.id), n])), [nodes]);
+
   const flowNodes = useMemo<FileFlowNode[]>(
     () =>
-      nodes.map((n) => {
+      nodes.map((n, i) => {
         const p = positions.get(n.id);
+        const descId = `${descPrefix}d${i}`;
         return {
           id: String(n.id),
           type: "file",
@@ -233,31 +255,41 @@ export function GraphView({
             language: n.language,
             selected: n.id === selectedId,
             dimmed: neighbourhood !== null && !neighbourhood.has(n.id),
+            descId,
+            description: `${fileTip(n).lines.join(". ")}. Enter opens the file.`,
           },
           draggable: false,
           connectable: false,
           ariaLabel: n.path,
+          domAttributes: { "aria-describedby": descId },
         };
       }),
-    [nodes, positions, selectedId, neighbourhood],
+    [nodes, positions, selectedId, neighbourhood, descPrefix],
   );
 
-  const flowEdges = useMemo<DepFlowEdge[]>(
-    () =>
-      edges.map((e) => {
-        const active = selectedId !== null && (e.source === selectedId || e.target === selectedId);
-        return {
-          id: `${e.source}-${e.target}`,
-          source: String(e.source),
-          target: String(e.target),
-          type: "dep",
-          markerEnd: { type: MarkerType.ArrowClosed, width: 14, height: 14, color: active ? "var(--text)" : "var(--edge)" },
-          data: { guess: isGuess(e), label: edgeLabel(e), active, dimmed: selectedId !== null && !active },
-          focusable: false,
-        };
-      }),
-    [edges, selectedId],
+  const flowEdges = useMemo<DepFlowEdge[]>(() => {
+    const paths = new Map(nodes.map((n) => [n.id, n.path]));
+    return edges.map((e) => {
+      const active = selectedId !== null && (e.source === selectedId || e.target === selectedId);
+      const label = edgeLabel(e, paths);
+      return {
+        id: `${e.source}-${e.target}`,
+        source: String(e.source),
+        target: String(e.target),
+        type: "dep",
+        markerEnd: { type: MarkerType.ArrowClosed, width: 14, height: 14, color: active ? "var(--text)" : "var(--edge)" },
+        data: { guess: isGuess(e), label, active, dimmed: selectedId !== null && !active },
+        focusable: false,
+        ariaLabel: label,
+      };
+    });
+  }, [nodes, edges, selectedId]);
+  const onEdgeMouseMove = useCallback<EdgeMouseHandler<DepFlowEdge>>(
+    (event, edge) => tipApi.showEdge(event.clientX, event.clientY, edge.data?.label ?? ""),
+    [tipApi],
   );
+  const tipNode = tip?.kind === "node" ? byId.get(tip.id) : undefined;
+  const tipPos = tipNode ? positions.get(tipNode.id) : undefined;
 
   return (
     // Nodes are focusable but not selectable (selection is the URL's ?node=), so React Flow does
@@ -270,15 +302,30 @@ export function GraphView({
         const node = (e.target as HTMLElement).closest<HTMLElement>(".react-flow__node");
         if (!node?.dataset.id) return;
         e.preventDefault();
+        tipApi.hide();
         onSelect(Number(node.dataset.id));
       }}
+      onFocus={(e) => {
+        const el = (e.target as HTMLElement).closest<HTMLElement>(".react-flow__node");
+        if (el && el === e.target && focusFromKeyboard(el)) tipApi.focusNode(el.dataset.id ?? null);
+      }}
+      onBlur={() => tipApi.focusNode(null)}
     >
       <ReactFlow<FileFlowNode, DepFlowEdge>
         nodes={flowNodes}
         edges={flowEdges}
         nodeTypes={nodeTypes}
         edgeTypes={edgeTypes}
-        onNodeClick={(_, node) => onSelect(Number(node.id))}
+        onNodeClick={(_, node) => {
+          tipApi.hide();
+          onSelect(Number(node.id));
+        }}
+        onNodeMouseEnter={(_, node) => tipApi.enterNode(node.id)}
+        onNodeMouseLeave={() => tipApi.leaveNode()}
+        // Edges ignore the pointer unless the canvas has an edge handler; these drive the tooltip.
+        onEdgeMouseEnter={onEdgeMouseMove}
+        onEdgeMouseMove={onEdgeMouseMove}
+        onEdgeMouseLeave={tipApi.hideEdge}
         onPaneClick={() => onSelect(null)}
         fitView={fitOnMount}
         fitViewOptions={initialFit}
@@ -290,6 +337,15 @@ export function GraphView({
         elementsSelectable={false}
         onlyRenderVisibleElements
       />
+      {tip?.kind === "edge" ? <EdgeTipView tip={tip} canvas={canvasRef.current} /> : null}
+      {tipNode && tipPos ? (
+        <NodeTipView
+          box={{ x: tipPos.x, y: tipPos.y, width: NODE_WIDTH, height: NODE_HEIGHT }}
+          {...fileTip(tipNode)}
+          canvas={canvasRef.current}
+          api={tipApi}
+        />
+      ) : null}
     </div>
   );
 }

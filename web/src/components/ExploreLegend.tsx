@@ -6,20 +6,23 @@ import { Icon } from "./Icon";
 
 /** The strip under the toolbar. Line 1 is the key (what a line means) with the view's counts on
  * the right; line 2 is the status (what is left out, the zoom note) and exists only when it has
- * something to say. A strip, not an overlay, so it never hides a node. Used by the Explorer and by
- * its loading frame, so both draw the same thing. */
+ * something to say; line 3 is a notice about the link (a file that cannot be shown, and why). A
+ * strip, not an overlay, so it never hides a node. Used by the Explorer and by its loading frame,
+ * so both draw the same thing. */
 export function ExploreLegend({
   kind,
   showGuesses,
   cycle = false,
   facts,
   status = null,
+  notice = null,
 }: {
   kind: "map" | "flat";
   showGuesses: boolean;
   cycle?: boolean;
   facts?: ReactNode; // the flat graph's counts; a map view says them in the breadcrumb row
   status?: string | null;
+  notice?: ReactNode;
 }) {
   return (
     <div className="legend" aria-label="Legend">
@@ -49,7 +52,18 @@ export function ExploreLegend({
         ) : null}
       </div>
       {status ? <p className="legend-status">{status}</p> : null}
+      {notice ? <LegendNotice>{notice}</LegendNotice> : null}
     </div>
+  );
+}
+
+/** A notice about the link in the address, as its own line of the strip. Views that have no
+ * legend (List view, an empty view) show it in a strip of its own, so it is never on the canvas. */
+export function LegendNotice({ children }: { children: ReactNode }) {
+  return (
+    <p className="legend-status legend-notice" role="status">
+      {children}
+    </p>
   );
 }
 
