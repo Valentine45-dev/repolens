@@ -164,7 +164,8 @@ export function Findings() {
             onChange={(v) => setFilter("severity", v || null)}
             options={(["high", "medium", "low"] as const).map((s) => ({
               value: s,
-              label: `${s[0].toUpperCase()}${s.slice(1)} (${counts?.by_severity[s] ?? 0})`,
+              // No number until it is known: unknown is never shown as 0.
+              label: `${s[0].toUpperCase()}${s.slice(1)}${counts ? ` (${counts.by_severity[s]})` : ""}`,
             }))}
           />
           <FilterSelect
