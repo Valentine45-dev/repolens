@@ -23,6 +23,7 @@ import {
   useEffect,
   useLayoutEffect,
   useMemo,
+  useId,
   useRef,
   useState,
   useSyncExternalStore,
@@ -52,7 +53,6 @@ import {
 } from "../mapLayout";
 import {
   boundaryText,
-  boundaryTitle,
   edgeKey,
   edgeSites,
   edgeSplit,
@@ -62,11 +62,19 @@ import {
   isDashed,
   type NodeAction,
   nodeAction,
-  nodeTooltip,
+  nodeDescription,
+  nodeTip,
   plural,
   restingEdges,
   showEdgeLabel,
 } from "../mapModel";
+import {
+  type CanvasTipApi,
+  EdgeTipView,
+  focusFromKeyboard,
+  NodeTipView,
+  useCanvasTip,
+} from "./CanvasTip";
 import { Icon } from "./Icon";
 
 // Hover, keyboard focus and selection live in a store, not in the node and edge objects: React
@@ -76,13 +84,13 @@ import { Icon } from "./Icon";
 // canvas) and the dimming of everything else is one attribute on the container.
 const StoreContext = createContext<FocusStore>(createFocusStore());
 
-// The edge tooltip is ours (a native <title> shows late, and only over the thin line): it follows
-// the pointer over an edge, its wide invisible hit zone, and its count label.
-interface Tip {
-  show(clientX: number, clientY: number, text: string): void;
-  hide(): void;
-}
-const TipContext = createContext<Tip>({ show: () => undefined, hide: () => undefined });
+// The tooltips are ours (CanvasTip.tsx), never the browser's: an edge's follows the pointer over
+// the edge, its wide invisible hit zone and its count label; a node's sits under the node.
+const NOOP = () => undefined;
+const TipContext = createContext<CanvasTipApi>({
+  showEdge: NOOP, hideEdge: NOOP, enterNode: NOOP, leaveNode: NOOP, enterTip: NOOP, leaveTip: NOOP,
+  focusNode: NOOP, hide: NOOP,
+});
 
 type MapNodeData = {
   node: MapNode;
@@ -91,6 +99,9 @@ type MapNodeData = {
   hideTests: boolean;
   /** Connections of this node that are not drawn at rest (hover shows them). */
   hiddenEdges: number;
+  /** The node's tooltip text for screen readers (its aria-describedby points here). */
+  descId: string;
+  description: string;
 };
 type MapFlowNode = Node<MapNodeData, "map">;
 
@@ -130,7 +141,7 @@ function Findings({
       className="map-findings-link"
       to={findingsHref(data.snapshotId, { path: node.path, folder: isFolder, hideTests: data.hideTests })}
       onClick={(e) => e.stopPropagation()}
-      title={`Open the ${text} under ${node.path} in Findings`}
+      aria-label={`Open the ${text} under ${node.path} in Findings`}
     >
       {text}
     </Link>
@@ -151,14 +162,11 @@ function Summary({ node, data }: { node: MapNode; data: MapNodeData }) {
   );
 }
 
+// What "circular" means is in the node's tooltip (nodeTip).
 function CycleTag({ node }: { node: MapNode }) {
   if (node.in_cycle !== true) return null;
-  const inside =
-    node.kind === "folder" && node.cycle_files
-      ? `${plural(node.cycle_files, "file")} here take part in a circular import. Open the folder to see which.`
-      : "Part of a circular import (top-level imports only).";
   return (
-    <span className="map-cycle-tag" title={inside}>
+    <span className="map-cycle-tag">
       <Icon name="cycle" size={12} />
       circular
     </span>
@@ -181,7 +189,6 @@ const MapNodeView = memo(function MapNodeView({ data }: NodeProps<MapFlowNode>) 
     style: { width: mapNodeWidth(level), height: mapNodeHeight(level) },
   };
   let head;
-  const title = nodeTooltip(node, level);
   if (node.kind === "folder") {
     head = (
       <>
@@ -239,7 +246,10 @@ const MapNodeView = memo(function MapNodeView({ data }: NodeProps<MapFlowNode>) 
     );
   }
   return (
-    <div className="map-node" title={title} {...common}>
+    <div className="map-node" {...common}>
+      <span id={data.descId} hidden>
+        {data.description}
+      </span>
       {/* Edges leave from the right and arrive on the left; one that points back (to a node to
           its left) uses the other two, so it does not loop around the node. */}
       <Handle id="in-l" type="target" position={Position.Left} isConnectable={false} className="graph-handle" />
@@ -256,17 +266,10 @@ const MapNodeView = memo(function MapNodeView({ data }: NodeProps<MapFlowNode>) 
         <Summary node={node} data={data} />
       )}
       {data.hiddenEdges > 0 ? (
-        <div
-          className="map-node-hidden"
-          title="These connections are not drawn until you hover this node, or turn on “All edges”."
-        >
-          {plural(data.hiddenEdges, "connection")} not drawn
-        </div>
+        <div className="map-node-hidden">{plural(data.hiddenEdges, "connection")} not drawn</div>
       ) : null}
       {boundary && level !== "symbol" ? (
-        <div className="map-node-boundary" title={boundaryTitle(node)}>
-          {boundary}
-        </div>
+        <div className="map-node-boundary">{boundary}</div>
       ) : null}
       <Handle id="in-t" type="target" position={Position.Top} isConnectable={false} className="graph-handle" />
       <Handle id="out-t" type="source" position={Position.Top} isConnectable={false} className="graph-handle" />
@@ -332,7 +335,6 @@ function DepEdge({
             />
           </marker>
         </defs>
-        <title>{data.title}</title>
         <BaseEdge
           path={path}
           interactionWidth={EDGE_HIT_WIDTH}
@@ -349,9 +351,9 @@ function DepEdge({
             className="edge-label mono num"
             data-active={active || undefined}
             data-cycle={data.cycle || undefined}
-            onMouseEnter={(e) => tip.show(e.clientX, e.clientY, data.title)}
-            onMouseMove={(e) => tip.show(e.clientX, e.clientY, data.title)}
-            onMouseLeave={tip.hide}
+            onMouseEnter={(e) => tip.showEdge(e.clientX, e.clientY, data.title)}
+            onMouseMove={(e) => tip.showEdge(e.clientX, e.clientY, data.title)}
+            onMouseLeave={tip.hideEdge}
             style={{
               transform: `translate(-50%, -50%) translate(${labelX + (data.vertical ? data.lane : 0)}px, ${labelY + (data.vertical ? 0 : data.lane)}px)`,
             }}
@@ -414,32 +416,26 @@ export function MapView({
   // Hover and keyboard focus show every edge of a node, like a selection does. Hover waits a
   // moment, so sweeping across the map does not restyle it for every node it crosses.
   const store = useMemo(createFocusStore, []);
-  const [tipState, setTipState] = useState<{ x: number; y: number; text: string } | null>(null);
-  const tip = useMemo<Tip>(
-    () => ({
-      show(clientX, clientY, text) {
-        const box = canvasRef.current?.getBoundingClientRect();
-        if (!box) return;
-        const x = Math.round(clientX - box.left);
-        const y = Math.round(clientY - box.top);
-        setTipState((old) =>
-          old && old.text === text && Math.abs(old.x - x) < 4 && Math.abs(old.y - y) < 4
-            ? old
-            : { x, y, text },
-        );
-      },
-      hide: () => setTipState(null),
-    }),
-    [],
-  );
+  const canvasRef = useRef<HTMLDivElement>(null);
+  const [tipState, tip] = useCanvasTip(canvasRef);
+  const descPrefix = useId();
   useLayoutEffect(() => store.configure(view.edges, selectedNodeId), [store, view.edges, selectedNodeId]);
   const intent = useMemo(() => createHoverIntent(store.setHover), [store]);
   useEffect(() => () => intent.cancel(), [intent]);
-  const onNodeMouseEnter = useCallback<NodeMouseHandler>((_, node) => intent.enter(node.id), [intent]);
-  const onNodeMouseLeave = useCallback<NodeMouseHandler>(() => intent.leave(), [intent]);
+  const onNodeMouseEnter = useCallback<NodeMouseHandler>(
+    (_, node) => {
+      intent.enter(node.id);
+      tip.enterNode(node.id);
+    },
+    [intent, tip],
+  );
+  const onNodeMouseLeave = useCallback<NodeMouseHandler>(() => {
+    intent.leave();
+    tip.leaveNode();
+  }, [intent, tip]);
   const focusing = useSyncExternalStore(store.subscribe, store.focusing);
   const onEdgeMouseMove = useCallback<EdgeMouseHandler<MapFlowEdge>>(
-    (event, edge) => tip.show(event.clientX, event.clientY, edge.data?.title ?? ""),
+    (event, edge) => tip.showEdge(event.clientX, event.clientY, edge.data?.title ?? ""),
     [tip],
   );
 
@@ -448,7 +444,6 @@ export function MapView({
   const [fitOnMount] = useState(selectedNodeId === null);
   const setZoomedIn = onZoomedIn;
   useEffect(() => () => onZoomedIn(false), [onZoomedIn]);
-  const canvasRef = useRef<HTMLDivElement>(null);
   const [ready, setReady] = useState(false);
   // Once the map has drawn, warm up code colours (Python) while the browser is idle (codeColours.ts).
   useEffect(() => (ready ? scheduleWarmUp() : undefined), [ready]);
@@ -496,19 +491,30 @@ export function MapView({
 
   const flowNodes = useMemo<MapFlowNode[]>(
     () =>
-      view.nodes.map((n) => {
+      view.nodes.map((n, i) => {
         const p = positions.get(n.id);
+        const hiddenEdges = hiddenByNode.get(n.id) ?? 0;
+        const descId = `${descPrefix}d${i}`; // node ids hold paths, which may hold spaces
         return {
           id: n.id,
           type: "map",
           position: { x: p?.x ?? 0, y: p?.y ?? 0 },
-          data: { node: n, level: view.level, snapshotId, hideTests, hiddenEdges: hiddenByNode.get(n.id) ?? 0 },
+          data: {
+            node: n,
+            level: view.level,
+            snapshotId,
+            hideTests,
+            hiddenEdges,
+            descId,
+            description: nodeDescription(n, view.level, hiddenEdges),
+          },
           draggable: false,
           connectable: false,
           ariaLabel: n.kind === "more" ? n.label : n.path || n.label,
+          domAttributes: { "aria-describedby": descId },
         };
       }),
-    [view.nodes, view.level, positions, snapshotId, hideTests, hiddenByNode],
+    [view.nodes, view.level, positions, snapshotId, hideTests, hiddenByNode, descPrefix],
   );
 
   const flowEdges = useMemo<MapFlowEdge[]>(() => {
@@ -553,6 +559,7 @@ export function MapView({
         },
         ...handles(e),
         focusable: false,
+        ariaLabel: notes.join(". "),
       };
     });
   }, [view.edges, selection, showAll, nodesById, positions, width]);
@@ -570,14 +577,20 @@ export function MapView({
         const node = el?.dataset.id ? nodesById.get(el.dataset.id) : undefined;
         if (!node) return;
         e.preventDefault();
+        tip.hide();
         onAction(nodeAction(view.level, node));
       }}
       data-focus={focusing || undefined}
       onFocus={(e) => {
         const el = (e.target as HTMLElement).closest<HTMLElement>(".react-flow__node");
         store.setFocused(el?.dataset.id ?? null);
+        // Only the node itself: a link inside it (its findings) keeps its own name.
+        if (el && el === e.target && focusFromKeyboard(el)) tip.focusNode(el.dataset.id ?? null);
       }}
-      onBlur={() => store.setFocused(null)}
+      onBlur={() => {
+        store.setFocused(null);
+        tip.focusNode(null);
+      }}
     >
       <StoreContext.Provider value={store}>
       <TipContext.Provider value={tip}>
@@ -587,6 +600,7 @@ export function MapView({
         nodeTypes={nodeTypes}
         edgeTypes={edgeTypes}
         onNodeClick={(_, node) => {
+          tip.hide();
           const n = nodesById.get(node.id);
           if (n) onAction(nodeAction(view.level, n));
         }}
@@ -595,7 +609,7 @@ export function MapView({
         // Edges ignore the pointer unless the canvas has an edge handler; these also drive the tooltip.
         onEdgeMouseEnter={onEdgeMouseMove}
         onEdgeMouseMove={onEdgeMouseMove}
-        onEdgeMouseLeave={tip.hide}
+        onEdgeMouseLeave={tip.hideEdge}
         onPaneClick={onClear}
         onInit={(instance) => {
           const canvas = canvasRef.current;
@@ -620,21 +634,14 @@ export function MapView({
         elementsSelectable={false}
         onlyRenderVisibleElements
       />
-      {tipState ? (
-        <div
-          className="map-tip"
-          role="tooltip"
-          style={{
-            left: tipState.x + 14,
-            top: tipState.y + 14,
-            transform:
-              canvasRef.current && tipState.x > canvasRef.current.clientWidth - 340
-                ? "translateX(calc(-100% - 28px))"
-                : undefined,
-          }}
-        >
-          {tipState.text}
-        </div>
+      {tipState?.kind === "edge" ? <EdgeTipView tip={tipState} canvas={canvasRef.current} /> : null}
+      {tipState?.kind === "node" && nodesById.has(tipState.id) && positions.has(tipState.id) ? (
+        <NodeTipView
+          box={{ ...positions.get(tipState.id)!, width, height }}
+          {...nodeTip(nodesById.get(tipState.id)!, view.level, hiddenByNode.get(tipState.id) ?? 0)}
+          canvas={canvasRef.current}
+          api={tip}
+        />
       ) : null}
       </TipContext.Provider>
       </StoreContext.Provider>

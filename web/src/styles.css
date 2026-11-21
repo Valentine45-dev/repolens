@@ -1612,6 +1612,16 @@ a {
   pointer-events: none;
 }
 
+/* A node's tip sits under its box and stays while the pointer moves onto it (CanvasTip.tsx). Same
+   look as the edge tip; the first line is the path in mono. */
+.map-tip[data-kind="node"] {
+  pointer-events: auto;
+}
+
+.map-tip-head {
+  overflow-wrap: anywhere;
+}
+
 .edge-label[data-active],
 .edge-label[data-cycle] {
   border-color: var(--text);
