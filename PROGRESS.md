@@ -2344,3 +2344,35 @@ are deliberately not changed after seeing eval results; these stay as documented
     tooltip has no PyGoat or flask view (the only symbol view with "+ N more" is black's
     `pytree.py`), so it rests on its unit test; COR-07 shows only while the first findings request
     is slow.
+- **Locked-run scorer and freeze checks (`eval/locked-scorer`, 21 Nov; not merged).** Full record:
+  `eval/results/LOCKED-FREEZE-CHECKS.md`; rules `docs/V2-EVAL-DESIGN-metrics.md` (§5, §6 and the
+  owner's 9 pre-freeze decisions). No locked question, label or key seen; the locked repos were not
+  fetched, cloned or analysed (GitHub tree metadata only).
+  - **Built:** `eval/locked_metrics.py` (pure scoring rules, frozen by hash), `eval/locked_eval.py`
+    (validate, estimate, run, summary, sheet, judge, analyse [--in-process]), 79 unit tests in
+    `eval/test_locked_*.py`, run by the new CI job `eval-unit`. Locked runs refuse unless the
+    question file matches `eval/locked/v2.0.sha256`, the scoring files match
+    `eval/locked/scorer.sha256`, tracked files are clean, 2 passes, real provider, cap <= $1 per
+    pass; a pass stopped by the cap is void and never resumed. `eval/locked/.gitattributes` keeps
+    question and hash files byte-exact (autocrlf would change them).
+  - **Tuning:** `eval/tuning_locked_format.yaml` (11 questions, every type). FakeProvider dry run ($0)
+    and one paid check, 2 passes, **$0.191** (Sonnet 5.5 at $2/$10 from the pricing page today):
+    code_hit A 3/4, B 4/4, C 4/4; doc_hit 0/1 (v2.0 chunks code only); graph 3/3 exact; first result
+    counts. Tuning spend recorded in result files to date: **$0.721**.
+  - **Part B:** all five locked repos far under 2,000 files / 20 MB (axios largest: 466 files, 3.6
+    MB). httpx and axios estimated at about 650 s of analysis, over the old 600 s cap. Timing in
+    process: flask 509 s, mocha 426 s (timing-only snapshot 39). **MAX_ANALYSIS_S = 2100 for the
+    locked runs** (2.5 x flask's 730 s of 14 Nov, rounded up to 300); `analyse` refuses another
+    value on the locked pins. `.env` and the product default (600) unchanged.
+  - **Incident:** I stopped the native API for RAM; the idle FE2 session restarted one on 8000
+    within a minute; my own API start failed to bind but its startup hook marked flask's running
+    job "Interrupted by server restart", and that job then lost search at the 600 s cap. Redone in
+    process (no API start); flask re-analysed (job 36) with 713 / 690 chunks and 1,976 edges as
+    before. Backup first: `C:\projects\repolens-db-backups\db-backup-2026-11-21-pre-locked-timing.sql`
+    (SHA-256 `F46065BC...43C40C`, restore checked). The FE2 session's API is still on 8000.
+  - **Rule revised before the freeze (owner):** the unanswerable / false-premise automatic pass needs
+    zero citations in the model's raw output (validated + dropped); any attempted citation goes to the
+    judge. `scorer.sha256` regenerated. Run-day checklist: close every other Claude Code session (FE2
+    included; it auto-restarts its API), no RepoLens API running for the in-process analysis.
+  - **Open (owner, before the locked run):** commit `eval/locked/v2.0.sha256`.
+  - Backend 701 passed, 3 skipped; ruff clean (backend and the new eval files).

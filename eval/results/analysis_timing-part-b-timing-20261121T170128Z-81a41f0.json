@@ -1,0 +1,83 @@
+{
+  "run": {
+    "commit_sha": "81a41f03a5b1f0e355d9b27f59cd4720b210af82",
+    "dirty": false,
+    "run_at": "2026-11-21T17:01:28+00:00",
+    "machine": "LAPTOP-4C2E555R",
+    "cpu": "Intel(R) Pentium(R) Silver N5030 CPU @ 1.10GHz",
+    "cpu_threads": 4,
+    "ram_gb": 7.8,
+    "os": "Windows 11 (10.0.26300)",
+    "python": "3.12.16",
+    "packages": {
+      "torch": "2.14.1+cpu",
+      "sentence-transformers": "6.2.0",
+      "transformers": "5.21.0",
+      "tree-sitter": "0.25.2",
+      "anthropic": "2.3.0"
+    },
+    "max_analysis_s": 600,
+    "tool_pins": {
+      "bandit": "bandit==1.9.4",
+      "semgrep": "semgrep==1.182.1"
+    },
+    "notes": "API on 190c1e9-era code with MAX_ANALYSIS_S=3600 (env override); agent's own work otherwise idle; owner's Chrome and Firefox open, Claude desktop app open",
+    "embedder": "sentence-transformers",
+    "embed_model": "sentence-transformers/all-MiniLM-L6-v2",
+    "embed_revision": "1110a243fdf4706b3f48f1d95db1a4f5529b4d41",
+    "llm_used": false,
+    "llm": {
+      "provider": "anthropic",
+      "model": "claude-sonnet-5-5",
+      "effort": "low",
+      "thinking": "between_tools",
+      "max_tokens": 4000,
+      "prompt_version": "2026-10-28.2"
+    },
+    "retrieval": {
+      "top_k": 8,
+      "graph_expansion": true,
+      "expand_max": 8,
+      "context_tokens": 6000
+    }
+  },
+  "pins": "eval/timing_pins.yaml",
+  "api": "http://127.0.0.1:8000",
+  "analyses": [
+    {
+      "repo": "pallets/flask",
+      "commit": "49943b5a94413a530761350f04e896f76e8d620e",
+      "snapshot_id": 6,
+      "job_id": 35,
+      "submitted_status": "queued",
+      "timing_only": false,
+      "stages": [
+        {
+          "t_s": 52.9,
+          "status": "running",
+          "stage": "fetch",
+          "search": "ready"
+        },
+        {
+          "t_s": 55.2,
+          "status": "running",
+          "stage": "discover",
+          "search": "ready"
+        },
+        {
+          "t_s": 92.0,
+          "status": "failed",
+          "stage": "discover",
+          "search": "ready"
+        }
+      ],
+      "final_status": "failed",
+      "error": "Interrupted by server restart.",
+      "receipt": null,
+      "search": "ready",
+      "search_error": null,
+      "analysis_s": null,
+      "total_with_tests_s": 92.0
+    }
+  ]
+}

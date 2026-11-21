@@ -1,0 +1,7 @@
+# Part B step 2 of the locked-run freeze: full-analysis timing on tuning-side repos only.
+# flask: already in the tuning set (re-analysed in place; its done job is marked "Re-run: ..." first).
+# mocha: timing only, approved 21 Nov 2026; no questions are written for it.
+#   uv run --project backend --env-file .env python eval/locked_eval.py analyse eval/timing_pins.yaml --label part-b-timing
+repos:
+  - {repo: pallets/flask, commit: 49943b5a94413a530761350f04e896f76e8d620e}
+  - {repo: mochajs/mocha, commit: 5b5afa7b12e3f76f4e0c6afa12e960c0b378358c, timing_only: true}

@@ -38,3 +38,21 @@ jobs:
       - run: uv sync --locked
       - run: uv run ruff check .
       - run: uv run pytest -q -rs
+
+  # Pure unit tests of the eval scripts (no database, no LLM, no network). Other eval/ tests
+  # run real tools (Bandit) and stay local.
+  eval-unit:
+    runs-on: ubuntu-24.04
+    env:
+      UV_NO_GROUP: embed
+      EMBEDDER: stub
+    steps:
+      - uses: actions/checkout@v7
+      - uses: astral-sh/setup-uv@v10.3.2
+        with:
+          working-directory: backend
+          enable-cache: true
+      - run: uv sync --locked
+        working-directory: backend
+      - run: uv run --project backend ruff check --config backend/pyproject.toml eval/locked_metrics.py eval/locked_eval.py eval/test_locked_metrics.py eval/test_locked_eval.py
+      - run: uv run --project backend python -m pytest -q -p no:cacheprovider eval/test_locked_metrics.py eval/test_locked_eval.py

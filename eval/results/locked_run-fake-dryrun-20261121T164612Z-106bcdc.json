@@ -1,0 +1,6472 @@
+{
+  "run": {
+    "commit_sha": "106bcdcc5eb2f971c405f9c5ca881dc7d95968d8",
+    "dirty": false,
+    "run_at": "2026-11-21T16:46:12+00:00",
+    "machine": "LAPTOP-4C2E555R",
+    "cpu": "Intel(R) Pentium(R) Silver N5030 CPU @ 1.10GHz",
+    "cpu_threads": 4,
+    "ram_gb": 7.8,
+    "os": "Windows 11 (10.0.26300)",
+    "python": "3.12.16",
+    "packages": {
+      "torch": "2.14.1+cpu",
+      "sentence-transformers": "6.2.0",
+      "transformers": "5.21.0",
+      "tree-sitter": "0.25.2",
+      "anthropic": "2.3.0"
+    },
+    "max_analysis_s": 600,
+    "tool_pins": {
+      "bandit": "bandit==1.9.4",
+      "semgrep": "semgrep==1.182.1"
+    },
+    "notes": "FakeProvider dry run; API stopped; owner's Chrome and Firefox open",
+    "embedder": "sentence-transformers",
+    "embed_model": "sentence-transformers/all-MiniLM-L6-v2",
+    "embed_revision": "1110a243fdf4706b3f48f1d95db1a4f5529b4d41",
+    "llm_used": true,
+    "llm": {
+      "provider": "anthropic",
+      "model": "fake",
+      "effort": "low",
+      "thinking": "between_tools",
+      "max_tokens": 4000,
+      "prompt_version": "2026-10-28.2"
+    },
+    "retrieval": {
+      "top_k": 8,
+      "graph_expansion": true,
+      "expand_max": 8,
+      "context_tokens": 6000
+    },
+    "answer_cache": "none (not implemented in the product)",
+    "doc_pool": "none (v2.0 chunks code only)",
+    "prices_usd_per_mtok": {
+      "in": 0.0,
+      "out": 0.0
+    }
+  },
+  "questions_file": "eval/tuning_locked_format.yaml",
+  "set": "tuning",
+  "questions_sha256": "57ad23fdd1e7e780c3084455bfaaddb2652af1afa0437b4f542723cba6564616",
+  "runner_changed": null,
+  "scoring_files_sha256": {
+    "eval/locked_metrics.py": "4e4085eab6842b33310d561c1dd52311fe5bd112eed2f07e70f7cb7623c9b967",
+    "eval/score_claims.py": "1d4df5bfc43ba6c83d409bd395d500f50b0e9bc0a22461f9e0dfeb237644d474",
+    "eval/locked_eval.py": "dacbe9f1f62169f6f785ce6d241db12e85f029dc160d083369d98eadbe75e807"
+  },
+  "configs": {
+    "A": {
+      "k": 8,
+      "expand": false,
+      "expand_max": 0
+    },
+    "B": {
+      "k": 16,
+      "expand": false,
+      "expand_max": 0
+    },
+    "C": {
+      "k": 8,
+      "expand": true,
+      "expand_max": 8
+    }
+  },
+  "live_config": "C",
+  "pass_cap_usd": 1.0,
+  "estimate": {
+    "ai_questions": 8,
+    "graph_questions": 3,
+    "input_tokens": 26449,
+    "output_tokens_assumed": 700,
+    "estimate_usd": 0.0,
+    "worst_case_usd": 0.0
+  },
+  "fake_provider": true,
+  "repos": {
+    "expressjs/express": {
+      "id": 3,
+      "llm_tokens_used": 62508,
+      "status": "done",
+      "job_id": 26,
+      "search_state": "ready",
+      "search_error": null,
+      "hit_file_limit": false,
+      "files_kept": 165,
+      "files_skipped": 51,
+      "files_beyond_limit": 0,
+      "chunks_non_test": 129,
+      "chunks_test": 1048,
+      "commit": "1c6f1b0fe4000977b9a7b4f34097e4d527dd9824",
+      "llm_tokens_used_after": 62508
+    },
+    "pallets/flask": {
+      "id": 6,
+      "llm_tokens_used": 0,
+      "status": "done",
+      "job_id": 27,
+      "search_state": "ready",
+      "search_error": null,
+      "hit_file_limit": false,
+      "files_kept": 194,
+      "files_skipped": 42,
+      "files_beyond_limit": 0,
+      "chunks_non_test": 713,
+      "chunks_test": 690,
+      "commit": "49943b5a94413a530761350f04e896f76e8d620e",
+      "llm_tokens_used_after": 0
+    },
+    "pallets/itsdangerous": {
+      "id": 1,
+      "llm_tokens_used": 64045,
+      "status": "done",
+      "job_id": 25,
+      "search_state": "ready",
+      "search_error": null,
+      "hit_file_limit": false,
+      "files_kept": 41,
+      "files_skipped": 9,
+      "files_beyond_limit": 0,
+      "chunks_non_test": 113,
+      "chunks_test": 68,
+      "commit": "672971d66a2ef9f85151e53283113f33d642dabd",
+      "llm_tokens_used_after": 64045
+    }
+  },
+  "passes": [
+    {
+      "pass": 1,
+      "void": false,
+      "void_reason": null,
+      "spent_usd": 0.0,
+      "records": [
+        {
+          "id": "T01",
+          "route": "ai",
+          "status": "answered",
+          "answer": "I could not find this in the provided code.",
+          "citations": [],
+          "dropped": 0,
+          "prompt_version": "2026-10-28.2",
+          "graph_paths": [],
+          "graph_total": null,
+          "lower_confidence": null,
+          "retrieval_summary": {
+            "k": 8,
+            "expand": true,
+            "include_tests": false,
+            "used_test_code": false,
+            "sent": 8,
+            "from_graph": 0
+          },
+          "sent": [
+            {
+              "path": "src/flask/helpers.py",
+              "start": 343,
+              "end": 357
+            },
+            {
+              "path": "src/flask/helpers.py",
+              "start": 360,
+              "end": 375
+            },
+            {
+              "path": "src/flask/helpers.py",
+              "start": 326,
+              "end": 345
+            },
+            {
+              "path": "src/flask/__init__.py",
+              "start": 29,
+              "end": 39
+            },
+            {
+              "path": "src/flask/helpers.py",
+              "start": 393,
+              "end": 399
+            },
+            {
+              "path": "src/flask/helpers.py",
+              "start": 373,
+              "end": 395
+            },
+            {
+              "path": "src/flask/__init__.py",
+              "start": 16,
+              "end": 31
+            },
+            {
+              "path": "src/flask/signals.py",
+              "start": 1,
+              "end": 17
+            }
+          ],
+          "latency_s": 0.5,
+          "calls": 1,
+          "tokens_in": 2293,
+          "tokens_out": 10,
+          "cost_usd": 0.0,
+          "retrieval": {
+            "A": [
+              {
+                "path": "src/flask/helpers.py",
+                "start": 343,
+                "end": 357,
+                "via": "search"
+              },
+              {
+                "path": "src/flask/helpers.py",
+                "start": 360,
+                "end": 375,
+                "via": "search"
+              },
+              {
+                "path": "src/flask/helpers.py",
+                "start": 326,
+                "end": 345,
+                "via": "search"
+              },
+              {
+                "path": "src/flask/__init__.py",
+                "start": 29,
+                "end": 39,
+                "via": "search"
+              },
+              {
+                "path": "src/flask/helpers.py",
+                "start": 393,
+                "end": 399,
+                "via": "search"
+              },
+              {
+                "path": "src/flask/helpers.py",
+                "start": 373,
+                "end": 395,
+                "via": "search"
+              },
+              {
+                "path": "src/flask/__init__.py",
+                "start": 16,
+                "end": 31,
+                "via": "search"
+              },
+              {
+                "path": "src/flask/signals.py",
+                "start": 1,
+                "end": 17,
+                "via": "search"
+              }
+            ],
+            "B": [
+              {
+                "path": "src/flask/helpers.py",
+                "start": 343,
+                "end": 357,
+                "via": "search"
+              },
+              {
+                "path": "src/flask/helpers.py",
+                "start": 360,
+                "end": 375,
+                "via": "search"
+              },
+              {
+                "path": "src/flask/helpers.py",
+                "start": 326,
+                "end": 345,
+                "via": "search"
+              },
+              {
+                "path": "src/flask/__init__.py",
+                "start": 29,
+                "end": 39,
+                "via": "search"
+              },
+              {
+                "path": "src/flask/helpers.py",
+                "start": 393,
+                "end": 399,
+                "via": "search"
+              },
+              {
+                "path": "src/flask/helpers.py",
+                "start": 373,
+                "end": 395,
+                "via": "search"
+              },
+              {
+                "path": "src/flask/__init__.py",
+                "start": 16,
+                "end": 31,
+                "via": "search"
+              },
+              {
+                "path": "src/flask/signals.py",
+                "start": 1,
+                "end": 17,
+                "via": "search"
+              },
+              {
+                "path": "src/flask/__init__.py",
+                "start": 1,
+                "end": 18,
+                "via": "search"
+              },
+              {
+                "path": "src/flask/app.py",
+                "start": 1471,
+                "end": 1490,
+                "via": "search"
+              },
+              {
+                "path": "src/flask/ctx.py",
+                "start": 320,
+                "end": 337,
+                "via": "search"
+              },
+              {
+                "path": "src/flask/helpers.py",
+                "start": 1,
+                "end": 25,
+                "via": "search"
+              },
+              {
+                "path": "src/flask/ctx.py",
+                "start": 118,
+                "end": 142,
+                "via": "search"
+              },
+              {
+                "path": "src/flask/sansio/blueprints.py",
+                "start": 623,
+                "end": 631,
+                "via": "search"
+              },
+              {
+                "path": "src/flask/app.py",
+                "start": 1045,
+                "end": 1054,
+                "via": "search"
+              },
+              {
+                "path": "src/flask/app.py",
+                "start": 25,
+                "end": 50,
+                "via": "search"
+              }
+            ],
+            "C": [
+              {
+                "path": "src/flask/helpers.py",
+                "start": 343,
+                "end": 357,
+                "via": "search"
+              },
+              {
+                "path": "src/flask/helpers.py",
+                "start": 360,
+                "end": 375,
+                "via": "search"
+              },
+              {
+                "path": "src/flask/helpers.py",
+                "start": 326,
+                "end": 345,
+                "via": "search"
+              },
+              {
+                "path": "src/flask/__init__.py",
+                "start": 29,
+                "end": 39,
+                "via": "search"
+              },
+              {
+                "path": "src/flask/helpers.py",
+                "start": 393,
+                "end": 399,
+                "via": "search"
+              },
+              {
+                "path": "src/flask/helpers.py",
+                "start": 373,
+                "end": 395,
+                "via": "search"
+              },
+              {
+                "path": "src/flask/__init__.py",
+                "start": 16,
+                "end": 31,
+                "via": "search"
+              },
+              {
+                "path": "src/flask/signals.py",
+                "start": 1,
+                "end": 17,
+                "via": "search"
+              }
+            ]
+          },
+          "sent_equals_config_C": true
+        },
+        {
+          "id": "T02",
+          "route": "ai",
+          "status": "answered",
+          "answer": "I could not find this in the provided code.",
+          "citations": [],
+          "dropped": 0,
+          "prompt_version": "2026-10-28.2",
+          "graph_paths": [],
+          "graph_total": null,
+          "lower_confidence": null,
+          "retrieval_summary": {
+            "k": 8,
+            "expand": true,
+            "include_tests": false,
+            "used_test_code": false,
+            "sent": 16,
+            "from_graph": 8
+          },
+          "sent": [
+            {
+              "path": "src/itsdangerous/serializer.py",
+              "start": 203,
+              "end": 225
+            },
+            {
+              "path": "src/itsdangerous/signer.py",
+              "start": 175,
+              "end": 180
+            },
+            {
+              "path": "src/itsdangerous/signer.py",
+              "start": 129,
+              "end": 147
+            },
+            {
+              "path": "src/itsdangerous/exc.py",
+              "start": 41,
+              "end": 57
+            },
+            {
+              "path": "src/itsdangerous/signer.py",
+              "start": 103,
+              "end": 122
+            },
+            {
+              "path": "src/itsdangerous/timed.py",
+              "start": 131,
+              "end": 156
+            },
+            {
+              "path": "src/itsdangerous/signer.py",
+              "start": 76,
+              "end": 92
+            },
+            {
+              "path": "src/itsdangerous/timed.py",
+              "start": 22,
+              "end": 27
+            },
+            {
+              "path": "src/itsdangerous/exc.py",
+              "start": 60,
+              "end": 63
+            },
+            {
+              "path": "src/itsdangerous/signer.py",
+              "start": 182,
+              "end": 201
+            },
+            {
+              "path": "src/itsdangerous/signer.py",
+              "start": 227,
+              "end": 242
+            },
+            {
+              "path": "src/itsdangerous/timed.py",
+              "start": 45,
+              "end": 51
+            },
+            {
+              "path": "src/itsdangerous/timed.py",
+              "start": 160,
+              "end": 167
+            },
+            {
+              "path": "src/itsdangerous/signer.py",
+              "start": 215,
+              "end": 220
+            },
+            {
+              "path": "src/itsdangerous/signer.py",
+              "start": 67,
+              "end": 73
+            },
+            {
+              "path": "src/itsdangerous/signer.py",
+              "start": 244,
+              "end": 256
+            }
+          ],
+          "latency_s": 1.62,
+          "calls": 1,
+          "tokens_in": 3365,
+          "tokens_out": 10,
+          "cost_usd": 0.0,
+          "retrieval": {
+            "A": [
+              {
+                "path": "src/itsdangerous/serializer.py",
+                "start": 203,
+                "end": 225,
+                "via": "search"
+              },
+              {
+                "path": "src/itsdangerous/signer.py",
+                "start": 175,
+                "end": 180,
+                "via": "search"
+              },
+              {
+                "path": "src/itsdangerous/signer.py",
+                "start": 129,
+                "end": 147,
+                "via": "search"
+              },
+              {
+                "path": "src/itsdangerous/exc.py",
+                "start": 41,
+                "end": 57,
+                "via": "search"
+              },
+              {
+                "path": "src/itsdangerous/signer.py",
+                "start": 103,
+                "end": 122,
+                "via": "search"
+              },
+              {
+                "path": "src/itsdangerous/timed.py",
+                "start": 131,
+                "end": 156,
+                "via": "search"
+              },
+              {
+                "path": "src/itsdangerous/signer.py",
+                "start": 76,
+                "end": 92,
+                "via": "search"
+              },
+              {
+                "path": "src/itsdangerous/timed.py",
+                "start": 22,
+                "end": 27,
+                "via": "search"
+              }
+            ],
+            "B": [
+              {
+                "path": "src/itsdangerous/serializer.py",
+                "start": 203,
+                "end": 225,
+                "via": "search"
+              },
+              {
+                "path": "src/itsdangerous/signer.py",
+                "start": 175,
+                "end": 180,
+                "via": "search"
+              },
+              {
+                "path": "src/itsdangerous/signer.py",
+                "start": 129,
+                "end": 147,
+                "via": "search"
+              },
+              {
+                "path": "src/itsdangerous/exc.py",
+                "start": 41,
+                "end": 57,
+                "via": "search"
+              },
+              {
+                "path": "src/itsdangerous/signer.py",
+                "start": 103,
+                "end": 122,
+                "via": "search"
+              },
+              {
+                "path": "src/itsdangerous/timed.py",
+                "start": 131,
+                "end": 156,
+                "via": "search"
+              },
+              {
+                "path": "src/itsdangerous/signer.py",
+                "start": 76,
+                "end": 92,
+                "via": "search"
+              },
+              {
+                "path": "src/itsdangerous/timed.py",
+                "start": 22,
+                "end": 27,
+                "via": "search"
+              },
+              {
+                "path": "src/itsdangerous/exc.py",
+                "start": 60,
+                "end": 63,
+                "via": "search"
+              },
+              {
+                "path": "src/itsdangerous/timed.py",
+                "start": 72,
+                "end": 91,
+                "via": "search"
+              },
+              {
+                "path": "src/itsdangerous/signer.py",
+                "start": 90,
+                "end": 105,
+                "via": "search"
+              },
+              {
+                "path": "src/itsdangerous/serializer.py",
+                "start": 236,
+                "end": 241,
+                "via": "search"
+              },
+              {
+                "path": "src/itsdangerous/signer.py",
+                "start": 182,
+                "end": 201,
+                "via": "search"
+              },
+              {
+                "path": "src/itsdangerous/serializer.py",
+                "start": 40,
+                "end": 55,
+                "via": "search"
+              },
+              {
+                "path": "src/itsdangerous/signer.py",
+                "start": 120,
+                "end": 127,
+                "via": "search"
+              },
+              {
+                "path": "src/itsdangerous/signer.py",
+                "start": 227,
+                "end": 242,
+                "via": "search"
+              }
+            ],
+            "C": [
+              {
+                "path": "src/itsdangerous/serializer.py",
+                "start": 203,
+                "end": 225,
+                "via": "search"
+              },
+              {
+                "path": "src/itsdangerous/signer.py",
+                "start": 175,
+                "end": 180,
+                "via": "search"
+              },
+              {
+                "path": "src/itsdangerous/signer.py",
+                "start": 129,
+                "end": 147,
+                "via": "search"
+              },
+              {
+                "path": "src/itsdangerous/exc.py",
+                "start": 41,
+                "end": 57,
+                "via": "search"
+              },
+              {
+                "path": "src/itsdangerous/signer.py",
+                "start": 103,
+                "end": 122,
+                "via": "search"
+              },
+              {
+                "path": "src/itsdangerous/timed.py",
+                "start": 131,
+                "end": 156,
+                "via": "search"
+              },
+              {
+                "path": "src/itsdangerous/signer.py",
+                "start": 76,
+                "end": 92,
+                "via": "search"
+              },
+              {
+                "path": "src/itsdangerous/timed.py",
+                "start": 22,
+                "end": 27,
+                "via": "search"
+              },
+              {
+                "path": "src/itsdangerous/exc.py",
+                "start": 60,
+                "end": 63,
+                "via": "graph"
+              },
+              {
+                "path": "src/itsdangerous/signer.py",
+                "start": 182,
+                "end": 201,
+                "via": "graph"
+              },
+              {
+                "path": "src/itsdangerous/signer.py",
+                "start": 227,
+                "end": 242,
+                "via": "graph"
+              },
+              {
+                "path": "src/itsdangerous/timed.py",
+                "start": 45,
+                "end": 51,
+                "via": "graph"
+              },
+              {
+                "path": "src/itsdangerous/timed.py",
+                "start": 160,
+                "end": 167,
+                "via": "graph"
+              },
+              {
+                "path": "src/itsdangerous/signer.py",
+                "start": 215,
+                "end": 220,
+                "via": "graph"
+              },
+              {
+                "path": "src/itsdangerous/signer.py",
+                "start": 67,
+                "end": 73,
+                "via": "graph"
+              },
+              {
+                "path": "src/itsdangerous/signer.py",
+                "start": 244,
+                "end": 256,
+                "via": "graph"
+              }
+            ]
+          },
+          "sent_equals_config_C": true
+        },
+        {
+          "id": "T03",
+          "route": "ai",
+          "status": "answered",
+          "answer": "I could not find this in the provided code.",
+          "citations": [],
+          "dropped": 0,
+          "prompt_version": "2026-10-28.2",
+          "graph_paths": [],
+          "graph_total": null,
+          "lower_confidence": null,
+          "retrieval_summary": {
+            "k": 8,
+            "expand": true,
+            "include_tests": false,
+            "used_test_code": false,
+            "sent": 10,
+            "from_graph": 2
+          },
+          "sent": [
+            {
+              "path": "src/flask/sessions.py",
+              "start": 337,
+              "end": 361
+            },
+            {
+              "path": "src/flask/sessions.py",
+              "start": 233,
+              "end": 247
+            },
+            {
+              "path": "src/flask/sessions.py",
+              "start": 359,
+              "end": 385
+            },
+            {
+              "path": "src/flask/sessions.py",
+              "start": 284,
+              "end": 301
+            },
+            {
+              "path": "src/flask/sessions.py",
+              "start": 171,
+              "end": 173
+            },
+            {
+              "path": "src/flask/sessions.py",
+              "start": 202,
+              "end": 206
+            },
+            {
+              "path": "src/flask/testing.py",
+              "start": 158,
+              "end": 183
+            },
+            {
+              "path": "src/flask/sessions.py",
+              "start": 187,
+              "end": 193
+            },
+            {
+              "path": "src/flask/sessions.py",
+              "start": 323,
+              "end": 335
+            },
+            {
+              "path": "src/flask/sessions.py",
+              "start": 303,
+              "end": 321
+            }
+          ],
+          "latency_s": 0.59,
+          "calls": 1,
+          "tokens_in": 2542,
+          "tokens_out": 10,
+          "cost_usd": 0.0,
+          "retrieval": {
+            "A": [
+              {
+                "path": "src/flask/sessions.py",
+                "start": 337,
+                "end": 361,
+                "via": "search"
+              },
+              {
+                "path": "src/flask/sessions.py",
+                "start": 233,
+                "end": 247,
+                "via": "search"
+              },
+              {
+                "path": "src/flask/sessions.py",
+                "start": 359,
+                "end": 385,
+                "via": "search"
+              },
+              {
+                "path": "src/flask/sessions.py",
+                "start": 284,
+                "end": 301,
+                "via": "search"
+              },
+              {
+                "path": "src/flask/sessions.py",
+                "start": 171,
+                "end": 173,
+                "via": "search"
+              },
+              {
+                "path": "src/flask/sessions.py",
+                "start": 202,
+                "end": 206,
+                "via": "search"
+              },
+              {
+                "path": "src/flask/testing.py",
+                "start": 158,
+                "end": 183,
+                "via": "search"
+              },
+              {
+                "path": "src/flask/sessions.py",
+                "start": 187,
+                "end": 193,
+                "via": "search"
+              }
+            ],
+            "B": [
+              {
+                "path": "src/flask/sessions.py",
+                "start": 337,
+                "end": 361,
+                "via": "search"
+              },
+              {
+                "path": "src/flask/sessions.py",
+                "start": 233,
+                "end": 247,
+                "via": "search"
+              },
+              {
+                "path": "src/flask/sessions.py",
+                "start": 359,
+                "end": 385,
+                "via": "search"
+              },
+              {
+                "path": "src/flask/sessions.py",
+                "start": 284,
+                "end": 301,
+                "via": "search"
+              },
+              {
+                "path": "src/flask/sessions.py",
+                "start": 171,
+                "end": 173,
+                "via": "search"
+              },
+              {
+                "path": "src/flask/sessions.py",
+                "start": 202,
+                "end": 206,
+                "via": "search"
+              },
+              {
+                "path": "src/flask/testing.py",
+                "start": 158,
+                "end": 183,
+                "via": "search"
+              },
+              {
+                "path": "src/flask/sessions.py",
+                "start": 187,
+                "end": 193,
+                "via": "search"
+              },
+              {
+                "path": "src/flask/sessions.py",
+                "start": 57,
+                "end": 71,
+                "via": "search"
+              },
+              {
+                "path": "src/flask/sessions.py",
+                "start": 323,
+                "end": 335,
+                "via": "search"
+              },
+              {
+                "path": "src/flask/sessions.py",
+                "start": 175,
+                "end": 185,
+                "via": "search"
+              },
+              {
+                "path": "src/flask/app.py",
+                "start": 245,
+                "end": 249,
+                "via": "search"
+              },
+              {
+                "path": "src/flask/sessions.py",
+                "start": 263,
+                "end": 270,
+                "via": "search"
+              },
+              {
+                "path": "src/flask/sessions.py",
+                "start": 208,
+                "end": 213,
+                "via": "search"
+              },
+              {
+                "path": "src/flask/sessions.py",
+                "start": 215,
+                "end": 221,
+                "via": "search"
+              },
+              {
+                "path": "src/flask/sessions.py",
+                "start": 195,
+                "end": 200,
+                "via": "search"
+              }
+            ],
+            "C": [
+              {
+                "path": "src/flask/sessions.py",
+                "start": 337,
+                "end": 361,
+                "via": "search"
+              },
+              {
+                "path": "src/flask/sessions.py",
+                "start": 233,
+                "end": 247,
+                "via": "search"
+              },
+              {
+                "path": "src/flask/sessions.py",
+                "start": 359,
+                "end": 385,
+                "via": "search"
+              },
+              {
+                "path": "src/flask/sessions.py",
+                "start": 284,
+                "end": 301,
+                "via": "search"
+              },
+              {
+                "path": "src/flask/sessions.py",
+                "start": 171,
+                "end": 173,
+                "via": "search"
+              },
+              {
+                "path": "src/flask/sessions.py",
+                "start": 202,
+                "end": 206,
+                "via": "search"
+              },
+              {
+                "path": "src/flask/testing.py",
+                "start": 158,
+                "end": 183,
+                "via": "search"
+              },
+              {
+                "path": "src/flask/sessions.py",
+                "start": 187,
+                "end": 193,
+                "via": "search"
+              },
+              {
+                "path": "src/flask/sessions.py",
+                "start": 323,
+                "end": 335,
+                "via": "graph"
+              },
+              {
+                "path": "src/flask/sessions.py",
+                "start": 303,
+                "end": 321,
+                "via": "graph"
+              }
+            ]
+          },
+          "sent_equals_config_C": true
+        },
+        {
+          "id": "T04",
+          "route": "ai",
+          "status": "answered",
+          "answer": "I could not find this in the provided code.",
+          "citations": [],
+          "dropped": 0,
+          "prompt_version": "2026-10-28.2",
+          "graph_paths": [],
+          "graph_total": null,
+          "lower_confidence": null,
+          "retrieval_summary": {
+            "k": 8,
+            "expand": true,
+            "include_tests": false,
+            "used_test_code": false,
+            "sent": 10,
+            "from_graph": 2
+          },
+          "sent": [
+            {
+              "path": "lib/request.js",
+              "start": 220,
+              "end": 241
+            },
+            {
+              "path": "lib/utils.js",
+              "start": 259,
+              "end": 271
+            },
+            {
+              "path": "lib/request.js",
+              "start": 39,
+              "end": 63
+            },
+            {
+              "path": "lib/request.js",
+              "start": 513,
+              "end": 527
+            },
+            {
+              "path": "lib/response.js",
+              "start": 783,
+              "end": 799
+            },
+            {
+              "path": "lib/utils.js",
+              "start": 154,
+              "end": 184
+            },
+            {
+              "path": "lib/request.js",
+              "start": 270,
+              "end": 281
+            },
+            {
+              "path": "lib/utils.js",
+              "start": 1,
+              "end": 33
+            },
+            {
+              "path": "lib/request.js",
+              "start": 64,
+              "end": 83
+            },
+            {
+              "path": "lib/response.js",
+              "start": 853,
+              "end": 867
+            }
+          ],
+          "latency_s": 0.47,
+          "calls": 1,
+          "tokens_in": 1904,
+          "tokens_out": 10,
+          "cost_usd": 0.0,
+          "retrieval": {
+            "A": [
+              {
+                "path": "lib/request.js",
+                "start": 220,
+                "end": 241,
+                "via": "search"
+              },
+              {
+                "path": "lib/utils.js",
+                "start": 259,
+                "end": 271,
+                "via": "search"
+              },
+              {
+                "path": "lib/request.js",
+                "start": 39,
+                "end": 63,
+                "via": "search"
+              },
+              {
+                "path": "lib/request.js",
+                "start": 513,
+                "end": 527,
+                "via": "search"
+              },
+              {
+                "path": "lib/response.js",
+                "start": 783,
+                "end": 799,
+                "via": "search"
+              },
+              {
+                "path": "lib/utils.js",
+                "start": 154,
+                "end": 184,
+                "via": "search"
+              },
+              {
+                "path": "lib/request.js",
+                "start": 270,
+                "end": 281,
+                "via": "search"
+              },
+              {
+                "path": "lib/utils.js",
+                "start": 1,
+                "end": 33,
+                "via": "search"
+              }
+            ],
+            "B": [
+              {
+                "path": "lib/request.js",
+                "start": 220,
+                "end": 241,
+                "via": "search"
+              },
+              {
+                "path": "lib/utils.js",
+                "start": 259,
+                "end": 271,
+                "via": "search"
+              },
+              {
+                "path": "lib/request.js",
+                "start": 39,
+                "end": 63,
+                "via": "search"
+              },
+              {
+                "path": "lib/request.js",
+                "start": 513,
+                "end": 527,
+                "via": "search"
+              },
+              {
+                "path": "lib/response.js",
+                "start": 783,
+                "end": 799,
+                "via": "search"
+              },
+              {
+                "path": "lib/utils.js",
+                "start": 154,
+                "end": 184,
+                "via": "search"
+              },
+              {
+                "path": "lib/request.js",
+                "start": 270,
+                "end": 281,
+                "via": "search"
+              },
+              {
+                "path": "lib/utils.js",
+                "start": 1,
+                "end": 33,
+                "via": "search"
+              },
+              {
+                "path": "lib/utils.js",
+                "start": 80,
+                "end": 102,
+                "via": "search"
+              },
+              {
+                "path": "lib/request.js",
+                "start": 64,
+                "end": 83,
+                "via": "search"
+              },
+              {
+                "path": "lib/request.js",
+                "start": 243,
+                "end": 272,
+                "via": "search"
+              },
+              {
+                "path": "lib/request.js",
+                "start": 503,
+                "end": 511,
+                "via": "search"
+              },
+              {
+                "path": "lib/application.js",
+                "start": 310,
+                "end": 334,
+                "via": "search"
+              },
+              {
+                "path": "lib/request.js",
+                "start": 85,
+                "end": 105,
+                "via": "search"
+              },
+              {
+                "path": "lib/response.js",
+                "start": 775,
+                "end": 781,
+                "via": "search"
+              },
+              {
+                "path": "lib/response.js",
+                "start": 79,
+                "end": 103,
+                "via": "search"
+              }
+            ],
+            "C": [
+              {
+                "path": "lib/request.js",
+                "start": 220,
+                "end": 241,
+                "via": "search"
+              },
+              {
+                "path": "lib/utils.js",
+                "start": 259,
+                "end": 271,
+                "via": "search"
+              },
+              {
+                "path": "lib/request.js",
+                "start": 39,
+                "end": 63,
+                "via": "search"
+              },
+              {
+                "path": "lib/request.js",
+                "start": 513,
+                "end": 527,
+                "via": "search"
+              },
+              {
+                "path": "lib/response.js",
+                "start": 783,
+                "end": 799,
+                "via": "search"
+              },
+              {
+                "path": "lib/utils.js",
+                "start": 154,
+                "end": 184,
+                "via": "search"
+              },
+              {
+                "path": "lib/request.js",
+                "start": 270,
+                "end": 281,
+                "via": "search"
+              },
+              {
+                "path": "lib/utils.js",
+                "start": 1,
+                "end": 33,
+                "via": "search"
+              },
+              {
+                "path": "lib/request.js",
+                "start": 64,
+                "end": 83,
+                "via": "graph"
+              },
+              {
+                "path": "lib/response.js",
+                "start": 853,
+                "end": 867,
+                "via": "graph"
+              }
+            ]
+          },
+          "sent_equals_config_C": true
+        },
+        {
+          "id": "T05",
+          "route": "ai",
+          "status": "answered",
+          "answer": "I could not find this in the provided code.",
+          "citations": [],
+          "dropped": 0,
+          "prompt_version": "2026-10-28.2",
+          "graph_paths": [],
+          "graph_total": null,
+          "lower_confidence": null,
+          "retrieval_summary": {
+            "k": 8,
+            "expand": true,
+            "include_tests": false,
+            "used_test_code": false,
+            "sent": 16,
+            "from_graph": 8
+          },
+          "sent": [
+            {
+              "path": "src/flask/app.py",
+              "start": 108,
+              "end": 126
+            },
+            {
+              "path": "src/flask/sansio/app.py",
+              "start": 60,
+              "end": 78
+            },
+            {
+              "path": "src/flask/templating.py",
+              "start": 49,
+              "end": 52
+            },
+            {
+              "path": "src/flask/globals.py",
+              "start": 26,
+              "end": 26
+            },
+            {
+              "path": "docs/conf.py",
+              "start": 29,
+              "end": 37
+            },
+            {
+              "path": "src/flask/sansio/blueprints.py",
+              "start": 34,
+              "end": 39
+            },
+            {
+              "path": "src/flask/sansio/blueprints.py",
+              "start": 407,
+              "end": 410
+            },
+            {
+              "path": "src/flask/sansio/blueprints.py",
+              "start": 119,
+              "end": 139
+            },
+            {
+              "path": "src/flask/app.py",
+              "start": 1145,
+              "end": 1167
+            },
+            {
+              "path": "src/flask/app.py",
+              "start": 1291,
+              "end": 1311
+            },
+            {
+              "path": "src/flask/sansio/app.py",
+              "start": 363,
+              "end": 381
+            },
+            {
+              "path": "src/flask/sansio/blueprints.py",
+              "start": 443,
+              "end": 444
+            },
+            {
+              "path": "src/flask/sansio/blueprints.py",
+              "start": 555,
+              "end": 556
+            },
+            {
+              "path": "src/flask/templating.py",
+              "start": 57,
+              "end": 62
+            },
+            {
+              "path": "src/flask/sansio/blueprints.py",
+              "start": 497,
+              "end": 498
+            },
+            {
+              "path": "src/flask/sansio/blueprints.py",
+              "start": 174,
+              "end": 194
+            }
+          ],
+          "latency_s": 0.94,
+          "calls": 1,
+          "tokens_in": 3133,
+          "tokens_out": 10,
+          "cost_usd": 0.0,
+          "retrieval": {
+            "A": [
+              {
+                "path": "src/flask/app.py",
+                "start": 108,
+                "end": 126,
+                "via": "search"
+              },
+              {
+                "path": "src/flask/sansio/app.py",
+                "start": 60,
+                "end": 78,
+                "via": "search"
+              },
+              {
+                "path": "src/flask/templating.py",
+                "start": 49,
+                "end": 52,
+                "via": "search"
+              },
+              {
+                "path": "src/flask/globals.py",
+                "start": 26,
+                "end": 26,
+                "via": "search"
+              },
+              {
+                "path": "docs/conf.py",
+                "start": 29,
+                "end": 37,
+                "via": "search"
+              },
+              {
+                "path": "src/flask/sansio/blueprints.py",
+                "start": 34,
+                "end": 39,
+                "via": "search"
+              },
+              {
+                "path": "src/flask/sansio/blueprints.py",
+                "start": 407,
+                "end": 410,
+                "via": "search"
+              },
+              {
+                "path": "src/flask/sansio/blueprints.py",
+                "start": 119,
+                "end": 139,
+                "via": "search"
+              }
+            ],
+            "B": [
+              {
+                "path": "src/flask/app.py",
+                "start": 108,
+                "end": 126,
+                "via": "search"
+              },
+              {
+                "path": "src/flask/sansio/app.py",
+                "start": 60,
+                "end": 78,
+                "via": "search"
+              },
+              {
+                "path": "src/flask/templating.py",
+                "start": 49,
+                "end": 52,
+                "via": "search"
+              },
+              {
+                "path": "src/flask/globals.py",
+                "start": 26,
+                "end": 26,
+                "via": "search"
+              },
+              {
+                "path": "docs/conf.py",
+                "start": 29,
+                "end": 37,
+                "via": "search"
+              },
+              {
+                "path": "src/flask/sansio/blueprints.py",
+                "start": 34,
+                "end": 39,
+                "via": "search"
+              },
+              {
+                "path": "src/flask/sansio/blueprints.py",
+                "start": 407,
+                "end": 410,
+                "via": "search"
+              },
+              {
+                "path": "src/flask/sansio/blueprints.py",
+                "start": 119,
+                "end": 139,
+                "via": "search"
+              },
+              {
+                "path": "src/flask/__main__.py",
+                "start": 1,
+                "end": 3,
+                "via": "search"
+              },
+              {
+                "path": "src/flask/blueprints.py",
+                "start": 18,
+                "end": 18,
+                "via": "search"
+              },
+              {
+                "path": "docs/conf.py",
+                "start": 1,
+                "end": 18,
+                "via": "search"
+              },
+              {
+                "path": "src/flask/globals.py",
+                "start": 24,
+                "end": 24,
+                "via": "search"
+              },
+              {
+                "path": "docs/conf.py",
+                "start": 42,
+                "end": 51,
+                "via": "search"
+              },
+              {
+                "path": "src/flask/globals.py",
+                "start": 30,
+                "end": 30,
+                "via": "search"
+              },
+              {
+                "path": "src/flask/globals.py",
+                "start": 20,
+                "end": 22,
+                "via": "search"
+              },
+              {
+                "path": "src/flask/debughelpers.py",
+                "start": 124,
+                "end": 146,
+                "via": "search"
+              }
+            ],
+            "C": [
+              {
+                "path": "src/flask/app.py",
+                "start": 108,
+                "end": 126,
+                "via": "search"
+              },
+              {
+                "path": "src/flask/sansio/app.py",
+                "start": 60,
+                "end": 78,
+                "via": "search"
+              },
+              {
+                "path": "src/flask/templating.py",
+                "start": 49,
+                "end": 52,
+                "via": "search"
+              },
+              {
+                "path": "src/flask/globals.py",
+                "start": 26,
+                "end": 26,
+                "via": "search"
+              },
+              {
+                "path": "docs/conf.py",
+                "start": 29,
+                "end": 37,
+                "via": "search"
+              },
+              {
+                "path": "src/flask/sansio/blueprints.py",
+                "start": 34,
+                "end": 39,
+                "via": "search"
+              },
+              {
+                "path": "src/flask/sansio/blueprints.py",
+                "start": 407,
+                "end": 410,
+                "via": "search"
+              },
+              {
+                "path": "src/flask/sansio/blueprints.py",
+                "start": 119,
+                "end": 139,
+                "via": "search"
+              },
+              {
+                "path": "src/flask/app.py",
+                "start": 1145,
+                "end": 1167,
+                "via": "graph"
+              },
+              {
+                "path": "src/flask/app.py",
+                "start": 1291,
+                "end": 1311,
+                "via": "graph"
+              },
+              {
+                "path": "src/flask/sansio/app.py",
+                "start": 363,
+                "end": 381,
+                "via": "graph"
+              },
+              {
+                "path": "src/flask/sansio/blueprints.py",
+                "start": 443,
+                "end": 444,
+                "via": "graph"
+              },
+              {
+                "path": "src/flask/sansio/blueprints.py",
+                "start": 555,
+                "end": 556,
+                "via": "graph"
+              },
+              {
+                "path": "src/flask/templating.py",
+                "start": 57,
+                "end": 62,
+                "via": "graph"
+              },
+              {
+                "path": "src/flask/sansio/blueprints.py",
+                "start": 497,
+                "end": 498,
+                "via": "graph"
+              },
+              {
+                "path": "src/flask/sansio/blueprints.py",
+                "start": 174,
+                "end": 194,
+                "via": "graph"
+              }
+            ]
+          },
+          "sent_equals_config_C": true
+        },
+        {
+          "id": "T06",
+          "route": "graph",
+          "status": "answered",
+          "answer": "6 files import src/itsdangerous/signer.py. The graph has static imports and name-based calls only.",
+          "citations": [],
+          "dropped": 0,
+          "prompt_version": null,
+          "graph_paths": [
+            "src/itsdangerous/__init__.py",
+            "src/itsdangerous/serializer.py",
+            "src/itsdangerous/timed.py",
+            "tests/test_itsdangerous/test_serializer.py",
+            "tests/test_itsdangerous/test_signer.py",
+            "tests/test_itsdangerous/test_timed.py"
+          ],
+          "graph_total": 6,
+          "lower_confidence": 0,
+          "retrieval_summary": null,
+          "sent": [],
+          "latency_s": 1.75,
+          "calls": 0,
+          "tokens_in": 0,
+          "tokens_out": 0,
+          "cost_usd": 0
+        },
+        {
+          "id": "T07",
+          "route": "graph",
+          "status": "answered",
+          "answer": "2 functions call src.itsdangerous.signer._make_keys_list in src/itsdangerous/signer.py. The graph has static imports and name-based calls only.",
+          "citations": [],
+          "dropped": 0,
+          "prompt_version": null,
+          "graph_paths": [
+            "src/itsdangerous/serializer.py",
+            "src/itsdangerous/signer.py"
+          ],
+          "graph_total": 2,
+          "lower_confidence": 0,
+          "retrieval_summary": null,
+          "sent": [],
+          "latency_s": 0.58,
+          "calls": 0,
+          "tokens_in": 0,
+          "tokens_out": 0,
+          "cost_usd": 0
+        },
+        {
+          "id": "T08",
+          "route": "graph",
+          "status": "answered",
+          "answer": "lib/express.js imports 3 files and 5 packages. The graph has static imports and name-based calls only.",
+          "citations": [],
+          "dropped": 0,
+          "prompt_version": null,
+          "graph_paths": [
+            "lib/application.js",
+            "lib/request.js",
+            "lib/response.js",
+            null,
+            null,
+            null,
+            null,
+            null
+          ],
+          "graph_total": 8,
+          "lower_confidence": 0,
+          "retrieval_summary": null,
+          "sent": [],
+          "latency_s": 2.01,
+          "calls": 0,
+          "tokens_in": 0,
+          "tokens_out": 0,
+          "cost_usd": 0
+        },
+        {
+          "id": "T09",
+          "route": "ai",
+          "status": "answered",
+          "answer": "I could not find this in the provided code.",
+          "citations": [],
+          "dropped": 0,
+          "prompt_version": "2026-10-28.2",
+          "graph_paths": [],
+          "graph_total": null,
+          "lower_confidence": null,
+          "retrieval_summary": {
+            "k": 8,
+            "expand": true,
+            "include_tests": false,
+            "used_test_code": false,
+            "sent": 16,
+            "from_graph": 8
+          },
+          "sent": [
+            {
+              "path": "lib/response.js",
+              "start": 334,
+              "end": 355
+            },
+            {
+              "path": "lib/response.js",
+              "start": 171,
+              "end": 198
+            },
+            {
+              "path": "lib/response.js",
+              "start": 196,
+              "end": 222
+            },
+            {
+              "path": "lib/response.js",
+              "start": 996,
+              "end": 1012
+            },
+            {
+              "path": "lib/response.js",
+              "start": 419,
+              "end": 443
+            },
+            {
+              "path": "lib/response.js",
+              "start": 649,
+              "end": 670
+            },
+            {
+              "path": "lib/response.js",
+              "start": 113,
+              "end": 146
+            },
+            {
+              "path": "lib/response.js",
+              "start": 466,
+              "end": 486
+            },
+            {
+              "path": "lib/response.js",
+              "start": 671,
+              "end": 692
+            },
+            {
+              "path": "lib/response.js",
+              "start": 310,
+              "end": 332
+            },
+            {
+              "path": "lib/response.js",
+              "start": 508,
+              "end": 514
+            },
+            {
+              "path": "lib/response.js",
+              "start": 293,
+              "end": 308
+            },
+            {
+              "path": "lib/response.js",
+              "start": 694,
+              "end": 704
+            },
+            {
+              "path": "lib/response.js",
+              "start": 224,
+              "end": 250
+            },
+            {
+              "path": "lib/response.js",
+              "start": 912,
+              "end": 921
+            },
+            {
+              "path": "lib/response.js",
+              "start": 52,
+              "end": 71
+            }
+          ],
+          "latency_s": 1.31,
+          "calls": 1,
+          "tokens_in": 3397,
+          "tokens_out": 10,
+          "cost_usd": 0.0
+        },
+        {
+          "id": "T10",
+          "route": "ai",
+          "status": "answered",
+          "answer": "I could not find this in the provided code.",
+          "citations": [],
+          "dropped": 0,
+          "prompt_version": "2026-10-28.2",
+          "graph_paths": [],
+          "graph_total": null,
+          "lower_confidence": null,
+          "retrieval_summary": {
+            "k": 8,
+            "expand": true,
+            "include_tests": false,
+            "used_test_code": false,
+            "sent": 16,
+            "from_graph": 8
+          },
+          "sent": [
+            {
+              "path": "src/flask/app.py",
+              "start": 143,
+              "end": 162
+            },
+            {
+              "path": "src/flask/json/tag.py",
+              "start": 219,
+              "end": 247
+            },
+            {
+              "path": "src/flask/json/tag.py",
+              "start": 1,
+              "end": 21
+            },
+            {
+              "path": "src/flask/sansio/app.py",
+              "start": 95,
+              "end": 114
+            },
+            {
+              "path": "src/flask/config.py",
+              "start": 126,
+              "end": 143
+            },
+            {
+              "path": "src/flask/json/tag.py",
+              "start": 143,
+              "end": 144
+            },
+            {
+              "path": "src/flask/json/tag.py",
+              "start": 256,
+              "end": 279
+            },
+            {
+              "path": "src/flask/json/provider.py",
+              "start": 108,
+              "end": 121
+            },
+            {
+              "path": "src/flask/app.py",
+              "start": 412,
+              "end": 428
+            },
+            {
+              "path": "src/flask/app.py",
+              "start": 1542,
+              "end": 1560
+            },
+            {
+              "path": "src/flask/app.py",
+              "start": 1291,
+              "end": 1311
+            },
+            {
+              "path": "src/flask/sansio/app.py",
+              "start": 363,
+              "end": 381
+            },
+            {
+              "path": "src/flask/json/tag.py",
+              "start": 289,
+              "end": 295
+            },
+            {
+              "path": "src/flask/app.py",
+              "start": 1145,
+              "end": 1167
+            },
+            {
+              "path": "src/flask/json/tag.py",
+              "start": 249,
+              "end": 254
+            },
+            {
+              "path": "src/flask/app.py",
+              "start": 1605,
+              "end": 1625
+            }
+          ],
+          "latency_s": 0.84,
+          "calls": 1,
+          "tokens_in": 3944,
+          "tokens_out": 10,
+          "cost_usd": 0.0
+        },
+        {
+          "id": "T11",
+          "route": "ai",
+          "status": "answered",
+          "answer": "I could not find this in the provided code.",
+          "citations": [],
+          "dropped": 0,
+          "prompt_version": "2026-10-28.2",
+          "graph_paths": [],
+          "graph_total": null,
+          "lower_confidence": null,
+          "retrieval_summary": {
+            "k": 8,
+            "expand": true,
+            "include_tests": false,
+            "used_test_code": false,
+            "sent": 16,
+            "from_graph": 8
+          },
+          "sent": [
+            {
+              "path": "src/itsdangerous/exc.py",
+              "start": 41,
+              "end": 57
+            },
+            {
+              "path": "src/itsdangerous/timed.py",
+              "start": 22,
+              "end": 27
+            },
+            {
+              "path": "src/itsdangerous/exc.py",
+              "start": 60,
+              "end": 63
+            },
+            {
+              "path": "src/itsdangerous/timed.py",
+              "start": 1,
+              "end": 19
+            },
+            {
+              "path": "src/itsdangerous/timed.py",
+              "start": 131,
+              "end": 156
+            },
+            {
+              "path": "src/itsdangerous/timed.py",
+              "start": 160,
+              "end": 167
+            },
+            {
+              "path": "src/itsdangerous/timed.py",
+              "start": 72,
+              "end": 91
+            },
+            {
+              "path": "src/itsdangerous/timed.py",
+              "start": 45,
+              "end": 51
+            },
+            {
+              "path": "src/itsdangerous/timed.py",
+              "start": 29,
+              "end": 33
+            },
+            {
+              "path": "src/itsdangerous/exc.py",
+              "start": 36,
+              "end": 39
+            },
+            {
+              "path": "src/itsdangerous/timed.py",
+              "start": 35,
+              "end": 43
+            },
+            {
+              "path": "src/itsdangerous/encoding.py",
+              "start": 20,
+              "end": 25
+            },
+            {
+              "path": "src/itsdangerous/encoding.py",
+              "start": 28,
+              "end": 38
+            },
+            {
+              "path": "src/itsdangerous/encoding.py",
+              "start": 11,
+              "end": 17
+            },
+            {
+              "path": "src/itsdangerous/encoding.py",
+              "start": 49,
+              "end": 50
+            },
+            {
+              "path": "src/itsdangerous/encoding.py",
+              "start": 53,
+              "end": 54
+            }
+          ],
+          "latency_s": 0.67,
+          "calls": 1,
+          "tokens_in": 2561,
+          "tokens_out": 10,
+          "cost_usd": 0.0
+        }
+      ]
+    },
+    {
+      "pass": 2,
+      "void": false,
+      "void_reason": null,
+      "spent_usd": 0.0,
+      "records": [
+        {
+          "id": "T01",
+          "route": "ai",
+          "status": "answered",
+          "answer": "I could not find this in the provided code.",
+          "citations": [],
+          "dropped": 0,
+          "prompt_version": "2026-10-28.2",
+          "graph_paths": [],
+          "graph_total": null,
+          "lower_confidence": null,
+          "retrieval_summary": {
+            "k": 8,
+            "expand": true,
+            "include_tests": false,
+            "used_test_code": false,
+            "sent": 8,
+            "from_graph": 0
+          },
+          "sent": [
+            {
+              "path": "src/flask/helpers.py",
+              "start": 343,
+              "end": 357
+            },
+            {
+              "path": "src/flask/helpers.py",
+              "start": 360,
+              "end": 375
+            },
+            {
+              "path": "src/flask/helpers.py",
+              "start": 326,
+              "end": 345
+            },
+            {
+              "path": "src/flask/__init__.py",
+              "start": 29,
+              "end": 39
+            },
+            {
+              "path": "src/flask/helpers.py",
+              "start": 393,
+              "end": 399
+            },
+            {
+              "path": "src/flask/helpers.py",
+              "start": 373,
+              "end": 395
+            },
+            {
+              "path": "src/flask/__init__.py",
+              "start": 16,
+              "end": 31
+            },
+            {
+              "path": "src/flask/signals.py",
+              "start": 1,
+              "end": 17
+            }
+          ],
+          "latency_s": 0.8,
+          "calls": 1,
+          "tokens_in": 2293,
+          "tokens_out": 10,
+          "cost_usd": 0.0,
+          "retrieval": {
+            "A": [
+              {
+                "path": "src/flask/helpers.py",
+                "start": 343,
+                "end": 357,
+                "via": "search"
+              },
+              {
+                "path": "src/flask/helpers.py",
+                "start": 360,
+                "end": 375,
+                "via": "search"
+              },
+              {
+                "path": "src/flask/helpers.py",
+                "start": 326,
+                "end": 345,
+                "via": "search"
+              },
+              {
+                "path": "src/flask/__init__.py",
+                "start": 29,
+                "end": 39,
+                "via": "search"
+              },
+              {
+                "path": "src/flask/helpers.py",
+                "start": 393,
+                "end": 399,
+                "via": "search"
+              },
+              {
+                "path": "src/flask/helpers.py",
+                "start": 373,
+                "end": 395,
+                "via": "search"
+              },
+              {
+                "path": "src/flask/__init__.py",
+                "start": 16,
+                "end": 31,
+                "via": "search"
+              },
+              {
+                "path": "src/flask/signals.py",
+                "start": 1,
+                "end": 17,
+                "via": "search"
+              }
+            ],
+            "B": [
+              {
+                "path": "src/flask/helpers.py",
+                "start": 343,
+                "end": 357,
+                "via": "search"
+              },
+              {
+                "path": "src/flask/helpers.py",
+                "start": 360,
+                "end": 375,
+                "via": "search"
+              },
+              {
+                "path": "src/flask/helpers.py",
+                "start": 326,
+                "end": 345,
+                "via": "search"
+              },
+              {
+                "path": "src/flask/__init__.py",
+                "start": 29,
+                "end": 39,
+                "via": "search"
+              },
+              {
+                "path": "src/flask/helpers.py",
+                "start": 393,
+                "end": 399,
+                "via": "search"
+              },
+              {
+                "path": "src/flask/helpers.py",
+                "start": 373,
+                "end": 395,
+                "via": "search"
+              },
+              {
+                "path": "src/flask/__init__.py",
+                "start": 16,
+                "end": 31,
+                "via": "search"
+              },
+              {
+                "path": "src/flask/signals.py",
+                "start": 1,
+                "end": 17,
+                "via": "search"
+              },
+              {
+                "path": "src/flask/__init__.py",
+                "start": 1,
+                "end": 18,
+                "via": "search"
+              },
+              {
+                "path": "src/flask/app.py",
+                "start": 1471,
+                "end": 1490,
+                "via": "search"
+              },
+              {
+                "path": "src/flask/ctx.py",
+                "start": 320,
+                "end": 337,
+                "via": "search"
+              },
+              {
+                "path": "src/flask/helpers.py",
+                "start": 1,
+                "end": 25,
+                "via": "search"
+              },
+              {
+                "path": "src/flask/ctx.py",
+                "start": 118,
+                "end": 142,
+                "via": "search"
+              },
+              {
+                "path": "src/flask/sansio/blueprints.py",
+                "start": 623,
+                "end": 631,
+                "via": "search"
+              },
+              {
+                "path": "src/flask/app.py",
+                "start": 1045,
+                "end": 1054,
+                "via": "search"
+              },
+              {
+                "path": "src/flask/app.py",
+                "start": 25,
+                "end": 50,
+                "via": "search"
+              }
+            ],
+            "C": [
+              {
+                "path": "src/flask/helpers.py",
+                "start": 343,
+                "end": 357,
+                "via": "search"
+              },
+              {
+                "path": "src/flask/helpers.py",
+                "start": 360,
+                "end": 375,
+                "via": "search"
+              },
+              {
+                "path": "src/flask/helpers.py",
+                "start": 326,
+                "end": 345,
+                "via": "search"
+              },
+              {
+                "path": "src/flask/__init__.py",
+                "start": 29,
+                "end": 39,
+                "via": "search"
+              },
+              {
+                "path": "src/flask/helpers.py",
+                "start": 393,
+                "end": 399,
+                "via": "search"
+              },
+              {
+                "path": "src/flask/helpers.py",
+                "start": 373,
+                "end": 395,
+                "via": "search"
+              },
+              {
+                "path": "src/flask/__init__.py",
+                "start": 16,
+                "end": 31,
+                "via": "search"
+              },
+              {
+                "path": "src/flask/signals.py",
+                "start": 1,
+                "end": 17,
+                "via": "search"
+              }
+            ]
+          },
+          "sent_equals_config_C": true
+        },
+        {
+          "id": "T02",
+          "route": "ai",
+          "status": "answered",
+          "answer": "I could not find this in the provided code.",
+          "citations": [],
+          "dropped": 0,
+          "prompt_version": "2026-10-28.2",
+          "graph_paths": [],
+          "graph_total": null,
+          "lower_confidence": null,
+          "retrieval_summary": {
+            "k": 8,
+            "expand": true,
+            "include_tests": false,
+            "used_test_code": false,
+            "sent": 16,
+            "from_graph": 8
+          },
+          "sent": [
+            {
+              "path": "src/itsdangerous/serializer.py",
+              "start": 203,
+              "end": 225
+            },
+            {
+              "path": "src/itsdangerous/signer.py",
+              "start": 175,
+              "end": 180
+            },
+            {
+              "path": "src/itsdangerous/signer.py",
+              "start": 129,
+              "end": 147
+            },
+            {
+              "path": "src/itsdangerous/exc.py",
+              "start": 41,
+              "end": 57
+            },
+            {
+              "path": "src/itsdangerous/signer.py",
+              "start": 103,
+              "end": 122
+            },
+            {
+              "path": "src/itsdangerous/timed.py",
+              "start": 131,
+              "end": 156
+            },
+            {
+              "path": "src/itsdangerous/signer.py",
+              "start": 76,
+              "end": 92
+            },
+            {
+              "path": "src/itsdangerous/timed.py",
+              "start": 22,
+              "end": 27
+            },
+            {
+              "path": "src/itsdangerous/exc.py",
+              "start": 60,
+              "end": 63
+            },
+            {
+              "path": "src/itsdangerous/signer.py",
+              "start": 182,
+              "end": 201
+            },
+            {
+              "path": "src/itsdangerous/signer.py",
+              "start": 227,
+              "end": 242
+            },
+            {
+              "path": "src/itsdangerous/timed.py",
+              "start": 45,
+              "end": 51
+            },
+            {
+              "path": "src/itsdangerous/timed.py",
+              "start": 160,
+              "end": 167
+            },
+            {
+              "path": "src/itsdangerous/signer.py",
+              "start": 215,
+              "end": 220
+            },
+            {
+              "path": "src/itsdangerous/signer.py",
+              "start": 67,
+              "end": 73
+            },
+            {
+              "path": "src/itsdangerous/signer.py",
+              "start": 244,
+              "end": 256
+            }
+          ],
+          "latency_s": 0.56,
+          "calls": 1,
+          "tokens_in": 3365,
+          "tokens_out": 10,
+          "cost_usd": 0.0,
+          "retrieval": {
+            "A": [
+              {
+                "path": "src/itsdangerous/serializer.py",
+                "start": 203,
+                "end": 225,
+                "via": "search"
+              },
+              {
+                "path": "src/itsdangerous/signer.py",
+                "start": 175,
+                "end": 180,
+                "via": "search"
+              },
+              {
+                "path": "src/itsdangerous/signer.py",
+                "start": 129,
+                "end": 147,
+                "via": "search"
+              },
+              {
+                "path": "src/itsdangerous/exc.py",
+                "start": 41,
+                "end": 57,
+                "via": "search"
+              },
+              {
+                "path": "src/itsdangerous/signer.py",
+                "start": 103,
+                "end": 122,
+                "via": "search"
+              },
+              {
+                "path": "src/itsdangerous/timed.py",
+                "start": 131,
+                "end": 156,
+                "via": "search"
+              },
+              {
+                "path": "src/itsdangerous/signer.py",
+                "start": 76,
+                "end": 92,
+                "via": "search"
+              },
+              {
+                "path": "src/itsdangerous/timed.py",
+                "start": 22,
+                "end": 27,
+                "via": "search"
+              }
+            ],
+            "B": [
+              {
+                "path": "src/itsdangerous/serializer.py",
+                "start": 203,
+                "end": 225,
+                "via": "search"
+              },
+              {
+                "path": "src/itsdangerous/signer.py",
+                "start": 175,
+                "end": 180,
+                "via": "search"
+              },
+              {
+                "path": "src/itsdangerous/signer.py",
+                "start": 129,
+                "end": 147,
+                "via": "search"
+              },
+              {
+                "path": "src/itsdangerous/exc.py",
+                "start": 41,
+                "end": 57,
+                "via": "search"
+              },
+              {
+                "path": "src/itsdangerous/signer.py",
+                "start": 103,
+                "end": 122,
+                "via": "search"
+              },
+              {
+                "path": "src/itsdangerous/timed.py",
+                "start": 131,
+                "end": 156,
+                "via": "search"
+              },
+              {
+                "path": "src/itsdangerous/signer.py",
+                "start": 76,
+                "end": 92,
+                "via": "search"
+              },
+              {
+                "path": "src/itsdangerous/timed.py",
+                "start": 22,
+                "end": 27,
+                "via": "search"
+              },
+              {
+                "path": "src/itsdangerous/exc.py",
+                "start": 60,
+                "end": 63,
+                "via": "search"
+              },
+              {
+                "path": "src/itsdangerous/timed.py",
+                "start": 72,
+                "end": 91,
+                "via": "search"
+              },
+              {
+                "path": "src/itsdangerous/signer.py",
+                "start": 90,
+                "end": 105,
+                "via": "search"
+              },
+              {
+                "path": "src/itsdangerous/serializer.py",
+                "start": 236,
+                "end": 241,
+                "via": "search"
+              },
+              {
+                "path": "src/itsdangerous/signer.py",
+                "start": 182,
+                "end": 201,
+                "via": "search"
+              },
+              {
+                "path": "src/itsdangerous/serializer.py",
+                "start": 40,
+                "end": 55,
+                "via": "search"
+              },
+              {
+                "path": "src/itsdangerous/signer.py",
+                "start": 120,
+                "end": 127,
+                "via": "search"
+              },
+              {
+                "path": "src/itsdangerous/signer.py",
+                "start": 227,
+                "end": 242,
+                "via": "search"
+              }
+            ],
+            "C": [
+              {
+                "path": "src/itsdangerous/serializer.py",
+                "start": 203,
+                "end": 225,
+                "via": "search"
+              },
+              {
+                "path": "src/itsdangerous/signer.py",
+                "start": 175,
+                "end": 180,
+                "via": "search"
+              },
+              {
+                "path": "src/itsdangerous/signer.py",
+                "start": 129,
+                "end": 147,
+                "via": "search"
+              },
+              {
+                "path": "src/itsdangerous/exc.py",
+                "start": 41,
+                "end": 57,
+                "via": "search"
+              },
+              {
+                "path": "src/itsdangerous/signer.py",
+                "start": 103,
+                "end": 122,
+                "via": "search"
+              },
+              {
+                "path": "src/itsdangerous/timed.py",
+                "start": 131,
+                "end": 156,
+                "via": "search"
+              },
+              {
+                "path": "src/itsdangerous/signer.py",
+                "start": 76,
+                "end": 92,
+                "via": "search"
+              },
+              {
+                "path": "src/itsdangerous/timed.py",
+                "start": 22,
+                "end": 27,
+                "via": "search"
+              },
+              {
+                "path": "src/itsdangerous/exc.py",
+                "start": 60,
+                "end": 63,
+                "via": "graph"
+              },
+              {
+                "path": "src/itsdangerous/signer.py",
+                "start": 182,
+                "end": 201,
+                "via": "graph"
+              },
+              {
+                "path": "src/itsdangerous/signer.py",
+                "start": 227,
+                "end": 242,
+                "via": "graph"
+              },
+              {
+                "path": "src/itsdangerous/timed.py",
+                "start": 45,
+                "end": 51,
+                "via": "graph"
+              },
+              {
+                "path": "src/itsdangerous/timed.py",
+                "start": 160,
+                "end": 167,
+                "via": "graph"
+              },
+              {
+                "path": "src/itsdangerous/signer.py",
+                "start": 215,
+                "end": 220,
+                "via": "graph"
+              },
+              {
+                "path": "src/itsdangerous/signer.py",
+                "start": 67,
+                "end": 73,
+                "via": "graph"
+              },
+              {
+                "path": "src/itsdangerous/signer.py",
+                "start": 244,
+                "end": 256,
+                "via": "graph"
+              }
+            ]
+          },
+          "sent_equals_config_C": true
+        },
+        {
+          "id": "T03",
+          "route": "ai",
+          "status": "answered",
+          "answer": "I could not find this in the provided code.",
+          "citations": [],
+          "dropped": 0,
+          "prompt_version": "2026-10-28.2",
+          "graph_paths": [],
+          "graph_total": null,
+          "lower_confidence": null,
+          "retrieval_summary": {
+            "k": 8,
+            "expand": true,
+            "include_tests": false,
+            "used_test_code": false,
+            "sent": 10,
+            "from_graph": 2
+          },
+          "sent": [
+            {
+              "path": "src/flask/sessions.py",
+              "start": 337,
+              "end": 361
+            },
+            {
+              "path": "src/flask/sessions.py",
+              "start": 233,
+              "end": 247
+            },
+            {
+              "path": "src/flask/sessions.py",
+              "start": 359,
+              "end": 385
+            },
+            {
+              "path": "src/flask/sessions.py",
+              "start": 284,
+              "end": 301
+            },
+            {
+              "path": "src/flask/sessions.py",
+              "start": 171,
+              "end": 173
+            },
+            {
+              "path": "src/flask/sessions.py",
+              "start": 202,
+              "end": 206
+            },
+            {
+              "path": "src/flask/testing.py",
+              "start": 158,
+              "end": 183
+            },
+            {
+              "path": "src/flask/sessions.py",
+              "start": 187,
+              "end": 193
+            },
+            {
+              "path": "src/flask/sessions.py",
+              "start": 323,
+              "end": 335
+            },
+            {
+              "path": "src/flask/sessions.py",
+              "start": 303,
+              "end": 321
+            }
+          ],
+          "latency_s": 0.36,
+          "calls": 1,
+          "tokens_in": 2542,
+          "tokens_out": 10,
+          "cost_usd": 0.0,
+          "retrieval": {
+            "A": [
+              {
+                "path": "src/flask/sessions.py",
+                "start": 337,
+                "end": 361,
+                "via": "search"
+              },
+              {
+                "path": "src/flask/sessions.py",
+                "start": 233,
+                "end": 247,
+                "via": "search"
+              },
+              {
+                "path": "src/flask/sessions.py",
+                "start": 359,
+                "end": 385,
+                "via": "search"
+              },
+              {
+                "path": "src/flask/sessions.py",
+                "start": 284,
+                "end": 301,
+                "via": "search"
+              },
+              {
+                "path": "src/flask/sessions.py",
+                "start": 171,
+                "end": 173,
+                "via": "search"
+              },
+              {
+                "path": "src/flask/sessions.py",
+                "start": 202,
+                "end": 206,
+                "via": "search"
+              },
+              {
+                "path": "src/flask/testing.py",
+                "start": 158,
+                "end": 183,
+                "via": "search"
+              },
+              {
+                "path": "src/flask/sessions.py",
+                "start": 187,
+                "end": 193,
+                "via": "search"
+              }
+            ],
+            "B": [
+              {
+                "path": "src/flask/sessions.py",
+                "start": 337,
+                "end": 361,
+                "via": "search"
+              },
+              {
+                "path": "src/flask/sessions.py",
+                "start": 233,
+                "end": 247,
+                "via": "search"
+              },
+              {
+                "path": "src/flask/sessions.py",
+                "start": 359,
+                "end": 385,
+                "via": "search"
+              },
+              {
+                "path": "src/flask/sessions.py",
+                "start": 284,
+                "end": 301,
+                "via": "search"
+              },
+              {
+                "path": "src/flask/sessions.py",
+                "start": 171,
+                "end": 173,
+                "via": "search"
+              },
+              {
+                "path": "src/flask/sessions.py",
+                "start": 202,
+                "end": 206,
+                "via": "search"
+              },
+              {
+                "path": "src/flask/testing.py",
+                "start": 158,
+                "end": 183,
+                "via": "search"
+              },
+              {
+                "path": "src/flask/sessions.py",
+                "start": 187,
+                "end": 193,
+                "via": "search"
+              },
+              {
+                "path": "src/flask/sessions.py",
+                "start": 57,
+                "end": 71,
+                "via": "search"
+              },
+              {
+                "path": "src/flask/sessions.py",
+                "start": 323,
+                "end": 335,
+                "via": "search"
+              },
+              {
+                "path": "src/flask/sessions.py",
+                "start": 175,
+                "end": 185,
+                "via": "search"
+              },
+              {
+                "path": "src/flask/app.py",
+                "start": 245,
+                "end": 249,
+                "via": "search"
+              },
+              {
+                "path": "src/flask/sessions.py",
+                "start": 263,
+                "end": 270,
+                "via": "search"
+              },
+              {
+                "path": "src/flask/sessions.py",
+                "start": 208,
+                "end": 213,
+                "via": "search"
+              },
+              {
+                "path": "src/flask/sessions.py",
+                "start": 215,
+                "end": 221,
+                "via": "search"
+              },
+              {
+                "path": "src/flask/sessions.py",
+                "start": 195,
+                "end": 200,
+                "via": "search"
+              }
+            ],
+            "C": [
+              {
+                "path": "src/flask/sessions.py",
+                "start": 337,
+                "end": 361,
+                "via": "search"
+              },
+              {
+                "path": "src/flask/sessions.py",
+                "start": 233,
+                "end": 247,
+                "via": "search"
+              },
+              {
+                "path": "src/flask/sessions.py",
+                "start": 359,
+                "end": 385,
+                "via": "search"
+              },
+              {
+                "path": "src/flask/sessions.py",
+                "start": 284,
+                "end": 301,
+                "via": "search"
+              },
+              {
+                "path": "src/flask/sessions.py",
+                "start": 171,
+                "end": 173,
+                "via": "search"
+              },
+              {
+                "path": "src/flask/sessions.py",
+                "start": 202,
+                "end": 206,
+                "via": "search"
+              },
+              {
+                "path": "src/flask/testing.py",
+                "start": 158,
+                "end": 183,
+                "via": "search"
+              },
+              {
+                "path": "src/flask/sessions.py",
+                "start": 187,
+                "end": 193,
+                "via": "search"
+              },
+              {
+                "path": "src/flask/sessions.py",
+                "start": 323,
+                "end": 335,
+                "via": "graph"
+              },
+              {
+                "path": "src/flask/sessions.py",
+                "start": 303,
+                "end": 321,
+                "via": "graph"
+              }
+            ]
+          },
+          "sent_equals_config_C": true
+        },
+        {
+          "id": "T04",
+          "route": "ai",
+          "status": "answered",
+          "answer": "I could not find this in the provided code.",
+          "citations": [],
+          "dropped": 0,
+          "prompt_version": "2026-10-28.2",
+          "graph_paths": [],
+          "graph_total": null,
+          "lower_confidence": null,
+          "retrieval_summary": {
+            "k": 8,
+            "expand": true,
+            "include_tests": false,
+            "used_test_code": false,
+            "sent": 10,
+            "from_graph": 2
+          },
+          "sent": [
+            {
+              "path": "lib/request.js",
+              "start": 220,
+              "end": 241
+            },
+            {
+              "path": "lib/utils.js",
+              "start": 259,
+              "end": 271
+            },
+            {
+              "path": "lib/request.js",
+              "start": 39,
+              "end": 63
+            },
+            {
+              "path": "lib/request.js",
+              "start": 513,
+              "end": 527
+            },
+            {
+              "path": "lib/response.js",
+              "start": 783,
+              "end": 799
+            },
+            {
+              "path": "lib/utils.js",
+              "start": 154,
+              "end": 184
+            },
+            {
+              "path": "lib/request.js",
+              "start": 270,
+              "end": 281
+            },
+            {
+              "path": "lib/utils.js",
+              "start": 1,
+              "end": 33
+            },
+            {
+              "path": "lib/request.js",
+              "start": 64,
+              "end": 83
+            },
+            {
+              "path": "lib/response.js",
+              "start": 853,
+              "end": 867
+            }
+          ],
+          "latency_s": 0.31,
+          "calls": 1,
+          "tokens_in": 1904,
+          "tokens_out": 10,
+          "cost_usd": 0.0,
+          "retrieval": {
+            "A": [
+              {
+                "path": "lib/request.js",
+                "start": 220,
+                "end": 241,
+                "via": "search"
+              },
+              {
+                "path": "lib/utils.js",
+                "start": 259,
+                "end": 271,
+                "via": "search"
+              },
+              {
+                "path": "lib/request.js",
+                "start": 39,
+                "end": 63,
+                "via": "search"
+              },
+              {
+                "path": "lib/request.js",
+                "start": 513,
+                "end": 527,
+                "via": "search"
+              },
+              {
+                "path": "lib/response.js",
+                "start": 783,
+                "end": 799,
+                "via": "search"
+              },
+              {
+                "path": "lib/utils.js",
+                "start": 154,
+                "end": 184,
+                "via": "search"
+              },
+              {
+                "path": "lib/request.js",
+                "start": 270,
+                "end": 281,
+                "via": "search"
+              },
+              {
+                "path": "lib/utils.js",
+                "start": 1,
+                "end": 33,
+                "via": "search"
+              }
+            ],
+            "B": [
+              {
+                "path": "lib/request.js",
+                "start": 220,
+                "end": 241,
+                "via": "search"
+              },
+              {
+                "path": "lib/utils.js",
+                "start": 259,
+                "end": 271,
+                "via": "search"
+              },
+              {
+                "path": "lib/request.js",
+                "start": 39,
+                "end": 63,
+                "via": "search"
+              },
+              {
+                "path": "lib/request.js",
+                "start": 513,
+                "end": 527,
+                "via": "search"
+              },
+              {
+                "path": "lib/response.js",
+                "start": 783,
+                "end": 799,
+                "via": "search"
+              },
+              {
+                "path": "lib/utils.js",
+                "start": 154,
+                "end": 184,
+                "via": "search"
+              },
+              {
+                "path": "lib/request.js",
+                "start": 270,
+                "end": 281,
+                "via": "search"
+              },
+              {
+                "path": "lib/utils.js",
+                "start": 1,
+                "end": 33,
+                "via": "search"
+              },
+              {
+                "path": "lib/utils.js",
+                "start": 80,
+                "end": 102,
+                "via": "search"
+              },
+              {
+                "path": "lib/request.js",
+                "start": 64,
+                "end": 83,
+                "via": "search"
+              },
+              {
+                "path": "lib/request.js",
+                "start": 243,
+                "end": 272,
+                "via": "search"
+              },
+              {
+                "path": "lib/request.js",
+                "start": 503,
+                "end": 511,
+                "via": "search"
+              },
+              {
+                "path": "lib/application.js",
+                "start": 310,
+                "end": 334,
+                "via": "search"
+              },
+              {
+                "path": "lib/request.js",
+                "start": 85,
+                "end": 105,
+                "via": "search"
+              },
+              {
+                "path": "lib/response.js",
+                "start": 775,
+                "end": 781,
+                "via": "search"
+              },
+              {
+                "path": "lib/response.js",
+                "start": 79,
+                "end": 103,
+                "via": "search"
+              }
+            ],
+            "C": [
+              {
+                "path": "lib/request.js",
+                "start": 220,
+                "end": 241,
+                "via": "search"
+              },
+              {
+                "path": "lib/utils.js",
+                "start": 259,
+                "end": 271,
+                "via": "search"
+              },
+              {
+                "path": "lib/request.js",
+                "start": 39,
+                "end": 63,
+                "via": "search"
+              },
+              {
+                "path": "lib/request.js",
+                "start": 513,
+                "end": 527,
+                "via": "search"
+              },
+              {
+                "path": "lib/response.js",
+                "start": 783,
+                "end": 799,
+                "via": "search"
+              },
+              {
+                "path": "lib/utils.js",
+                "start": 154,
+                "end": 184,
+                "via": "search"
+              },
+              {
+                "path": "lib/request.js",
+                "start": 270,
+                "end": 281,
+                "via": "search"
+              },
+              {
+                "path": "lib/utils.js",
+                "start": 1,
+                "end": 33,
+                "via": "search"
+              },
+              {
+                "path": "lib/request.js",
+                "start": 64,
+                "end": 83,
+                "via": "graph"
+              },
+              {
+                "path": "lib/response.js",
+                "start": 853,
+                "end": 867,
+                "via": "graph"
+              }
+            ]
+          },
+          "sent_equals_config_C": true
+        },
+        {
+          "id": "T05",
+          "route": "ai",
+          "status": "answered",
+          "answer": "I could not find this in the provided code.",
+          "citations": [],
+          "dropped": 0,
+          "prompt_version": "2026-10-28.2",
+          "graph_paths": [],
+          "graph_total": null,
+          "lower_confidence": null,
+          "retrieval_summary": {
+            "k": 8,
+            "expand": true,
+            "include_tests": false,
+            "used_test_code": false,
+            "sent": 16,
+            "from_graph": 8
+          },
+          "sent": [
+            {
+              "path": "src/flask/app.py",
+              "start": 108,
+              "end": 126
+            },
+            {
+              "path": "src/flask/sansio/app.py",
+              "start": 60,
+              "end": 78
+            },
+            {
+              "path": "src/flask/templating.py",
+              "start": 49,
+              "end": 52
+            },
+            {
+              "path": "src/flask/globals.py",
+              "start": 26,
+              "end": 26
+            },
+            {
+              "path": "docs/conf.py",
+              "start": 29,
+              "end": 37
+            },
+            {
+              "path": "src/flask/sansio/blueprints.py",
+              "start": 34,
+              "end": 39
+            },
+            {
+              "path": "src/flask/sansio/blueprints.py",
+              "start": 407,
+              "end": 410
+            },
+            {
+              "path": "src/flask/sansio/blueprints.py",
+              "start": 119,
+              "end": 139
+            },
+            {
+              "path": "src/flask/app.py",
+              "start": 1145,
+              "end": 1167
+            },
+            {
+              "path": "src/flask/app.py",
+              "start": 1291,
+              "end": 1311
+            },
+            {
+              "path": "src/flask/sansio/app.py",
+              "start": 363,
+              "end": 381
+            },
+            {
+              "path": "src/flask/sansio/blueprints.py",
+              "start": 443,
+              "end": 444
+            },
+            {
+              "path": "src/flask/sansio/blueprints.py",
+              "start": 555,
+              "end": 556
+            },
+            {
+              "path": "src/flask/templating.py",
+              "start": 57,
+              "end": 62
+            },
+            {
+              "path": "src/flask/sansio/blueprints.py",
+              "start": 497,
+              "end": 498
+            },
+            {
+              "path": "src/flask/sansio/blueprints.py",
+              "start": 174,
+              "end": 194
+            }
+          ],
+          "latency_s": 0.47,
+          "calls": 1,
+          "tokens_in": 3133,
+          "tokens_out": 10,
+          "cost_usd": 0.0,
+          "retrieval": {
+            "A": [
+              {
+                "path": "src/flask/app.py",
+                "start": 108,
+                "end": 126,
+                "via": "search"
+              },
+              {
+                "path": "src/flask/sansio/app.py",
+                "start": 60,
+                "end": 78,
+                "via": "search"
+              },
+              {
+                "path": "src/flask/templating.py",
+                "start": 49,
+                "end": 52,
+                "via": "search"
+              },
+              {
+                "path": "src/flask/globals.py",
+                "start": 26,
+                "end": 26,
+                "via": "search"
+              },
+              {
+                "path": "docs/conf.py",
+                "start": 29,
+                "end": 37,
+                "via": "search"
+              },
+              {
+                "path": "src/flask/sansio/blueprints.py",
+                "start": 34,
+                "end": 39,
+                "via": "search"
+              },
+              {
+                "path": "src/flask/sansio/blueprints.py",
+                "start": 407,
+                "end": 410,
+                "via": "search"
+              },
+              {
+                "path": "src/flask/sansio/blueprints.py",
+                "start": 119,
+                "end": 139,
+                "via": "search"
+              }
+            ],
+            "B": [
+              {
+                "path": "src/flask/app.py",
+                "start": 108,
+                "end": 126,
+                "via": "search"
+              },
+              {
+                "path": "src/flask/sansio/app.py",
+                "start": 60,
+                "end": 78,
+                "via": "search"
+              },
+              {
+                "path": "src/flask/templating.py",
+                "start": 49,
+                "end": 52,
+                "via": "search"
+              },
+              {
+                "path": "src/flask/globals.py",
+                "start": 26,
+                "end": 26,
+                "via": "search"
+              },
+              {
+                "path": "docs/conf.py",
+                "start": 29,
+                "end": 37,
+                "via": "search"
+              },
+              {
+                "path": "src/flask/sansio/blueprints.py",
+                "start": 34,
+                "end": 39,
+                "via": "search"
+              },
+              {
+                "path": "src/flask/sansio/blueprints.py",
+                "start": 407,
+                "end": 410,
+                "via": "search"
+              },
+              {
+                "path": "src/flask/sansio/blueprints.py",
+                "start": 119,
+                "end": 139,
+                "via": "search"
+              },
+              {
+                "path": "src/flask/__main__.py",
+                "start": 1,
+                "end": 3,
+                "via": "search"
+              },
+              {
+                "path": "src/flask/blueprints.py",
+                "start": 18,
+                "end": 18,
+                "via": "search"
+              },
+              {
+                "path": "docs/conf.py",
+                "start": 1,
+                "end": 18,
+                "via": "search"
+              },
+              {
+                "path": "src/flask/globals.py",
+                "start": 24,
+                "end": 24,
+                "via": "search"
+              },
+              {
+                "path": "docs/conf.py",
+                "start": 42,
+                "end": 51,
+                "via": "search"
+              },
+              {
+                "path": "src/flask/globals.py",
+                "start": 30,
+                "end": 30,
+                "via": "search"
+              },
+              {
+                "path": "src/flask/globals.py",
+                "start": 20,
+                "end": 22,
+                "via": "search"
+              },
+              {
+                "path": "src/flask/debughelpers.py",
+                "start": 124,
+                "end": 146,
+                "via": "search"
+              }
+            ],
+            "C": [
+              {
+                "path": "src/flask/app.py",
+                "start": 108,
+                "end": 126,
+                "via": "search"
+              },
+              {
+                "path": "src/flask/sansio/app.py",
+                "start": 60,
+                "end": 78,
+                "via": "search"
+              },
+              {
+                "path": "src/flask/templating.py",
+                "start": 49,
+                "end": 52,
+                "via": "search"
+              },
+              {
+                "path": "src/flask/globals.py",
+                "start": 26,
+                "end": 26,
+                "via": "search"
+              },
+              {
+                "path": "docs/conf.py",
+                "start": 29,
+                "end": 37,
+                "via": "search"
+              },
+              {
+                "path": "src/flask/sansio/blueprints.py",
+                "start": 34,
+                "end": 39,
+                "via": "search"
+              },
+              {
+                "path": "src/flask/sansio/blueprints.py",
+                "start": 407,
+                "end": 410,
+                "via": "search"
+              },
+              {
+                "path": "src/flask/sansio/blueprints.py",
+                "start": 119,
+                "end": 139,
+                "via": "search"
+              },
+              {
+                "path": "src/flask/app.py",
+                "start": 1145,
+                "end": 1167,
+                "via": "graph"
+              },
+              {
+                "path": "src/flask/app.py",
+                "start": 1291,
+                "end": 1311,
+                "via": "graph"
+              },
+              {
+                "path": "src/flask/sansio/app.py",
+                "start": 363,
+                "end": 381,
+                "via": "graph"
+              },
+              {
+                "path": "src/flask/sansio/blueprints.py",
+                "start": 443,
+                "end": 444,
+                "via": "graph"
+              },
+              {
+                "path": "src/flask/sansio/blueprints.py",
+                "start": 555,
+                "end": 556,
+                "via": "graph"
+              },
+              {
+                "path": "src/flask/templating.py",
+                "start": 57,
+                "end": 62,
+                "via": "graph"
+              },
+              {
+                "path": "src/flask/sansio/blueprints.py",
+                "start": 497,
+                "end": 498,
+                "via": "graph"
+              },
+              {
+                "path": "src/flask/sansio/blueprints.py",
+                "start": 174,
+                "end": 194,
+                "via": "graph"
+              }
+            ]
+          },
+          "sent_equals_config_C": true
+        },
+        {
+          "id": "T06",
+          "route": "graph",
+          "status": "answered",
+          "answer": "6 files import src/itsdangerous/signer.py. The graph has static imports and name-based calls only.",
+          "citations": [],
+          "dropped": 0,
+          "prompt_version": null,
+          "graph_paths": [
+            "src/itsdangerous/__init__.py",
+            "src/itsdangerous/serializer.py",
+            "src/itsdangerous/timed.py",
+            "tests/test_itsdangerous/test_serializer.py",
+            "tests/test_itsdangerous/test_signer.py",
+            "tests/test_itsdangerous/test_timed.py"
+          ],
+          "graph_total": 6,
+          "lower_confidence": 0,
+          "retrieval_summary": null,
+          "sent": [],
+          "latency_s": 1.19,
+          "calls": 0,
+          "tokens_in": 0,
+          "tokens_out": 0,
+          "cost_usd": 0
+        },
+        {
+          "id": "T07",
+          "route": "graph",
+          "status": "answered",
+          "answer": "2 functions call src.itsdangerous.signer._make_keys_list in src/itsdangerous/signer.py. The graph has static imports and name-based calls only.",
+          "citations": [],
+          "dropped": 0,
+          "prompt_version": null,
+          "graph_paths": [
+            "src/itsdangerous/serializer.py",
+            "src/itsdangerous/signer.py"
+          ],
+          "graph_total": 2,
+          "lower_confidence": 0,
+          "retrieval_summary": null,
+          "sent": [],
+          "latency_s": 0.23,
+          "calls": 0,
+          "tokens_in": 0,
+          "tokens_out": 0,
+          "cost_usd": 0
+        },
+        {
+          "id": "T08",
+          "route": "graph",
+          "status": "answered",
+          "answer": "lib/express.js imports 3 files and 5 packages. The graph has static imports and name-based calls only.",
+          "citations": [],
+          "dropped": 0,
+          "prompt_version": null,
+          "graph_paths": [
+            "lib/application.js",
+            "lib/request.js",
+            "lib/response.js",
+            null,
+            null,
+            null,
+            null,
+            null
+          ],
+          "graph_total": 8,
+          "lower_confidence": 0,
+          "retrieval_summary": null,
+          "sent": [],
+          "latency_s": 1.19,
+          "calls": 0,
+          "tokens_in": 0,
+          "tokens_out": 0,
+          "cost_usd": 0
+        },
+        {
+          "id": "T09",
+          "route": "ai",
+          "status": "answered",
+          "answer": "I could not find this in the provided code.",
+          "citations": [],
+          "dropped": 0,
+          "prompt_version": "2026-10-28.2",
+          "graph_paths": [],
+          "graph_total": null,
+          "lower_confidence": null,
+          "retrieval_summary": {
+            "k": 8,
+            "expand": true,
+            "include_tests": false,
+            "used_test_code": false,
+            "sent": 16,
+            "from_graph": 8
+          },
+          "sent": [
+            {
+              "path": "lib/response.js",
+              "start": 334,
+              "end": 355
+            },
+            {
+              "path": "lib/response.js",
+              "start": 171,
+              "end": 198
+            },
+            {
+              "path": "lib/response.js",
+              "start": 196,
+              "end": 222
+            },
+            {
+              "path": "lib/response.js",
+              "start": 996,
+              "end": 1012
+            },
+            {
+              "path": "lib/response.js",
+              "start": 419,
+              "end": 443
+            },
+            {
+              "path": "lib/response.js",
+              "start": 649,
+              "end": 670
+            },
+            {
+              "path": "lib/response.js",
+              "start": 113,
+              "end": 146
+            },
+            {
+              "path": "lib/response.js",
+              "start": 466,
+              "end": 486
+            },
+            {
+              "path": "lib/response.js",
+              "start": 671,
+              "end": 692
+            },
+            {
+              "path": "lib/response.js",
+              "start": 310,
+              "end": 332
+            },
+            {
+              "path": "lib/response.js",
+              "start": 508,
+              "end": 514
+            },
+            {
+              "path": "lib/response.js",
+              "start": 293,
+              "end": 308
+            },
+            {
+              "path": "lib/response.js",
+              "start": 694,
+              "end": 704
+            },
+            {
+              "path": "lib/response.js",
+              "start": 224,
+              "end": 250
+            },
+            {
+              "path": "lib/response.js",
+              "start": 912,
+              "end": 921
+            },
+            {
+              "path": "lib/response.js",
+              "start": 52,
+              "end": 71
+            }
+          ],
+          "latency_s": 0.75,
+          "calls": 1,
+          "tokens_in": 3397,
+          "tokens_out": 10,
+          "cost_usd": 0.0
+        },
+        {
+          "id": "T10",
+          "route": "ai",
+          "status": "answered",
+          "answer": "I could not find this in the provided code.",
+          "citations": [],
+          "dropped": 0,
+          "prompt_version": "2026-10-28.2",
+          "graph_paths": [],
+          "graph_total": null,
+          "lower_confidence": null,
+          "retrieval_summary": {
+            "k": 8,
+            "expand": true,
+            "include_tests": false,
+            "used_test_code": false,
+            "sent": 16,
+            "from_graph": 8
+          },
+          "sent": [
+            {
+              "path": "src/flask/app.py",
+              "start": 143,
+              "end": 162
+            },
+            {
+              "path": "src/flask/json/tag.py",
+              "start": 219,
+              "end": 247
+            },
+            {
+              "path": "src/flask/json/tag.py",
+              "start": 1,
+              "end": 21
+            },
+            {
+              "path": "src/flask/sansio/app.py",
+              "start": 95,
+              "end": 114
+            },
+            {
+              "path": "src/flask/config.py",
+              "start": 126,
+              "end": 143
+            },
+            {
+              "path": "src/flask/json/tag.py",
+              "start": 143,
+              "end": 144
+            },
+            {
+              "path": "src/flask/json/tag.py",
+              "start": 256,
+              "end": 279
+            },
+            {
+              "path": "src/flask/json/provider.py",
+              "start": 108,
+              "end": 121
+            },
+            {
+              "path": "src/flask/app.py",
+              "start": 412,
+              "end": 428
+            },
+            {
+              "path": "src/flask/app.py",
+              "start": 1542,
+              "end": 1560
+            },
+            {
+              "path": "src/flask/app.py",
+              "start": 1291,
+              "end": 1311
+            },
+            {
+              "path": "src/flask/sansio/app.py",
+              "start": 363,
+              "end": 381
+            },
+            {
+              "path": "src/flask/json/tag.py",
+              "start": 289,
+              "end": 295
+            },
+            {
+              "path": "src/flask/app.py",
+              "start": 1145,
+              "end": 1167
+            },
+            {
+              "path": "src/flask/json/tag.py",
+              "start": 249,
+              "end": 254
+            },
+            {
+              "path": "src/flask/app.py",
+              "start": 1605,
+              "end": 1625
+            }
+          ],
+          "latency_s": 0.42,
+          "calls": 1,
+          "tokens_in": 3944,
+          "tokens_out": 10,
+          "cost_usd": 0.0
+        },
+        {
+          "id": "T11",
+          "route": "ai",
+          "status": "answered",
+          "answer": "I could not find this in the provided code.",
+          "citations": [],
+          "dropped": 0,
+          "prompt_version": "2026-10-28.2",
+          "graph_paths": [],
+          "graph_total": null,
+          "lower_confidence": null,
+          "retrieval_summary": {
+            "k": 8,
+            "expand": true,
+            "include_tests": false,
+            "used_test_code": false,
+            "sent": 16,
+            "from_graph": 8
+          },
+          "sent": [
+            {
+              "path": "src/itsdangerous/exc.py",
+              "start": 41,
+              "end": 57
+            },
+            {
+              "path": "src/itsdangerous/timed.py",
+              "start": 22,
+              "end": 27
+            },
+            {
+              "path": "src/itsdangerous/exc.py",
+              "start": 60,
+              "end": 63
+            },
+            {
+              "path": "src/itsdangerous/timed.py",
+              "start": 1,
+              "end": 19
+            },
+            {
+              "path": "src/itsdangerous/timed.py",
+              "start": 131,
+              "end": 156
+            },
+            {
+              "path": "src/itsdangerous/timed.py",
+              "start": 160,
+              "end": 167
+            },
+            {
+              "path": "src/itsdangerous/timed.py",
+              "start": 72,
+              "end": 91
+            },
+            {
+              "path": "src/itsdangerous/timed.py",
+              "start": 45,
+              "end": 51
+            },
+            {
+              "path": "src/itsdangerous/timed.py",
+              "start": 29,
+              "end": 33
+            },
+            {
+              "path": "src/itsdangerous/exc.py",
+              "start": 36,
+              "end": 39
+            },
+            {
+              "path": "src/itsdangerous/timed.py",
+              "start": 35,
+              "end": 43
+            },
+            {
+              "path": "src/itsdangerous/encoding.py",
+              "start": 20,
+              "end": 25
+            },
+            {
+              "path": "src/itsdangerous/encoding.py",
+              "start": 28,
+              "end": 38
+            },
+            {
+              "path": "src/itsdangerous/encoding.py",
+              "start": 11,
+              "end": 17
+            },
+            {
+              "path": "src/itsdangerous/encoding.py",
+              "start": 49,
+              "end": 50
+            },
+            {
+              "path": "src/itsdangerous/encoding.py",
+              "start": 53,
+              "end": 54
+            }
+          ],
+          "latency_s": 0.25,
+          "calls": 1,
+          "tokens_in": 2561,
+          "tokens_out": 10,
+          "cost_usd": 0.0
+        }
+      ]
+    }
+  ],
+  "summary": {
+    "passes": [
+      {
+        "pass": 1,
+        "void": false,
+        "answered": 11,
+        "grouped": {
+          "overall": {
+            "questions": 11,
+            "by_type": {
+              "code_how": 2,
+              "locate": 2,
+              "purpose": 1,
+              "graph": 3,
+              "unanswerable": 1,
+              "false_premise": 2
+            },
+            "code_hit": {
+              "A": {
+                "k": 3,
+                "n": 4,
+                "rate": 0.75
+              },
+              "B": {
+                "k": 4,
+                "n": 4,
+                "rate": 1.0
+              },
+              "C": {
+                "k": 4,
+                "n": 4,
+                "rate": 1.0
+              }
+            },
+            "doc_hit": {
+              "A": {
+                "k": 0,
+                "n": 1,
+                "rate": 0.0
+              },
+              "B": {
+                "k": 0,
+                "n": 1,
+                "rate": 0.0
+              },
+              "C": {
+                "k": 0,
+                "n": 1,
+                "rate": 0.0
+              }
+            },
+            "answered_correct_file": {
+              "k": 0,
+              "n": 5,
+              "rate": 0.0
+            },
+            "graph": {
+              "routing": {
+                "k": 3,
+                "n": 3,
+                "rate": 1.0
+              },
+              "exact_all": {
+                "k": 3,
+                "n": 3,
+                "rate": 1.0
+              },
+              "exact_graph_routed": {
+                "k": 3,
+                "n": 3,
+                "rate": 1.0
+              },
+              "precision_mean": 1.0,
+              "recall_mean": 1.0
+            },
+            "unanswerable_ok": {
+              "n": 3,
+              "pass": 3,
+              "fail": 0,
+              "awaiting_human": 0
+            },
+            "citation_validity": {
+              "k": 8,
+              "n": 8,
+              "rate": 1.0
+            },
+            "citation_validity_citations": {
+              "k": 0,
+              "n": 0,
+              "rate": null
+            },
+            "cited_sentence_rate": {
+              "k": 0,
+              "n": 8,
+              "rate": 0.0
+            },
+            "faithful_human": {
+              "n": 8,
+              "yes": 0,
+              "partly": 0,
+              "no": 0,
+              "awaiting_human": 8
+            },
+            "status": {
+              "answered": 11
+            },
+            "latency_s": {
+              "median": 0.84,
+              "max": 2.01
+            },
+            "tokens_in": 23139,
+            "tokens_out": 80,
+            "llm_calls": 8,
+            "cost_usd": 0.0
+          },
+          "per_repo": {
+            "expressjs/express": {
+              "questions": 3,
+              "by_type": {
+                "locate": 1,
+                "graph": 1,
+                "unanswerable": 1
+              },
+              "code_hit": {
+                "A": {
+                  "k": 1,
+                  "n": 1,
+                  "rate": 1.0
+                },
+                "B": {
+                  "k": 1,
+                  "n": 1,
+                  "rate": 1.0
+                },
+                "C": {
+                  "k": 1,
+                  "n": 1,
+                  "rate": 1.0
+                }
+              },
+              "doc_hit": {
+                "A": {
+                  "k": 0,
+                  "n": 0,
+                  "rate": null
+                },
+                "B": {
+                  "k": 0,
+                  "n": 0,
+                  "rate": null
+                },
+                "C": {
+                  "k": 0,
+                  "n": 0,
+                  "rate": null
+                }
+              },
+              "answered_correct_file": {
+                "k": 0,
+                "n": 1,
+                "rate": 0.0
+              },
+              "graph": {
+                "routing": {
+                  "k": 1,
+                  "n": 1,
+                  "rate": 1.0
+                },
+                "exact_all": {
+                  "k": 1,
+                  "n": 1,
+                  "rate": 1.0
+                },
+                "exact_graph_routed": {
+                  "k": 1,
+                  "n": 1,
+                  "rate": 1.0
+                },
+                "precision_mean": 1.0,
+                "recall_mean": 1.0
+              },
+              "unanswerable_ok": {
+                "n": 1,
+                "pass": 1,
+                "fail": 0,
+                "awaiting_human": 0
+              },
+              "citation_validity": {
+                "k": 2,
+                "n": 2,
+                "rate": 1.0
+              },
+              "citation_validity_citations": {
+                "k": 0,
+                "n": 0,
+                "rate": null
+              },
+              "cited_sentence_rate": {
+                "k": 0,
+                "n": 2,
+                "rate": 0.0
+              },
+              "faithful_human": {
+                "n": 2,
+                "yes": 0,
+                "partly": 0,
+                "no": 0,
+                "awaiting_human": 2
+              },
+              "status": {
+                "answered": 3
+              },
+              "latency_s": {
+                "median": 1.31,
+                "max": 2.01
+              },
+              "tokens_in": 5301,
+              "tokens_out": 20,
+              "llm_calls": 2,
+              "cost_usd": 0.0
+            },
+            "pallets/flask": {
+              "questions": 4,
+              "by_type": {
+                "code_how": 1,
+                "locate": 1,
+                "purpose": 1,
+                "false_premise": 1
+              },
+              "code_hit": {
+                "A": {
+                  "k": 2,
+                  "n": 2,
+                  "rate": 1.0
+                },
+                "B": {
+                  "k": 2,
+                  "n": 2,
+                  "rate": 1.0
+                },
+                "C": {
+                  "k": 2,
+                  "n": 2,
+                  "rate": 1.0
+                }
+              },
+              "doc_hit": {
+                "A": {
+                  "k": 0,
+                  "n": 1,
+                  "rate": 0.0
+                },
+                "B": {
+                  "k": 0,
+                  "n": 1,
+                  "rate": 0.0
+                },
+                "C": {
+                  "k": 0,
+                  "n": 1,
+                  "rate": 0.0
+                }
+              },
+              "answered_correct_file": {
+                "k": 0,
+                "n": 3,
+                "rate": 0.0
+              },
+              "graph": {
+                "routing": {
+                  "k": 0,
+                  "n": 0,
+                  "rate": null
+                },
+                "exact_all": {
+                  "k": 0,
+                  "n": 0,
+                  "rate": null
+                },
+                "exact_graph_routed": {
+                  "k": 0,
+                  "n": 0,
+                  "rate": null
+                },
+                "precision_mean": null,
+                "recall_mean": null
+              },
+              "unanswerable_ok": {
+                "n": 1,
+                "pass": 1,
+                "fail": 0,
+                "awaiting_human": 0
+              },
+              "citation_validity": {
+                "k": 4,
+                "n": 4,
+                "rate": 1.0
+              },
+              "citation_validity_citations": {
+                "k": 0,
+                "n": 0,
+                "rate": null
+              },
+              "cited_sentence_rate": {
+                "k": 0,
+                "n": 4,
+                "rate": 0.0
+              },
+              "faithful_human": {
+                "n": 4,
+                "yes": 0,
+                "partly": 0,
+                "no": 0,
+                "awaiting_human": 4
+              },
+              "status": {
+                "answered": 4
+              },
+              "latency_s": {
+                "median": 0.715,
+                "max": 0.94
+              },
+              "tokens_in": 11912,
+              "tokens_out": 40,
+              "llm_calls": 4,
+              "cost_usd": 0.0
+            },
+            "pallets/itsdangerous": {
+              "questions": 4,
+              "by_type": {
+                "code_how": 1,
+                "graph": 2,
+                "false_premise": 1
+              },
+              "code_hit": {
+                "A": {
+                  "k": 0,
+                  "n": 1,
+                  "rate": 0.0
+                },
+                "B": {
+                  "k": 1,
+                  "n": 1,
+                  "rate": 1.0
+                },
+                "C": {
+                  "k": 1,
+                  "n": 1,
+                  "rate": 1.0
+                }
+              },
+              "doc_hit": {
+                "A": {
+                  "k": 0,
+                  "n": 0,
+                  "rate": null
+                },
+                "B": {
+                  "k": 0,
+                  "n": 0,
+                  "rate": null
+                },
+                "C": {
+                  "k": 0,
+                  "n": 0,
+                  "rate": null
+                }
+              },
+              "answered_correct_file": {
+                "k": 0,
+                "n": 1,
+                "rate": 0.0
+              },
+              "graph": {
+                "routing": {
+                  "k": 2,
+                  "n": 2,
+                  "rate": 1.0
+                },
+                "exact_all": {
+                  "k": 2,
+                  "n": 2,
+                  "rate": 1.0
+                },
+                "exact_graph_routed": {
+                  "k": 2,
+                  "n": 2,
+                  "rate": 1.0
+                },
+                "precision_mean": 1.0,
+                "recall_mean": 1.0
+              },
+              "unanswerable_ok": {
+                "n": 1,
+                "pass": 1,
+                "fail": 0,
+                "awaiting_human": 0
+              },
+              "citation_validity": {
+                "k": 2,
+                "n": 2,
+                "rate": 1.0
+              },
+              "citation_validity_citations": {
+                "k": 0,
+                "n": 0,
+                "rate": null
+              },
+              "cited_sentence_rate": {
+                "k": 0,
+                "n": 2,
+                "rate": 0.0
+              },
+              "faithful_human": {
+                "n": 2,
+                "yes": 0,
+                "partly": 0,
+                "no": 0,
+                "awaiting_human": 2
+              },
+              "status": {
+                "answered": 4
+              },
+              "latency_s": {
+                "median": 1.145,
+                "max": 1.75
+              },
+              "tokens_in": 5926,
+              "tokens_out": 20,
+              "llm_calls": 2,
+              "cost_usd": 0.0
+            }
+          },
+          "per_writer": {
+            "T": {
+              "questions": 11,
+              "by_type": {
+                "code_how": 2,
+                "locate": 2,
+                "purpose": 1,
+                "graph": 3,
+                "unanswerable": 1,
+                "false_premise": 2
+              },
+              "code_hit": {
+                "A": {
+                  "k": 3,
+                  "n": 4,
+                  "rate": 0.75
+                },
+                "B": {
+                  "k": 4,
+                  "n": 4,
+                  "rate": 1.0
+                },
+                "C": {
+                  "k": 4,
+                  "n": 4,
+                  "rate": 1.0
+                }
+              },
+              "doc_hit": {
+                "A": {
+                  "k": 0,
+                  "n": 1,
+                  "rate": 0.0
+                },
+                "B": {
+                  "k": 0,
+                  "n": 1,
+                  "rate": 0.0
+                },
+                "C": {
+                  "k": 0,
+                  "n": 1,
+                  "rate": 0.0
+                }
+              },
+              "answered_correct_file": {
+                "k": 0,
+                "n": 5,
+                "rate": 0.0
+              },
+              "graph": {
+                "routing": {
+                  "k": 3,
+                  "n": 3,
+                  "rate": 1.0
+                },
+                "exact_all": {
+                  "k": 3,
+                  "n": 3,
+                  "rate": 1.0
+                },
+                "exact_graph_routed": {
+                  "k": 3,
+                  "n": 3,
+                  "rate": 1.0
+                },
+                "precision_mean": 1.0,
+                "recall_mean": 1.0
+              },
+              "unanswerable_ok": {
+                "n": 3,
+                "pass": 3,
+                "fail": 0,
+                "awaiting_human": 0
+              },
+              "citation_validity": {
+                "k": 8,
+                "n": 8,
+                "rate": 1.0
+              },
+              "citation_validity_citations": {
+                "k": 0,
+                "n": 0,
+                "rate": null
+              },
+              "cited_sentence_rate": {
+                "k": 0,
+                "n": 8,
+                "rate": 0.0
+              },
+              "faithful_human": {
+                "n": 8,
+                "yes": 0,
+                "partly": 0,
+                "no": 0,
+                "awaiting_human": 8
+              },
+              "status": {
+                "answered": 11
+              },
+              "latency_s": {
+                "median": 0.84,
+                "max": 2.01
+              },
+              "tokens_in": 23139,
+              "tokens_out": 80,
+              "llm_calls": 8,
+              "cost_usd": 0.0
+            }
+          },
+          "per_type": {
+            "code_how": {
+              "questions": 2,
+              "by_type": {
+                "code_how": 2
+              },
+              "code_hit": {
+                "A": {
+                  "k": 1,
+                  "n": 2,
+                  "rate": 0.5
+                },
+                "B": {
+                  "k": 2,
+                  "n": 2,
+                  "rate": 1.0
+                },
+                "C": {
+                  "k": 2,
+                  "n": 2,
+                  "rate": 1.0
+                }
+              },
+              "doc_hit": {
+                "A": {
+                  "k": 0,
+                  "n": 0,
+                  "rate": null
+                },
+                "B": {
+                  "k": 0,
+                  "n": 0,
+                  "rate": null
+                },
+                "C": {
+                  "k": 0,
+                  "n": 0,
+                  "rate": null
+                }
+              },
+              "answered_correct_file": {
+                "k": 0,
+                "n": 2,
+                "rate": 0.0
+              },
+              "graph": {
+                "routing": {
+                  "k": 0,
+                  "n": 0,
+                  "rate": null
+                },
+                "exact_all": {
+                  "k": 0,
+                  "n": 0,
+                  "rate": null
+                },
+                "exact_graph_routed": {
+                  "k": 0,
+                  "n": 0,
+                  "rate": null
+                },
+                "precision_mean": null,
+                "recall_mean": null
+              },
+              "unanswerable_ok": {
+                "n": 0,
+                "pass": 0,
+                "fail": 0,
+                "awaiting_human": 0
+              },
+              "citation_validity": {
+                "k": 2,
+                "n": 2,
+                "rate": 1.0
+              },
+              "citation_validity_citations": {
+                "k": 0,
+                "n": 0,
+                "rate": null
+              },
+              "cited_sentence_rate": {
+                "k": 0,
+                "n": 2,
+                "rate": 0.0
+              },
+              "faithful_human": {
+                "n": 2,
+                "yes": 0,
+                "partly": 0,
+                "no": 0,
+                "awaiting_human": 2
+              },
+              "status": {
+                "answered": 2
+              },
+              "latency_s": {
+                "median": 1.06,
+                "max": 1.62
+              },
+              "tokens_in": 5658,
+              "tokens_out": 20,
+              "llm_calls": 2,
+              "cost_usd": 0.0
+            },
+            "locate": {
+              "questions": 2,
+              "by_type": {
+                "locate": 2
+              },
+              "code_hit": {
+                "A": {
+                  "k": 2,
+                  "n": 2,
+                  "rate": 1.0
+                },
+                "B": {
+                  "k": 2,
+                  "n": 2,
+                  "rate": 1.0
+                },
+                "C": {
+                  "k": 2,
+                  "n": 2,
+                  "rate": 1.0
+                }
+              },
+              "doc_hit": {
+                "A": {
+                  "k": 0,
+                  "n": 0,
+                  "rate": null
+                },
+                "B": {
+                  "k": 0,
+                  "n": 0,
+                  "rate": null
+                },
+                "C": {
+                  "k": 0,
+                  "n": 0,
+                  "rate": null
+                }
+              },
+              "answered_correct_file": {
+                "k": 0,
+                "n": 2,
+                "rate": 0.0
+              },
+              "graph": {
+                "routing": {
+                  "k": 0,
+                  "n": 0,
+                  "rate": null
+                },
+                "exact_all": {
+                  "k": 0,
+                  "n": 0,
+                  "rate": null
+                },
+                "exact_graph_routed": {
+                  "k": 0,
+                  "n": 0,
+                  "rate": null
+                },
+                "precision_mean": null,
+                "recall_mean": null
+              },
+              "unanswerable_ok": {
+                "n": 0,
+                "pass": 0,
+                "fail": 0,
+                "awaiting_human": 0
+              },
+              "citation_validity": {
+                "k": 2,
+                "n": 2,
+                "rate": 1.0
+              },
+              "citation_validity_citations": {
+                "k": 0,
+                "n": 0,
+                "rate": null
+              },
+              "cited_sentence_rate": {
+                "k": 0,
+                "n": 2,
+                "rate": 0.0
+              },
+              "faithful_human": {
+                "n": 2,
+                "yes": 0,
+                "partly": 0,
+                "no": 0,
+                "awaiting_human": 2
+              },
+              "status": {
+                "answered": 2
+              },
+              "latency_s": {
+                "median": 0.53,
+                "max": 0.59
+              },
+              "tokens_in": 4446,
+              "tokens_out": 20,
+              "llm_calls": 2,
+              "cost_usd": 0.0
+            },
+            "purpose": {
+              "questions": 1,
+              "by_type": {
+                "purpose": 1
+              },
+              "code_hit": {
+                "A": {
+                  "k": 0,
+                  "n": 0,
+                  "rate": null
+                },
+                "B": {
+                  "k": 0,
+                  "n": 0,
+                  "rate": null
+                },
+                "C": {
+                  "k": 0,
+                  "n": 0,
+                  "rate": null
+                }
+              },
+              "doc_hit": {
+                "A": {
+                  "k": 0,
+                  "n": 1,
+                  "rate": 0.0
+                },
+                "B": {
+                  "k": 0,
+                  "n": 1,
+                  "rate": 0.0
+                },
+                "C": {
+                  "k": 0,
+                  "n": 1,
+                  "rate": 0.0
+                }
+              },
+              "answered_correct_file": {
+                "k": 0,
+                "n": 1,
+                "rate": 0.0
+              },
+              "graph": {
+                "routing": {
+                  "k": 0,
+                  "n": 0,
+                  "rate": null
+                },
+                "exact_all": {
+                  "k": 0,
+                  "n": 0,
+                  "rate": null
+                },
+                "exact_graph_routed": {
+                  "k": 0,
+                  "n": 0,
+                  "rate": null
+                },
+                "precision_mean": null,
+                "recall_mean": null
+              },
+              "unanswerable_ok": {
+                "n": 0,
+                "pass": 0,
+                "fail": 0,
+                "awaiting_human": 0
+              },
+              "citation_validity": {
+                "k": 1,
+                "n": 1,
+                "rate": 1.0
+              },
+              "citation_validity_citations": {
+                "k": 0,
+                "n": 0,
+                "rate": null
+              },
+              "cited_sentence_rate": {
+                "k": 0,
+                "n": 1,
+                "rate": 0.0
+              },
+              "faithful_human": {
+                "n": 1,
+                "yes": 0,
+                "partly": 0,
+                "no": 0,
+                "awaiting_human": 1
+              },
+              "status": {
+                "answered": 1
+              },
+              "latency_s": {
+                "median": 0.94,
+                "max": 0.94
+              },
+              "tokens_in": 3133,
+              "tokens_out": 10,
+              "llm_calls": 1,
+              "cost_usd": 0.0
+            },
+            "graph": {
+              "questions": 3,
+              "by_type": {
+                "graph": 3
+              },
+              "code_hit": {
+                "A": {
+                  "k": 0,
+                  "n": 0,
+                  "rate": null
+                },
+                "B": {
+                  "k": 0,
+                  "n": 0,
+                  "rate": null
+                },
+                "C": {
+                  "k": 0,
+                  "n": 0,
+                  "rate": null
+                }
+              },
+              "doc_hit": {
+                "A": {
+                  "k": 0,
+                  "n": 0,
+                  "rate": null
+                },
+                "B": {
+                  "k": 0,
+                  "n": 0,
+                  "rate": null
+                },
+                "C": {
+                  "k": 0,
+                  "n": 0,
+                  "rate": null
+                }
+              },
+              "answered_correct_file": {
+                "k": 0,
+                "n": 0,
+                "rate": null
+              },
+              "graph": {
+                "routing": {
+                  "k": 3,
+                  "n": 3,
+                  "rate": 1.0
+                },
+                "exact_all": {
+                  "k": 3,
+                  "n": 3,
+                  "rate": 1.0
+                },
+                "exact_graph_routed": {
+                  "k": 3,
+                  "n": 3,
+                  "rate": 1.0
+                },
+                "precision_mean": 1.0,
+                "recall_mean": 1.0
+              },
+              "unanswerable_ok": {
+                "n": 0,
+                "pass": 0,
+                "fail": 0,
+                "awaiting_human": 0
+              },
+              "citation_validity": {
+                "k": 0,
+                "n": 0,
+                "rate": null
+              },
+              "citation_validity_citations": {
+                "k": 0,
+                "n": 0,
+                "rate": null
+              },
+              "cited_sentence_rate": {
+                "k": 0,
+                "n": 0,
+                "rate": null
+              },
+              "faithful_human": {
+                "n": 0,
+                "yes": 0,
+                "partly": 0,
+                "no": 0,
+                "awaiting_human": 0
+              },
+              "status": {
+                "answered": 3
+              },
+              "latency_s": {
+                "median": 1.75,
+                "max": 2.01
+              },
+              "tokens_in": 0,
+              "tokens_out": 0,
+              "llm_calls": 0,
+              "cost_usd": 0
+            },
+            "unanswerable": {
+              "questions": 1,
+              "by_type": {
+                "unanswerable": 1
+              },
+              "code_hit": {
+                "A": {
+                  "k": 0,
+                  "n": 0,
+                  "rate": null
+                },
+                "B": {
+                  "k": 0,
+                  "n": 0,
+                  "rate": null
+                },
+                "C": {
+                  "k": 0,
+                  "n": 0,
+                  "rate": null
+                }
+              },
+              "doc_hit": {
+                "A": {
+                  "k": 0,
+                  "n": 0,
+                  "rate": null
+                },
+                "B": {
+                  "k": 0,
+                  "n": 0,
+                  "rate": null
+                },
+                "C": {
+                  "k": 0,
+                  "n": 0,
+                  "rate": null
+                }
+              },
+              "answered_correct_file": {
+                "k": 0,
+                "n": 0,
+                "rate": null
+              },
+              "graph": {
+                "routing": {
+                  "k": 0,
+                  "n": 0,
+                  "rate": null
+                },
+                "exact_all": {
+                  "k": 0,
+                  "n": 0,
+                  "rate": null
+                },
+                "exact_graph_routed": {
+                  "k": 0,
+                  "n": 0,
+                  "rate": null
+                },
+                "precision_mean": null,
+                "recall_mean": null
+              },
+              "unanswerable_ok": {
+                "n": 1,
+                "pass": 1,
+                "fail": 0,
+                "awaiting_human": 0
+              },
+              "citation_validity": {
+                "k": 1,
+                "n": 1,
+                "rate": 1.0
+              },
+              "citation_validity_citations": {
+                "k": 0,
+                "n": 0,
+                "rate": null
+              },
+              "cited_sentence_rate": {
+                "k": 0,
+                "n": 1,
+                "rate": 0.0
+              },
+              "faithful_human": {
+                "n": 1,
+                "yes": 0,
+                "partly": 0,
+                "no": 0,
+                "awaiting_human": 1
+              },
+              "status": {
+                "answered": 1
+              },
+              "latency_s": {
+                "median": 1.31,
+                "max": 1.31
+              },
+              "tokens_in": 3397,
+              "tokens_out": 10,
+              "llm_calls": 1,
+              "cost_usd": 0.0
+            },
+            "false_premise": {
+              "questions": 2,
+              "by_type": {
+                "false_premise": 2
+              },
+              "code_hit": {
+                "A": {
+                  "k": 0,
+                  "n": 0,
+                  "rate": null
+                },
+                "B": {
+                  "k": 0,
+                  "n": 0,
+                  "rate": null
+                },
+                "C": {
+                  "k": 0,
+                  "n": 0,
+                  "rate": null
+                }
+              },
+              "doc_hit": {
+                "A": {
+                  "k": 0,
+                  "n": 0,
+                  "rate": null
+                },
+                "B": {
+                  "k": 0,
+                  "n": 0,
+                  "rate": null
+                },
+                "C": {
+                  "k": 0,
+                  "n": 0,
+                  "rate": null
+                }
+              },
+              "answered_correct_file": {
+                "k": 0,
+                "n": 0,
+                "rate": null
+              },
+              "graph": {
+                "routing": {
+                  "k": 0,
+                  "n": 0,
+                  "rate": null
+                },
+                "exact_all": {
+                  "k": 0,
+                  "n": 0,
+                  "rate": null
+                },
+                "exact_graph_routed": {
+                  "k": 0,
+                  "n": 0,
+                  "rate": null
+                },
+                "precision_mean": null,
+                "recall_mean": null
+              },
+              "unanswerable_ok": {
+                "n": 2,
+                "pass": 2,
+                "fail": 0,
+                "awaiting_human": 0
+              },
+              "citation_validity": {
+                "k": 2,
+                "n": 2,
+                "rate": 1.0
+              },
+              "citation_validity_citations": {
+                "k": 0,
+                "n": 0,
+                "rate": null
+              },
+              "cited_sentence_rate": {
+                "k": 0,
+                "n": 2,
+                "rate": 0.0
+              },
+              "faithful_human": {
+                "n": 2,
+                "yes": 0,
+                "partly": 0,
+                "no": 0,
+                "awaiting_human": 2
+              },
+              "status": {
+                "answered": 2
+              },
+              "latency_s": {
+                "median": 0.755,
+                "max": 0.84
+              },
+              "tokens_in": 6505,
+              "tokens_out": 20,
+              "llm_calls": 2,
+              "cost_usd": 0.0
+            }
+          }
+        },
+        "comparisons_code_hit": {
+          "C vs B": {
+            "questions": 4,
+            "wins": 0,
+            "losses": 0,
+            "p_mcnemar_exact": 1.0
+          },
+          "C vs A": {
+            "questions": 4,
+            "wins": 1,
+            "losses": 0,
+            "p_mcnemar_exact": 1.0
+          },
+          "B vs A": {
+            "questions": 4,
+            "wins": 1,
+            "losses": 0,
+            "p_mcnemar_exact": 1.0
+          }
+        }
+      },
+      {
+        "pass": 2,
+        "void": false,
+        "answered": 11,
+        "grouped": {
+          "overall": {
+            "questions": 11,
+            "by_type": {
+              "code_how": 2,
+              "locate": 2,
+              "purpose": 1,
+              "graph": 3,
+              "unanswerable": 1,
+              "false_premise": 2
+            },
+            "code_hit": {
+              "A": {
+                "k": 3,
+                "n": 4,
+                "rate": 0.75
+              },
+              "B": {
+                "k": 4,
+                "n": 4,
+                "rate": 1.0
+              },
+              "C": {
+                "k": 4,
+                "n": 4,
+                "rate": 1.0
+              }
+            },
+            "doc_hit": {
+              "A": {
+                "k": 0,
+                "n": 1,
+                "rate": 0.0
+              },
+              "B": {
+                "k": 0,
+                "n": 1,
+                "rate": 0.0
+              },
+              "C": {
+                "k": 0,
+                "n": 1,
+                "rate": 0.0
+              }
+            },
+            "answered_correct_file": {
+              "k": 0,
+              "n": 5,
+              "rate": 0.0
+            },
+            "graph": {
+              "routing": {
+                "k": 3,
+                "n": 3,
+                "rate": 1.0
+              },
+              "exact_all": {
+                "k": 3,
+                "n": 3,
+                "rate": 1.0
+              },
+              "exact_graph_routed": {
+                "k": 3,
+                "n": 3,
+                "rate": 1.0
+              },
+              "precision_mean": 1.0,
+              "recall_mean": 1.0
+            },
+            "unanswerable_ok": {
+              "n": 3,
+              "pass": 3,
+              "fail": 0,
+              "awaiting_human": 0
+            },
+            "citation_validity": {
+              "k": 8,
+              "n": 8,
+              "rate": 1.0
+            },
+            "citation_validity_citations": {
+              "k": 0,
+              "n": 0,
+              "rate": null
+            },
+            "cited_sentence_rate": {
+              "k": 0,
+              "n": 8,
+              "rate": 0.0
+            },
+            "faithful_human": {
+              "n": 8,
+              "yes": 0,
+              "partly": 0,
+              "no": 0,
+              "awaiting_human": 8
+            },
+            "status": {
+              "answered": 11
+            },
+            "latency_s": {
+              "median": 0.47,
+              "max": 1.19
+            },
+            "tokens_in": 23139,
+            "tokens_out": 80,
+            "llm_calls": 8,
+            "cost_usd": 0.0
+          },
+          "per_repo": {
+            "expressjs/express": {
+              "questions": 3,
+              "by_type": {
+                "locate": 1,
+                "graph": 1,
+                "unanswerable": 1
+              },
+              "code_hit": {
+                "A": {
+                  "k": 1,
+                  "n": 1,
+                  "rate": 1.0
+                },
+                "B": {
+                  "k": 1,
+                  "n": 1,
+                  "rate": 1.0
+                },
+                "C": {
+                  "k": 1,
+                  "n": 1,
+                  "rate": 1.0
+                }
+              },
+              "doc_hit": {
+                "A": {
+                  "k": 0,
+                  "n": 0,
+                  "rate": null
+                },
+                "B": {
+                  "k": 0,
+                  "n": 0,
+                  "rate": null
+                },
+                "C": {
+                  "k": 0,
+                  "n": 0,
+                  "rate": null
+                }
+              },
+              "answered_correct_file": {
+                "k": 0,
+                "n": 1,
+                "rate": 0.0
+              },
+              "graph": {
+                "routing": {
+                  "k": 1,
+                  "n": 1,
+                  "rate": 1.0
+                },
+                "exact_all": {
+                  "k": 1,
+                  "n": 1,
+                  "rate": 1.0
+                },
+                "exact_graph_routed": {
+                  "k": 1,
+                  "n": 1,
+                  "rate": 1.0
+                },
+                "precision_mean": 1.0,
+                "recall_mean": 1.0
+              },
+              "unanswerable_ok": {
+                "n": 1,
+                "pass": 1,
+                "fail": 0,
+                "awaiting_human": 0
+              },
+              "citation_validity": {
+                "k": 2,
+                "n": 2,
+                "rate": 1.0
+              },
+              "citation_validity_citations": {
+                "k": 0,
+                "n": 0,
+                "rate": null
+              },
+              "cited_sentence_rate": {
+                "k": 0,
+                "n": 2,
+                "rate": 0.0
+              },
+              "faithful_human": {
+                "n": 2,
+                "yes": 0,
+                "partly": 0,
+                "no": 0,
+                "awaiting_human": 2
+              },
+              "status": {
+                "answered": 3
+              },
+              "latency_s": {
+                "median": 0.75,
+                "max": 1.19
+              },
+              "tokens_in": 5301,
+              "tokens_out": 20,
+              "llm_calls": 2,
+              "cost_usd": 0.0
+            },
+            "pallets/flask": {
+              "questions": 4,
+              "by_type": {
+                "code_how": 1,
+                "locate": 1,
+                "purpose": 1,
+                "false_premise": 1
+              },
+              "code_hit": {
+                "A": {
+                  "k": 2,
+                  "n": 2,
+                  "rate": 1.0
+                },
+                "B": {
+                  "k": 2,
+                  "n": 2,
+                  "rate": 1.0
+                },
+                "C": {
+                  "k": 2,
+                  "n": 2,
+                  "rate": 1.0
+                }
+              },
+              "doc_hit": {
+                "A": {
+                  "k": 0,
+                  "n": 1,
+                  "rate": 0.0
+                },
+                "B": {
+                  "k": 0,
+                  "n": 1,
+                  "rate": 0.0
+                },
+                "C": {
+                  "k": 0,
+                  "n": 1,
+                  "rate": 0.0
+                }
+              },
+              "answered_correct_file": {
+                "k": 0,
+                "n": 3,
+                "rate": 0.0
+              },
+              "graph": {
+                "routing": {
+                  "k": 0,
+                  "n": 0,
+                  "rate": null
+                },
+                "exact_all": {
+                  "k": 0,
+                  "n": 0,
+                  "rate": null
+                },
+                "exact_graph_routed": {
+                  "k": 0,
+                  "n": 0,
+                  "rate": null
+                },
+                "precision_mean": null,
+                "recall_mean": null
+              },
+              "unanswerable_ok": {
+                "n": 1,
+                "pass": 1,
+                "fail": 0,
+                "awaiting_human": 0
+              },
+              "citation_validity": {
+                "k": 4,
+                "n": 4,
+                "rate": 1.0
+              },
+              "citation_validity_citations": {
+                "k": 0,
+                "n": 0,
+                "rate": null
+              },
+              "cited_sentence_rate": {
+                "k": 0,
+                "n": 4,
+                "rate": 0.0
+              },
+              "faithful_human": {
+                "n": 4,
+                "yes": 0,
+                "partly": 0,
+                "no": 0,
+                "awaiting_human": 4
+              },
+              "status": {
+                "answered": 4
+              },
+              "latency_s": {
+                "median": 0.44499999999999995,
+                "max": 0.8
+              },
+              "tokens_in": 11912,
+              "tokens_out": 40,
+              "llm_calls": 4,
+              "cost_usd": 0.0
+            },
+            "pallets/itsdangerous": {
+              "questions": 4,
+              "by_type": {
+                "code_how": 1,
+                "graph": 2,
+                "false_premise": 1
+              },
+              "code_hit": {
+                "A": {
+                  "k": 0,
+                  "n": 1,
+                  "rate": 0.0
+                },
+                "B": {
+                  "k": 1,
+                  "n": 1,
+                  "rate": 1.0
+                },
+                "C": {
+                  "k": 1,
+                  "n": 1,
+                  "rate": 1.0
+                }
+              },
+              "doc_hit": {
+                "A": {
+                  "k": 0,
+                  "n": 0,
+                  "rate": null
+                },
+                "B": {
+                  "k": 0,
+                  "n": 0,
+                  "rate": null
+                },
+                "C": {
+                  "k": 0,
+                  "n": 0,
+                  "rate": null
+                }
+              },
+              "answered_correct_file": {
+                "k": 0,
+                "n": 1,
+                "rate": 0.0
+              },
+              "graph": {
+                "routing": {
+                  "k": 2,
+                  "n": 2,
+                  "rate": 1.0
+                },
+                "exact_all": {
+                  "k": 2,
+                  "n": 2,
+                  "rate": 1.0
+                },
+                "exact_graph_routed": {
+                  "k": 2,
+                  "n": 2,
+                  "rate": 1.0
+                },
+                "precision_mean": 1.0,
+                "recall_mean": 1.0
+              },
+              "unanswerable_ok": {
+                "n": 1,
+                "pass": 1,
+                "fail": 0,
+                "awaiting_human": 0
+              },
+              "citation_validity": {
+                "k": 2,
+                "n": 2,
+                "rate": 1.0
+              },
+              "citation_validity_citations": {
+                "k": 0,
+                "n": 0,
+                "rate": null
+              },
+              "cited_sentence_rate": {
+                "k": 0,
+                "n": 2,
+                "rate": 0.0
+              },
+              "faithful_human": {
+                "n": 2,
+                "yes": 0,
+                "partly": 0,
+                "no": 0,
+                "awaiting_human": 2
+              },
+              "status": {
+                "answered": 4
+              },
+              "latency_s": {
+                "median": 0.405,
+                "max": 1.19
+              },
+              "tokens_in": 5926,
+              "tokens_out": 20,
+              "llm_calls": 2,
+              "cost_usd": 0.0
+            }
+          },
+          "per_writer": {
+            "T": {
+              "questions": 11,
+              "by_type": {
+                "code_how": 2,
+                "locate": 2,
+                "purpose": 1,
+                "graph": 3,
+                "unanswerable": 1,
+                "false_premise": 2
+              },
+              "code_hit": {
+                "A": {
+                  "k": 3,
+                  "n": 4,
+                  "rate": 0.75
+                },
+                "B": {
+                  "k": 4,
+                  "n": 4,
+                  "rate": 1.0
+                },
+                "C": {
+                  "k": 4,
+                  "n": 4,
+                  "rate": 1.0
+                }
+              },
+              "doc_hit": {
+                "A": {
+                  "k": 0,
+                  "n": 1,
+                  "rate": 0.0
+                },
+                "B": {
+                  "k": 0,
+                  "n": 1,
+                  "rate": 0.0
+                },
+                "C": {
+                  "k": 0,
+                  "n": 1,
+                  "rate": 0.0
+                }
+              },
+              "answered_correct_file": {
+                "k": 0,
+                "n": 5,
+                "rate": 0.0
+              },
+              "graph": {
+                "routing": {
+                  "k": 3,
+                  "n": 3,
+                  "rate": 1.0
+                },
+                "exact_all": {
+                  "k": 3,
+                  "n": 3,
+                  "rate": 1.0
+                },
+                "exact_graph_routed": {
+                  "k": 3,
+                  "n": 3,
+                  "rate": 1.0
+                },
+                "precision_mean": 1.0,
+                "recall_mean": 1.0
+              },
+              "unanswerable_ok": {
+                "n": 3,
+                "pass": 3,
+                "fail": 0,
+                "awaiting_human": 0
+              },
+              "citation_validity": {
+                "k": 8,
+                "n": 8,
+                "rate": 1.0
+              },
+              "citation_validity_citations": {
+                "k": 0,
+                "n": 0,
+                "rate": null
+              },
+              "cited_sentence_rate": {
+                "k": 0,
+                "n": 8,
+                "rate": 0.0
+              },
+              "faithful_human": {
+                "n": 8,
+                "yes": 0,
+                "partly": 0,
+                "no": 0,
+                "awaiting_human": 8
+              },
+              "status": {
+                "answered": 11
+              },
+              "latency_s": {
+                "median": 0.47,
+                "max": 1.19
+              },
+              "tokens_in": 23139,
+              "tokens_out": 80,
+              "llm_calls": 8,
+              "cost_usd": 0.0
+            }
+          },
+          "per_type": {
+            "code_how": {
+              "questions": 2,
+              "by_type": {
+                "code_how": 2
+              },
+              "code_hit": {
+                "A": {
+                  "k": 1,
+                  "n": 2,
+                  "rate": 0.5
+                },
+                "B": {
+                  "k": 2,
+                  "n": 2,
+                  "rate": 1.0
+                },
+                "C": {
+                  "k": 2,
+                  "n": 2,
+                  "rate": 1.0
+                }
+              },
+              "doc_hit": {
+                "A": {
+                  "k": 0,
+                  "n": 0,
+                  "rate": null
+                },
+                "B": {
+                  "k": 0,
+                  "n": 0,
+                  "rate": null
+                },
+                "C": {
+                  "k": 0,
+                  "n": 0,
+                  "rate": null
+                }
+              },
+              "answered_correct_file": {
+                "k": 0,
+                "n": 2,
+                "rate": 0.0
+              },
+              "graph": {
+                "routing": {
+                  "k": 0,
+                  "n": 0,
+                  "rate": null
+                },
+                "exact_all": {
+                  "k": 0,
+                  "n": 0,
+                  "rate": null
+                },
+                "exact_graph_routed": {
+                  "k": 0,
+                  "n": 0,
+                  "rate": null
+                },
+                "precision_mean": null,
+                "recall_mean": null
+              },
+              "unanswerable_ok": {
+                "n": 0,
+                "pass": 0,
+                "fail": 0,
+                "awaiting_human": 0
+              },
+              "citation_validity": {
+                "k": 2,
+                "n": 2,
+                "rate": 1.0
+              },
+              "citation_validity_citations": {
+                "k": 0,
+                "n": 0,
+                "rate": null
+              },
+              "cited_sentence_rate": {
+                "k": 0,
+                "n": 2,
+                "rate": 0.0
+              },
+              "faithful_human": {
+                "n": 2,
+                "yes": 0,
+                "partly": 0,
+                "no": 0,
+                "awaiting_human": 2
+              },
+              "status": {
+                "answered": 2
+              },
+              "latency_s": {
+                "median": 0.68,
+                "max": 0.8
+              },
+              "tokens_in": 5658,
+              "tokens_out": 20,
+              "llm_calls": 2,
+              "cost_usd": 0.0
+            },
+            "locate": {
+              "questions": 2,
+              "by_type": {
+                "locate": 2
+              },
+              "code_hit": {
+                "A": {
+                  "k": 2,
+                  "n": 2,
+                  "rate": 1.0
+                },
+                "B": {
+                  "k": 2,
+                  "n": 2,
+                  "rate": 1.0
+                },
+                "C": {
+                  "k": 2,
+                  "n": 2,
+                  "rate": 1.0
+                }
+              },
+              "doc_hit": {
+                "A": {
+                  "k": 0,
+                  "n": 0,
+                  "rate": null
+                },
+                "B": {
+                  "k": 0,
+                  "n": 0,
+                  "rate": null
+                },
+                "C": {
+                  "k": 0,
+                  "n": 0,
+                  "rate": null
+                }
+              },
+              "answered_correct_file": {
+                "k": 0,
+                "n": 2,
+                "rate": 0.0
+              },
+              "graph": {
+                "routing": {
+                  "k": 0,
+                  "n": 0,
+                  "rate": null
+                },
+                "exact_all": {
+                  "k": 0,
+                  "n": 0,
+                  "rate": null
+                },
+                "exact_graph_routed": {
+                  "k": 0,
+                  "n": 0,
+                  "rate": null
+                },
+                "precision_mean": null,
+                "recall_mean": null
+              },
+              "unanswerable_ok": {
+                "n": 0,
+                "pass": 0,
+                "fail": 0,
+                "awaiting_human": 0
+              },
+              "citation_validity": {
+                "k": 2,
+                "n": 2,
+                "rate": 1.0
+              },
+              "citation_validity_citations": {
+                "k": 0,
+                "n": 0,
+                "rate": null
+              },
+              "cited_sentence_rate": {
+                "k": 0,
+                "n": 2,
+                "rate": 0.0
+              },
+              "faithful_human": {
+                "n": 2,
+                "yes": 0,
+                "partly": 0,
+                "no": 0,
+                "awaiting_human": 2
+              },
+              "status": {
+                "answered": 2
+              },
+              "latency_s": {
+                "median": 0.33499999999999996,
+                "max": 0.36
+              },
+              "tokens_in": 4446,
+              "tokens_out": 20,
+              "llm_calls": 2,
+              "cost_usd": 0.0
+            },
+            "purpose": {
+              "questions": 1,
+              "by_type": {
+                "purpose": 1
+              },
+              "code_hit": {
+                "A": {
+                  "k": 0,
+                  "n": 0,
+                  "rate": null
+                },
+                "B": {
+                  "k": 0,
+                  "n": 0,
+                  "rate": null
+                },
+                "C": {
+                  "k": 0,
+                  "n": 0,
+                  "rate": null
+                }
+              },
+              "doc_hit": {
+                "A": {
+                  "k": 0,
+                  "n": 1,
+                  "rate": 0.0
+                },
+                "B": {
+                  "k": 0,
+                  "n": 1,
+                  "rate": 0.0
+                },
+                "C": {
+                  "k": 0,
+                  "n": 1,
+                  "rate": 0.0
+                }
+              },
+              "answered_correct_file": {
+                "k": 0,
+                "n": 1,
+                "rate": 0.0
+              },
+              "graph": {
+                "routing": {
+                  "k": 0,
+                  "n": 0,
+                  "rate": null
+                },
+                "exact_all": {
+                  "k": 0,
+                  "n": 0,
+                  "rate": null
+                },
+                "exact_graph_routed": {
+                  "k": 0,
+                  "n": 0,
+                  "rate": null
+                },
+                "precision_mean": null,
+                "recall_mean": null
+              },
+              "unanswerable_ok": {
+                "n": 0,
+                "pass": 0,
+                "fail": 0,
+                "awaiting_human": 0
+              },
+              "citation_validity": {
+                "k": 1,
+                "n": 1,
+                "rate": 1.0
+              },
+              "citation_validity_citations": {
+                "k": 0,
+                "n": 0,
+                "rate": null
+              },
+              "cited_sentence_rate": {
+                "k": 0,
+                "n": 1,
+                "rate": 0.0
+              },
+              "faithful_human": {
+                "n": 1,
+                "yes": 0,
+                "partly": 0,
+                "no": 0,
+                "awaiting_human": 1
+              },
+              "status": {
+                "answered": 1
+              },
+              "latency_s": {
+                "median": 0.47,
+                "max": 0.47
+              },
+              "tokens_in": 3133,
+              "tokens_out": 10,
+              "llm_calls": 1,
+              "cost_usd": 0.0
+            },
+            "graph": {
+              "questions": 3,
+              "by_type": {
+                "graph": 3
+              },
+              "code_hit": {
+                "A": {
+                  "k": 0,
+                  "n": 0,
+                  "rate": null
+                },
+                "B": {
+                  "k": 0,
+                  "n": 0,
+                  "rate": null
+                },
+                "C": {
+                  "k": 0,
+                  "n": 0,
+                  "rate": null
+                }
+              },
+              "doc_hit": {
+                "A": {
+                  "k": 0,
+                  "n": 0,
+                  "rate": null
+                },
+                "B": {
+                  "k": 0,
+                  "n": 0,
+                  "rate": null
+                },
+                "C": {
+                  "k": 0,
+                  "n": 0,
+                  "rate": null
+                }
+              },
+              "answered_correct_file": {
+                "k": 0,
+                "n": 0,
+                "rate": null
+              },
+              "graph": {
+                "routing": {
+                  "k": 3,
+                  "n": 3,
+                  "rate": 1.0
+                },
+                "exact_all": {
+                  "k": 3,
+                  "n": 3,
+                  "rate": 1.0
+                },
+                "exact_graph_routed": {
+                  "k": 3,
+                  "n": 3,
+                  "rate": 1.0
+                },
+                "precision_mean": 1.0,
+                "recall_mean": 1.0
+              },
+              "unanswerable_ok": {
+                "n": 0,
+                "pass": 0,
+                "fail": 0,
+                "awaiting_human": 0
+              },
+              "citation_validity": {
+                "k": 0,
+                "n": 0,
+                "rate": null
+              },
+              "citation_validity_citations": {
+                "k": 0,
+                "n": 0,
+                "rate": null
+              },
+              "cited_sentence_rate": {
+                "k": 0,
+                "n": 0,
+                "rate": null
+              },
+              "faithful_human": {
+                "n": 0,
+                "yes": 0,
+                "partly": 0,
+                "no": 0,
+                "awaiting_human": 0
+              },
+              "status": {
+                "answered": 3
+              },
+              "latency_s": {
+                "median": 1.19,
+                "max": 1.19
+              },
+              "tokens_in": 0,
+              "tokens_out": 0,
+              "llm_calls": 0,
+              "cost_usd": 0
+            },
+            "unanswerable": {
+              "questions": 1,
+              "by_type": {
+                "unanswerable": 1
+              },
+              "code_hit": {
+                "A": {
+                  "k": 0,
+                  "n": 0,
+                  "rate": null
+                },
+                "B": {
+                  "k": 0,
+                  "n": 0,
+                  "rate": null
+                },
+                "C": {
+                  "k": 0,
+                  "n": 0,
+                  "rate": null
+                }
+              },
+              "doc_hit": {
+                "A": {
+                  "k": 0,
+                  "n": 0,
+                  "rate": null
+                },
+                "B": {
+                  "k": 0,
+                  "n": 0,
+                  "rate": null
+                },
+                "C": {
+                  "k": 0,
+                  "n": 0,
+                  "rate": null
+                }
+              },
+              "answered_correct_file": {
+                "k": 0,
+                "n": 0,
+                "rate": null
+              },
+              "graph": {
+                "routing": {
+                  "k": 0,
+                  "n": 0,
+                  "rate": null
+                },
+                "exact_all": {
+                  "k": 0,
+                  "n": 0,
+                  "rate": null
+                },
+                "exact_graph_routed": {
+                  "k": 0,
+                  "n": 0,
+                  "rate": null
+                },
+                "precision_mean": null,
+                "recall_mean": null
+              },
+              "unanswerable_ok": {
+                "n": 1,
+                "pass": 1,
+                "fail": 0,
+                "awaiting_human": 0
+              },
+              "citation_validity": {
+                "k": 1,
+                "n": 1,
+                "rate": 1.0
+              },
+              "citation_validity_citations": {
+                "k": 0,
+                "n": 0,
+                "rate": null
+              },
+              "cited_sentence_rate": {
+                "k": 0,
+                "n": 1,
+                "rate": 0.0
+              },
+              "faithful_human": {
+                "n": 1,
+                "yes": 0,
+                "partly": 0,
+                "no": 0,
+                "awaiting_human": 1
+              },
+              "status": {
+                "answered": 1
+              },
+              "latency_s": {
+                "median": 0.75,
+                "max": 0.75
+              },
+              "tokens_in": 3397,
+              "tokens_out": 10,
+              "llm_calls": 1,
+              "cost_usd": 0.0
+            },
+            "false_premise": {
+              "questions": 2,
+              "by_type": {
+                "false_premise": 2
+              },
+              "code_hit": {
+                "A": {
+                  "k": 0,
+                  "n": 0,
+                  "rate": null
+                },
+                "B": {
+                  "k": 0,
+                  "n": 0,
+                  "rate": null
+                },
+                "C": {
+                  "k": 0,
+                  "n": 0,
+                  "rate": null
+                }
+              },
+              "doc_hit": {
+                "A": {
+                  "k": 0,
+                  "n": 0,
+                  "rate": null
+                },
+                "B": {
+                  "k": 0,
+                  "n": 0,
+                  "rate": null
+                },
+                "C": {
+                  "k": 0,
+                  "n": 0,
+                  "rate": null
+                }
+              },
+              "answered_correct_file": {
+                "k": 0,
+                "n": 0,
+                "rate": null
+              },
+              "graph": {
+                "routing": {
+                  "k": 0,
+                  "n": 0,
+                  "rate": null
+                },
+                "exact_all": {
+                  "k": 0,
+                  "n": 0,
+                  "rate": null
+                },
+                "exact_graph_routed": {
+                  "k": 0,
+                  "n": 0,
+                  "rate": null
+                },
+                "precision_mean": null,
+                "recall_mean": null
+              },
+              "unanswerable_ok": {
+                "n": 2,
+                "pass": 2,
+                "fail": 0,
+                "awaiting_human": 0
+              },
+              "citation_validity": {
+                "k": 2,
+                "n": 2,
+                "rate": 1.0
+              },
+              "citation_validity_citations": {
+                "k": 0,
+                "n": 0,
+                "rate": null
+              },
+              "cited_sentence_rate": {
+                "k": 0,
+                "n": 2,
+                "rate": 0.0
+              },
+              "faithful_human": {
+                "n": 2,
+                "yes": 0,
+                "partly": 0,
+                "no": 0,
+                "awaiting_human": 2
+              },
+              "status": {
+                "answered": 2
+              },
+              "latency_s": {
+                "median": 0.33499999999999996,
+                "max": 0.42
+              },
+              "tokens_in": 6505,
+              "tokens_out": 20,
+              "llm_calls": 2,
+              "cost_usd": 0.0
+            }
+          }
+        },
+        "comparisons_code_hit": {
+          "C vs B": {
+            "questions": 4,
+            "wins": 0,
+            "losses": 0,
+            "p_mcnemar_exact": 1.0
+          },
+          "C vs A": {
+            "questions": 4,
+            "wins": 1,
+            "losses": 0,
+            "p_mcnemar_exact": 1.0
+          },
+          "B vs A": {
+            "questions": 4,
+            "wins": 1,
+            "losses": 0,
+            "p_mcnemar_exact": 1.0
+          }
+        }
+      }
+    ],
+    "agreement_pass_1_2": {
+      "route": {
+        "k": 11,
+        "n": 11,
+        "rate": 1.0,
+        "left_out_pending": 0
+      },
+      "answered_correct_file": {
+        "k": 5,
+        "n": 5,
+        "rate": 1.0,
+        "left_out_pending": 0
+      },
+      "exact": {
+        "k": 3,
+        "n": 3,
+        "rate": 1.0,
+        "left_out_pending": 0
+      },
+      "unanswerable_ok": {
+        "k": 3,
+        "n": 3,
+        "rate": 1.0,
+        "left_out_pending": 0
+      },
+      "citation_valid": {
+        "k": 8,
+        "n": 8,
+        "rate": 1.0,
+        "left_out_pending": 0
+      },
+      "retrieval_identical": true
+    }
+  }
+}

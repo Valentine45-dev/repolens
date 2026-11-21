@@ -1,0 +1,8 @@
+# The five locked repos at their pinned commits (no question content). Analysed on run day only:
+#   uv run --project backend --env-file .env python eval/locked_eval.py analyse eval/locked/pins.yaml --label locked-v2.0
+repos:
+  - {repo: sindresorhus/p-limit, commit: a8a6fbec4e0e866d6d779b10889bb4f5567e70eb}
+  - {repo: jd/tenacity, commit: aac059c906170ee7b6ce1aa086a226f3aded5c99}
+  - {repo: tkem/cachetools, commit: 07bb96086794ca6e2f70f32b7cc759fe91c08651}
+  - {repo: encode/httpx, commit: 3ba5fe0d7ac70222590e759c31442b1cab263791}
+  - {repo: axios/axios, commit: 84a9f3b9a4f3244b8c8e818f557d64c7b964fb25}
