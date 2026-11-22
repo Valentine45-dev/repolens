@@ -104,6 +104,8 @@ def run_info(provider=None, *, llm_used: bool) -> dict:
             "hybrid": config.QA_HYBRID,
             "hybrid_depth": config.QA_HYBRID_DEPTH,
             "rrf_k": config.QA_RRF_K,
+            "doc_pool": config.QA_DOC_POOL,
+            "doc_cutoff_rank": config.QA_DOC_CUTOFF_RANK,
         },
     }
 

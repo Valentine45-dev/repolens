@@ -199,7 +199,7 @@ def test_ai_answer_with_validated_citations(client, snapshot, fake):
     assert a["citations"] == [{
         "path": "sample_app/service.py", "start_line": start, "end_line": end,
         "file_id": a["citations"][0]["file_id"], "symbol_id": a["citations"][0]["symbol_id"],
-        "in_test": False,
+        "in_test": False, "source": "code",
     }]
     assert "400-410" not in a["answer"]
     assert a["prompt_version"] == system_prompt().version
@@ -674,7 +674,7 @@ def test_unscoped_questions_are_unchanged(client, snapshot, fake):
     assert default.snippets == none.snippets
     assert {s.via for s in default.snippets} <= {"search", "graph"}
     assert set(default.summary()) == {"k", "hybrid", "expand", "include_tests", "used_test_code",
-                                      "sent", "from_graph"}
+                                      "sent", "from_graph", "docs", "doc_pool"}
     fake.script = [NOT_FOUND, NOT_FOUND]
     without = ask(client, snapshot, q)
     with_null = ask(client, snapshot, q, file_id=None)

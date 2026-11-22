@@ -836,6 +836,13 @@ a {
   border-color: var(--border-strong);
 }
 
+/* Documentation (README, docs text) in Ask: on doc citation chips and the doc panel's caption. */
+.tag[data-kind="doc"] {
+  border-style: solid;
+  border-color: var(--border-strong);
+  font-family: var(--font-sans);
+}
+
 /* --- Explorer (full width: the graph needs it) --- */
 
 /* --- Analysis shell: header + tabs on every tab, Ask drawer on the right --- */

@@ -104,7 +104,7 @@ def _ranked(found) -> list:
     """Code locations for an answer the LLM could not give, in search order. These come from the
     server's own search, never from model text, and graph neighbours are left out: they are not
     ranked against the question."""
-    return [s for s in found.snippets if s.via != "graph"]
+    return [s for s in found.snippets if s.via not in ("graph", "doc")]
 
 
 def _without_llm(snapshot_id: int, question: str, include_tests: bool, file_id: int | None,
@@ -143,8 +143,9 @@ def ai_answer(snapshot_id: int, question: str, include_tests: bool = False,
 
     system = system_prompt()
     prompt = build_user_message(question, [
-        format_snippet(s.path, s.qualified_name, s.start_line, s.text) for s in found.snippets
-    ])
+        format_snippet(s.path, s.qualified_name, s.start_line, s.text, s.source)
+        for s in found.snippets
+    ], has_docs=any(s.source == "doc" for s in found.snippets))
     estimate = int(len(system.text + prompt) / CHARS_PER_TOKEN) + config.LLM_MAX_TOKENS
     charge = provider.counts_toward_budget  # False for FakeProvider: made-up token counts
     if charge and not _reserve(snapshot_id, estimate):

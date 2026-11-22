@@ -1,0 +1,500 @@
+{
+  "run": {
+    "commit_sha": "6a2fff1d14c40473fbb0f8ac8e7e28f21f054ef1",
+    "dirty": false,
+    "run_at": "2026-11-22T17:11:26+00:00",
+    "machine": "LAPTOP-4C2E555R",
+    "cpu": "Intel(R) Pentium(R) Silver N5030 CPU @ 1.10GHz",
+    "cpu_threads": 4,
+    "ram_gb": 7.8,
+    "os": "Windows 11 (10.0.26300)",
+    "python": "3.12.16",
+    "packages": {
+      "torch": "2.14.1+cpu",
+      "sentence-transformers": "6.2.0",
+      "transformers": "5.21.0",
+      "tree-sitter": "0.25.2",
+      "anthropic": "2.3.0"
+    },
+    "max_analysis_s": 1200,
+    "tool_pins": {
+      "bandit": "bandit==1.9.4",
+      "semgrep": "semgrep==1.182.1"
+    },
+    "notes": "",
+    "embedder": "sentence-transformers",
+    "embed_model": "sentence-transformers/all-MiniLM-L6-v2",
+    "embed_revision": "1110a243fdf4706b3f48f1d95db1a4f5529b4d41",
+    "llm_used": false,
+    "llm": {
+      "provider": "anthropic",
+      "model": "claude-sonnet-5-5",
+      "effort": "low",
+      "thinking": "between_tools",
+      "max_tokens": 4000,
+      "prompt_version": "2026-11-22.1"
+    },
+    "retrieval": {
+      "top_k": 8,
+      "graph_expansion": true,
+      "expand_max": 8,
+      "context_tokens": 6000,
+      "hybrid": true,
+      "hybrid_depth": 16,
+      "rrf_k": 60,
+      "doc_pool": 2,
+      "doc_cutoff_rank": 8
+    }
+  },
+  "snapshot_id": 1,
+  "repo": "pallets/itsdangerous",
+  "commit": "672971d66a2ef9f85151e53283113f33d642dabd",
+  "rerun_job": 45,
+  "analysis": {
+    "final_status": "done",
+    "search": "ready",
+    "analysis_s": 180.5,
+    "total_with_tests_s": 207.4
+  },
+  "backfill": {
+    "group": "docs",
+    "files": 9,
+    "too_large": [],
+    "chunks": 38,
+    "windows": 14,
+    "embed_seconds": 14.6,
+    "model": "sentence-transformers/all-MiniLM-L6-v2@1110a243fdf4706b3f48f1d95db1a4f5529b4d41"
+  },
+  "doc_chunks_fresh": 38,
+  "doc_chunks_backfill": 38,
+  "doc_rows_identical": true,
+  "code_before_backfill": {
+    "n": 181,
+    "sig": "16767790f12ad94c843eb92588441b51"
+  },
+  "code_after_backfill": {
+    "n": 181,
+    "sig": "16767790f12ad94c843eb92588441b51"
+  },
+  "code_identical": true,
+  "doc_rows": [
+    {
+      "path": "docs/concepts.rst",
+      "start_line": 5,
+      "end_line": 15,
+      "token_count": 158,
+      "in_test": false,
+      "symbol_id": null,
+      "text": "970c3c7ec1b8f610621aa47d2bb75ead",
+      "tsv": "7aecc2e0fa8c5ce3e13a8e8033300526",
+      "embedding": "bea8c10d80c2b8c81dbffb1a6dcae7ea"
+    },
+    {
+      "path": "docs/concepts.rst",
+      "start_line": 18,
+      "end_line": 42,
+      "token_count": 247,
+      "in_test": false,
+      "symbol_id": null,
+      "text": "e307a681ac350a1b15fb87d79e813522",
+      "tsv": "3bcb623f3702e32c84cee623bd0b0f42",
+      "embedding": "2929a89f7f6a375768d6c97438047368"
+    },
+    {
+      "path": "docs/concepts.rst",
+      "start_line": 40,
+      "end_line": 53,
+      "token_count": 135,
+      "in_test": false,
+      "symbol_id": null,
+      "text": "664eb1496cb6c3843d3e5d2379a644d1",
+      "tsv": "f826101687e258e0baf93580f2a8c758",
+      "embedding": "f3b2b17baed0f307de2ca837bedb29f6"
+    },
+    {
+      "path": "docs/concepts.rst",
+      "start_line": 56,
+      "end_line": 78,
+      "token_count": 236,
+      "in_test": false,
+      "symbol_id": null,
+      "text": "727a8a857717c7459f2b303c4992e79e",
+      "tsv": "398f63ebdd6bc6b662c8ac07fc859fbb",
+      "embedding": "83b67d29ee2e2ec2a40a6c027f0749bc"
+    },
+    {
+      "path": "docs/concepts.rst",
+      "start_line": 76,
+      "end_line": 98,
+      "token_count": 196,
+      "in_test": false,
+      "symbol_id": null,
+      "text": "b4ca13f3f734baec0d294729b545b58e",
+      "tsv": "02cd9f0302b06b7defc9e68e731502a3",
+      "embedding": "0f827209d462a108b9dfe28c2cbb5585"
+    },
+    {
+      "path": "docs/concepts.rst",
+      "start_line": 101,
+      "end_line": 122,
+      "token_count": 216,
+      "in_test": false,
+      "symbol_id": null,
+      "text": "606904be09dd064391134575eef9d528",
+      "tsv": "af7121dcb79356536729e4b7bb5eeabc",
+      "embedding": "672a665dadb6a9926e756b4ce9707af4"
+    },
+    {
+      "path": "docs/concepts.rst",
+      "start_line": 120,
+      "end_line": 134,
+      "token_count": 147,
+      "in_test": false,
+      "symbol_id": null,
+      "text": "745a17a7ac023a8284cca636e686d67a",
+      "tsv": "9a6cc904914a29c7f82e1cb4b7804d56",
+      "embedding": "1b75a42e4adbd29b811e2b3f2cb83cc1"
+    },
+    {
+      "path": "docs/concepts.rst",
+      "start_line": 137,
+      "end_line": 154,
+      "token_count": 245,
+      "in_test": false,
+      "symbol_id": null,
+      "text": "3f96dfb3562aa52eec6b6f8959e16a5f",
+      "tsv": "8b8e9b50e1e68012b4c38cb0c6577973",
+      "embedding": "5d6dba1e0ba14b38e4b6374128e0ad38"
+    },
+    {
+      "path": "docs/encoding.rst",
+      "start_line": 1,
+      "end_line": 1,
+      "token_count": 20,
+      "in_test": false,
+      "symbol_id": null,
+      "text": "51534ac430d5a63cb0bcca21741376c1",
+      "tsv": "6625f2fd347ad3b4646504fdcf2de482",
+      "embedding": "0dff77e12abfea18a423ff3b32976b11"
+    },
+    {
+      "path": "docs/encoding.rst",
+      "start_line": 3,
+      "end_line": 8,
+      "token_count": 55,
+      "in_test": false,
+      "symbol_id": null,
+      "text": "b025f5e5199b726388f204554bb04d06",
+      "tsv": "19f847196f592e7bbf0358d21366504c",
+      "embedding": "b6566091e606f5b15eea4c8272838a88"
+    },
+    {
+      "path": "docs/exceptions.rst",
+      "start_line": 1,
+      "end_line": 1,
+      "token_count": 21,
+      "in_test": false,
+      "symbol_id": null,
+      "text": "2435fb9521419cb7b0a5daecfd7754fd",
+      "tsv": "6140ed579113976057397ce0c8974dbd",
+      "embedding": "ca1dae450d58bcbd12b0d7e80fd62095"
+    },
+    {
+      "path": "docs/exceptions.rst",
+      "start_line": 3,
+      "end_line": 22,
+      "token_count": 104,
+      "in_test": false,
+      "symbol_id": null,
+      "text": "e4fe158268da99e2edce053771f02374",
+      "tsv": "57351d015a42fc8cf68621163aaa7ccd",
+      "embedding": "7287919eb87b342eb4f6be7fce543bd1"
+    },
+    {
+      "path": "docs/index.rst",
+      "start_line": 1,
+      "end_line": 1,
+      "token_count": 20,
+      "in_test": false,
+      "symbol_id": null,
+      "text": "27b53557f146cf9171f6a192c075ff0c",
+      "tsv": "5e09a8704d82cf8027da8866904dc1d1",
+      "embedding": "558cf75b8facfe07aed0797c86c08daa"
+    },
+    {
+      "path": "docs/index.rst",
+      "start_line": 3,
+      "end_line": 20,
+      "token_count": 164,
+      "in_test": false,
+      "symbol_id": null,
+      "text": "ca270a2454ac6460ba146cd6d2b386e5",
+      "tsv": "c51c86eccc8552e92d51bcc6bb3d57a1",
+      "embedding": "df6712d70aa4838bfc3d967171156419"
+    },
+    {
+      "path": "docs/index.rst",
+      "start_line": 23,
+      "end_line": 32,
+      "token_count": 76,
+      "in_test": false,
+      "symbol_id": null,
+      "text": "f2233946424c4be8d6329311673a1cef",
+      "tsv": "38701cc14e17236f27c76f6c864e51a8",
+      "embedding": "fd22772aa1da4f0b18f8e5211ebea4c2"
+    },
+    {
+      "path": "docs/index.rst",
+      "start_line": 35,
+      "end_line": 47,
+      "token_count": 167,
+      "in_test": false,
+      "symbol_id": null,
+      "text": "6a07b439b94f1330789b5fa19ceda921",
+      "tsv": "16c72c4a26c0119d22975560dc9621c2",
+      "embedding": "6d439223d491c836e78997990d43914c"
+    },
+    {
+      "path": "docs/index.rst",
+      "start_line": 50,
+      "end_line": 63,
+      "token_count": 58,
+      "in_test": false,
+      "symbol_id": null,
+      "text": "ef6c80094957d974eaaad882287ef018",
+      "tsv": "89f21b070cb3f41a75e674e4b3173763",
+      "embedding": "4457e6f02128b5d32805dac935369a29"
+    },
+    {
+      "path": "docs/serializer.rst",
+      "start_line": 1,
+      "end_line": 1,
+      "token_count": 22,
+      "in_test": false,
+      "symbol_id": null,
+      "text": "b6b8f3a84405331034a5986bb9196efd",
+      "tsv": "c53319369d05799e7c8c01d1302da6c1",
+      "embedding": "a888fd175726106576801f0ffe9e6971"
+    },
+    {
+      "path": "docs/serializer.rst",
+      "start_line": 3,
+      "end_line": 24,
+      "token_count": 236,
+      "in_test": false,
+      "symbol_id": null,
+      "text": "786f4642d398f1a27d6b62def93b463b",
+      "tsv": "783fcea55f8f2400424f0c0e7caeefae",
+      "embedding": "879b44098177c69bdfaaa95050024cd3"
+    },
+    {
+      "path": "docs/serializer.rst",
+      "start_line": 22,
+      "end_line": 33,
+      "token_count": 147,
+      "in_test": false,
+      "symbol_id": null,
+      "text": "dc17746663c37d4768cc53b9dc46441a",
+      "tsv": "b64f8b97733f41af9de34d9ff36b3f04",
+      "embedding": "983e27007ee0d77be104edc18f3b8d82"
+    },
+    {
+      "path": "docs/serializer.rst",
+      "start_line": 36,
+      "end_line": 62,
+      "token_count": 234,
+      "in_test": false,
+      "symbol_id": null,
+      "text": "9a722e433768a4cdf750b006bf0d919a",
+      "tsv": "55721127cf824e89640eb1314c62ca2b",
+      "embedding": "b96b3f5b0446979c9f0a6f123bd6aad1"
+    },
+    {
+      "path": "docs/serializer.rst",
+      "start_line": 60,
+      "end_line": 74,
+      "token_count": 148,
+      "in_test": false,
+      "symbol_id": null,
+      "text": "8c068d6cbc222f14bbb15a89db426772",
+      "tsv": "f071e18663d55ae13992657176125de2",
+      "embedding": "faae2fd46e55faea53f1c87c81c78a42"
+    },
+    {
+      "path": "docs/serializer.rst",
+      "start_line": 77,
+      "end_line": 95,
+      "token_count": 245,
+      "in_test": false,
+      "symbol_id": null,
+      "text": "1ab12cf5cb51fcf9d43636dcf6a0e855",
+      "tsv": "b8bfb1d20c8fcf14eabee4d05105ca6b",
+      "embedding": "178cf1e07626912cc2971f18430bd30e"
+    },
+    {
+      "path": "docs/serializer.rst",
+      "start_line": 93,
+      "end_line": 104,
+      "token_count": 139,
+      "in_test": false,
+      "symbol_id": null,
+      "text": "706c5502a5b1d8e0fb8978d6c2e3099c",
+      "tsv": "f4a560f8ddf5a5c45c3cc777e4471e6b",
+      "embedding": "c7857a48ff0d9a7a72ef3ecd60345f2f"
+    },
+    {
+      "path": "docs/serializer.rst",
+      "start_line": 108,
+      "end_line": 112,
+      "token_count": 30,
+      "in_test": false,
+      "symbol_id": null,
+      "text": "8e3149d4f5b51d4c7ddcd9f004b1513e",
+      "tsv": "5cb58632fa67501d6bbf9101eb65941b",
+      "embedding": "38c98f5052524dff47bc96c7c0c2ab63"
+    },
+    {
+      "path": "docs/signer.rst",
+      "start_line": 1,
+      "end_line": 1,
+      "token_count": 22,
+      "in_test": false,
+      "symbol_id": null,
+      "text": "6aacba3fe0e0d25e022b9c1cd9b51ecb",
+      "tsv": "81811b4fc682f490ec41c6b9b2964866",
+      "embedding": "bb831bc3c30ee643acc5bfa25f2de26e"
+    },
+    {
+      "path": "docs/signer.rst",
+      "start_line": 3,
+      "end_line": 25,
+      "token_count": 243,
+      "in_test": false,
+      "symbol_id": null,
+      "text": "0ab87ca81926f1bcc464549e3f53bf8a",
+      "tsv": "581bbc8005dffe2e8e6a87c531f183f4",
+      "embedding": "7471ecb8db3c4c00e52f112c49f13a22"
+    },
+    {
+      "path": "docs/signer.rst",
+      "start_line": 23,
+      "end_line": 41,
+      "token_count": 188,
+      "in_test": false,
+      "symbol_id": null,
+      "text": "4ac743fa93cb167357b2a7281c5c8b12",
+      "tsv": "96d4bcf958893ff3a9f1b60953dc15c0",
+      "embedding": "8d3fd6577df1bb3f4d3989644298215d"
+    },
+    {
+      "path": "docs/signer.rst",
+      "start_line": 44,
+      "end_line": 49,
+      "token_count": 58,
+      "in_test": false,
+      "symbol_id": null,
+      "text": "f48953f54f38ebf5695534590431dc76",
+      "tsv": "eb617fed0decebcdd329163f40c3cfaf",
+      "embedding": "f25c5cb8419a7c031d8e8a11d5c20577"
+    },
+    {
+      "path": "docs/timed.rst",
+      "start_line": 1,
+      "end_line": 1,
+      "token_count": 20,
+      "in_test": false,
+      "symbol_id": null,
+      "text": "f3b6ea36344035adba973978beaca913",
+      "tsv": "b64157db62ccd4923ebe95f2a2584d3f",
+      "embedding": "01c9b83356d8fb690ef165e7782a5a39"
+    },
+    {
+      "path": "docs/timed.rst",
+      "start_line": 3,
+      "end_line": 28,
+      "token_count": 218,
+      "in_test": false,
+      "symbol_id": null,
+      "text": "5a2978dfaebc2efaa351a0ef47ffdc1b",
+      "tsv": "7600cc3e0884bcf8790ff2918d2ac630",
+      "embedding": "20bd31e82fa776042704476859c0f222"
+    },
+    {
+      "path": "docs/url_safe.rst",
+      "start_line": 1,
+      "end_line": 1,
+      "token_count": 26,
+      "in_test": false,
+      "symbol_id": null,
+      "text": "407e206ac7b8be48bc604d2dd63b412b",
+      "tsv": "a0018cbf6a01e2ceee8aa9e4edd4bc4d",
+      "embedding": "e72df386bb828dec984497fdf01383ab"
+    },
+    {
+      "path": "docs/url_safe.rst",
+      "start_line": 3,
+      "end_line": 21,
+      "token_count": 238,
+      "in_test": false,
+      "symbol_id": null,
+      "text": "e7f168bed42862dd3245696f81528130",
+      "tsv": "43ef926d6e0bf7ba2eb5dbd54486f612",
+      "embedding": "53f56e8aa6230048cfdce92ad1778c3a"
+    },
+    {
+      "path": "README.md",
+      "start_line": 1,
+      "end_line": 1,
+      "token_count": 84,
+      "in_test": false,
+      "symbol_id": null,
+      "text": "aeb65891c8a99afea4a63c48a33437db",
+      "tsv": "23eb131981c6726fee234d76c135091a",
+      "embedding": "8c7bd135c7e103e205b69b34e60e80d4"
+    },
+    {
+      "path": "README.md",
+      "start_line": 3,
+      "end_line": 13,
+      "token_count": 94,
+      "in_test": false,
+      "symbol_id": null,
+      "text": "4a075519da9c8d28967fdae5447cb73a",
+      "tsv": "dfeb59b48eae64d7d975e886ded87718",
+      "embedding": "3c02b88e9f7c8fe135425f04e4d8e429"
+    },
+    {
+      "path": "README.md",
+      "start_line": 16,
+      "end_line": 32,
+      "token_count": 190,
+      "in_test": false,
+      "symbol_id": null,
+      "text": "0a42257884ce20e0840aec9786324663",
+      "tsv": "ea699bc379a7ccdbeed6a60bcc9cbe4e",
+      "embedding": "ccb65de1d9bf98cabef04a534ceb25b6"
+    },
+    {
+      "path": "README.md",
+      "start_line": 35,
+      "end_line": 42,
+      "token_count": 82,
+      "in_test": false,
+      "symbol_id": null,
+      "text": "f4bfc3cd196733d1785762499bbc315e",
+      "tsv": "cffc3d0386a8194f3c26e1f23259a6b2",
+      "embedding": "b0198ae0bd8723d4522a16194801bc2f"
+    },
+    {
+      "path": "README.md",
+      "start_line": 44,
+      "end_line": 50,
+      "token_count": 70,
+      "in_test": false,
+      "symbol_id": null,
+      "text": "b31c97ea2768115c58ae8ee380450d3e",
+      "tsv": "516cd271fbb2db2495af4f20b7a97aa2",
+      "embedding": "c933d55240036bab9d8bf55a531750b0"
+    }
+  ]
+}

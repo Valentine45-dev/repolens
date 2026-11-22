@@ -140,39 +140,48 @@ def build_chunks(
     all_lines = content.split("\n")
     chunks: list[Chunk] = []
     for symbol, start, end in _units(symbols, all_lines):
-        lines = all_lines[start - 1:end]
-        # Trim blank lines at the edges; skip units that are only whitespace.
-        while lines and not lines[0].strip():
-            lines, start = lines[1:], start + 1
-        while lines and not lines[-1].strip():
-            lines, end = lines[:-1], end - 1
-        if not lines:
-            continue
-        head = prefix(path, symbol.qualified_name)
-        whole = head + "\n".join(lines)
-        (whole_tokens,) = count_tokens([whole])
-        if whole_tokens <= max_tokens:
-            chunks.append(Chunk(path, symbol.qualified_name, start, end, "\n".join(lines),
-                                whole, whole_tokens, False, start))
-            continue
+        chunks += unit_chunks(path, symbol.qualified_name, all_lines, start, end, count_tokens,
+                              max_tokens)
+    return chunks
 
-        # Too long: overlapping windows. Per-line counts (without special tokens) give the
-        # split; the exact count of each window is then checked and the window shrunk if needed.
-        (head_tokens,) = count_tokens([head])
-        per_line = [max(t - 2, 1) for t in count_tokens([ln or " " for ln in lines])]
-        budget = max(max_tokens - head_tokens - 4, 8)
-        for w_start, w_end in _windows(lines, per_line, budget):
-            while True:
-                text = "\n".join(lines[w_start:w_end])
-                (tokens,) = count_tokens([head + text])
-                if tokens <= max_tokens or w_end - w_start == 1:
-                    break
-                w_end -= 1
-            if tokens > max_tokens:  # a single huge line: cut it to fit
-                text = _truncate(head, text, count_tokens, max_tokens)
-                (tokens,) = count_tokens([head + text])
-            chunks.append(Chunk(path, symbol.qualified_name, start + w_start, start + w_end - 1,
-                                text, head + text, tokens, True, start))
+
+def unit_chunks(path: str, name: str, all_lines: list[str], start: int, end: int,
+                count_tokens: CountTokens, max_tokens: int) -> list[Chunk]:
+    """The chunks of one unit (lines start..end, 1-based, inclusive): one chunk if it fits the
+    model's limit with its prefix, else overlapping windows. Code units and documentation
+    sections (app/qa/docs.py) both go through here, so they are split the same way."""
+    lines = all_lines[start - 1:end]
+    # Trim blank lines at the edges; skip units that are only whitespace.
+    while lines and not lines[0].strip():
+        lines, start = lines[1:], start + 1
+    while lines and not lines[-1].strip():
+        lines, end = lines[:-1], end - 1
+    if not lines:
+        return []
+    head = prefix(path, name)
+    whole = head + "\n".join(lines)
+    (whole_tokens,) = count_tokens([whole])
+    if whole_tokens <= max_tokens:
+        return [Chunk(path, name, start, end, "\n".join(lines), whole, whole_tokens, False, start)]
+
+    # Too long: overlapping windows. Per-line counts (without special tokens) give the
+    # split; the exact count of each window is then checked and the window shrunk if needed.
+    chunks: list[Chunk] = []
+    (head_tokens,) = count_tokens([head])
+    per_line = [max(t - 2, 1) for t in count_tokens([ln or " " for ln in lines])]
+    budget = max(max_tokens - head_tokens - 4, 8)
+    for w_start, w_end in _windows(lines, per_line, budget):
+        while True:
+            text = "\n".join(lines[w_start:w_end])
+            (tokens,) = count_tokens([head + text])
+            if tokens <= max_tokens or w_end - w_start == 1:
+                break
+            w_end -= 1
+        if tokens > max_tokens:  # a single huge line: cut it to fit
+            text = _truncate(head, text, count_tokens, max_tokens)
+            (tokens,) = count_tokens([head + text])
+        chunks.append(Chunk(path, name, start + w_start, start + w_end - 1, text, head + text,
+                            tokens, True, start))
     return chunks
 
 

@@ -52,18 +52,24 @@ import locked_metrics as lm
 import yaml
 from runinfo import ROOT, header, run_info, save_results  # also puts backend/ on sys.path
 
-# v2.1 (Step 5 Part B): D and DG added; A, B, C say hybrid False so they keep their v2.0 meaning
-# whatever QA_HYBRID's default is.
+# v2.1 (Step 5): D and DG added (Part B); A, B, C say hybrid False so they keep their v2.0 meaning
+# whatever QA_HYBRID's default is. E (Part A; pre-planned in V2-EVAL-DESIGN §5, "E docs pool
+# on/off") is retrieval only, never sent to the LLM: DG plus up to 2 doc chunks at the 8th code
+# vector hit's cutoff, scored for doc_hit; its code part is DG's (E vs DG checks it). Every other
+# configuration says doc_pool 0, so it is code only whatever QA_DOC_POOL's default is.
 CONFIGS = {
-    "A": {"k": 8, "expand": False, "expand_max": 0, "hybrid": False},
-    "B": {"k": 16, "expand": False, "expand_max": 0, "hybrid": False},
-    "C": {"k": 8, "expand": True, "expand_max": 8, "hybrid": False},
-    "D": {"k": 8, "expand": False, "expand_max": 0, "hybrid": True},
-    "DG": {"k": 8, "expand": True, "expand_max": 8, "hybrid": True},
+    "A": {"k": 8, "expand": False, "expand_max": 0, "hybrid": False, "doc_pool": 0},
+    "B": {"k": 16, "expand": False, "expand_max": 0, "hybrid": False, "doc_pool": 0},
+    "C": {"k": 8, "expand": True, "expand_max": 8, "hybrid": False, "doc_pool": 0},
+    "D": {"k": 8, "expand": False, "expand_max": 0, "hybrid": True, "doc_pool": 0},
+    "DG": {"k": 8, "expand": True, "expand_max": 8, "hybrid": True, "doc_pool": 0},
+    "E": {"k": 8, "expand": True, "expand_max": 8, "hybrid": True, "doc_pool": 2,
+          "doc_cutoff_rank": 8},
 }
-# What /ask uses with the default settings (QA_TOP_K 8, expansion on, 8, QA_HYBRID on since v2.1).
+# What /ask uses with the default settings (QA_TOP_K 8, expansion on, 8, QA_HYBRID on since v2.1,
+# QA_DOC_POOL 0: Part A ships off).
 LIVE_CONFIG = "DG"
-PAIRS = [("C", "B"), ("C", "A"), ("B", "A"), ("DG", "C"), ("DG", "D"), ("D", "A")]
+PAIRS = [("C", "B"), ("C", "A"), ("B", "A"), ("DG", "C"), ("DG", "D"), ("D", "A"), ("E", "DG")]
 PASS_CAP_USD = 1.0
 # Frozen in Part B step 2 (eval/results/LOCKED-FREEZE-CHECKS.md): >= 2.5x the slowest
 # measured full analysis of a similar-size repo on the eval PC, rounded up to 300 s.
@@ -585,12 +591,36 @@ def cmd_validate(args) -> None:
         raise SystemExit(1)
 
 
+def sends_docs() -> bool:
+    """Whether anything this runner retrieves can include documentation: a configuration with a
+    doc pool (E), or /ask itself if QA_DOC_POOL is turned on."""
+    from app import config
+
+    return config.QA_DOC_POOL > 0 or any(c.get("doc_pool", 0) > 0 for c in CONFIGS.values())
+
+
+def require_docs(facts: dict, repo: str) -> None:
+    """v2.1: when docs can be sent (sends_docs), a snapshot that has doc files but no doc chunks
+    (analysed before docs and not backfilled) would score doc_hit as a miss for the wrong reason:
+    refuse."""
+    from app.ingest.docchunks import doc_status
+
+    if not sends_docs():
+        return
+    d = doc_status(facts["id"])
+    facts.update(d)
+    if d["doc_files"] > 0 and d["doc_chunks"] == 0:
+        raise SystemExit(f"{repo}: {d['doc_files']} doc files but no doc chunks; run"
+                         f" `python -m app.ingest.docchunks {facts['id']}` first")
+
+
 def _snapshots(questions: list[dict]) -> dict:
     out = {}
     for repo in sorted({q["repo"] for q in questions}):
         commit = next(q["commit"] for q in questions if q["repo"] == repo)
         facts = snapshot_facts(repo, commit)
         require_search(facts, repo)
+        require_docs(facts, repo)
         out[repo] = {**facts, "commit": commit}
     return out
 
@@ -642,7 +672,16 @@ def cmd_run(args) -> None:
         info = run_info(meter, llm_used=True)
         info["notes"] = args.notes
         info["answer_cache"] = "none (not implemented in the product)"
-        info["doc_pool"] = "none (v2.0 chunks code only)"
+        from app import config
+
+        info["doc_pool"] = (
+            (f"/ask: QA_DOC_POOL {config.QA_DOC_POOL}, cutoff at code vector hit"
+             f" {config.QA_DOC_CUTOFF_RANK}" if config.QA_DOC_POOL > 0
+             else "/ask: off (QA_DOC_POOL 0)")
+            + "; retrieval-only configs with docs: "
+            + (", ".join(f"{n} (pool {c['doc_pool']}, cutoff {c.get('doc_cutoff_rank')})"
+                         for n, c in CONFIGS.items() if c.get("doc_pool", 0) > 0) or "none"))
+        info["doc_chunks"] = {r: s.get("doc_chunks") for r, s in snaps.items()}
         info["prices_usd_per_mtok"] = {"in": price_in, "out": price_out}
         print(header(info))
         print(f"{len(questions)} questions, {args.passes} pass(es), estimate per pass"
@@ -794,8 +833,11 @@ def cmd_analyse(args) -> None:
     path = save_results("analysis_timing" + (f"-{args.label}" if args.label else ""), info,
                         {"pins": _rel(args.pins), "analyses": out})
     for r in out:
-        print(f"{r['repo']}: analysis {r['analysis_s']} s, with test code"
-              f" {r['total_with_tests_s']} s, search {r['search']}, receipt {r['receipt']}")
+        print(f"{r['repo']}: snapshot {r['snapshot_id']}, analysis {r['analysis_s']} s, with test"
+              f" code {r['total_with_tests_s']} s, search {r['search']}, receipt {r['receipt']}")
+    ids = " ".join(str(r["snapshot_id"]) for r in out)
+    print(f"doc chunks (v2.1, before validate): cd backend; uv run --env-file ../.env python -m"
+          f" app.ingest.docchunks {ids}")
     print("saved", _rel(path))
 
 

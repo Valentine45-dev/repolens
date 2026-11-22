@@ -151,6 +151,10 @@ docker compose exec -T db psql -U repolens -d repolens < backend/migrations/2026
 docker compose exec -T db psql -U repolens -d repolens < backend/migrations/2026-11-07-findings-categories.sql
 ```
 
+```bash
+docker compose exec -T db psql -U repolens -d repolens < backend/migrations/2026-11-22-doc-chunks.sql
+```
+
 (In PowerShell, pipe the file instead: `Get-Content backend/migrations/<file> | docker compose
 exec -T db psql -U repolens -d repolens`.)
 
@@ -171,6 +175,18 @@ until the repository is analysed again). Also with the API stopped:
 ```bash
 cd backend
 uv run --env-file ../.env python -m app.ingest.redetect
+```
+
+**Documentation in Ask (off by default).** With `QA_DOC_POOL=2`, Ask may add up to two README /
+docs chunks after the code, each only if it is at least as close to the question as the
+`QA_DOC_CUTOFF_RANK`-th code hit; doc citations open the file as plain text. It ships off: on the
+tuning questions a doc chunk passed even the tightest cutoff for 10 of 16 code questions (the
+adoption bar was 30%; PROGRESS.md, Step 5 Part A). Analyses made with it off, or before it existed,
+get doc chunks from their stored files with (API stopped):
+
+```bash
+cd backend
+uv run --env-file ../.env python -m app.ingest.docchunks <snapshot id> [...]
 ```
 
 Run only one API against a database at a time: on startup the API marks every running

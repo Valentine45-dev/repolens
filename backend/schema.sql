@@ -142,18 +142,24 @@ CREATE TABLE findings (
 );
 CREATE INDEX findings_snapshot ON findings (snapshot_id, severity);
 
+-- Code chunks hang off a symbol; documentation chunks (README, *.md, *.rst, docs/*.txt; app/qa/docs.py)
+-- have no symbol, only their file. Doc files never become symbols, so they stay out of the graph.
 CREATE TABLE chunks (
   id           BIGSERIAL PRIMARY KEY,
   snapshot_id  BIGINT NOT NULL REFERENCES snapshots(id) ON DELETE CASCADE,
-  symbol_id    BIGINT NOT NULL REFERENCES symbols(id) ON DELETE CASCADE,
+  symbol_id    BIGINT REFERENCES symbols(id) ON DELETE CASCADE,     -- NULL for doc chunks
+  file_id      BIGINT NOT NULL REFERENCES files(id) ON DELETE CASCADE,
+  source       TEXT NOT NULL DEFAULT 'code' CHECK (source IN ('code', 'doc')),
   start_line   INT NOT NULL,                      -- the chunk's own range (a window of a long
   end_line     INT NOT NULL,                      -- symbol has its own), cited as path:start-end
   token_count  INT NOT NULL,                      -- model tokens of the embedded text
   in_test      BOOLEAN NOT NULL DEFAULT false,    -- test or example code (app/paths.py)
   text         TEXT NOT NULL,                     -- redacted
   search_tsv   TSVECTOR,
-  embedding    vector(384)                        -- all-MiniLM-L6-v2 / bge-small class models
+  embedding    vector(384),                       -- all-MiniLM-L6-v2 / bge-small class models
+  CONSTRAINT chunks_code_has_symbol CHECK (source = 'doc' OR symbol_id IS NOT NULL)
 );
 CREATE INDEX chunks_snapshot ON chunks (snapshot_id);
+CREATE INDEX chunks_file ON chunks (file_id);
 CREATE INDEX chunks_tsv ON chunks USING gin (search_tsv);
 -- No vector index: exact scan per snapshot (see design section 6).

@@ -48,24 +48,28 @@ def test_unanswerable_questions_are_not_scored():
     miss = {"hit": False}
     rows = [
         {"repo": "a", "unanswerable": False, "first_hit_rank": 2,
-         "configs": {"A": miss, "B": hit, "C": hit, "D": miss, "DG": hit}},
+         "configs": {"A": miss, "B": hit, "C": hit, "D": miss, "DG": hit, "E": hit}},
         {"repo": "a", "unanswerable": True, "top_paths": ["x.py:1-2"]},  # no hits: never scored
     ]
     summary = rr.summarise(rows)
     assert summary["all"]["questions"] == 1 and summary["a"]["questions"] == 1
-    assert summary["all"]["recall"] == {"A": 0.0, "B": 1.0, "C": 1.0, "D": 0.0, "DG": 1.0}
+    assert summary["all"]["recall"] == {"A": 0.0, "B": 1.0, "C": 1.0, "D": 0.0, "DG": 1.0,
+                                        "E": 1.0}
     assert summary["all"]["mrr_search_16"] == 0.5
 
 
 def test_configs_compare_c_with_b_at_equal_size():
     configs = load().CONFIGS
-    assert configs["A"] == {"k": 8, "expand": False, "expand_max": 0, "hybrid": False}
+    assert configs["A"] == {"k": 8, "expand": False, "expand_max": 0, "hybrid": False,
+                            "doc_pool": 0}
     assert configs["B"]["k"] == configs["C"]["k"] + configs["C"]["expand_max"] == 16
     # v2.1: A, B and C stay vector-only whatever QA_HYBRID's default is; D and DG are hybrid,
-    # DG with C's expansion
+    # DG with C's expansion; E is DG with the doc pool; only E sends docs
     assert not any(configs[c]["hybrid"] for c in "ABC")
     assert configs["D"] == {**configs["A"], "hybrid": True}
     assert configs["DG"] == {**configs["C"], "hybrid": True}
+    assert configs["E"] == {**configs["DG"], "doc_pool": 2, "doc_cutoff_rank": 8}
+    assert [n for n, c in configs.items() if c["doc_pool"]] == ["E"]
 
 
 def test_questions_file_is_well_formed():

@@ -573,26 +573,35 @@ function ResultRow({
 function SourceChips({ snapshotId, sources }: { snapshotId: number; sources: Citation[] }) {
   return (
     <ul className="citation-list">
-      {sources.map((c) => (
-        <li key={`${c.path}:${c.start_line}-${c.end_line}`}>
-          <Link
-            className="citation"
-            state={REVEAL}
-            to={exploreHref(snapshotId, {
-              fileId: c.file_id,
-              lines: { start: c.start_line, end: c.end_line },
-              tests: c.in_test,
-              ask: true,
-            })}
-          >
-            <Icon name="file" size={14} />
-            <span>
-              <PathText path={c.path} />:{c.start_line}
-              {c.end_line !== c.start_line ? `-${c.end_line}` : ""}
-            </span>
-          </Link>
-        </li>
-      ))}
+      {sources.map((c) => {
+        const doc = c.source === "doc";
+        return (
+          <li key={`${c.path}:${c.start_line}-${c.end_line}`}>
+            <Link
+              className="citation"
+              data-source={doc ? "doc" : "code"}
+              state={REVEAL}
+              to={exploreHref(snapshotId, {
+                ...(doc ? { docId: c.file_id } : { fileId: c.file_id }),
+                lines: { start: c.start_line, end: c.end_line },
+                tests: c.in_test,
+                ask: true,
+              })}
+            >
+              <Icon name="file" size={14} />
+              <span>
+                <PathText path={c.path} />:{c.start_line}
+                {c.end_line !== c.start_line ? `-${c.end_line}` : ""}
+              </span>
+              {doc ? (
+                <span className="tag" data-kind="doc">
+                  documentation
+                </span>
+              ) : null}
+            </Link>
+          </li>
+        );
+      })}
     </ul>
   );
 }
