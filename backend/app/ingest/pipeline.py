@@ -33,6 +33,7 @@ from app.ingest.parse_js import parse_js
 from app.ingest.resolve import JsModules, PythonModules, Target, resolve_js, resolve_python
 from app.paths import is_doc_path, is_nonrunning_path, is_test_path
 from app.qa.chunks import Chunk, build_chunks, search_words
+from app.qa.docs import build_all_doc_chunks
 from app.qa.embed import get_embedder
 
 log = logging.getLogger("repolens.ingest")
@@ -476,6 +477,66 @@ def _set_progress(job_id: int, done: int, total: int, percent: int | None = None
         )
 
 
+def _vector_text(v: list[float]) -> str:
+    return "[" + ",".join(f"{x:.6f}" for x in v) + "]"
+
+
+def stored_doc_files(snapshot_id: int) -> list[tuple[str, str]]:
+    """(path, redacted content) of the stored files that are not code, in path order: the input
+    of documentation chunking for fresh analyses and the backfill alike."""
+    with pool().connection() as conn:
+        return [(r["path"], r["content"] or "") for r in conn.execute(
+            "SELECT path, content FROM files WHERE snapshot_id = %s AND language IS NULL"
+            " ORDER BY path", (snapshot_id,))]
+
+
+def embed_docs(snapshot_id: int, job_id: int | None, deadline: float) -> dict:
+    """Documentation chunks of a snapshot (app/qa/docs.py) from its stored files, embedded and
+    put in place of the snapshot's doc rows in one transaction (code rows are never touched).
+    Used by fresh analyses (search_first) and by the backfill (app.ingest.docchunks), so both
+    make the same chunks. Raises JobError past the deadline, before anything is replaced."""
+    embedder = get_embedder()
+    started = time.monotonic()
+    chunks, picked = build_all_doc_chunks(stored_doc_files(snapshot_id), embedder.count_tokens,
+                                          embedder.max_tokens)
+    vectors: list[list[float]] = []
+    step = 256
+    if job_id is not None:
+        _set_progress(job_id, 0, len(chunks))
+    for i in range(0, len(chunks), step):
+        vectors += embedder.embed([c.embed_text for c in chunks[i:i + step]])
+        _check_deadline(deadline)
+        if job_id is not None:
+            _set_progress(job_id, min(i + step, len(chunks)), len(chunks))
+    with pool().connection() as conn, conn.transaction():
+        conn.execute("DELETE FROM chunks WHERE snapshot_id = %s AND source = 'doc'",
+                     (snapshot_id,))
+        file_ids = {r["path"]: r["id"] for r in conn.execute(
+            "SELECT id, path FROM files WHERE snapshot_id = %s", (snapshot_id,))}
+        rows = [
+            (snapshot_id, file_ids[c.path], c.start_line, c.end_line, c.token_count,
+             is_test_path(c.path), c.text, search_words(c), _vector_text(v))
+            for c, v in zip(chunks, vectors, strict=True)
+        ]
+        with conn.cursor() as cur:
+            cur.executemany(
+                "INSERT INTO chunks (snapshot_id, symbol_id, file_id, start_line, end_line,"
+                " token_count, in_test, text, search_tsv, embedding, source)"
+                " VALUES (%s, NULL, %s, %s, %s, %s, %s, %s, to_tsvector('simple', %s),"
+                " %s::vector, 'doc')",
+                rows,
+            )
+    return {
+        "group": "docs",
+        "files": len(picked.files),
+        "too_large": picked.too_large,
+        "chunks": len(rows),
+        "windows": sum(1 for c in chunks if c.window),
+        "embed_seconds": round(time.monotonic() - started, 1),
+        "model": f"{embedder.name}@{embedder.revision}",
+    }
+
+
 def embed_group(snapshot_id: int, job_id: int, chunks: list[Chunk], in_test: bool,
                 deadline: float, percent: tuple[int, int] | None = None) -> dict:
     """Embed one group (non-test or test chunks) and replace that group's rows in one
@@ -495,27 +556,27 @@ def embed_group(snapshot_id: int, job_id: int, chunks: list[Chunk], in_test: boo
     embed_seconds = time.monotonic() - started
 
     with pool().connection() as conn, conn.transaction():
-        conn.execute("DELETE FROM chunks WHERE snapshot_id = %s AND in_test = %s",
-                     (snapshot_id, in_test))
-        symbol_ids: dict[tuple[str, str], int] = {}
+        # Code rows only: documentation chunks (embed_docs) are replaced on their own.
+        conn.execute("DELETE FROM chunks WHERE snapshot_id = %s AND in_test = %s"
+                     " AND source = 'code'", (snapshot_id, in_test))
+        symbol_ids: dict[tuple[str, str], tuple[int, int]] = {}
         for r in conn.execute(
-            "SELECT f.path, s.qualified_name, s.id FROM symbols s JOIN files f ON f.id = s.file_id"
-            " WHERE s.snapshot_id = %s ORDER BY s.id DESC",
+            "SELECT f.path, s.qualified_name, s.id, s.file_id FROM symbols s"
+            " JOIN files f ON f.id = s.file_id WHERE s.snapshot_id = %s ORDER BY s.id DESC",
             (snapshot_id,),
         ):
-            symbol_ids[(r["path"], r["qualified_name"])] = r["id"]  # lowest id wins
+            symbol_ids[(r["path"], r["qualified_name"])] = (r["id"], r["file_id"])  # lowest wins
         rows = [
-            (snapshot_id, symbol_ids[(c.path, c.qualified_name)], c.start_line, c.end_line,
-             c.token_count, in_test, c.text, search_words(c),
-             "[" + ",".join(f"{x:.6f}" for x in v) + "]")
+            (snapshot_id, *symbol_ids[(c.path, c.qualified_name)], c.start_line, c.end_line,
+             c.token_count, in_test, c.text, search_words(c), _vector_text(v))
             for c, v in zip(chunks, vectors, strict=True)
             if (c.path, c.qualified_name) in symbol_ids
         ]
         with conn.cursor() as cur:
             cur.executemany(
-                "INSERT INTO chunks (snapshot_id, symbol_id, start_line, end_line, token_count,"
-                " in_test, text, search_tsv, embedding)"
-                " VALUES (%s, %s, %s, %s, %s, %s, %s, to_tsvector('simple', %s), %s::vector)",
+                "INSERT INTO chunks (snapshot_id, symbol_id, file_id, start_line, end_line,"
+                " token_count, in_test, text, search_tsv, embedding)"
+                " VALUES (%s, %s, %s, %s, %s, %s, %s, %s, to_tsvector('simple', %s), %s::vector)",
                 rows,
             )
     return {
@@ -574,8 +635,30 @@ def search_first(job_id: int, snapshot_id: int, parsed: dict[str, Parsed], deadl
                     "Search for questions could not be prepared (internal error).")
         return None
     log.info("job %s: embed %s split_units=%d", job_id, stats, split_units)
+    _embed_docs_or_note(job_id, snapshot_id, deadline)
     _set_search(job_id, "tests" if test else "ready")
     return test
+
+
+def _embed_docs_or_note(job_id: int, snapshot_id: int, deadline: float) -> None:
+    """Documentation chunks, after the non-test code and before search is called ready (so an
+    evaluation that waits for search sees them). A failure here leaves code search working."""
+    if config.QA_DOC_POOL <= 0:
+        log.info("job %s: documentation not prepared for search (QA_DOC_POOL=0)", job_id)
+        return
+    try:
+        stats = embed_docs(snapshot_id, job_id, deadline)
+    except JobError:
+        log.warning("job %s: documentation search stopped at the time limit; code search is"
+                    " ready without it", job_id)
+        return
+    except Exception as e:
+        log.error("job %s: documentation search failed: %s", job_id, type(e).__name__)
+        return
+    log.info("job %s: embed %s", job_id, {k: v for k, v in stats.items() if k != "too_large"})
+    if stats["too_large"]:
+        log.info("job %s: %d documentation file(s) over 200 KB left out of search: %s", job_id,
+                 len(stats["too_large"]), ", ".join(stats["too_large"]))
 
 
 def search_tests(job_id: int, snapshot_id: int, test: list[Chunk]) -> None:

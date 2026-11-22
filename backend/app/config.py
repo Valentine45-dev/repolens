@@ -56,3 +56,9 @@ QA_CONTEXT_TOKENS = int(os.environ.get("QA_CONTEXT_TOKENS", "6000"))  # snippet 
 QA_HYBRID = os.environ.get("QA_HYBRID", "1") == "1"
 QA_HYBRID_DEPTH = int(os.environ.get("QA_HYBRID_DEPTH", "16"))  # each list's depth before fusion
 QA_RRF_K = int(os.environ.get("QA_RRF_K", "60"))
+# Documentation in Ask (Step 5 Part A): up to QA_DOC_POOL doc chunks after the code, each only if
+# its vector distance is no worse than the QA_DOC_CUTOFF_RANK-th code vector hit's (or the last
+# hit's, if there are fewer). 0 turns docs off (and doc chunks are then not prepared at analysis).
+# Defaults set by the Part A adoption rule (PROGRESS.md).
+QA_DOC_POOL = int(os.environ.get("QA_DOC_POOL", "2"))
+QA_DOC_CUTOFF_RANK = int(os.environ.get("QA_DOC_CUTOFF_RANK", "8"))

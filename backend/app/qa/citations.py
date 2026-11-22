@@ -41,8 +41,9 @@ class Citation:
     start_line: int
     end_line: int
     file_id: int
-    symbol_id: int
+    symbol_id: int | None  # None for documentation
     in_test: bool  # the Explorer hides test files unless asked, so the chip says so
+    source: str = "code"  # "doc": the chip says documentation and opens the doc panel
 
 
 @dataclass
@@ -133,7 +134,8 @@ def validate(text: str, snippets: list[Snippet]) -> Validated:
             return _GONE
         citations.setdefault(
             (path, start, end),
-            Citation(path, start, end, snippet.file_id, snippet.symbol_id, snippet.in_test),
+            Citation(path, start, end, snippet.file_id, snippet.symbol_id, snippet.in_test,
+                     snippet.source),
         )
         shown = m[0]
         if m["astart"] or "\\" in m["path"]:  # shown in the usual form
