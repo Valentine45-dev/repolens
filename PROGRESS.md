@@ -2491,4 +2491,12 @@ are deliberately not changed after seeing eval results; these stay as documented
   `eval/scorer_selfcheck.py` (the runner's own manifest check; passes: scoring files as frozen, runner
   unchanged) and `eval/retrieval_compare.py`. Retrieval eval `retrieval_context-analysis-default-*-00c90d3.json`
   identical to `...-after-job-lock-race-*-edc3726.json` (A 0.71, B 0.86, C 0.93), as predicted. Backend 713
-  passed, 3 skipped; ruff clean. $0.
+  passed, 3 skipped; ruff clean. $0. **Merged into `main` (22 Nov, `5c2b2b2`), CI green on `main`.**
+- **22 Nov 2026: locked run v2.0 done by the owner per LOCKED-FREEZE-CHECKS §5** — analysis in-process at
+  `f4f2331` with MAX_ANALYSIS_S 2100, all five search ready; question file hash matched; validate reported 2
+  (deviation: the pre-registered count was 1; the one expected path v2.0 cannot store appears in both
+  expected-file lists of one graph question and validate counts each occurrence; a diagnostic, ids and paths
+  only, confirmed it before any question was run; the run continued), recorded before any question; two passes,
+  $1.19 total (pass 2 had 8 LLM network failures, status unavailable); results committed on branch
+  `eval/locked-run-v2.0` (`5f5c628`), pushed, not merged until after v2.1. Sealed: no scores recorded here.
+  For v2.1 the pre-registered run-day validate count is **2**.
