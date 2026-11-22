@@ -61,7 +61,8 @@ CONFIGS = {
     "D": {"k": 8, "expand": False, "expand_max": 0, "hybrid": True},
     "DG": {"k": 8, "expand": True, "expand_max": 8, "hybrid": True},
 }
-LIVE_CONFIG = "C"  # what /ask uses with the default settings (QA_TOP_K 8, expansion on, 8)
+# What /ask uses with the default settings (QA_TOP_K 8, expansion on, 8, QA_HYBRID on since v2.1).
+LIVE_CONFIG = "DG"
 PAIRS = [("C", "B"), ("C", "A"), ("B", "A"), ("DG", "C"), ("DG", "D"), ("D", "A")]
 PASS_CAP_USD = 1.0
 # Frozen in Part B step 2 (eval/results/LOCKED-FREEZE-CHECKS.md): >= 2.5x the slowest

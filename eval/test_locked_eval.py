@@ -148,6 +148,14 @@ def test_meter_cap_arithmetic():
 
 # ---- blind sheet ---------------------------------------------------------------------------
 
+def test_live_config_is_what_ask_uses_by_default():
+    from app import config
+
+    live = le.CONFIGS[le.LIVE_CONFIG]
+    assert (live["k"], live["expand"], live["expand_max"], live["hybrid"]) == (
+        config.QA_TOP_K, config.QA_GRAPH_EXPANSION, config.QA_EXPAND_MAX, config.QA_HYBRID)
+
+
 def _every_config(records: list[dict]) -> list[dict]:
     """The shared test records carry retrieval for A, B and C (v2.0); a real run records every
     configuration in le.CONFIGS, so configurations added later get C's retrieval here."""
