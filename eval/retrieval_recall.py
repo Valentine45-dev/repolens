@@ -15,6 +15,12 @@ A, B and C pass hybrid=False, so they mean what they meant before hybrid search 
 format; `source: code` ranges only), so the summary covers both sets. Paired comparisons (wins,
 losses, exact two-sided sign test) use eval/locked_metrics.paired.
 
+--doc-ladder (Step 5 Part A, rule fixed in PROGRESS.md before the run): in the live configuration
+(LIVE, the product defaults) with the default doc pool, for each doc cutoff rank in DOC_LADDER:
+doc-leak = share of the code_how questions (v1 questions and the tuning file's code_how) with at
+least one doc chunk sent; doc_hit = per purpose question of the tuning file, whether a sent doc
+chunk overlaps a `source: doc` range. Code is checked to be the same at every rung.
+
 Questions and labels come from a YAML file (default eval/questions.yaml); each repo entry names
 the URL and commit, and the matching analysed snapshot is looked up in the database (it must be
 `done`). Retrieval is the same function /ask uses (app.qa.retrieve.retrieve), with test code
@@ -44,6 +50,8 @@ CONFIGS = {
 }
 PAIRS = [("C", "B"), ("C", "A"), ("B", "A"), ("DG", "C"), ("DG", "D"), ("D", "A")]
 CODE_TYPES = ("code_how", "locate")
+DOC_LADDER = (8, 6, 4, 2, 1)  # loosest first; the rule adopts the loosest with leak <= 30%
+LEAK_BAR = 0.30
 
 
 def overlaps(a_start: int, a_end: int, b_start: int, b_end: int) -> bool:
@@ -134,6 +142,61 @@ def evaluate(repos: list[dict]) -> dict:
             "comparisons": compare(rows)}
 
 
+def _ranges(snippets, via: str | None = None) -> list[str]:
+    return [f"{s.path}:{s.start_line}-{s.end_line}" for s in snippets if via is None or s.via == via]
+
+
+def doc_ladder(v1_repos: list[dict], tuning_file: Path | None) -> dict:
+    """Doc-leak and doc_hit for each rung of DOC_LADDER, in the live configuration."""
+    from app import config
+
+    code_how = []  # (repo name, question id, question, snapshot)
+    for repo in v1_repos:
+        sid = snapshot_for(repo)
+        code_how += [(repo["name"], q["id"], q["question"], sid) for q in repo["questions"]
+                     if not q.get("unanswerable")]
+    purpose = []  # (repo, id, question, snapshot, doc ranges)
+    if tuning_file:
+        data = yaml.safe_load(tuning_file.read_text(encoding="utf-8"))
+        for q in data["questions"]:
+            if q["type"] not in ("code_how", "purpose"):
+                continue
+            sid = snapshot_for({"name": q["repo"], "url": f"https://github.com/{q['repo']}",
+                                "commit": q["commit"]})
+            if q["type"] == "code_how":
+                code_how.append((q["repo"], q["id"], q["question"], sid))
+            else:
+                purpose.append((q["repo"], q["id"], q["question"], sid,
+                                [e for e in q["expected"] if e["source"] == "doc"]))
+    out = {"pool": config.QA_DOC_POOL, "live": "product defaults", "bar": LEAK_BAR, "rungs": {}}
+    for rank in DOC_LADDER:
+        rung = {"code_how": [], "purpose": []}
+        for name, qid, text, sid in code_how:
+            r = retrieve(sid, text, doc_cutoff_rank=rank)
+            off = retrieve(sid, text, doc_pool=0)
+            rung["code_how"].append({
+                "q": f"{name}#{qid}", "docs_sent": _ranges(r.snippets, "doc"),
+                "code_same_as_pool_0": _ranges([s for s in r.snippets if s.via != "doc"])
+                == _ranges(off.snippets)})
+        for name, qid, text, sid, wanted in purpose:
+            r = retrieve(sid, text, doc_cutoff_rank=rank)
+            docs = [s for s in r.snippets if s.via == "doc"]
+            rung["purpose"].append({"q": f"{name}#{qid}", "docs_sent": _ranges(docs),
+                                    "doc_hit": is_hit(docs, wanted) if wanted else None})
+        n = len(rung["code_how"])
+        leaked = sum(1 for x in rung["code_how"] if x["docs_sent"])
+        rung["doc_leak"] = {"questions": n, "with_doc": leaked,
+                            "rate": round(leaked / n, 3) if n else None}
+        rung["doc_hit"] = {"questions": len(rung["purpose"]),
+                           "hits": sum(1 for x in rung["purpose"] if x["doc_hit"])}
+        rung["code_unchanged"] = all(x["code_same_as_pool_0"] for x in rung["code_how"])
+        out["rungs"][str(rank)] = rung
+    passing = [r for r in DOC_LADDER if out["rungs"][str(r)]["doc_leak"]["rate"] is not None
+               and out["rungs"][str(r)]["doc_leak"]["rate"] <= LEAK_BAR]
+    out["adopted_rank"] = passing[0] if passing else None  # loosest that meets the bar
+    return out
+
+
 def compare(rows: list[dict]) -> dict:
     """Paired hit/miss per question for each pair of configurations, with the questions named."""
     from locked_metrics import paired  # the frozen scorer's own sign test
@@ -196,7 +259,27 @@ def main() -> None:
     parser.add_argument("--tuning-locked", type=Path, default=None,
                         help="also score this locked-format file's code_how/locate questions")
     parser.add_argument("--label", default="", help="name for this run, e.g. baseline")
+    parser.add_argument("--doc-ladder", action="store_true",
+                        help="only the Part A doc cutoff ladder (doc-leak, doc_hit)")
     args = parser.parse_args()
+    if args.doc_ladder:
+        db.open_pool()
+        try:
+            info = run_info(llm_used=False)
+            info["label"] = args.label
+            print(header(info), f"| {args.label}" if args.label else "")
+            res = doc_ladder(load_questions(args.questions), args.tuning_locked)
+            for rank, rung in res["rungs"].items():
+                print(f"cutoff at code vector hit {rank}: doc-leak {rung['doc_leak']['with_doc']}/"
+                      f"{rung['doc_leak']['questions']} = {rung['doc_leak']['rate']}; doc_hit"
+                      f" {rung['doc_hit']['hits']}/{rung['doc_hit']['questions']}; code unchanged"
+                      f" {rung['code_unchanged']}")
+            print(f"adopted (loosest with doc-leak <= {LEAK_BAR}): {res['adopted_rank']}")
+            name = "doc_ladder" + (f"-{args.label}" if args.label else "")
+            print("saved", save_results(name, info, res))
+        finally:
+            db.close_pool()
+        return
 
     db.open_pool()
     try:
