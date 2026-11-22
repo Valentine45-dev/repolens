@@ -145,7 +145,7 @@ def ai_answer(snapshot_id: int, question: str, include_tests: bool = False,
     prompt = build_user_message(question, [
         format_snippet(s.path, s.qualified_name, s.start_line, s.text, s.source)
         for s in found.snippets
-    ])
+    ], has_docs=any(s.source == "doc" for s in found.snippets))
     estimate = int(len(system.text + prompt) / CHARS_PER_TOKEN) + config.LLM_MAX_TOKENS
     charge = provider.counts_toward_budget  # False for FakeProvider: made-up token counts
     if charge and not _reserve(snapshot_id, estimate):

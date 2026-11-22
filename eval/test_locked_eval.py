@@ -152,8 +152,44 @@ def test_live_config_is_what_ask_uses_by_default():
     from app import config
 
     live = le.CONFIGS[le.LIVE_CONFIG]
-    assert (live["k"], live["expand"], live["expand_max"], live["hybrid"]) == (
-        config.QA_TOP_K, config.QA_GRAPH_EXPANSION, config.QA_EXPAND_MAX, config.QA_HYBRID)
+    assert (live["k"], live["expand"], live["expand_max"], live["hybrid"], live["doc_pool"]) == (
+        config.QA_TOP_K, config.QA_GRAPH_EXPANSION, config.QA_EXPAND_MAX, config.QA_HYBRID,
+        config.QA_DOC_POOL)
+
+
+def test_config_e_is_dg_with_the_doc_pool_and_every_other_config_is_code_only():
+    e, dg = le.CONFIGS["E"], le.CONFIGS["DG"]
+    assert {k: v for k, v in e.items() if not k.startswith("doc_")} == {
+        k: v for k, v in dg.items() if not k.startswith("doc_")}
+    assert (e["doc_pool"], e["doc_cutoff_rank"]) == (2, 8)
+    assert all(c["doc_pool"] == 0 for n, c in le.CONFIGS.items() if n != "E")
+    assert ("E", "DG") in le.PAIRS
+
+
+@pytest.mark.parametrize("files, chunks, refuses", [(3, 0, True), (3, 5, False), (0, 0, False)])
+def test_doc_guard_refuses_only_a_snapshot_with_doc_files_and_no_doc_chunks(
+        monkeypatch, files, chunks, refuses):
+    from app.ingest import docchunks
+
+    monkeypatch.setattr(docchunks, "doc_status",
+                        lambda sid: {"doc_files": files, "doc_chunks": chunks})
+    facts = {"id": 7}
+    if refuses:
+        with pytest.raises(SystemExit, match="docchunks 7"):
+            le.require_docs(facts, "x/y")
+    else:
+        le.require_docs(facts, "x/y")
+        assert facts["doc_chunks"] == chunks
+
+
+def test_doc_guard_does_nothing_when_no_config_sends_docs(monkeypatch):
+    from app import config
+    from app.ingest import docchunks
+
+    monkeypatch.setattr(config, "QA_DOC_POOL", 0)
+    monkeypatch.setattr(le, "CONFIGS", {n: c for n, c in le.CONFIGS.items() if n != "E"})
+    monkeypatch.setattr(docchunks, "doc_status", lambda sid: pytest.fail("not called"))
+    le.require_docs({"id": 7}, "x/y")
 
 
 def _every_config(records: list[dict]) -> list[dict]:

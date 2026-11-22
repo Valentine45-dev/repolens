@@ -59,6 +59,7 @@ QA_RRF_K = int(os.environ.get("QA_RRF_K", "60"))
 # Documentation in Ask (Step 5 Part A): up to QA_DOC_POOL doc chunks after the code, each only if
 # its vector distance is no worse than the QA_DOC_CUTOFF_RANK-th code vector hit's (or the last
 # hit's, if there are fewer). 0 turns docs off (and doc chunks are then not prepared at analysis).
-# Defaults set by the Part A adoption rule (PROGRESS.md).
-QA_DOC_POOL = int(os.environ.get("QA_DOC_POOL", "2"))
+# Off by default since 22 Nov by the Part A adoption rule (PROGRESS.md): doc-leak was above 30% at
+# every cutoff tried (75% at the 8th code hit, 62.5% at the 1st). QA_DOC_POOL=2 turns it on.
+QA_DOC_POOL = int(os.environ.get("QA_DOC_POOL", "0"))
 QA_DOC_CUTOFF_RANK = int(os.environ.get("QA_DOC_CUTOFF_RANK", "8"))

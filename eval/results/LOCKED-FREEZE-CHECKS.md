@@ -186,7 +186,12 @@ prices per MTok from the provider's pricing page. Keep every output; never re-ru
 new retrieval configurations, add `--runner-changed`; the diff against the freeze is saved in the
 results. The scoring files must be byte-identical (after line endings), or the run refuses.
 
-v2.1 additions (Step 5 Part A, 22 Nov), between steps 4 and 6:
+v2.1 additions (Step 5 Part A, 22 Nov), between steps 4 and 6. **Part A ships switched off**
+(`QA_DOC_POOL` 0 by its adoption rule: doc-leak above 30% at every cutoff, PROGRESS.md), so `/ask`
+and every answer are code only. The doc backfill is needed only if a configuration sends docs. The
+v2.1 runner has one: **E**, retrieval only (never sent to the LLM; answers unaffected), DG plus up
+to 2 doc chunks at the 8th code vector hit's cutoff, reported for doc_hit (its code_hit must equal
+DG's). So step 4a stays for v2.1:
 - 4a. Step 4 reuses the v2.0 analyses (same pins), which have no documentation chunks. `analyse`
   now prints each repo's snapshot id and, at the end, the backfill command for them. The owner runs
   it (agents never run it on these snapshots). It chunks and embeds the stored doc files with the
@@ -197,9 +202,9 @@ v2.1 additions (Step 5 Part A, 22 Nov), between steps 4 and 6:
 - 6. Validate as before. **Pre-registered for v2.1: 2 expected paths not in the analysed snapshots,
   the same count as v2.0's run-day result** (doc chunks do not change which files are stored).
   Any other count: stop and report.
-- The run (step 8, with `--runner-changed`) refuses while docs are on (`QA_DOC_POOL` > 0) and a
-  snapshot's stored doc chunks differ in number from what the chunker makes from its stored files
-  (missing backfill or out of date); run info records the real `doc_pool` setting and the doc
+- The run (step 8, with `--runner-changed`) refuses when a configuration sends docs (E is in
+  `CONFIGS`, or `QA_DOC_POOL` > 0) and a snapshot has doc files but 0 doc chunks (the backfill was
+  not run). Run info records the real doc settings (`/ask` off; E's pool and cutoff) and the doc
   chunk count per repo.
 
 ## 6. Incidents and limits

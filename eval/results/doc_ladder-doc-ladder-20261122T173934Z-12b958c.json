@@ -1,0 +1,739 @@
+{
+  "run": {
+    "commit_sha": "12b958c9f93105b833bef7d9a485cbbd279f9824",
+    "dirty": false,
+    "run_at": "2026-11-22T17:39:34+00:00",
+    "machine": "LAPTOP-4C2E555R",
+    "cpu": "Intel(R) Pentium(R) Silver N5030 CPU @ 1.10GHz",
+    "cpu_threads": 4,
+    "ram_gb": 7.8,
+    "os": "Windows 11 (10.0.26300)",
+    "python": "3.12.16",
+    "packages": {
+      "torch": "2.14.1+cpu",
+      "sentence-transformers": "6.2.0",
+      "transformers": "5.21.0",
+      "tree-sitter": "0.25.2",
+      "anthropic": "2.3.0"
+    },
+    "max_analysis_s": 1200,
+    "tool_pins": {
+      "bandit": "bandit==1.9.4",
+      "semgrep": "semgrep==1.182.1"
+    },
+    "notes": "",
+    "embedder": "sentence-transformers",
+    "embed_model": "sentence-transformers/all-MiniLM-L6-v2",
+    "embed_revision": "1110a243fdf4706b3f48f1d95db1a4f5529b4d41",
+    "llm_used": false,
+    "llm": {
+      "provider": "anthropic",
+      "model": "claude-sonnet-5-5",
+      "effort": "low",
+      "thinking": "between_tools",
+      "max_tokens": 4000,
+      "prompt_version": "2026-11-22.1"
+    },
+    "retrieval": {
+      "top_k": 8,
+      "graph_expansion": true,
+      "expand_max": 8,
+      "context_tokens": 6000,
+      "hybrid": true,
+      "hybrid_depth": 16,
+      "rrf_k": 60,
+      "doc_pool": 2,
+      "doc_cutoff_rank": 8
+    },
+    "label": "doc-ladder"
+  },
+  "pool": 2,
+  "live": "product defaults",
+  "bar": 0.3,
+  "rungs": {
+    "8": {
+      "code_how": [
+        {
+          "q": "express#1",
+          "docs_sent": [
+            "Readme.md:71-79"
+          ],
+          "code_same_as_pool_0": true
+        },
+        {
+          "q": "express#2",
+          "docs_sent": [],
+          "code_same_as_pool_0": true
+        },
+        {
+          "q": "express#3",
+          "docs_sent": [],
+          "code_same_as_pool_0": true
+        },
+        {
+          "q": "express#4",
+          "docs_sent": [],
+          "code_same_as_pool_0": true
+        },
+        {
+          "q": "express#5",
+          "docs_sent": [],
+          "code_same_as_pool_0": true
+        },
+        {
+          "q": "express#6",
+          "docs_sent": [
+            "Readme.md:119-127",
+            "Readme.md:71-79"
+          ],
+          "code_same_as_pool_0": true
+        },
+        {
+          "q": "express#7",
+          "docs_sent": [
+            "Readme.md:28-48",
+            "Readme.md:71-79"
+          ],
+          "code_same_as_pool_0": true
+        },
+        {
+          "q": "itsdangerous#9",
+          "docs_sent": [
+            "README.md:3-13",
+            "README.md:16-32"
+          ],
+          "code_same_as_pool_0": true
+        },
+        {
+          "q": "itsdangerous#10",
+          "docs_sent": [
+            "README.md:3-13",
+            "README.md:16-32"
+          ],
+          "code_same_as_pool_0": true
+        },
+        {
+          "q": "itsdangerous#11",
+          "docs_sent": [
+            "README.md:3-13",
+            "README.md:16-32"
+          ],
+          "code_same_as_pool_0": true
+        },
+        {
+          "q": "itsdangerous#12",
+          "docs_sent": [
+            "README.md:3-13",
+            "docs/url_safe.rst:3-21"
+          ],
+          "code_same_as_pool_0": true
+        },
+        {
+          "q": "itsdangerous#13",
+          "docs_sent": [
+            "README.md:3-13",
+            "docs/concepts.rst:5-15"
+          ],
+          "code_same_as_pool_0": true
+        },
+        {
+          "q": "itsdangerous#14",
+          "docs_sent": [
+            "README.md:3-13",
+            "docs/timed.rst:3-28"
+          ],
+          "code_same_as_pool_0": true
+        },
+        {
+          "q": "itsdangerous#15",
+          "docs_sent": [
+            "docs/concepts.rst:56-78",
+            "docs/concepts.rst:18-42"
+          ],
+          "code_same_as_pool_0": true
+        },
+        {
+          "q": "pallets/flask#T01",
+          "docs_sent": [
+            "docs/quickstart.rst:783-797",
+            "docs/patterns/flashing.rst:1-12"
+          ],
+          "code_same_as_pool_0": true
+        },
+        {
+          "q": "pallets/itsdangerous#T02",
+          "docs_sent": [
+            "docs/concepts.rst:18-42",
+            "README.md:3-13"
+          ],
+          "code_same_as_pool_0": true
+        }
+      ],
+      "purpose": [
+        {
+          "q": "pallets/flask#T05",
+          "docs_sent": [
+            "README.md:38-45",
+            "docs/tutorial/next.rst:14-36"
+          ],
+          "doc_hit": false
+        }
+      ],
+      "doc_leak": {
+        "questions": 16,
+        "with_doc": 12,
+        "rate": 0.75
+      },
+      "doc_hit": {
+        "questions": 1,
+        "hits": 0
+      },
+      "code_unchanged": true
+    },
+    "6": {
+      "code_how": [
+        {
+          "q": "express#1",
+          "docs_sent": [
+            "Readme.md:71-79"
+          ],
+          "code_same_as_pool_0": true
+        },
+        {
+          "q": "express#2",
+          "docs_sent": [],
+          "code_same_as_pool_0": true
+        },
+        {
+          "q": "express#3",
+          "docs_sent": [],
+          "code_same_as_pool_0": true
+        },
+        {
+          "q": "express#4",
+          "docs_sent": [],
+          "code_same_as_pool_0": true
+        },
+        {
+          "q": "express#5",
+          "docs_sent": [],
+          "code_same_as_pool_0": true
+        },
+        {
+          "q": "express#6",
+          "docs_sent": [
+            "Readme.md:119-127",
+            "Readme.md:71-79"
+          ],
+          "code_same_as_pool_0": true
+        },
+        {
+          "q": "express#7",
+          "docs_sent": [
+            "Readme.md:28-48",
+            "Readme.md:71-79"
+          ],
+          "code_same_as_pool_0": true
+        },
+        {
+          "q": "itsdangerous#9",
+          "docs_sent": [
+            "README.md:3-13",
+            "README.md:16-32"
+          ],
+          "code_same_as_pool_0": true
+        },
+        {
+          "q": "itsdangerous#10",
+          "docs_sent": [
+            "README.md:3-13",
+            "README.md:16-32"
+          ],
+          "code_same_as_pool_0": true
+        },
+        {
+          "q": "itsdangerous#11",
+          "docs_sent": [
+            "README.md:3-13",
+            "README.md:16-32"
+          ],
+          "code_same_as_pool_0": true
+        },
+        {
+          "q": "itsdangerous#12",
+          "docs_sent": [
+            "README.md:3-13",
+            "docs/url_safe.rst:3-21"
+          ],
+          "code_same_as_pool_0": true
+        },
+        {
+          "q": "itsdangerous#13",
+          "docs_sent": [
+            "README.md:3-13",
+            "docs/concepts.rst:5-15"
+          ],
+          "code_same_as_pool_0": true
+        },
+        {
+          "q": "itsdangerous#14",
+          "docs_sent": [
+            "README.md:3-13",
+            "docs/timed.rst:3-28"
+          ],
+          "code_same_as_pool_0": true
+        },
+        {
+          "q": "itsdangerous#15",
+          "docs_sent": [
+            "docs/concepts.rst:56-78",
+            "docs/concepts.rst:18-42"
+          ],
+          "code_same_as_pool_0": true
+        },
+        {
+          "q": "pallets/flask#T01",
+          "docs_sent": [
+            "docs/quickstart.rst:783-797",
+            "docs/patterns/flashing.rst:1-12"
+          ],
+          "code_same_as_pool_0": true
+        },
+        {
+          "q": "pallets/itsdangerous#T02",
+          "docs_sent": [
+            "docs/concepts.rst:18-42",
+            "README.md:3-13"
+          ],
+          "code_same_as_pool_0": true
+        }
+      ],
+      "purpose": [
+        {
+          "q": "pallets/flask#T05",
+          "docs_sent": [
+            "README.md:38-45",
+            "docs/tutorial/next.rst:14-36"
+          ],
+          "doc_hit": false
+        }
+      ],
+      "doc_leak": {
+        "questions": 16,
+        "with_doc": 12,
+        "rate": 0.75
+      },
+      "doc_hit": {
+        "questions": 1,
+        "hits": 0
+      },
+      "code_unchanged": true
+    },
+    "4": {
+      "code_how": [
+        {
+          "q": "express#1",
+          "docs_sent": [
+            "Readme.md:71-79"
+          ],
+          "code_same_as_pool_0": true
+        },
+        {
+          "q": "express#2",
+          "docs_sent": [],
+          "code_same_as_pool_0": true
+        },
+        {
+          "q": "express#3",
+          "docs_sent": [],
+          "code_same_as_pool_0": true
+        },
+        {
+          "q": "express#4",
+          "docs_sent": [],
+          "code_same_as_pool_0": true
+        },
+        {
+          "q": "express#5",
+          "docs_sent": [],
+          "code_same_as_pool_0": true
+        },
+        {
+          "q": "express#6",
+          "docs_sent": [
+            "Readme.md:119-127",
+            "Readme.md:71-79"
+          ],
+          "code_same_as_pool_0": true
+        },
+        {
+          "q": "express#7",
+          "docs_sent": [],
+          "code_same_as_pool_0": true
+        },
+        {
+          "q": "itsdangerous#9",
+          "docs_sent": [
+            "README.md:3-13",
+            "README.md:16-32"
+          ],
+          "code_same_as_pool_0": true
+        },
+        {
+          "q": "itsdangerous#10",
+          "docs_sent": [
+            "README.md:3-13",
+            "README.md:16-32"
+          ],
+          "code_same_as_pool_0": true
+        },
+        {
+          "q": "itsdangerous#11",
+          "docs_sent": [
+            "README.md:3-13",
+            "README.md:16-32"
+          ],
+          "code_same_as_pool_0": true
+        },
+        {
+          "q": "itsdangerous#12",
+          "docs_sent": [
+            "README.md:3-13",
+            "docs/url_safe.rst:3-21"
+          ],
+          "code_same_as_pool_0": true
+        },
+        {
+          "q": "itsdangerous#13",
+          "docs_sent": [
+            "README.md:3-13",
+            "docs/concepts.rst:5-15"
+          ],
+          "code_same_as_pool_0": true
+        },
+        {
+          "q": "itsdangerous#14",
+          "docs_sent": [
+            "README.md:3-13",
+            "docs/timed.rst:3-28"
+          ],
+          "code_same_as_pool_0": true
+        },
+        {
+          "q": "itsdangerous#15",
+          "docs_sent": [
+            "docs/concepts.rst:56-78",
+            "docs/concepts.rst:18-42"
+          ],
+          "code_same_as_pool_0": true
+        },
+        {
+          "q": "pallets/flask#T01",
+          "docs_sent": [
+            "docs/quickstart.rst:783-797",
+            "docs/patterns/flashing.rst:1-12"
+          ],
+          "code_same_as_pool_0": true
+        },
+        {
+          "q": "pallets/itsdangerous#T02",
+          "docs_sent": [
+            "docs/concepts.rst:18-42",
+            "README.md:3-13"
+          ],
+          "code_same_as_pool_0": true
+        }
+      ],
+      "purpose": [
+        {
+          "q": "pallets/flask#T05",
+          "docs_sent": [
+            "README.md:38-45",
+            "docs/tutorial/next.rst:14-36"
+          ],
+          "doc_hit": false
+        }
+      ],
+      "doc_leak": {
+        "questions": 16,
+        "with_doc": 11,
+        "rate": 0.688
+      },
+      "doc_hit": {
+        "questions": 1,
+        "hits": 0
+      },
+      "code_unchanged": true
+    },
+    "2": {
+      "code_how": [
+        {
+          "q": "express#1",
+          "docs_sent": [
+            "Readme.md:71-79"
+          ],
+          "code_same_as_pool_0": true
+        },
+        {
+          "q": "express#2",
+          "docs_sent": [],
+          "code_same_as_pool_0": true
+        },
+        {
+          "q": "express#3",
+          "docs_sent": [],
+          "code_same_as_pool_0": true
+        },
+        {
+          "q": "express#4",
+          "docs_sent": [],
+          "code_same_as_pool_0": true
+        },
+        {
+          "q": "express#5",
+          "docs_sent": [],
+          "code_same_as_pool_0": true
+        },
+        {
+          "q": "express#6",
+          "docs_sent": [
+            "Readme.md:119-127",
+            "Readme.md:71-79"
+          ],
+          "code_same_as_pool_0": true
+        },
+        {
+          "q": "express#7",
+          "docs_sent": [],
+          "code_same_as_pool_0": true
+        },
+        {
+          "q": "itsdangerous#9",
+          "docs_sent": [
+            "README.md:3-13",
+            "README.md:16-32"
+          ],
+          "code_same_as_pool_0": true
+        },
+        {
+          "q": "itsdangerous#10",
+          "docs_sent": [
+            "README.md:3-13",
+            "README.md:16-32"
+          ],
+          "code_same_as_pool_0": true
+        },
+        {
+          "q": "itsdangerous#11",
+          "docs_sent": [
+            "README.md:3-13",
+            "README.md:16-32"
+          ],
+          "code_same_as_pool_0": true
+        },
+        {
+          "q": "itsdangerous#12",
+          "docs_sent": [
+            "README.md:3-13",
+            "docs/url_safe.rst:3-21"
+          ],
+          "code_same_as_pool_0": true
+        },
+        {
+          "q": "itsdangerous#13",
+          "docs_sent": [
+            "README.md:3-13",
+            "docs/concepts.rst:5-15"
+          ],
+          "code_same_as_pool_0": true
+        },
+        {
+          "q": "itsdangerous#14",
+          "docs_sent": [
+            "README.md:3-13",
+            "docs/timed.rst:3-28"
+          ],
+          "code_same_as_pool_0": true
+        },
+        {
+          "q": "itsdangerous#15",
+          "docs_sent": [
+            "docs/concepts.rst:56-78",
+            "docs/concepts.rst:18-42"
+          ],
+          "code_same_as_pool_0": true
+        },
+        {
+          "q": "pallets/flask#T01",
+          "docs_sent": [
+            "docs/quickstart.rst:783-797",
+            "docs/patterns/flashing.rst:1-12"
+          ],
+          "code_same_as_pool_0": true
+        },
+        {
+          "q": "pallets/itsdangerous#T02",
+          "docs_sent": [
+            "docs/concepts.rst:18-42",
+            "README.md:3-13"
+          ],
+          "code_same_as_pool_0": true
+        }
+      ],
+      "purpose": [
+        {
+          "q": "pallets/flask#T05",
+          "docs_sent": [
+            "README.md:38-45",
+            "docs/tutorial/next.rst:14-36"
+          ],
+          "doc_hit": false
+        }
+      ],
+      "doc_leak": {
+        "questions": 16,
+        "with_doc": 11,
+        "rate": 0.688
+      },
+      "doc_hit": {
+        "questions": 1,
+        "hits": 0
+      },
+      "code_unchanged": true
+    },
+    "1": {
+      "code_how": [
+        {
+          "q": "express#1",
+          "docs_sent": [],
+          "code_same_as_pool_0": true
+        },
+        {
+          "q": "express#2",
+          "docs_sent": [],
+          "code_same_as_pool_0": true
+        },
+        {
+          "q": "express#3",
+          "docs_sent": [],
+          "code_same_as_pool_0": true
+        },
+        {
+          "q": "express#4",
+          "docs_sent": [],
+          "code_same_as_pool_0": true
+        },
+        {
+          "q": "express#5",
+          "docs_sent": [],
+          "code_same_as_pool_0": true
+        },
+        {
+          "q": "express#6",
+          "docs_sent": [
+            "Readme.md:119-127",
+            "Readme.md:71-79"
+          ],
+          "code_same_as_pool_0": true
+        },
+        {
+          "q": "express#7",
+          "docs_sent": [],
+          "code_same_as_pool_0": true
+        },
+        {
+          "q": "itsdangerous#9",
+          "docs_sent": [
+            "README.md:3-13",
+            "README.md:16-32"
+          ],
+          "code_same_as_pool_0": true
+        },
+        {
+          "q": "itsdangerous#10",
+          "docs_sent": [
+            "README.md:3-13"
+          ],
+          "code_same_as_pool_0": true
+        },
+        {
+          "q": "itsdangerous#11",
+          "docs_sent": [
+            "README.md:3-13",
+            "README.md:16-32"
+          ],
+          "code_same_as_pool_0": true
+        },
+        {
+          "q": "itsdangerous#12",
+          "docs_sent": [
+            "README.md:3-13",
+            "docs/url_safe.rst:3-21"
+          ],
+          "code_same_as_pool_0": true
+        },
+        {
+          "q": "itsdangerous#13",
+          "docs_sent": [
+            "README.md:3-13",
+            "docs/concepts.rst:5-15"
+          ],
+          "code_same_as_pool_0": true
+        },
+        {
+          "q": "itsdangerous#14",
+          "docs_sent": [
+            "README.md:3-13",
+            "docs/timed.rst:3-28"
+          ],
+          "code_same_as_pool_0": true
+        },
+        {
+          "q": "itsdangerous#15",
+          "docs_sent": [
+            "docs/concepts.rst:56-78",
+            "docs/concepts.rst:18-42"
+          ],
+          "code_same_as_pool_0": true
+        },
+        {
+          "q": "pallets/flask#T01",
+          "docs_sent": [
+            "docs/quickstart.rst:783-797",
+            "docs/patterns/flashing.rst:1-12"
+          ],
+          "code_same_as_pool_0": true
+        },
+        {
+          "q": "pallets/itsdangerous#T02",
+          "docs_sent": [
+            "docs/concepts.rst:18-42",
+            "README.md:3-13"
+          ],
+          "code_same_as_pool_0": true
+        }
+      ],
+      "purpose": [
+        {
+          "q": "pallets/flask#T05",
+          "docs_sent": [
+            "README.md:38-45",
+            "docs/tutorial/next.rst:14-36"
+          ],
+          "doc_hit": false
+        }
+      ],
+      "doc_leak": {
+        "questions": 16,
+        "with_doc": 10,
+        "rate": 0.625
+      },
+      "doc_hit": {
+        "questions": 1,
+        "hits": 0
+      },
+      "code_unchanged": true
+    }
+  },
+  "adopted_rank": null
+}

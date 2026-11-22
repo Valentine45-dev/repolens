@@ -41,14 +41,17 @@ from runinfo import ROOT, header, run_info, save_results  # also puts backend/ o
 from app import db  # noqa: E402
 from app.qa.retrieve import retrieve  # noqa: E402
 
+# The same configurations as eval/locked_eval.py (E: DG + the doc pool, retrieval only).
 CONFIGS = {
-    "A": {"k": 8, "expand": False, "expand_max": 0, "hybrid": False},
-    "B": {"k": 16, "expand": False, "expand_max": 0, "hybrid": False},
-    "C": {"k": 8, "expand": True, "expand_max": 8, "hybrid": False},
-    "D": {"k": 8, "expand": False, "expand_max": 0, "hybrid": True},
-    "DG": {"k": 8, "expand": True, "expand_max": 8, "hybrid": True},
+    "A": {"k": 8, "expand": False, "expand_max": 0, "hybrid": False, "doc_pool": 0},
+    "B": {"k": 16, "expand": False, "expand_max": 0, "hybrid": False, "doc_pool": 0},
+    "C": {"k": 8, "expand": True, "expand_max": 8, "hybrid": False, "doc_pool": 0},
+    "D": {"k": 8, "expand": False, "expand_max": 0, "hybrid": True, "doc_pool": 0},
+    "DG": {"k": 8, "expand": True, "expand_max": 8, "hybrid": True, "doc_pool": 0},
+    "E": {"k": 8, "expand": True, "expand_max": 8, "hybrid": True, "doc_pool": 2,
+          "doc_cutoff_rank": 8},
 }
-PAIRS = [("C", "B"), ("C", "A"), ("B", "A"), ("DG", "C"), ("DG", "D"), ("D", "A")]
+PAIRS = [("C", "B"), ("C", "A"), ("B", "A"), ("DG", "C"), ("DG", "D"), ("D", "A"), ("E", "DG")]
 CODE_TYPES = ("code_how", "locate")
 DOC_LADDER = (8, 6, 4, 2, 1)  # loosest first; the rule adopts the loosest with leak <= 30%
 LEAK_BAR = 0.30
