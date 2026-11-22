@@ -2483,3 +2483,12 @@ are deliberately not changed after seeing eval results; these stay as documented
     median latency rises by at most 50%; otherwise off. Proves the evidence exists, not that it supports the
     claim. *Predicted:* answered_correct_file 14/14 in both arms; 0-1 sentences removed per answer;
     could-not-find +0-1; median latency +20-40%; main risk: quotes with line prefixes or paraphrase.
+- **Step 5 Part E (`fix/analysis-default`, 22 Nov; not merged).** Product default `MAX_ANALYSIS_S` 600 → 1200
+  (`config.py`, `.env.example`, README): on 21 Nov mocha's search was lost at 600 s under CPU load and Retry
+  recovered it. Locked runs keep their frozen 2100 (`LOCKED_MAX_ANALYSIS_S`, unchanged). The test that quoted
+  "600 s" now reads the limit from config; new `test_config_defaults.py` pins the default. **Local `.env` still
+  says `MAX_ANALYSIS_S=600` and overrides the default on this PC (owner to change it).** New eval helpers:
+  `eval/scorer_selfcheck.py` (the runner's own manifest check; passes: scoring files as frozen, runner
+  unchanged) and `eval/retrieval_compare.py`. Retrieval eval `retrieval_context-analysis-default-*-00c90d3.json`
+  identical to `...-after-job-lock-race-*-edc3726.json` (A 0.71, B 0.86, C 0.93), as predicted. Backend 713
+  passed, 3 skipped; ruff clean. $0.
