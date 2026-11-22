@@ -155,6 +155,10 @@ prices per MTok from the provider's pricing page. Keep every output; never re-ru
    ```powershell
    uv run --project backend --env-file .env python eval/locked_eval.py validate eval/locked/v2.0.yaml
    ```
+   **Pre-registered (22 Nov, at the hash freeze):** validate is expected to report exactly **1**
+   expected path not in the analysed snapshots (a file type v2.0 does not store; kept in the key
+   deliberately). The command then exits with an error code; that is expected for a count of 1.
+   **Any other count: stop and report**, do not run.
 7. Estimate one pass (refuses above $1):
    ```powershell
    uv run --project backend --env-file .env python eval/locked_eval.py estimate eval/locked/v2.0.yaml --price-in <X> --price-out <Y>
