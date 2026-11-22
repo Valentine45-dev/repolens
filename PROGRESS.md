@@ -2757,3 +2757,8 @@ are deliberately not changed after seeing eval results; these stay as documented
     default (same code, prompt, model and retrieval).
   - **Note:** the first call of each arm took long (240 s off, 99 s on: model load on a cold process; the
     median is unaffected).
+  - **Checks:** backend 815 passed, 3 skipped; eval unit 85 passed; web 367 passed in 46 files, `tsc` clean;
+    ruff clean. Retrieval eval `retrieval_context-claim-check-20261122T195441Z-f763e5e.json` identical to Part
+    A's final (`...-doc-search-with-E-...-293d1b7.json`, all 20 records, configs A-E): Part C does not touch
+    retrieval. Scorer self-check: scoring files as frozen; runner changed (records `claims`, additive). No API
+    started.
