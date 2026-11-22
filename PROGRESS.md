@@ -2500,3 +2500,42 @@ are deliberately not changed after seeing eval results; these stay as documented
   $1.19 total (pass 2 had 8 LLM network failures, status unavailable); results committed on branch
   `eval/locked-run-v2.0` (`5f5c628`), pushed, not merged until after v2.1. Sealed: no scores recorded here.
   For v2.1 the pre-registered run-day validate count is **2**.
+- **Step 5 Part B: hybrid search (`feat/hybrid-search`, 22 Nov; not merged). Adopted: hybrid on by default,
+  `LIVE_CONFIG = "DG"`.**
+  - **Built:** `app.qa.chunks.query_terms` (question split by the same rule as the stored `search_words`;
+    fixed stop list `KEYWORD_STOP_WORDS`; one-letter terms and anything not `[a-z0-9]+` dropped, so the
+    `' | '`-joined tsquery has no operators from the question); `retrieve._keyword` (code chunks,
+    `search_tsv @@ to_tsquery('simple', ...)`, `ts_rank(..., 1)`, same `in_test` rule and test-code fallback);
+    `retrieve.fuse` (RRF, ties: better single rank, vector distance, chunk id). `retrieve(hybrid=...)`, default
+    `QA_HYBRID`; `QA_HYBRID_DEPTH` 16, `QA_RRF_K` 60; `hybrid` in the retrieval summary (additive in `/ask`).
+    With `hybrid=False` the code path is the old one (depth = k). No schema change, no backfill. Run info
+    records the three settings.
+  - **Runners:** `eval/locked_eval.py` and `eval/retrieval_recall.py`: configs D and DG added; A, B, C now say
+    `hybrid: False` so they keep their v2.0 meaning whatever the default is; pairs DG vs C, DG vs D, D vs A
+    added. `retrieval_recall.py --tuning-locked FILE` adds the locked-format tuning file's code_how + locate
+    questions; paired comparisons use the frozen scorer's `paired` (exact two-sided sign test).
+    `retrieval_compare.py --configs A,B,C`. Runner test: `LIVE_CONFIG` equals the product defaults.
+  - **Free eval (first result counts):** `retrieval_context-hybrid-tuning-20261122T142850Z-3c5ed8c.json` (run
+    on the uncommitted tree, committed unchanged as `db423bf`). 18 tuning code questions (v1 14 + T01-T04):
+    A 0.72, B 0.89, C 0.94, **D 0.72, DG 0.94**. Paired: **DG vs C 0 wins / 0 losses** (p = 1.0); DG vs D 4 / 0
+    (express#4, itsdangerous#9, #10, T02; p = 0.125); D vs A 2 / 2 (won express#2, itsdangerous#11; lost
+    express#4, itsdangerous#10; p = 1.0); C vs A 4 / 0 (p = 0.125); C vs B 1 / 0. Q5 is still missed by every
+    configuration. **Check:** A, B, C on the v1 questions identical to `main`'s
+    `...-analysis-default-*-00c90d3.json` (all 16 records); T01-T04 A 3/4, B 4/4, C 4/4 as on 21 Nov.
+  - **Against the prediction:** D vs A 2-2 (predicted 1-3 wins, 0-2 losses: inside); Q5 not recovered
+    (predicted it might be); DG vs C 0-0 as predicted; DG vs D 4-0 (predicted 1-2). Hybrid on its own neither
+    helps nor hurts on these questions; graph expansion is what lifts it, as it lifts plain search.
+  - **Adoption rule applied:** DG wins at least as many as it loses against C (0-0, a tie adopts DG) →
+    `QA_HYBRID` default 1, `LIVE_CONFIG = "DG"`. Not a measured gain: on the tuning set DG and C hit the same
+    questions; it changes which chunks are sent.
+  - **Smoke eval (default retrieval changed):** `smoke_qa-hybrid-20261122T145523Z-949e078.json`, Sonnet 5.5,
+    effort low, between_tools, prompt 2026-10-28.2: **7/8**, the one FAIL is Q16 (itsdangerous "encrypt"
+    false-premise trap: "signs, not encrypts" with 4 citations, the same failure under the old rule as in every
+    run since v1); 1 dropped citation (Q2); 29,204 in / 2,659 out tokens, **$0.085**. Step 5 spend: **$0.085**.
+  - **Tests:** `tests/test_hybrid.py` (11: terms, stop words, operators, fusion order and ties, keyword
+    search finds a named identifier first, test-code rule, `hybrid=False` ignores the default, odd questions
+    do not fail); updated `test_ask_db.py` (summary key), `test_eval_scoring.py`, `eval/test_locked_eval.py`
+    (shared records get the new configs). Backend 724 passed, 3 skipped; eval unit 80 passed; ruff clean
+    (backend; eval files with CI's config; the import-order note in `retrieval_recall.py` exists on `main`
+    too and that file is not in CI's lint list). Scorer self-check: scoring files as frozen; runner changed
+    (v2.1 run needs `--runner-changed`).
