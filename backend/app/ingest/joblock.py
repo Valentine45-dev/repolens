@@ -7,8 +7,13 @@ search in progress) whose lock nobody holds has lost its runner and is marked fa
 lock is held is still running in another process (another API, or an evaluation script that runs
 the pipeline in its own process) and is left alone.
 
-If the lock connection cannot be opened, the job runs unlocked, as before this lock existed, and
-a WARNING says so: a restart elsewhere could then mark it interrupted.
+The startup check takes a free lock and releases it at once. A job that asks for its lock in
+that instant waits for it (up to WAIT_S) instead of failing at once: pg_try_advisory_lock would
+have returned false, and the job would have run unlocked (22 Nov: a CI test flaked this way).
+
+If the lock connection cannot be opened, or the lock is still held after WAIT_S, the job runs
+unlocked, as before this lock existed, and a WARNING says so: a restart elsewhere could then mark
+it interrupted.
 """
 
 import logging
@@ -24,6 +29,9 @@ log = logging.getLogger("repolens.ingest")
 # High bits mark the key as RepoLens's job lock ("RL"); the low 48 bits are the job id.
 NAMESPACE = 0x524C << 48
 CONNECT_TIMEOUT_S = 5
+# How long a job waits for its lock. A check holds a free lock only for a moment; a lock still
+# held after this belongs to another live session (the same job run twice).
+WAIT_S = 5.0
 
 
 def key(job_id: int) -> int:
@@ -46,9 +54,14 @@ def held(job_id: int) -> Iterator[bool]:
             raise ValueError("DATABASE_URL is not set")
         conn = psycopg.connect(config.DATABASE_URL, autocommit=True,
                                connect_timeout=CONNECT_TIMEOUT_S)
-        got = conn.execute("SELECT pg_try_advisory_lock(%s)", (key(job_id),)).fetchone()[0]
-        if not got:
-            log.warning("job %s: its lock is held by another session; running unlocked", job_id)
+        # This connection only ever holds the lock, so the setting stays for its whole session.
+        conn.execute("SELECT set_config('lock_timeout', %s, false)",
+                     (f"{int(WAIT_S * 1000)}ms",))
+        try:
+            conn.execute("SELECT pg_advisory_lock(%s)", (key(job_id),))
+        except psycopg.errors.LockNotAvailable:
+            log.warning("job %s: its lock is still held by another session after %g s;"
+                        " running unlocked", job_id, WAIT_S)
             conn.close()
             conn = None
     except (psycopg.Error, ValueError) as e:

@@ -2406,3 +2406,24 @@ are deliberately not changed after seeing eval results; these stay as documented
   report exactly 1 expected path not in the analysed snapshots (a file type v2.0 does not store; kept in the key
   deliberately); any other count = stop and report. Sealed: the owner looks at summary numbers only until v2.1 is
   frozen. The question file itself is not on this PC and was not opened.
+- **Job-lock race (`fix/job-lock-race`, 22 Nov; not merged).** Cause: CI test
+  `test_a_job_waiting_in_the_queue_already_holds_its_lock` flaked once. `pg_try_advisory_lock` fails at
+  once when another session holds the free lock at that instant; the test's take-and-release probe (and,
+  in the product, the startup check `is_orphaned`) does exactly that, so the job ran unlocked (WARNING).
+  - **Fix (`app/ingest/joblock.py`):** the job takes `pg_advisory_lock` under `lock_timeout` = `WAIT_S`
+    (5 s) on its own lock connection. A check holds a free lock only for a moment, so the job now waits
+    and gets it. Still held after 5 s: WARNING "still held by another session after 5 s; running
+    unlocked", as before. `is_orphaned` (the startup check) unchanged.
+  - **Test probe:** `holds()` in `tests/test_job_lock_db.py` now reads `pg_locks` and never takes the
+    lock. New DB tests: a lock held for 0.5 s is waited for (no warning); a lock held past `WAIT_S`
+    (patched to 0.3 s) warns and runs unlocked. Revert check: with main's `joblock.py`, both new tests
+    fail (the other 9 pass).
+  - **Proof (this PC, run alone):** job-lock DB tests 50 times in a loop: before (`f4f2331`) **11 / 50**
+    runs failed, all in the queue test; after **0 / 50**. Stress script (scratchpad, not committed; the
+    job enters `held()` while another session takes and releases its lock in a tight loop, 200 trials):
+    job ran unlocked **98 / 200** before, **0 / 200** after.
+  - **Checks:** free retrieval eval before (`f4f2331`) and after (`edc3726`): summary and every question
+    record identical (A 0.71, B 0.86, C 0.93); two new result files only. `eval/locked/scorer.sha256`
+    self-check passes (no eval/ file changed). Backend 712 passed, 3 skipped; ruff clean.
+  - **Left as is (not this race):** a job created by one process but not yet handed to its runner has no
+    lock, so a startup check in that gap still marks it interrupted. Narrow; not seen.
