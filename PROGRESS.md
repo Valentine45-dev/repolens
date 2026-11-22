@@ -2427,3 +2427,59 @@ are deliberately not changed after seeing eval results; these stay as documented
     self-check passes (no eval/ file changed). Backend 712 passed, 3 skipped; ruff clean.
   - **Left as is (not this race):** a job created by one process but not yet handed to its runner has no
     lock, so a startup check in that gap still marks it interrupted. Narrow; not seen.
+
+- **Step 5 (v2.1) pre-registration (22 Nov, written before any Step 5 code; owner's go after Step 0).**
+  Order **E → B → D → A → C**, one branch each, ask before each merge; whatever is not merged by **Tue 24 Nov
+  10:00 IST** stays out of v2.1. Tuning only: `eval/questions.yaml` (v1) and `eval/tuning_locked_format.yaml`
+  on the tuning snapshots; no locked file, locked result or locked repo. Step 5 spend cap **$1.50 in total,
+  smoke evals included** (estimate: A distraction $0.20-0.45, C $0.49, up to three smoke runs ~$0.10 each).
+  Tuning code questions: **code_how** = v1 Q1-7, Q9-15 (14) + T01, T02 = **16**; **code_how + locate** = those
+  + T03, T04 = **18**; **purpose** = T05 (n = 1). The first result counts for every run.
+  - **E (`fix/analysis-default`).** Product default `MAX_ANALYSIS_S` 600 → 1200 (config, `.env.example`,
+    README); the locked runs keep their frozen 2100. *Predicted:* retrieval eval identical (no retrieval change).
+  - **B (`feat/hybrid-search`).** Keyword search over `chunks.search_tsv` (already `to_tsvector('simple',
+    search_words(chunk))`: path, name and identifiers split, so no backfill): question split with the same rule
+    as `search_words`, lower case, a fixed stop list (committed in code before the eval), OR semantics, rank
+    `ts_rank(search_tsv, q, 1)`, code chunks only, same `in_test` rule and test-code fallback. Reciprocal rank
+    fusion k = 60 over vector top-16 and keyword top-16, top 8, deduped by chunk; graph expansion then on the
+    fused hits. Runner and free eval configs: A, B, C unchanged; **D** = hybrid top-8, no expansion; **DG** =
+    hybrid top-8 + expansion (8). Pairs DG vs C, DG vs D, D vs A; paired wins/losses and exact sign-test p.
+    **Adoption rule:** live = DG if DG wins at least as many of the 18 tuning code questions as it loses against
+    C (a 0-0 tie adopts DG); otherwise C stays live and `QA_HYBRID=0`. `LIVE_CONFIG` then matches `/ask`.
+    *Predicted:* D vs A: D wins 1-3 (Q5 "format" → `res.format`, Q2 "send"), loses 0-2; DG vs C most likely a
+    tie (0-1 wins, 0-1 losses), so DG adopted; DG beats D by 1-2.
+  - **D (`fix/ask-citations`).** A-01..A-04 confirmed on `main` (throwaway `validate()` calls, 22 Nov). Fix: A-01
+    status `unverified` when any citation was dropped (no new status: the frozen scorer counts only answered /
+    unverified as AI answers); A-02 every `path.ext:N` that is not a host or IP is a citation attempt, `#L12-L14`
+    accepted; A-03 sent paths matched first, longest first; A-04 line numbers `\d{1,7}`, a validator failure
+    returns `unverified`. **Measurement change:** A-02 makes `citation_validity` stricter in v2.1 than in v2.0
+    (more forms count as dropped). The raw model output stays saved as today, so v2.0's answers can later be
+    re-validated offline with the new validator (aggregates only; not in this task). *Predicted:* retrieval eval
+    identical; no tuning answer changes status except ones with a dropped citation (A-01).
+  - **A (`feat/doc-search`).** Doc chunks for stored README* / `*.md` / `*.rst` / `*.txt` under `docs/` or named
+    README*; not CHANGELOG*, CHANGES*, HISTORY*, LICENSE*, COPYING*, NOTICE*, not under `.github/`,
+    node_modules, vendor or build output, not over 200 KB (skipped with a note). A section ends at the next
+    heading of any level; long sections split into 256-token windows (same tokenizer rule as code). Separate
+    pool, up to `QA_DOC_POOL` (default 2) doc chunks after code and graph chunks, never in a code slot.
+    **Cutoff ladder, fixed now:** doc distance no worse than the 8th, 6th, 4th, 2nd, 1st code vector hit; adopt
+    the LOOSEST that gives **doc-leak ≤ 30%** (share of the 16 code_how questions where ≥ 1 doc chunk is sent in
+    the live config); report doc_hit on T05 at that cutoff. None reaches ≤ 30% → docs ship off
+    (`QA_DOC_POOL=0`). **Then the distraction check** (cap $0.50): pool 0 vs default, LLM calls only for
+    questions where a doc chunk was sent (the rest count as ties); per question answered_correct_file and
+    citation_validity. **Adoption rule:** docs on by default if doc-leak ≤ 30% at the adopted cutoff AND the
+    default loses no more questions than it wins on answered_correct_file; otherwise `QA_DOC_POOL=0`.
+    Backfill and fresh analysis call the same doc-chunking function (proved on one tuning repo: identical
+    paths, ranges, text, embeddings). *Predicted:* code_hit identical by construction (v1 A 0.71, B 0.86,
+    C 0.93; T01-T04 A 3/4, B 4/4, C 4/4); doc_hit T05 a hit at the 8th; doc-leak at the 8th about 45-70%
+    (7-11 of 16: itsdangerous's `docs/*.rst` mirror the v1 questions, flask has `docs/patterns/flashing.rst`
+    for T01), so a tighter rung (4th or 2nd) is likely; 0 distraction losses.
+  - **C (`feat/claim-check`).** Each cited claim carries `[path:N-M "exact quote"]`; kept only if the range lies
+    inside a sent snippet AND the quote (whitespace-normalised, case-sensitive, ≥ 3 words or ≥ 15 characters)
+    appears in those lines as sent. Failed sentences are removed; the "N statements removed" note is a
+    separate API field shown by the UI, never part of the answer text. Quotes stripped from the text. All
+    claims fail → the "could not find" answer. Behind `QA_CLAIM_CHECK`; tuning Q&A = the 18 v1 Q&A questions,
+    one pass per arm (cap $0.60). **Adoption rule:** on by default if, on the tuning set, it loses no more
+    questions than it wins on answered_correct_file, the could-not-find count rises by at most 2 questions, and
+    median latency rises by at most 50%; otherwise off. Proves the evidence exists, not that it supports the
+    claim. *Predicted:* answered_correct_file 14/14 in both arms; 0-1 sentences removed per answer;
+    could-not-find +0-1; median latency +20-40%; main risk: quotes with line prefixes or paraphrase.
