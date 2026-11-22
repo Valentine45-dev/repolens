@@ -89,7 +89,9 @@ def search_ready(snapshot_id: int) -> bool:
     with pool().connection() as conn:
         row = conn.execute(
             "SELECT st.search_state, st.search_error,"
-            " EXISTS (SELECT 1 FROM chunks c WHERE c.snapshot_id = st.snapshot_id) AS has_chunks"
+            # Code chunks only: documentation chunks alone never make code search ready.
+            " EXISTS (SELECT 1 FROM chunks c WHERE c.snapshot_id = st.snapshot_id"
+            " AND c.source = 'code') AS has_chunks"
             " FROM snapshot_status st WHERE st.snapshot_id = %s",
             (snapshot_id,),
         ).fetchone()
