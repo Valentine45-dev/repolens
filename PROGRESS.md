@@ -2762,3 +2762,38 @@ are deliberately not changed after seeing eval results; these stay as documented
     A's final (`...-doc-search-with-E-...-293d1b7.json`, all 20 records, configs A-E): Part C does not touch
     retrieval. Scorer self-check: scoring files as frozen; runner changed (records `claims`, additive). No API
     started.
+  - **Merged into `main` (23 Nov, `0d6d16b`), CI green on `main`.**
+- **v2.1 freeze (23 Nov 2026). The `main` commit that merges `docs/v2.1-freeze` is v2.1: no further product
+  changes before the locked run.** Product code is that of `0d6d16b` (this merge adds only this note and one
+  result file). What is on and off by default:
+  - **Hybrid search ON** (`QA_HYBRID=1`, Part B): keyword OR query on `search_tsv` + vector, RRF k = 60 over
+    top-16 each, top 8, then graph expansion (8). **`LIVE_CONFIG = "DG"`** in `eval/locked_eval.py` matches
+    `/ask` (runner test).
+  - **Docs in Ask OFF** (`QA_DOC_POOL=0`, Part A: doc-leak 62.5-75% at every cutoff tried). `/ask` and every
+    answer are code only; the prompt is v2.0's when no docs are sent. **Config E** stays in the runner,
+    retrieval only (never sent to the LLM): DG + doc pool 2 at the 8th code hit, reported for doc_hit; its
+    code_hit equals DG's. Run day: the owner runs the doc backfill on the printed locked snapshot ids after
+    `analyse` (needed for E only); the run refuses if E is in CONFIGS and a snapshot has doc files but 0 doc
+    chunks (LOCKED-FREEZE-CHECKS §5, v2.1).
+  - **Claim check ON** (`QA_CLAIM_CHECK=1`, Part C): system prompt `2026-11-23.claims.1`; each cited statement
+    must quote its cited lines; failed statements removed; the note is a separate `claims` field.
+  - **Ask citation fixes A-01..A-04 in** (Part D): a dropped citation → `unverified`; any file-like citation
+    and `#L` anchors checked; sent paths with brackets, parentheses, spaces or backslashes matched first;
+    bounded line numbers and no 500 on a validator failure.
+  - **has_chunks fix in:** search-ready and the Ask feature check count code chunks only.
+  - **Product `MAX_ANALYSIS_S` default 1200** (Part E; was 600). The locked runs keep their frozen 2100.
+  - **Measurement changes against v2.0 (report with every v2.1 vs v2.0 comparison):** `citation_validity` is
+    **not comparable with v2.0**: A-02 counts more citation forms as dropped, and with the claim check a
+    failed quote is a dropped citation (tuning: 16/18 off → 12/18 on). A-01 makes more answers `unverified`
+    (still an AI answer for the frozen scorer). Kept citations are written `(path:N-M)`; the frozen
+    `score_claims.py` reads them, but not a citation to a path with brackets or spaces. The raw model output
+    stays saved per answer, so v2.0's answers can be re-validated offline with the new validator later.
+  - **Unchanged:** `eval/locked_metrics.py` and `eval/score_claims.py` byte-identical to the freeze (scorer
+    self-check passes on `main` `0d6d16b`); the runner (`eval/locked_eval.py`) changed only by configurations D,
+    DG, E (A, B, C pinned to their v2.0 meaning), `LIVE_CONFIG`, the doc guard and backfill hint, the real doc
+    settings in run info and the additive `claims` record, so the v2.1 run needs `--runner-changed`. Graph
+    router, file discovery and the frozen question file untouched. Run-day validate pre-registered at **2**.
+  - **Free retrieval on `main` `0d6d16b`** (clean tree): `retrieval_context-v2.1-main-20261122T200405Z-
+    0d6d16b.json` identical to Part C's `...-claim-check-20261122T195441Z-f763e5e.json` (all 20 records;
+    A 0.72, B 0.89, C 0.94, D 0.72, DG 0.94, E 0.94 on the 18 tuning code questions).
+  - **Step 5 spend:** $0.5477 of $1.50 (Part B smoke $0.085, Part C arms $0.4627); Parts A, D, E $0.
