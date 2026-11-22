@@ -2580,3 +2580,91 @@ are deliberately not changed after seeing eval results; these stay as documented
     B's `...-hybrid-tuning-*-3c5ed8c.json` (configs, summary, all 20 records), as predicted. Scorer
     self-check: scoring files as frozen. No smoke eval: the default prompt, model and retrieval path are
     unchanged (only validation and status). $0; Step 5 spend still $0.085.
+  - **Merged into `main` (22 Nov, `d400231`), CI green on `main`.**
+- **Step 5 Part A: README and docs in Ask (`feat/doc-search`, 22 Nov; not merged). Adoption rule applied:
+  docs ship OFF (`QA_DOC_POOL` default 0).** Code, tests and backfill kept; Ask answers and their prompts are
+  as in v2.0.
+  - **Backup first:** `C:\projects\repolens-db-backups\db-backup-2026-11-22-before-doc-chunks.sql` (96,623,007
+    bytes, SHA-256 `6704ABD2653A8F26D33C88B7E4ABAB0FF4F00E00F0BBCB7304A186FA6FF25DBB`), no API running; restored
+    into a throwaway database with identical row counts in all 9 tables, then dropped.
+  - **Schema:** `chunks.file_id` (NOT NULL, filled from the symbol's file), `chunks.source` ('code' | 'doc'),
+    `chunks.symbol_id` nullable with `CHECK (source = 'doc' OR symbol_id IS NOT NULL)`, index on `file_id`;
+    `schema.sql` + `migrations/2026-11-22-doc-chunks.sql` (idempotent: run twice on the dev DB, the second a
+    no-op). Code chunks byte-identical across the migration (`eval/code_chunk_signature.py`, tuning snapshots
+    1, 2, 3, 6, 7 and the smoke fixture 4); `file_id` equals the symbol's file on all 12,312 rows.
+  - **Queries that join chunks to symbols (all changed):** `retrieve.py` `_FROM` is now `files f ON f.id =
+    c.file_id LEFT JOIN symbols`, and `_search`, `_keyword`, `_expand`, `_scoped` say `source = 'code'`;
+    `pipeline.embed_group` deletes and inserts code rows only (with `file_id`); `embed_docs` replaces doc rows
+    only. Unchanged and still correct: `answer.search_ready` and `snapshots.py` `has_chunks` (any chunk; doc
+    chunks are only ever embedded after the code ones); `eval/locked_eval.py` `snapshot_facts` counts
+    (recorded facts; with docs off no doc chunks are made at analysis). Tests that join chunks to symbols are
+    on code chunks only.
+  - **Built:** `app/qa/docs.py` (which files: README* any extension, `*.md`, `*.rst`, `*.txt` under `docs/` or
+    README*; not CHANGELOG*/CHANGES*/HISTORY*/LICENSE*/COPYING*/NOTICE*, `.github/`, node_modules, vendor,
+    build output; over 200 KB left out with a log note; sections end at the next heading of any level, ATX and
+    setext Markdown outside fences, RST titles with levels in order of first use; heading-only sections make no
+    chunk; windows by the shared `chunks.unit_chunks`, so the same 256-token rule as code). **Config examples
+    are redacted in doc chunks:** stored docs only get today's redaction (quoted values and token formats), so
+    an unquoted `password = x` in a README fence was not redacted (checked); doc chunks run the config-value
+    rule over Markdown fences tagged ini/yaml/env/sh/... or untagged and RST `code-block::` in those languages
+    (stored file text and findings unchanged). `pipeline.embed_docs` (from stored files; used by fresh analyses,
+    after the code and before search is ready, and by the backfill `python -m app.ingest.docchunks <ids>`:
+    explicit ids only, refuses unless done and search ready, holds the job's lock). Retrieval: separate doc
+    pool, up to `QA_DOC_POOL`, each no farther than the `QA_DOC_CUTOFF_RANK`-th code vector hit, after code
+    and graph within the leftover budget, never a code slot, never an expansion seed. Doc snippets
+    `kind="doc"`, same escaping; doc citations validated like code, `source: "doc"`, `symbol_id: null`. UI: doc
+    chips with a "documentation" tag open `DocPanel` (`?doc=<id>&lines=`), plain text, cited lines highlighted.
+  - **Prompt byte-identical to v2.0 when no docs are sent:** `system.md` is `main`'s (PROMPT_VERSION
+    `2026-10-28.2`, unchanged); code snippets keep the v2.0 tag; the doc tag and the one added instruction ("If
+    the documentation and the code disagree, say so and go by the code"; a prompt instruction, not a
+    guarantee) are in the user message only when a doc snippet is sent. Tests: `test_code_only_prompts_are_
+    exactly_v2_0s`, `test_with_docs_off_the_prompt_has_no_doc_snippet_or_note`. No smoke eval needed (default
+    prompt, model and retrieval unchanged). The planted-mismatch check by hand was not done (docs ship off;
+    FakeProvider tests cover the prompt).
+  - **Backfill and proof:** fresh analysis = backfill on itsdangerous (snapshot 1, re-analysed in place, job
+    45, 180 s to done): 38 doc chunks identical in path, lines, token count, in_test, text, search words and
+    embedding; code chunks unchanged by the backfill (`doc_chunks_fresh_vs_backfill-*-6a2fff1.json`).
+    Backfilled 2 (PyGoat: 31 files, 342 chunks, 148 s), 3 (express: 3, 35, 19 s), 6 (flask: 79, 796, 425 s), 4
+    (fixture: 0); 654 s in all; code-chunk signatures identical before/after. black (7) refused: search failed.
+    Flask's doc embedding (425 s) is more than estimated; with docs on, flask's analysis would be about 934 s,
+    under the new 1200 s default.
+  - **Free evals (first result counts):** docs off `retrieval_context-doc-search-pool0-*-8c1f20e.json`
+    identical to Part D's (20 records): code_hit identical by construction (checked). Docs on at the 8th
+    (`...-pool2-rank8-*-12b958c.json`): every code hit/miss as before, only "sent" grows. **Cutoff ladder**
+    (`doc_ladder-doc-ladder-20261122T173934Z-12b958c.json`, live config DG, pool 2, 16 code_how questions):
+    | cutoff at code vector hit | 8 | 6 | 4 | 2 | 1 |
+    |---|---|---|---|---|---|
+    | doc-leak | 12/16 = 0.75 | 12/16 = 0.75 | 11/16 = 0.69 | 11/16 = 0.69 | 10/16 = 0.62 |
+    | doc_hit (T05) | 0/1 | 0/1 | 0/1 | 0/1 | 0/1 |
+    Even at the 1st hit a doc chunk is closer than the best code chunk for 10 of 16 code questions (itsdangerous's
+    general README intro `README.md:3-13` for almost every itsdangerous question; flask `docs/patterns/
+    flashing.rst` for T01). T05 got flask `README.md:38-45` ("Donate") and `docs/tutorial/next.rst`, not the
+    intro (`README.md:3-18`). **Against the prediction:** leak 75% at the 8th (predicted 45-70%; above it);
+    doc_hit T05 a miss (predicted a hit); no rung reaches the bar (predicted the 4th or 2nd might).
+  - **Adoption rule (fixed 22 Nov):** no rung ≤ 30% → **`QA_DOC_POOL=0`, Part A ships off.** The paid distraction
+    check was not run (the first condition already fails): $0 for Part A; Step 5 spend still $0.085.
+  - **Config E (pre-planned: V2-EVAL-DESIGN §5, "E docs pool on/off"; added at the owner's request, 22 Nov):**
+    retrieval only, never sent to the LLM (answers unaffected): DG + doc pool 2 at the 8th code vector hit,
+    reported for doc_hit; its code_hit must equal DG's. Every other config pins `doc_pool: 0`. Pair E vs DG.
+    Free eval `retrieval_context-doc-search-with-E-20261122T180609Z-293d1b7.json`: A-DG identical to Part D's
+    (20 records); E vs DG 0 wins / 0 losses. The runner refuses a run when a configuration sends docs (E, or
+    `QA_DOC_POOL` > 0) and a snapshot has doc files but 0 doc chunks; `analyse` prints the snapshot ids and the
+    backfill command; run info states `/ask` docs off and E's pool and cutoff. LOCKED-FREEZE-CHECKS §5 (v2.1):
+    the owner runs the backfill on the printed locked snapshot ids after `analyse` (needed for E only), then
+    validate, pre-registered at **2** (same as v2.0's run day). That §5 edit is in `eval/results/` at the
+    owner's request.
+  - **Tests:** `tests/test_docs.py` (files, sections, windows, config redaction, and on a temporary repo: tag
+    text and injection stay inside their README snippet, secret redacted in chunks, >200 KB not chunked
+    without error, doc files absent from the graph with stored-file and symbol counts unchanged, relative
+    cutoff and no code slot taken, doc citations validated and marked, backfill = fresh rows and code
+    untouched, search retry keeps docs, docs off prepares none, docs-off prompt), `test_qa.py` (doc snippet
+    escaping, v2.0-identical code-only prompt), web `DocPanel.dom.test.tsx` (HTML/script in Markdown shown as
+    text, nothing executed; label, highlight, no Used by/Uses) and the doc chip test in `AskDrawer.dom.test.tsx`;
+    runner tests for E and the guard. Doc panel screenshots and the owner's browser check skipped by the
+    owner: unreachable with docs off; the web tests cover it.
+  - **Checks:** backend 792 passed, 3 skipped; eval unit 85 passed; web 364 passed in 46 files, `tsc` clean;
+    ruff clean (backend; eval files with CI's config). Scorer self-check: scoring files as frozen; runner
+    changed (v2.1 runs need `--runner-changed`). No API was started for Part A; one in-process analysis
+    (itsdangerous) and one backfill run, never together. $0.
+  - **Dev DB now:** the tuning snapshots 1, 2, 3, 6 have doc chunks (unused while `QA_DOC_POOL` is 0); the
+    locked snapshots were not touched.
