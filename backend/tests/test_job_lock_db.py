@@ -44,12 +44,16 @@ def job(url, job_id):
 
 
 def holds(url, job_id) -> bool:
-    """Another live session holds the job's lock (checked from a fresh session)."""
+    """Some live session holds the job's lock. Read from pg_locks, so the probe never takes the
+    lock itself: a take-and-release probe could hold it at the instant the job asks for it."""
+    k = joblock.key(job_id)
     with connect(url) as conn:
-        got = conn.execute("SELECT pg_try_advisory_lock(%s)", (joblock.key(job_id),)).fetchone()[0]
-        if got:
-            conn.execute("SELECT pg_advisory_unlock(%s)", (joblock.key(job_id),))
-        return not got
+        return conn.execute(
+            "SELECT EXISTS (SELECT 1 FROM pg_locks WHERE locktype = 'advisory' AND granted"
+            " AND database = (SELECT oid FROM pg_database WHERE datname = current_database())"
+            " AND classid::bigint = %s AND objid::bigint = %s AND objsubid = 1)",
+            (k >> 32, k & 0xFFFFFFFF),
+        ).fetchone()[0]
 
 
 def test_api_start_leaves_jobs_of_a_live_process_alone(test_db, jobs):
@@ -140,6 +144,47 @@ def test_a_job_waiting_in_the_queue_already_holds_its_lock(test_db, jobs, monkey
         assert holds(test_db, j)
     t.join(timeout=10)
     assert not holds(test_db, j)
+
+
+def test_a_job_waits_for_a_lock_held_for_a_moment(test_db, jobs, monkeypatch, caplog):
+    """The startup check (or a probe) holds a free lock for a moment: a job asking for it then
+    waits and gets it, instead of running unlocked (22 Nov CI flake)."""
+    j = jobs("queued", "queued")
+    seen = []
+    monkeypatch.setattr(pipeline, "_run_job", lambda *a: seen.append(holds(test_db, j)))
+    checker = connect(test_db)
+    assert checker.execute("SELECT pg_try_advisory_lock(%s)", (joblock.key(j),)).fetchone()[0]
+    try:
+        with caplog.at_level(logging.WARNING, logger="repolens.ingest"):
+            t = threading.Thread(target=pipeline.run_job, args=(j, 1, "u", SHA))
+            t.start()
+            threading.Event().wait(0.5)  # the job is now waiting for the lock
+            assert seen == []
+            checker.execute("SELECT pg_advisory_unlock(%s)", (joblock.key(j),))
+            t.join(timeout=10)
+    finally:
+        checker.close()
+    assert seen == [True]
+    assert not [r for r in caplog.records if r.levelno == logging.WARNING]
+    assert not holds(test_db, j)
+
+
+def test_a_lock_held_too_long_warns_and_runs_unlocked(test_db, jobs, monkeypatch, caplog):
+    j = jobs()
+    ran = []
+    monkeypatch.setattr(joblock, "WAIT_S", 0.3)
+    monkeypatch.setattr(pipeline, "_run_job", lambda *a: ran.append(True))
+    other = connect(test_db)
+    other.execute("SELECT pg_advisory_lock(%s)", (joblock.key(j),))
+    try:
+        with caplog.at_level(logging.WARNING, logger="repolens.ingest"):
+            pipeline.run_job(j, 1, "u", SHA)
+    finally:
+        other.close()
+    assert ran == [True]
+    assert any(f"job {j}:" in r.getMessage() and "still held by another session after 0.3 s"
+               in r.getMessage() and "running unlocked" in r.getMessage()
+               for r in caplog.records if r.levelno == logging.WARNING)
 
 
 def test_no_lock_connection_warns_and_runs_unlocked(test_db, jobs, monkeypatch, caplog):
