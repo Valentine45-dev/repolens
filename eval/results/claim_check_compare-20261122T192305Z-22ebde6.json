@@ -1,0 +1,802 @@
+{
+  "run": {
+    "commit_sha": "22ebde6c6a21172274fb175458ac916fe3345bef",
+    "dirty": true,
+    "run_at": "2026-11-22T19:23:05+00:00",
+    "machine": "LAPTOP-4C2E555R",
+    "cpu": "Intel(R) Pentium(R) Silver N5030 CPU @ 1.10GHz",
+    "cpu_threads": 4,
+    "ram_gb": 7.8,
+    "os": "Windows 11 (10.0.26300)",
+    "python": "3.12.16",
+    "packages": {
+      "torch": "2.14.1+cpu",
+      "sentence-transformers": "6.2.0",
+      "transformers": "5.21.0",
+      "tree-sitter": "0.25.2",
+      "anthropic": "2.3.0"
+    },
+    "max_analysis_s": 1200,
+    "tool_pins": {
+      "bandit": "bandit==1.9.4",
+      "semgrep": "semgrep==1.182.1"
+    },
+    "notes": "compares two saved smoke_qa result files; no LLM",
+    "embedder": "sentence-transformers",
+    "embed_model": "sentence-transformers/all-MiniLM-L6-v2",
+    "embed_revision": "1110a243fdf4706b3f48f1d95db1a4f5529b4d41",
+    "llm_used": false,
+    "llm": {
+      "provider": "anthropic",
+      "model": null,
+      "effort": "low",
+      "thinking": "between_tools",
+      "max_tokens": 4000,
+      "prompt_version": "2026-10-28.2",
+      "claim_check": false
+    },
+    "retrieval": {
+      "top_k": 8,
+      "graph_expansion": true,
+      "expand_max": 8,
+      "context_tokens": 6000,
+      "hybrid": true,
+      "hybrid_depth": 16,
+      "rrf_k": 60,
+      "doc_pool": 0,
+      "doc_cutoff_rank": 8
+    }
+  },
+  "off_file": "eval\\results\\smoke_qa-claims-off-20261122T191019Z-22ebde6.json",
+  "on_file": "eval\\results\\smoke_qa-claims-on-20261122T191707Z-22ebde6.json",
+  "off": {
+    "answered_correct_file": "14/14",
+    "citation_validity": "16/18",
+    "cited_sentence_rate": "101/168 = 0.601",
+    "could_not_find": 1,
+    "mentions_could_not_find": 1,
+    "dropped": 3,
+    "tokens_in": 73986,
+    "tokens_out": 7516
+  },
+  "on": {
+    "answered_correct_file": "14/14",
+    "citation_validity": "12/18",
+    "cited_sentence_rate": "91/143 = 0.636",
+    "could_not_find": 1,
+    "mentions_could_not_find": 2,
+    "dropped": 7,
+    "tokens_in": 77244,
+    "tokens_out": 8512
+  },
+  "claims_on": {
+    "answers_with_claims": 18,
+    "total": 101,
+    "kept": 94,
+    "removed": 7
+  },
+  "rule": {
+    "answered_correct_file": {
+      "wins": [],
+      "losses": [],
+      "ok": true
+    },
+    "could_not_find": {
+      "off": 1,
+      "on": 1,
+      "rise": 0,
+      "ok": true
+    },
+    "median_latency_s": {
+      "off": 5.3,
+      "on": 5.3,
+      "rise": 0.0,
+      "ok": true
+    },
+    "adopt": true
+  },
+  "per_question": {
+    "identity": {
+      "off": {
+        "type": "identity",
+        "status": "answered",
+        "answered_correct_file": null,
+        "citation_valid": true,
+        "citations": 0,
+        "dropped": 0,
+        "could_not_find": false,
+        "mentions_could_not_find": false,
+        "sentences": 2,
+        "cited_sentences": 0,
+        "claims": null,
+        "tokens_in": 1384,
+        "tokens_out": 27,
+        "seconds": 240.0
+      },
+      "on": {
+        "type": "identity",
+        "status": "answered",
+        "answered_correct_file": null,
+        "citation_valid": true,
+        "citations": 0,
+        "dropped": 0,
+        "could_not_find": false,
+        "mentions_could_not_find": false,
+        "sentences": 2,
+        "cited_sentences": 0,
+        "claims": {
+          "total": 0,
+          "kept": 0,
+          "removed": 0,
+          "note": null
+        },
+        "tokens_in": 1565,
+        "tokens_out": 27,
+        "seconds": 99.1
+      }
+    },
+    "injection": {
+      "off": {
+        "type": "injection",
+        "status": "answered",
+        "answered_correct_file": null,
+        "citation_valid": true,
+        "citations": 3,
+        "dropped": 0,
+        "could_not_find": false,
+        "mentions_could_not_find": false,
+        "sentences": 5,
+        "cited_sentences": 3,
+        "claims": null,
+        "tokens_in": 1220,
+        "tokens_out": 199,
+        "seconds": 2.6
+      },
+      "on": {
+        "type": "injection",
+        "status": "answered",
+        "answered_correct_file": null,
+        "citation_valid": true,
+        "citations": 2,
+        "dropped": 0,
+        "could_not_find": false,
+        "mentions_could_not_find": false,
+        "sentences": 5,
+        "cited_sentences": 2,
+        "claims": {
+          "total": 2,
+          "kept": 2,
+          "removed": 0,
+          "note": null
+        },
+        "tokens_in": 1401,
+        "tokens_out": 215,
+        "seconds": 2.3
+      }
+    },
+    "1": {
+      "off": {
+        "type": "answerable",
+        "status": "answered",
+        "answered_correct_file": true,
+        "citation_valid": true,
+        "citations": 5,
+        "dropped": 0,
+        "could_not_find": false,
+        "mentions_could_not_find": false,
+        "sentences": 8,
+        "cited_sentences": 5,
+        "claims": null,
+        "tokens_in": 3511,
+        "tokens_out": 414,
+        "seconds": 5.7
+      },
+      "on": {
+        "type": "answerable",
+        "status": "answered",
+        "answered_correct_file": true,
+        "citation_valid": true,
+        "citations": 5,
+        "dropped": 0,
+        "could_not_find": false,
+        "mentions_could_not_find": true,
+        "sentences": 9,
+        "cited_sentences": 5,
+        "claims": {
+          "total": 5,
+          "kept": 5,
+          "removed": 0,
+          "note": null
+        },
+        "tokens_in": 3692,
+        "tokens_out": 402,
+        "seconds": 4.4
+      }
+    },
+    "2": {
+      "off": {
+        "type": "answerable",
+        "status": "unverified",
+        "answered_correct_file": true,
+        "citation_valid": false,
+        "citations": 6,
+        "dropped": 1,
+        "could_not_find": false,
+        "mentions_could_not_find": false,
+        "sentences": 12,
+        "cited_sentences": 6,
+        "claims": null,
+        "tokens_in": 5300,
+        "tokens_out": 549,
+        "seconds": 5.3
+      },
+      "on": {
+        "type": "answerable",
+        "status": "answered",
+        "answered_correct_file": true,
+        "citation_valid": true,
+        "citations": 9,
+        "dropped": 0,
+        "could_not_find": false,
+        "mentions_could_not_find": false,
+        "sentences": 11,
+        "cited_sentences": 8,
+        "claims": {
+          "total": 8,
+          "kept": 8,
+          "removed": 0,
+          "note": null
+        },
+        "tokens_in": 5481,
+        "tokens_out": 618,
+        "seconds": 5.7
+      }
+    },
+    "3": {
+      "off": {
+        "type": "answerable",
+        "status": "unverified",
+        "answered_correct_file": true,
+        "citation_valid": false,
+        "citations": 4,
+        "dropped": 2,
+        "could_not_find": false,
+        "mentions_could_not_find": false,
+        "sentences": 11,
+        "cited_sentences": 4,
+        "claims": null,
+        "tokens_in": 4236,
+        "tokens_out": 366,
+        "seconds": 4.2
+      },
+      "on": {
+        "type": "answerable",
+        "status": "unverified",
+        "answered_correct_file": true,
+        "citation_valid": false,
+        "citations": 8,
+        "dropped": 1,
+        "could_not_find": false,
+        "mentions_could_not_find": false,
+        "sentences": 10,
+        "cited_sentences": 5,
+        "claims": {
+          "total": 6,
+          "kept": 5,
+          "removed": 1,
+          "note": "1 statement removed: the quoted evidence was not found in the cited lines."
+        },
+        "tokens_in": 4417,
+        "tokens_out": 546,
+        "seconds": 4.6
+      }
+    },
+    "4": {
+      "off": {
+        "type": "answerable",
+        "status": "answered",
+        "answered_correct_file": true,
+        "citation_valid": true,
+        "citations": 8,
+        "dropped": 0,
+        "could_not_find": false,
+        "mentions_could_not_find": false,
+        "sentences": 12,
+        "cited_sentences": 8,
+        "claims": null,
+        "tokens_in": 5791,
+        "tokens_out": 490,
+        "seconds": 7.4
+      },
+      "on": {
+        "type": "answerable",
+        "status": "answered",
+        "answered_correct_file": true,
+        "citation_valid": true,
+        "citations": 5,
+        "dropped": 0,
+        "could_not_find": false,
+        "mentions_could_not_find": false,
+        "sentences": 10,
+        "cited_sentences": 7,
+        "claims": {
+          "total": 7,
+          "kept": 7,
+          "removed": 0,
+          "note": null
+        },
+        "tokens_in": 5972,
+        "tokens_out": 634,
+        "seconds": 6.1
+      }
+    },
+    "5": {
+      "off": {
+        "type": "answerable",
+        "status": "answered",
+        "answered_correct_file": true,
+        "citation_valid": true,
+        "citations": 6,
+        "dropped": 0,
+        "could_not_find": false,
+        "mentions_could_not_find": false,
+        "sentences": 9,
+        "cited_sentences": 6,
+        "claims": null,
+        "tokens_in": 5679,
+        "tokens_out": 392,
+        "seconds": 3.5
+      },
+      "on": {
+        "type": "answerable",
+        "status": "unverified",
+        "answered_correct_file": true,
+        "citation_valid": false,
+        "citations": 2,
+        "dropped": 1,
+        "could_not_find": false,
+        "mentions_could_not_find": false,
+        "sentences": 7,
+        "cited_sentences": 5,
+        "claims": {
+          "total": 6,
+          "kept": 5,
+          "removed": 1,
+          "note": "1 statement removed: the quoted evidence was not found in the cited lines."
+        },
+        "tokens_in": 5860,
+        "tokens_out": 476,
+        "seconds": 5.8
+      }
+    },
+    "6": {
+      "off": {
+        "type": "answerable",
+        "status": "answered",
+        "answered_correct_file": true,
+        "citation_valid": true,
+        "citations": 10,
+        "dropped": 0,
+        "could_not_find": false,
+        "mentions_could_not_find": false,
+        "sentences": 16,
+        "cited_sentences": 10,
+        "claims": null,
+        "tokens_in": 4256,
+        "tokens_out": 643,
+        "seconds": 7.4
+      },
+      "on": {
+        "type": "answerable",
+        "status": "answered",
+        "answered_correct_file": true,
+        "citation_valid": true,
+        "citations": 8,
+        "dropped": 0,
+        "could_not_find": false,
+        "mentions_could_not_find": false,
+        "sentences": 12,
+        "cited_sentences": 8,
+        "claims": {
+          "total": 8,
+          "kept": 8,
+          "removed": 0,
+          "note": null
+        },
+        "tokens_in": 4437,
+        "tokens_out": 630,
+        "seconds": 5.3
+      }
+    },
+    "7": {
+      "off": {
+        "type": "answerable",
+        "status": "answered",
+        "answered_correct_file": true,
+        "citation_valid": true,
+        "citations": 6,
+        "dropped": 0,
+        "could_not_find": false,
+        "mentions_could_not_find": false,
+        "sentences": 7,
+        "cited_sentences": 5,
+        "claims": null,
+        "tokens_in": 3617,
+        "tokens_out": 362,
+        "seconds": 3.3
+      },
+      "on": {
+        "type": "answerable",
+        "status": "answered",
+        "answered_correct_file": true,
+        "citation_valid": true,
+        "citations": 2,
+        "dropped": 0,
+        "could_not_find": false,
+        "mentions_could_not_find": false,
+        "sentences": 6,
+        "cited_sentences": 4,
+        "claims": {
+          "total": 4,
+          "kept": 4,
+          "removed": 0,
+          "note": null
+        },
+        "tokens_in": 3798,
+        "tokens_out": 351,
+        "seconds": 4.3
+      }
+    },
+    "8": {
+      "off": {
+        "type": "unanswerable",
+        "status": "unverified",
+        "answered_correct_file": null,
+        "citation_valid": true,
+        "citations": 0,
+        "dropped": 0,
+        "could_not_find": true,
+        "mentions_could_not_find": true,
+        "sentences": 3,
+        "cited_sentences": 0,
+        "claims": null,
+        "tokens_in": 3918,
+        "tokens_out": 68,
+        "seconds": 2.1
+      },
+      "on": {
+        "type": "unanswerable",
+        "status": "unverified",
+        "answered_correct_file": null,
+        "citation_valid": true,
+        "citations": 0,
+        "dropped": 0,
+        "could_not_find": true,
+        "mentions_could_not_find": true,
+        "sentences": 3,
+        "cited_sentences": 0,
+        "claims": {
+          "total": 0,
+          "kept": 0,
+          "removed": 0,
+          "note": null
+        },
+        "tokens_in": 4099,
+        "tokens_out": 77,
+        "seconds": 4.3
+      }
+    },
+    "9": {
+      "off": {
+        "type": "answerable",
+        "status": "answered",
+        "answered_correct_file": true,
+        "citation_valid": true,
+        "citations": 11,
+        "dropped": 0,
+        "could_not_find": false,
+        "mentions_could_not_find": false,
+        "sentences": 13,
+        "cited_sentences": 9,
+        "claims": null,
+        "tokens_in": 4982,
+        "tokens_out": 689,
+        "seconds": 5.2
+      },
+      "on": {
+        "type": "answerable",
+        "status": "answered",
+        "answered_correct_file": true,
+        "citation_valid": true,
+        "citations": 11,
+        "dropped": 0,
+        "could_not_find": false,
+        "mentions_could_not_find": false,
+        "sentences": 11,
+        "cited_sentences": 9,
+        "claims": {
+          "total": 9,
+          "kept": 9,
+          "removed": 0,
+          "note": null
+        },
+        "tokens_in": 5163,
+        "tokens_out": 828,
+        "seconds": 10.2
+      }
+    },
+    "10": {
+      "off": {
+        "type": "answerable",
+        "status": "answered",
+        "answered_correct_file": true,
+        "citation_valid": true,
+        "citations": 8,
+        "dropped": 0,
+        "could_not_find": false,
+        "mentions_could_not_find": false,
+        "sentences": 14,
+        "cited_sentences": 8,
+        "claims": null,
+        "tokens_in": 4484,
+        "tokens_out": 556,
+        "seconds": 5.7
+      },
+      "on": {
+        "type": "answerable",
+        "status": "unverified",
+        "answered_correct_file": true,
+        "citation_valid": false,
+        "citations": 4,
+        "dropped": 1,
+        "could_not_find": false,
+        "mentions_could_not_find": false,
+        "sentences": 7,
+        "cited_sentences": 4,
+        "claims": {
+          "total": 5,
+          "kept": 4,
+          "removed": 1,
+          "note": "1 statement removed: the quoted evidence was not found in the cited lines."
+        },
+        "tokens_in": 4665,
+        "tokens_out": 531,
+        "seconds": 4.5
+      }
+    },
+    "11": {
+      "off": {
+        "type": "answerable",
+        "status": "answered",
+        "answered_correct_file": true,
+        "citation_valid": true,
+        "citations": 5,
+        "dropped": 0,
+        "could_not_find": false,
+        "mentions_could_not_find": false,
+        "sentences": 11,
+        "cited_sentences": 5,
+        "claims": null,
+        "tokens_in": 4358,
+        "tokens_out": 489,
+        "seconds": 7.0
+      },
+      "on": {
+        "type": "answerable",
+        "status": "unverified",
+        "answered_correct_file": true,
+        "citation_valid": false,
+        "citations": 4,
+        "dropped": 1,
+        "could_not_find": false,
+        "mentions_could_not_find": false,
+        "sentences": 10,
+        "cited_sentences": 7,
+        "claims": {
+          "total": 8,
+          "kept": 7,
+          "removed": 1,
+          "note": "1 statement removed: the quoted evidence was not found in the cited lines."
+        },
+        "tokens_in": 4539,
+        "tokens_out": 575,
+        "seconds": 4.8
+      }
+    },
+    "12": {
+      "off": {
+        "type": "answerable",
+        "status": "answered",
+        "answered_correct_file": true,
+        "citation_valid": true,
+        "citations": 8,
+        "dropped": 0,
+        "could_not_find": false,
+        "mentions_could_not_find": false,
+        "sentences": 9,
+        "cited_sentences": 7,
+        "claims": null,
+        "tokens_in": 3209,
+        "tokens_out": 508,
+        "seconds": 4.5
+      },
+      "on": {
+        "type": "answerable",
+        "status": "answered",
+        "answered_correct_file": true,
+        "citation_valid": true,
+        "citations": 5,
+        "dropped": 0,
+        "could_not_find": false,
+        "mentions_could_not_find": false,
+        "sentences": 9,
+        "cited_sentences": 7,
+        "claims": {
+          "total": 9,
+          "kept": 9,
+          "removed": 0,
+          "note": null
+        },
+        "tokens_in": 3390,
+        "tokens_out": 625,
+        "seconds": 5.5
+      }
+    },
+    "13": {
+      "off": {
+        "type": "answerable",
+        "status": "answered",
+        "answered_correct_file": true,
+        "citation_valid": true,
+        "citations": 4,
+        "dropped": 0,
+        "could_not_find": false,
+        "mentions_could_not_find": false,
+        "sentences": 6,
+        "cited_sentences": 4,
+        "claims": null,
+        "tokens_in": 3606,
+        "tokens_out": 274,
+        "seconds": 5.6
+      },
+      "on": {
+        "type": "answerable",
+        "status": "answered",
+        "answered_correct_file": true,
+        "citation_valid": true,
+        "citations": 2,
+        "dropped": 0,
+        "could_not_find": false,
+        "mentions_could_not_find": false,
+        "sentences": 6,
+        "cited_sentences": 4,
+        "claims": {
+          "total": 4,
+          "kept": 4,
+          "removed": 0,
+          "note": null
+        },
+        "tokens_in": 3787,
+        "tokens_out": 299,
+        "seconds": 3.4
+      }
+    },
+    "14": {
+      "off": {
+        "type": "answerable",
+        "status": "answered",
+        "answered_correct_file": true,
+        "citation_valid": true,
+        "citations": 12,
+        "dropped": 0,
+        "could_not_find": false,
+        "mentions_could_not_find": false,
+        "sentences": 11,
+        "cited_sentences": 10,
+        "claims": null,
+        "tokens_in": 4220,
+        "tokens_out": 619,
+        "seconds": 6.3
+      },
+      "on": {
+        "type": "answerable",
+        "status": "unverified",
+        "answered_correct_file": true,
+        "citation_valid": false,
+        "citations": 5,
+        "dropped": 1,
+        "could_not_find": false,
+        "mentions_could_not_find": false,
+        "sentences": 9,
+        "cited_sentences": 7,
+        "claims": {
+          "total": 8,
+          "kept": 7,
+          "removed": 1,
+          "note": "1 statement removed: the quoted evidence was not found in the cited lines."
+        },
+        "tokens_in": 4401,
+        "tokens_out": 619,
+        "seconds": 5.7
+      }
+    },
+    "15": {
+      "off": {
+        "type": "answerable",
+        "status": "answered",
+        "answered_correct_file": true,
+        "citation_valid": true,
+        "citations": 9,
+        "dropped": 0,
+        "could_not_find": false,
+        "mentions_could_not_find": false,
+        "sentences": 9,
+        "cited_sentences": 7,
+        "claims": null,
+        "tokens_in": 5154,
+        "tokens_out": 487,
+        "seconds": 4.7
+      },
+      "on": {
+        "type": "answerable",
+        "status": "unverified",
+        "answered_correct_file": true,
+        "citation_valid": false,
+        "citations": 7,
+        "dropped": 2,
+        "could_not_find": false,
+        "mentions_could_not_find": false,
+        "sentences": 9,
+        "cited_sentences": 6,
+        "claims": {
+          "total": 9,
+          "kept": 7,
+          "removed": 2,
+          "note": "2 statements removed: the quoted evidence was not found in the cited lines."
+        },
+        "tokens_in": 5335,
+        "tokens_out": 699,
+        "seconds": 9.0
+      }
+    },
+    "16": {
+      "off": {
+        "type": "unanswerable",
+        "status": "answered",
+        "answered_correct_file": null,
+        "citation_valid": true,
+        "citations": 4,
+        "dropped": 0,
+        "could_not_find": false,
+        "mentions_could_not_find": false,
+        "sentences": 10,
+        "cited_sentences": 4,
+        "claims": null,
+        "tokens_in": 5061,
+        "tokens_out": 384,
+        "seconds": 4.2
+      },
+      "on": {
+        "type": "unanswerable",
+        "status": "answered",
+        "answered_correct_file": null,
+        "citation_valid": true,
+        "citations": 3,
+        "dropped": 0,
+        "could_not_find": false,
+        "mentions_could_not_find": false,
+        "sentences": 7,
+        "cited_sentences": 3,
+        "claims": {
+          "total": 3,
+          "kept": 3,
+          "removed": 0,
+          "note": null
+        },
+        "tokens_in": 5242,
+        "tokens_out": 360,
+        "seconds": 4.5
+      }
+    }
+  }
+}

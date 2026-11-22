@@ -303,6 +303,8 @@ def run_question(q: dict, snapshot_id: int, meter: Meter) -> dict:
         "citations": [f"{c['path']}:{c['start_line']}-{c['end_line']}"
                       for c in reply["citations"]],
         "dropped": reply["dropped"], "prompt_version": reply.get("prompt_version"),
+        # v2.1, purely additive (not scored): claim-check counts, None with the check off
+        "claims": reply.get("claims"),
         "graph_paths": [r.get("path") for r in reply.get("results", [])]
         if reply["kind"] == "graph" else [],
         "graph_total": reply.get("total"), "lower_confidence": reply.get("lower_confidence"),

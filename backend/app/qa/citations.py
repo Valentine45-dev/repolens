@@ -116,6 +116,30 @@ def _tidy(text: str) -> str:
     return text.replace(_GONE, "").strip()
 
 
+def citation_spans(text: str, sent_paths: set[str]) -> list[tuple[int, int, str, int, int]]:
+    """(start, end, path, first line, last line) of every citation attempt in the text, found the
+    way validate() finds them (sent paths first, then the generic shape minus hosts), in order."""
+    spans: list[tuple[int, int, str, int, int]] = []
+    taken = [False] * len(text)
+
+    def add(m: re.Match) -> None:
+        if any(taken[m.start():m.end()]):
+            return
+        spans.append((m.start(), m.end(), m["path"].removeprefix("./").replace("\\", "/"),
+                      *_lines(m)))
+        for i in range(m.start(), m.end()):
+            taken[i] = True
+
+    sent = _sent_pattern(sent_paths)
+    if sent:
+        for m in sent.finditer(text):
+            add(m)
+    for m in CITATION.finditer(text):
+        if _is_attempt(m["path"].removeprefix("./")):
+            add(m)
+    return sorted(spans)
+
+
 _KEPT = "\x01"  # wraps the index of a citation already checked, so the generic pass skips it
 
 

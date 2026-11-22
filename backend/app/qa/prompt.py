@@ -9,6 +9,8 @@ from functools import lru_cache
 from pathlib import Path
 
 SYSTEM_FILE = Path(__file__).parent / "prompts" / "system.md"
+# With QA_CLAIM_CHECK on (app/qa/claims.py): the same prompt, citations with exact quotes.
+CLAIMS_FILE = Path(__file__).parent / "prompts" / "system_claims.md"
 COULD_NOT_FIND = "I could not find this in the provided code."
 # The fixed identity reply (system.md); it has no citations by design.
 IDENTITY_ANSWER = (
@@ -22,17 +24,33 @@ class SystemPrompt:
     text: str
 
 
-def read_system_file() -> str:
+def read_system_file(path: Path = SYSTEM_FILE) -> str:
     # Line endings normalised, so a CRLF checkout on Windows sends (and hashes) the same text.
-    return SYSTEM_FILE.read_text(encoding="utf-8").replace("\r\n", "\n")
+    return path.read_text(encoding="utf-8").replace("\r\n", "\n")
+
+
+def _parse(text: str, name: str) -> SystemPrompt:
+    first, _, rest = text.partition("\n")
+    if not first.startswith("PROMPT_VERSION: "):
+        raise RuntimeError(f"{name} must start with 'PROMPT_VERSION: <version>'")
+    return SystemPrompt(first.removeprefix("PROMPT_VERSION: ").strip(), rest.strip() + "\n")
 
 
 @lru_cache(maxsize=1)
 def system_prompt() -> SystemPrompt:
-    first, _, rest = read_system_file().partition("\n")
-    if not first.startswith("PROMPT_VERSION: "):
-        raise RuntimeError("system.md must start with 'PROMPT_VERSION: <version>'")
-    return SystemPrompt(first.removeprefix("PROMPT_VERSION: ").strip(), rest.strip() + "\n")
+    return _parse(read_system_file(), "system.md")
+
+
+@lru_cache(maxsize=1)
+def claims_prompt() -> SystemPrompt:
+    return _parse(read_system_file(CLAIMS_FILE), "system_claims.md")
+
+
+def active_prompt() -> SystemPrompt:
+    """The system prompt /ask sends: the claims one with QA_CLAIM_CHECK on."""
+    from app import config
+
+    return claims_prompt() if config.QA_CLAIM_CHECK else system_prompt()
 
 
 # Repo text and the question must not open or close our blocks.

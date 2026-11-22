@@ -12,6 +12,18 @@ const answer = {
   }],
 };
 
+describe("claim-check counts on saved turns (Part C)", () => {
+  it("accepts well-formed claims or none, and rejects a malformed one", () => {
+    const claims = { total: 2, kept: 1, removed: 1, note: "1 statement removed: ..." };
+    expect(isAnswer({ ...answer, claims })).toBe(true);
+    expect(isAnswer({ ...answer, claims: { ...claims, note: null } })).toBe(true);
+    expect(isAnswer({ ...answer, claims: null })).toBe(true);
+    expect(isAnswer(answer)).toBe(true); // older answers have none
+    expect(isAnswer({ ...answer, claims: { ...claims, kept: "1" } })).toBe(false);
+    expect(isAnswer({ ...answer, claims: { ...claims, note: 3 } })).toBe(false);
+  });
+});
+
 describe("saved Ask turns", () => {
   it("keeps answered, failed and interrupted turns, and a question still waiting", () => {
     const turns = [

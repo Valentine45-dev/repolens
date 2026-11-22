@@ -8,6 +8,7 @@ import pytest
 from conftest import FIXTURE, query
 
 from app import config
+from app.db import pool
 from app.qa import llm
 from app.qa.docs import (
     MAX_DOC_BYTES,
@@ -201,6 +202,8 @@ def doc_repo(client, monkeypatch, tmp_path):
 
     monkeypatch.setattr(clone, "fetch_commit", fetch)
     monkeypatch.setattr(config, "QA_DOC_POOL", 2)
+    # Scripted answers use bare citations (citation validation of docs); claims: test_claims.py.
+    monkeypatch.setattr(config, "QA_CLAIM_CHECK", False)
     body = client.post("/repos", json={"url": "https://github.com/example/docs"}).json()
     status = client.get(f"/snapshots/{body['snapshot_id']}/status").json()
     assert status["status"] == "done", status
@@ -348,6 +351,23 @@ def test_search_retry_keeps_doc_chunks_and_code_rebuild_leaves_them(doc_repo):
     job = query("SELECT job_id FROM snapshot_status WHERE snapshot_id = %s", doc_repo)[0]["job_id"]
     pipeline._run_search_retry(job, doc_repo)  # re-embeds code from stored files, then docs
     assert len(_doc_rows(doc_repo)) == before > 0
+
+
+@pytest.mark.db
+def test_doc_chunks_alone_never_make_search_ready(client, doc_repo):
+    """Code search failed and left no code chunks; doc chunks are still there. Ask must say search
+    is not ready (and offer the retry), not search docs only. Failed before the fix."""
+    from app.qa.answer import search_ready
+
+    job = query("SELECT job_id FROM snapshot_status WHERE snapshot_id = %s", doc_repo)[0]["job_id"]
+    with pool().connection() as conn:
+        conn.execute("DELETE FROM chunks WHERE snapshot_id = %s AND source = 'code'", (doc_repo,))
+        conn.execute("UPDATE jobs SET search_state = 'failed', search_error = 'x' WHERE id = %s",
+                     (job,))
+    assert len(_doc_rows(doc_repo)) > 0
+    assert search_ready(doc_repo) is False
+    f = client.get(f"/snapshots/{doc_repo}/status").json()["features"]
+    assert (f["ask"], f["retry_search"]) == (False, True)
 
 
 def test_doc_files_path_in_test_dirs_follow_the_test_rule():

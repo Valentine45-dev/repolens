@@ -21,7 +21,7 @@ ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT / "backend"))
 
 from app import config  # noqa: E402
-from app.qa.prompt import system_prompt  # noqa: E402
+from app.qa.prompt import active_prompt  # noqa: E402
 
 RESULTS = ROOT / "eval" / "results"
 
@@ -78,7 +78,9 @@ def run_info(provider=None, *, llm_used: bool) -> dict:
         "effort": provider.settings["effort"] if provider else config.LLM_EFFORT,
         "thinking": provider.settings["thinking"] if provider else config.LLM_THINKING,
         "max_tokens": config.LLM_MAX_TOKENS,
-        "prompt_version": system_prompt().version,
+        # The prompt /ask sends (the claims prompt with QA_CLAIM_CHECK on).
+        "prompt_version": active_prompt().version,
+        "claim_check": config.QA_CLAIM_CHECK,
     }
     return {
         "commit_sha": _git("rev-parse", "HEAD"),

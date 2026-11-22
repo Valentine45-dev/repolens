@@ -27,6 +27,9 @@ def snapshot(client):
 def fake(monkeypatch):
     provider = FakeProvider()
     monkeypatch.setattr(llm, "get_provider", lambda: provider)
+    # These tests script v2.0-style answers (bare citations) to test citation validation itself;
+    # the claim check (on by default since Part C) is tested in test_claims.py.
+    monkeypatch.setattr(config, "QA_CLAIM_CHECK", False)
     return provider
 
 

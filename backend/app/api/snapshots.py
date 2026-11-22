@@ -54,7 +54,9 @@ def snapshot_status(snapshot_id: int) -> dict:
             " st.percent, st.error, st.search_error, st.progress_done, st.progress_total,"
             " st.search_state, j.files_kept, j.files_skipped, j.files_beyond_limit,"
             " j.hit_file_limit,"
-            " EXISTS (SELECT 1 FROM chunks c WHERE c.snapshot_id = s.id) AS has_chunks"
+            # Code chunks only: documentation chunks alone never make Ask ready.
+            " EXISTS (SELECT 1 FROM chunks c WHERE c.snapshot_id = s.id"
+            " AND c.source = 'code') AS has_chunks"
             " FROM snapshots s JOIN repos r ON r.id = s.repo_id"
             " JOIN snapshot_status st ON st.snapshot_id = s.id"
             " JOIN jobs j ON j.id = st.job_id"
