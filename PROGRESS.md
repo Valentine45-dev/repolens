@@ -2575,6 +2575,8 @@ are deliberately not changed after seeing eval results; these stay as documented
     `dropped` per record), so v2.0's answers can later be re-validated offline with the new validator for a
     like-for-like comparison (aggregates only; not in this task).
   - **Checks:** backend tests `test_qa.py` 68 passed, `test_ask_db.py` 56 passed; web 361 passed (2 new in
-    `AskDrawer.dom.test.tsx`; the main one fails on the old drawer), `tsc` clean. No retrieval change. No
-    smoke eval: the default prompt, model and retrieval path are unchanged (only validation and status).
-    $0.
+    `AskDrawer.dom.test.tsx`; the main one fails on the old drawer), `tsc` clean. Full backend 744 passed,
+    3 skipped; ruff clean. Retrieval eval `retrieval_context-ask-citations-*-3cbe636.json` identical to Part
+    B's `...-hybrid-tuning-*-3c5ed8c.json` (configs, summary, all 20 records), as predicted. Scorer
+    self-check: scoring files as frozen. No smoke eval: the default prompt, model and retrieval path are
+    unchanged (only validation and status). $0; Step 5 spend still $0.085.
