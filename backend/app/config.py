@@ -50,3 +50,9 @@ QA_TOP_K = int(os.environ.get("QA_TOP_K", "8"))
 QA_GRAPH_EXPANSION = os.environ.get("QA_GRAPH_EXPANSION", "1") == "1"
 QA_EXPAND_MAX = int(os.environ.get("QA_EXPAND_MAX", "8"))
 QA_CONTEXT_TOKENS = int(os.environ.get("QA_CONTEXT_TOKENS", "6000"))  # snippet text, estimated
+# Hybrid search (app/qa/retrieve.py): keyword + vector merged by reciprocal rank fusion. On by
+# default since 22 Nov by the Step 5 adoption rule (PROGRESS.md: DG tied C 0-0 on the 18 tuning
+# code questions; a tie adopts DG). QA_HYBRID=0 = vector search only (v2.0).
+QA_HYBRID = os.environ.get("QA_HYBRID", "1") == "1"
+QA_HYBRID_DEPTH = int(os.environ.get("QA_HYBRID_DEPTH", "16"))  # each list's depth before fusion
+QA_RRF_K = int(os.environ.get("QA_RRF_K", "60"))

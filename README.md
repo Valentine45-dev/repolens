@@ -39,7 +39,8 @@ pattern checks, not a security verdict; they can miss issues and can flag safe c
                                                     │   clone deleted afterwards
                                                     │
                      POST /snapshots/{id}/ask ─▶    │ router: graph question? ─yes─▶ SQL on edges
-                                                    │   no ─▶ vector top-8 + 1-hop graph expansion
+                                                    │   no ─▶ hybrid top-8 (keyword + vector, RRF)
+                                                    │        + 1-hop graph expansion
                                                     │        ─▶ LLM (Anthropic) ─▶ citation check
 ```
 

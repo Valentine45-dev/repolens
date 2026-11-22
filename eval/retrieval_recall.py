@@ -6,7 +6,14 @@ Configurations (same questions, same scoring):
     A  search top 8
     B  search top 16
     C  search top 8 + graph expansion (up to 8 more, so up to 16)
+    D  hybrid (keyword + vector, reciprocal rank fusion) top 8
+    DG hybrid top 8 + graph expansion (8)
 Expansion helps only if C beats B: the same number of chunks spent on search alone.
+A, B and C pass hybrid=False, so they mean what they meant before hybrid search existed.
+
+--tuning-locked FILE adds that file's code_how and locate questions (eval/tuning_locked_format.yaml
+format; `source: code` ranges only), so the summary covers both sets. Paired comparisons (wins,
+losses, exact two-sided sign test) use eval/locked_metrics.paired.
 
 Questions and labels come from a YAML file (default eval/questions.yaml); each repo entry names
 the URL and commit, and the matching analysed snapshot is looked up in the database (it must be
@@ -29,10 +36,14 @@ from app import db  # noqa: E402
 from app.qa.retrieve import retrieve  # noqa: E402
 
 CONFIGS = {
-    "A": {"k": 8, "expand": False, "expand_max": 0},
-    "B": {"k": 16, "expand": False, "expand_max": 0},
-    "C": {"k": 8, "expand": True, "expand_max": 8},
+    "A": {"k": 8, "expand": False, "expand_max": 0, "hybrid": False},
+    "B": {"k": 16, "expand": False, "expand_max": 0, "hybrid": False},
+    "C": {"k": 8, "expand": True, "expand_max": 8, "hybrid": False},
+    "D": {"k": 8, "expand": False, "expand_max": 0, "hybrid": True},
+    "DG": {"k": 8, "expand": True, "expand_max": 8, "hybrid": True},
 }
+PAIRS = [("C", "B"), ("C", "A"), ("B", "A"), ("DG", "C"), ("DG", "D"), ("D", "A")]
+CODE_TYPES = ("code_how", "locate")
 
 
 def overlaps(a_start: int, a_end: int, b_start: int, b_end: int) -> bool:
@@ -57,6 +68,25 @@ def first_hit_rank(snippets, expected: list[dict]) -> int | None:
 def load_questions(path: Path) -> list[dict]:
     data = yaml.safe_load(path.read_text(encoding="utf-8"))
     return data["repos"]
+
+
+def load_tuning_locked(path: Path) -> list[dict]:
+    """The locked-format tuning file as repo entries: code_how and locate questions only, with
+    their `source: code` ranges (code_hit's definition)."""
+    data = yaml.safe_load(path.read_text(encoding="utf-8"))
+    repos: dict[tuple[str, str], dict] = {}
+    for q in data["questions"]:
+        if q["type"] not in CODE_TYPES:
+            continue
+        key = (q["repo"], q["commit"])
+        repo = repos.setdefault(key, {"name": q["repo"], "url": f"https://github.com/{q['repo']}",
+                                      "commit": q["commit"], "questions": []})
+        repo["questions"].append({
+            "id": q["id"], "question": q["question"], "type": q["type"],
+            "expected": [{"path": e["path"], "start": e["start"], "end": e["end"]}
+                         for e in q["expected"] if e["source"] == "code"],
+        })
+    return list(repos.values())
 
 
 def snapshot_for(repo: dict) -> int:
@@ -100,7 +130,25 @@ def evaluate(repos: list[dict]) -> dict:
                 for name, ctx in contexts.items()
             }
             rows.append(row)
-    return {"configs": CONFIGS, "questions": rows, "summary": summarise(rows)}
+    return {"configs": CONFIGS, "questions": rows, "summary": summarise(rows),
+            "comparisons": compare(rows)}
+
+
+def compare(rows: list[dict]) -> dict:
+    """Paired hit/miss per question for each pair of configurations, with the questions named."""
+    from locked_metrics import paired  # the frozen scorer's own sign test
+
+    scored = [r for r in rows if not r["unanswerable"]]
+    out = {}
+    for x, y in PAIRS:
+        hx = {f"{r['repo']}#{r['id']}": r["configs"][x]["hit"] for r in scored}
+        hy = {f"{r['repo']}#{r['id']}": r["configs"][y]["hit"] for r in scored}
+        out[f"{x} vs {y}"] = {
+            **paired(hx, hy),
+            "won": sorted(i for i in hx if hx[i] and not hy[i]),
+            "lost": sorted(i for i in hx if hy[i] and not hx[i]),
+        }
+    return out
 
 
 def summarise(rows: list[dict]) -> dict:
@@ -121,27 +169,32 @@ def summarise(rows: list[dict]) -> dict:
 
 
 def print_table(results: dict) -> None:
-    print(f"{'set':<14}{'n':>3}   A top8   B top16  C 8+graph   MRR@16")
+    print(f"{'set':<22}{'n':>3}" + "".join(f"{c:>7}" for c in CONFIGS) + "   MRR@16")
     for name, s in results["summary"].items():
         r = s["recall"]
-        print(f"{name:<14}{s['questions']:>3}   {r['A']:>6.2f}   {r['B']:>6.2f}   {r['C']:>8.2f}"
-              f"   {s['mrr_search_16']:>6.2f}")
+        print(f"{name:<22}{s['questions']:>3}" + "".join(f"{r[c]:>7.2f}" for c in CONFIGS)
+              + f"   {s['mrr_search_16']:>6.2f}")
     print()
     for r in results["questions"]:
         if r["unanswerable"]:
-            print(f"Q{r['id']:>2} unanswerable; top: {', '.join(r['top_paths'])}")
+            print(f"Q{r['id']!s:>3} unanswerable; top: {', '.join(r['top_paths'])}")
             continue
         cells = "  ".join(
             f"{c}:{'Y' if v['hit'] else '-'}{'*' if v['hit_from_graph'] else ' '}"
             f"({v['sent']:>2})" for c, v in r["configs"].items()
         )
-        print(f"Q{r['id']:>2} rank {r['first_hit_rank'] or '-':>2}  {cells}")
-    print("\n(n) = chunks sent; * = a graph-added chunk overlaps a label")
+        print(f"Q{r['id']!s:>3} rank {r['first_hit_rank'] or '-':>2}  {cells}")
+    print("\n(n) = chunks sent; * = a graph-added chunk overlaps a label\n")
+    for pair, c in results["comparisons"].items():
+        print(f"{pair:<9} wins {c['wins']} losses {c['losses']} (of {c['questions']})"
+              f"  p = {c['p_mcnemar_exact']}  won {c['won']} lost {c['lost']}")
 
 
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__.split("\n")[0])
     parser.add_argument("--questions", type=Path, default=ROOT / "eval" / "questions.yaml")
+    parser.add_argument("--tuning-locked", type=Path, default=None,
+                        help="also score this locked-format file's code_how/locate questions")
     parser.add_argument("--label", default="", help="name for this run, e.g. baseline")
     args = parser.parse_args()
 
@@ -150,8 +203,13 @@ def main() -> None:
         info = run_info(llm_used=False)
         info["label"] = args.label
         print(header(info), f"| {args.label}" if args.label else "")
-        results = evaluate(load_questions(args.questions))
+        repos = load_questions(args.questions)
+        if args.tuning_locked:
+            repos += load_tuning_locked(args.tuning_locked)
+        results = evaluate(repos)
         results["questions_file"] = str(args.questions.relative_to(ROOT))
+        if args.tuning_locked:
+            results["tuning_locked_file"] = str(args.tuning_locked.resolve().relative_to(ROOT))
         print_table(results)
         name = "retrieval_context" + (f"-{args.label}" if args.label else "")
         print("\nsaved", save_results(name, info, results))

@@ -631,8 +631,8 @@ def test_unscoped_questions_are_unchanged(client, snapshot, fake):
     none = retrieve(snapshot, q, scope_file_id=None)
     assert default.snippets == none.snippets
     assert {s.via for s in default.snippets} <= {"search", "graph"}
-    assert set(default.summary()) == {"k", "expand", "include_tests", "used_test_code", "sent",
-                                      "from_graph"}
+    assert set(default.summary()) == {"k", "hybrid", "expand", "include_tests", "used_test_code",
+                                      "sent", "from_graph"}
     fake.script = [NOT_FOUND, NOT_FOUND]
     without = ask(client, snapshot, q)
     with_null = ask(client, snapshot, q, file_id=None)
