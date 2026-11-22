@@ -58,6 +58,10 @@ function isResult(v: unknown): v is GraphResult {
   );
 }
 
+function isClaims(v: unknown): boolean {
+  return isObj(v) && isInt(v.total) && isInt(v.kept) && isInt(v.removed) && nullable(isStr)(v.note);
+}
+
 export function isAnswer(v: unknown): v is Answer {
   return (
     isObj(v) &&
@@ -69,6 +73,7 @@ export function isAnswer(v: unknown): v is Answer {
     listOf(isResult)(v.results) &&
     optional(v.locations, listOf(isCitation)) &&
     (v.retrieval === null || (isObj(v.retrieval) && optional(v.retrieval.scope, isObj))) &&
+    optional(v.claims, nullable(isClaims)) &&
     optional(v.query, isStr) &&
     optional(v.target, nullable(isObj))
   );

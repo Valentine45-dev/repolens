@@ -75,6 +75,30 @@ def test_prompt_version_hash_guard():
     assert PROMPT_HASHES[version] == digest, "system.md changed: bump PROMPT_VERSION"
 
 
+CLAIMS_PROMPT_HASHES = {  # prompts/system_claims.md (QA_CLAIM_CHECK)
+    "2026-11-23.claims.1": "d42740d72696d5f722e7844fd5fb83c5f0a26913fa9a6a08a67dfff6d52d3608",
+}
+
+
+def test_claims_prompt_version_hash_guard():
+    from app.qa.prompt import CLAIMS_FILE, claims_prompt
+
+    version = claims_prompt().version
+    digest = hashlib.sha256(read_system_file(CLAIMS_FILE).encode()).hexdigest()
+    assert version in CLAIMS_PROMPT_HASHES, f"new claims PROMPT_VERSION {version}: add {digest}"
+    assert CLAIMS_PROMPT_HASHES[version] == digest, "system_claims.md changed: bump its version"
+
+
+def test_claims_prompt_differs_only_in_the_citation_rules():
+    from app.qa.prompt import claims_prompt
+
+    base, claims = system_prompt().text, claims_prompt().text
+    for section in ("You are RepoLens's assistant", "Grounding", "Trust boundary", "Format"):
+        part = base[base.index(section):].split("\n\n")[0]
+        assert part in claims, section
+    assert 'path:start-end, then the quote in double quotes' in claims
+
+
 def test_system_prompt_states_the_rules():
     text = system_prompt().text
     assert not text.startswith("PROMPT_VERSION")  # the version line is not sent

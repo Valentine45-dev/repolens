@@ -724,6 +724,14 @@ function AnswerView({
         </div>
       ) : null}
 
+      {/* Claim check (Part C): the server's own note, beside the answer, never in its text. */}
+      {answer.claims && answer.claims.total > 0 ? (
+        <p className="caption" data-testid="claims-note">
+          {answer.claims.note ? `${answer.claims.note} ` : null}
+          The quotes of the statements shown were found in the lines they cite; that shows the
+          evidence exists, not that it supports the statement.
+        </p>
+      ) : null}
       {answer.dropped > 0 && answer.status !== "unverified" ? (
         <p className="caption">
           {answer.dropped === 1

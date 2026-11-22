@@ -506,6 +506,28 @@ describe("Part A: documentation citations", () => {
   });
 });
 
+describe("Part C: claim check note", () => {
+  it("shows the server's note beside the answer, not inside it", async () => {
+    await open("/a/94/explore?ask=1");
+    await ask("How is a user created?");
+    const note = "1 statement removed: the quoted evidence was not found in the cited lines.";
+    await answerWith({ ...answer("It creates a user."), status: "unverified", dropped: 1, claims: { total: 2, kept: 1, removed: 1, note } });
+    const t = turns()[0];
+    const shown = t.querySelector('[data-testid="claims-note"]')!;
+    expect(shown.textContent).toContain(note);
+    expect(shown.textContent).toContain("not that it supports the statement");
+    // the answer text itself is drawn as sent: the note is not part of it
+    expect([...t.querySelectorAll("p")].some((p) => p.textContent === "It creates a user.")).toBe(true);
+  });
+
+  it("says nothing about claims when the check was off", async () => {
+    await open("/a/95/explore?ask=1");
+    await ask("How is a user created?");
+    await answerWith({ ...answer("It creates a user."), claims: null });
+    expect(turns()[0].querySelector('[data-testid="claims-note"]')).toBeNull();
+  });
+});
+
 describe("A-01: an answer with some sources removed", () => {
   const NONE = "None of the sources this answer cited could be verified";
 

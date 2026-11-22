@@ -204,6 +204,10 @@ export interface Answer {
     from_graph: number;
     scope?: { file_id: number; sent: number }; // "Ask about this" questions only
   } | null;
+  /** Claim check (QA_CLAIM_CHECK): how many cited statements were kept or removed. `note` says
+   * how many were removed; it is shown beside the answer, never inside its text. Absent or null
+   * with the check off and on older answers. */
+  claims?: { total: number; kept: number; removed: number; note: string | null } | null;
   // graph answers only
   query?: string;
   target?: GraphResult | null;

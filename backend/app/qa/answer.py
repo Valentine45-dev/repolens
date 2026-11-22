@@ -14,12 +14,13 @@ from app import config
 from app.db import pool
 from app.qa import llm
 from app.qa.citations import validate
+from app.qa.claims import check_claims
 from app.qa.prompt import (
     COULD_NOT_FIND,
     IDENTITY_ANSWER,
+    active_prompt,
     build_user_message,
     format_snippet,
-    system_prompt,
 )
 from app.qa.retrieve import CHARS_PER_TOKEN, retrieve
 
@@ -39,7 +40,7 @@ REFUSED = (
 
 
 def _reply(status: str, answer: str, retrieval=None, citations=(), dropped: int = 0,
-           locations=()) -> dict:
+           locations=(), claims: dict | None = None) -> dict:
     return {
         "kind": "ai",
         "status": status,
@@ -52,8 +53,11 @@ def _reply(status: str, answer: str, retrieval=None, citations=(), dropped: int 
             for s in locations
         ],
         "results": [],
-        "prompt_version": system_prompt().version,
+        "prompt_version": active_prompt().version,
         "retrieval": retrieval.summary() if retrieval else None,
+        # QA_CLAIM_CHECK: {total, kept, removed, note}; the note is shown by the UI and never put
+        # in the answer text. None with the check off.
+        "claims": claims,
     }
 
 
@@ -143,7 +147,7 @@ def ai_answer(snapshot_id: int, question: str, include_tests: bool = False,
     if not found.snippets:
         return _reply("no_context", NO_CODE, found)
 
-    system = system_prompt()
+    system = active_prompt()
     prompt = build_user_message(question, [
         format_snippet(s.path, s.qualified_name, s.start_line, s.text, s.source)
         for s in found.snippets
@@ -176,12 +180,18 @@ def ai_answer(snapshot_id: int, question: str, include_tests: bool = False,
                     completion.stop_reason)
         return _reply("unavailable", UNAVAILABLE, found, locations=_ranked(found))
 
+    claims, claim_dropped = None, 0
     try:
-        checked = validate(completion.text.strip(), found.snippets)
+        text = completion.text.strip()
+        if config.QA_CLAIM_CHECK:  # quotes checked, failed claims removed, quotes stripped
+            claimed = check_claims(text, found.snippets)
+            text, claims, claim_dropped = claimed.text, claimed.summary(), claimed.dropped
+        checked = validate(text, found.snippets)
     except Exception as e:  # never a 500 after a paid call (review A-04); the text is not shown
         log.error("ask snapshot=%s %s: citation validation failed: %s", snapshot_id, q_log,
                   type(e).__name__)
         return _reply("unavailable", UNAVAILABLE, found, locations=_ranked(found))
+    checked.dropped += claim_dropped
     # Only the bare "could not find" sentence and the exact identity reply are exempt from
     # the citation rule, so uncited claims cannot ride along with either of them. Any dropped
     # citation makes the answer unverified, even next to valid ones (review A-01): the
@@ -197,9 +207,10 @@ def ai_answer(snapshot_id: int, question: str, include_tests: bool = False,
         text += "\n\n" + TRUNCATED
     log.info(
         "ask snapshot=%s %s: %s model=%s %s prompt=%s sent=%d cited=%d dropped=%d"
-        " tokens=%d+%d",
+        " tokens=%d+%d claims=%s",
         snapshot_id, q_log, status, provider.name, provider.settings, system.version,
         len(found.snippets),
         len(checked.citations), checked.dropped, completion.tokens_in, completion.tokens_out,
+        f"{claims['kept']}/{claims['total']}" if claims else "-",
     )
-    return _reply(status, text, found, checked.citations, checked.dropped)
+    return _reply(status, text, found, checked.citations, checked.dropped, claims=claims)

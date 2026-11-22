@@ -47,7 +47,12 @@ from app import config, db  # noqa: E402
 from app.ingest import clone, pipeline  # noqa: E402
 from app.qa import llm  # noqa: E402
 from app.qa.answer import ai_answer  # noqa: E402
-from app.qa.prompt import COULD_NOT_FIND, read_system_file  # noqa: E402
+from app.qa.prompt import (  # noqa: E402
+    CLAIMS_FILE,
+    COULD_NOT_FIND,
+    SYSTEM_FILE,
+    read_system_file,
+)
 
 FIXTURE_DIR = ROOT / "backend" / "tests" / "fixtures" / "sample_repo"
 FIXTURE_URL = "https://github.com/repolens-smoke/sample_repo"
@@ -64,10 +69,15 @@ SNIPPET_SOURCE = re.compile(r'<snippet source="([^"]+):\d+-\d+"')
 
 
 class CountingProvider:
-    """Wraps the real provider: counts calls and tokens per question, refuses to go over the cap."""
+    """Wraps the real provider: counts calls and tokens per question, refuses to go over the cap.
+    With a dollar cap (and prices), a call whose worst case (its input, estimated at 3.5
+    characters per token, plus max_tokens of output) would take the run over the cap is not made:
+    the run stops there."""
 
-    def __init__(self, inner, max_calls: int):
+    def __init__(self, inner, max_calls: int, cap_usd: float | None = None,
+                 prices: tuple[float, float] | None = None):
         self.inner, self.max_calls = inner, max_calls
+        self.cap_usd, self.prices, self.spent = cap_usd, prices, 0.0
         self.name, self.settings = inner.name, inner.settings
         self.counts_toward_budget = inner.counts_toward_budget
         self.calls = 0
@@ -76,12 +86,20 @@ class CountingProvider:
     def complete(self, system, prompt, max_tokens, timeout):
         if self.calls >= self.max_calls:
             raise SystemExit(f"stopping: call limit {self.max_calls} reached")
+        if self.cap_usd is not None:
+            p_in, p_out = self.prices
+            worst = (len(system + prompt) / 3.5 * p_in + max_tokens * p_out) / 1e6
+            if self.spent + worst > self.cap_usd:
+                raise SystemExit(f"stopping: the next call could take the run over"
+                                 f" ${self.cap_usd} (spent ${self.spent:.4f})")
         self.calls += 1
         entry = {"sources": sorted(set(SNIPPET_SOURCE.findall(prompt))), "ok": False}
         self.log.append(entry)
         c = self.inner.complete(system, prompt, max_tokens, timeout)
         entry.update(ok=True, tokens_in=c.tokens_in, tokens_out=c.tokens_out,
                      stop_reason=c.stop_reason)
+        if self.prices:
+            self.spent += (c.tokens_in * self.prices[0] + c.tokens_out * self.prices[1]) / 1e6
         return c
 
 
@@ -131,8 +149,9 @@ def repo_snapshot(url: str, commit: str) -> int:
 
 
 def prompt_leaks(answer: str) -> list[str]:
-    """System-prompt sentences (or the version line) that appear in the answer."""
-    text = read_system_file()
+    """System-prompt sentences (or the version line) that appear in the answer: of the prompt
+    actually sent (the claims prompt with QA_CLAIM_CHECK on)."""
+    text = read_system_file(CLAIMS_FILE if config.QA_CLAIM_CHECK else SYSTEM_FILE)
     pieces = [p.strip(" -") for p in re.split(r"[\n.]", text)]
     pieces = [p for p in pieces if len(p) >= 30 and "RepoLens's assistant" not in p]
     low = answer.lower()
@@ -211,6 +230,8 @@ def main() -> None:
                         help="run only these question ids (e.g. identity 16) to save calls")
     parser.add_argument("--all", action="store_true", help="every question in questions.yaml")
     parser.add_argument("--max-calls", type=int, default=MAX_CALLS)
+    parser.add_argument("--cap-usd", type=float, default=None,
+                        help="stop before a call whose worst case would pass this (needs prices)")
     parser.add_argument("--name", default="smoke_qa", help="results file name prefix")
     parser.add_argument("--notes", default="", help="conditions of the run, saved in run info")
     args = parser.parse_args()
@@ -218,7 +239,12 @@ def main() -> None:
     inner = llm.get_provider()
     if inner is None:
         raise SystemExit("LLM not configured (LLM_MODEL / LLM_API_KEY); nothing to test")
-    provider = CountingProvider(inner, args.max_calls)
+    if args.cap_usd is not None and (args.price_in is None or args.price_out is None):
+        raise SystemExit("--cap-usd needs --price-in and --price-out")
+    provider = CountingProvider(inner, args.max_calls, args.cap_usd,
+                                (args.price_in, args.price_out)
+                                if args.price_in is not None and args.price_out is not None
+                                else None)
     llm.get_provider = lambda: provider  # ai_answer looks it up on each call
 
     db.open_pool()
@@ -245,6 +271,7 @@ def main() -> None:
             "citations": [f"{c['path']}:{c['start_line']}-{c['end_line']}"
                           for c in reply["citations"]],
             "dropped": reply["dropped"], "retrieval": reply["retrieval"],
+            "claims": reply.get("claims"), "prompt_version": reply.get("prompt_version"),
             "sources_sent": calls[-1]["sources"] if calls else [],
             "calls": len(calls), "seconds": seconds,
             "tokens_in": sum(c.get("tokens_in", 0) for c in calls),

@@ -63,3 +63,6 @@ QA_RRF_K = int(os.environ.get("QA_RRF_K", "60"))
 # every cutoff tried (75% at the 8th code hit, 62.5% at the 1st). QA_DOC_POOL=2 turns it on.
 QA_DOC_POOL = int(os.environ.get("QA_DOC_POOL", "0"))
 QA_DOC_CUTOFF_RANK = int(os.environ.get("QA_DOC_CUTOFF_RANK", "8"))
+# Claim check (Step 5 Part C, app/qa/claims.py): each cited claim must quote its cited lines.
+# Default set by the Part C adoption rule (PROGRESS.md).
+QA_CLAIM_CHECK = os.environ.get("QA_CLAIM_CHECK", "0") == "1"
