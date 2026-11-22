@@ -2400,3 +2400,9 @@ are deliberately not changed after seeing eval results; these stay as documented
     file changed). Backend 710 passed, 3 skipped; ruff clean.
   - **Locked run:** unaffected (scorer and runner unchanged; analysis output unchanged; only job-status
     bookkeeping). The run-day checklist still requires no other session and no API.
+- **22 Nov: v2.0 question file frozen (hash only); 50 questions, 5 repos.** `eval/locked/v2.0.sha256` (branch
+  `eval/freeze-v2.0`): `2bc20961ba6cb5b141a1a352d1804208a0ec63dc4d5ca444e3b4be2b4ad7e507  v2.0.yaml`; `read_hash_file()`
+  parses it to that value; `scorer.sha256` self-check passes. Pre-registered: run-day validate is expected to
+  report exactly 1 expected path not in the analysed snapshots (a file type v2.0 does not store; kept in the key
+  deliberately); any other count = stop and report. Sealed: the owner looks at summary numbers only until v2.1 is
+  frozen. The question file itself is not on this PC and was not opened.
