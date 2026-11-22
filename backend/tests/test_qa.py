@@ -170,6 +170,78 @@ def test_unknown_file_with_a_code_extension_is_still_dropped():
     assert v.dropped == 2 and v.citations == []
 
 
+# --- review 14 Nov, A-02..A-04 (each case failed before the fix) -----------------------------
+
+@pytest.mark.parametrize("text", [
+    "Routes are matched in (lib/router.go:10-20).",
+    "The view is src/App.vue:5.",
+    "Built by Makefile.am:3 and build.rs:1-4.",
+])
+def test_a02_any_file_like_citation_is_checked_and_counted(text):
+    v = validate(text, SENT)
+    assert v.citations == [] and v.dropped >= 1
+    assert ":1" not in v.text and ":5" not in v.text and ":3" not in v.text
+
+
+@pytest.mark.parametrize("text, cited, shown", [
+    ("See src/app.py#L12-L14.", ("src/app.py", 12, 14), "See src/app.py:12-14."),
+    ("See src/app.py#L12.", ("src/app.py", 12, 12), "See src/app.py:12."),
+    ("See (`src/app.py#L12-14`).", ("src/app.py", 12, 14), "See (`src/app.py:12-14`)."),
+])
+def test_a02_github_line_anchors_are_citations_shown_in_the_usual_form(text, cited, shown):
+    v = validate(text, SENT)
+    assert [(c.path, c.start_line, c.end_line) for c in v.citations] == [cited]
+    assert (v.dropped, v.text) == (0, shown)
+
+
+def test_a02_an_invented_line_anchor_is_dropped():
+    v = validate("It is at src/app.py#L90-L95.", SENT)
+    assert (v.citations, v.dropped, v.text) == ([], 1, "It is at.")
+
+
+@pytest.mark.parametrize("text", [
+    "It connects to service.local:9000 or cache.lan:6379.",
+    "Version 2.1:3 is not a file.",
+    "Set HOST=10.0.0.12:8080 first.",
+])
+def test_a02_hosts_and_versions_stay_text(text):
+    assert (validate(text, SENT).dropped, validate(text, SENT).text) == (0, text)
+
+
+ODD = [snip("app/[id]/page.tsx", 1, 20, file_id=3), snip("app/(shop)/cart.ts", 1, 10, file_id=4),
+       snip("src/my file.py", 1, 20, file_id=5), snip("src/app.py", 10, 30)]
+
+
+@pytest.mark.parametrize("text, cited", [
+    ("The page loads the item (app/[id]/page.tsx:3-9).", ("app/[id]/page.tsx", 3, 9)),
+    ("The cart is built in (app/(shop)/cart.ts:2).", ("app/(shop)/cart.ts", 2, 2)),
+    ("Spaces work too (src/my file.py:2-4).", ("src/my file.py", 2, 4)),
+    ("In backticks `app/[id]/page.tsx:3`.", ("app/[id]/page.tsx", 3, 3)),
+])
+def test_a03_sent_paths_with_brackets_parentheses_or_spaces_are_valid(text, cited):
+    v = validate(text, ODD)
+    assert [(c.path, c.start_line, c.end_line) for c in v.citations] == [cited]
+    assert (v.dropped, v.text) == (0, text)
+
+
+def test_a03_backslash_paths_match_and_are_shown_with_slashes():
+    v = validate("Windows style src\\app.py:12-14 works.", ODD)
+    assert [(c.path, c.start_line) for c in v.citations] == [("src/app.py", 12)]
+    assert v.text == "Windows style src/app.py:12-14 works."
+
+
+def test_a03_a_sent_path_inside_a_longer_name_is_not_that_path():
+    v = validate("Other code in xsrc/app.py:12 and lib/src/app.py:12.", ODD)
+    assert v.citations == [] and v.dropped == 2
+
+
+def test_a04_a_huge_line_number_is_not_an_error():
+    text = "x src/app.py:" + "1" * 5000
+    v = validate(text, SENT)  # raised ValueError before the fix
+    assert v.citations == []
+    assert find_citations(text) is not None
+
+
 def test_duplicate_citations_listed_once_in_first_use_order():
     v = validate("web/a.ts:1 then src/app.py:10-12 then web/a.ts:1 again.", SENT)
     assert [c.path for c in v.citations] == ["web/a.ts", "src/app.py"]

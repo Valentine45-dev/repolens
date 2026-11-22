@@ -2539,3 +2539,42 @@ are deliberately not changed after seeing eval results; these stay as documented
     (backend; eval files with CI's config; the import-order note in `retrieval_recall.py` exists on `main`
     too and that file is not in CI's lint list). Scorer self-check: scoring files as frozen; runner changed
     (v2.1 run needs `--runner-changed`).
+  - **Merged into `main` (22 Nov, `e9f98e0`), CI green on `main`.**
+- **db container stopped by itself (22 Nov, found during Part B):** Docker recorded it finished at 13:48:35 UTC
+  (19:18 IST), exit 0, `OOMKilled=false`; Postgres logged no shutdown (last checkpoint 05:01:51 UTC) and on the
+  restart at 14:22 UTC reported "not properly shut down; automatic recovery", which completed. That points to
+  the Docker/WSL VM stopping (sleep, WSL shutdown or memory pressure on the host), not a kill inside the
+  container; the cause was not determined. Restarted with `docker compose up -d db`; nothing else changed.
+- **Step 5 Part D: Ask citation fixes A-01..A-04 (`fix/ask-citations`, 22 Nov; not merged).** All four held on
+  `main` (`e9f98e0`, throwaway `validate()` calls) and all four were small, so all are fixed; each has tests
+  that fail on the old code (16 failed before the fix; 5 guards passed before and after).
+  - **A-01** (`answer.py`): any dropped citation makes the answer `unverified`, even next to valid ones. No new
+    status (the frozen scorer counts only answered / unverified as AI answers). The existing test that
+    expected `answered` with 1 dropped now expects `unverified`. **UI:** an unverified answer that still has
+    chips says "N sources this answer cited could not be verified and were removed. The sentences they were
+    attached to are not backed by a source. Check the code before relying on them." instead of the old
+    "None of the sources ... could be verified" (which stays for the no-chip case). Not done: a marker in
+    the text where a citation was removed (it would change the answer text the frozen `score_claims.py`
+    splits).
+  - **A-02** (`citations.py`): every generic `name.ext:N` is a citation attempt, checked and counted, unless it
+    is a host or version (no slash + a host suffix list that leaves out file extensions which are also
+    country domains: `.py`, `.md`, `.rs`, `.sh`; digits and dots only; `//host` after a scheme). GitHub
+    anchors `path#L12` / `#L12-L14` accepted; a valid one is shown as `path:12-14`, so the frozen scorer's
+    pattern reads it.
+  - **A-03:** sent paths are matched first, longest first, exactly as sent (brackets, parentheses, spaces;
+    backslashes for slashes, shown with slashes); a sent path inside a longer name is not that path. Only
+    then the generic pattern.
+  - **A-04:** line numbers `\d{1,7}` not followed by a digit (a huge digit run is plain text); any validator
+    exception returns `unavailable` with the search's own locations, not a 500 and not the unchecked text
+    (the model's text could not be checked, so it is not shown as an answer).
+  - **Measurement change for v2.1 (record when comparing with v2.0):** A-02 makes `citation_validity` stricter:
+    citation-shaped text with an extension RepoLens does not store, and `#L` forms, now count as dropped (or
+    valid) instead of being ignored. A-03 can turn a v2.0 drop into a valid citation for odd paths. The frozen
+    `score_claims.py` has v2.0's pattern, so a valid citation to a path with brackets or spaces is not seen
+    there (its sentence counts as uncited). The raw model output is still saved as before (`answer` and
+    `dropped` per record), so v2.0's answers can later be re-validated offline with the new validator for a
+    like-for-like comparison (aggregates only; not in this task).
+  - **Checks:** backend tests `test_qa.py` 68 passed, `test_ask_db.py` 56 passed; web 361 passed (2 new in
+    `AskDrawer.dom.test.tsx`; the main one fails on the old drawer), `tsc` clean. No retrieval change. No
+    smoke eval: the default prompt, model and retrieval path are unchanged (only validation and status).
+    $0.

@@ -1,9 +1,10 @@
 """AI answers: retrieve, build the prompt, call the LLM inside the token cap and the deadline,
 validate citations. Degraded states are answers with a status, never HTTP errors.
 
-Statuses: answered | unverified (no citation survived validation, or the answer was cut off
-at max_tokens) | refused (the model's safety classifiers declined) | no_context (nothing to
-search) | unavailable (no key, provider down, deadline passed, empty answer) | cap_reached.
+Statuses: answered | unverified (no citation survived validation, a citation was dropped, or
+the answer was cut off at max_tokens) | refused (the model's safety classifiers declined) |
+no_context (nothing to search) | unavailable (no key, provider down, deadline passed, empty
+answer, citation validation failed) | cap_reached.
 """
 
 import hashlib
@@ -172,12 +173,20 @@ def ai_answer(snapshot_id: int, question: str, include_tests: bool = False,
                     completion.stop_reason)
         return _reply("unavailable", UNAVAILABLE, found, locations=_ranked(found))
 
-    checked = validate(completion.text.strip(), found.snippets)
+    try:
+        checked = validate(completion.text.strip(), found.snippets)
+    except Exception as e:  # never a 500 after a paid call (review A-04); the text is not shown
+        log.error("ask snapshot=%s %s: citation validation failed: %s", snapshot_id, q_log,
+                  type(e).__name__)
+        return _reply("unavailable", UNAVAILABLE, found, locations=_ranked(found))
     # Only the bare "could not find" sentence and the exact identity reply are exempt from
-    # the citation rule, so uncited claims cannot ride along with either of them.
+    # the citation rule, so uncited claims cannot ride along with either of them. Any dropped
+    # citation makes the answer unverified, even next to valid ones (review A-01): the
+    # sentences it was attached to now read as plain claims.
     not_found = _bare(checked.text) == _bare(COULD_NOT_FIND)
     identity = checked.text == IDENTITY_ANSWER
-    status = "answered" if checked.citations or not_found or identity else "unverified"
+    status = ("answered" if (checked.citations or not_found or identity) and not checked.dropped
+              else "unverified")
     text = checked.text
     if completion.stop_reason == "max_tokens":
         # Cut off at the length limit: what is there may be fine, but it is not the full answer.

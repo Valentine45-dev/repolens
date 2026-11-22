@@ -644,10 +644,22 @@ function AnswerView({
 
       {graph ? <p>{answer.answer}</p> : <Markdown text={answer.answer} />}
 
-      {answer.status === "unverified" ? (
+      {answer.status === "unverified" && answer.citations.length === 0 ? (
         <p className="turn-note">
           <Icon name="x" size={14} /> None of the sources this answer cited could be verified, so it
           is shown without sources. Check the code before relying on it.
+        </p>
+      ) : null}
+      {/* Some sources verified, some removed (review A-01): the sentences that lost theirs now
+          read as plain claims, so say so instead of the "none verified" line. */}
+      {answer.status === "unverified" && answer.citations.length > 0 && answer.dropped > 0 ? (
+        <p className="turn-note">
+          <Icon name="x" size={14} />{" "}
+          {answer.dropped === 1
+            ? "1 source this answer cited could not be verified and was removed."
+            : `${answer.dropped} sources this answer cited could not be verified and were removed.`}{" "}
+          The sentences they were attached to are not backed by a source. Check the code before
+          relying on them.
         </p>
       ) : null}
 
