@@ -188,6 +188,36 @@ def _truncate(head: str, text: str, count_tokens: CountTokens, max_tokens: int) 
 _IDENT_PARTS = re.compile(r"[A-Z]+(?=[A-Z][a-z])|[A-Z]?[a-z]+|[A-Z]+|\d+")
 
 
+# Words a question is made of that say nothing about code (the 'simple' text search config has no
+# stop words of its own). Fixed before the hybrid evaluation (Step 5 Part B, 22 Nov); words that can
+# name code (get, set, use, send, read, write, before, after, ...) are deliberately not here.
+KEYWORD_STOP_WORDS = frozenset("""
+a an the and or but if of to in on at by for from with without into onto about as
+is are was were be been being am do does did doing done has have had having
+it its this that these those there their them they he she him her his we you your i me my our us
+what which who whom whose when where why how
+can could would should will shall may might must not no nor so than then too very just also
+any all some each every other such own same both either neither only again once here
+s t ll re ve d m
+""".split())
+
+
+def query_terms(question: str) -> list[str]:
+    """Keyword-search terms for a question, split by the same rule as `search_words` (stored in
+    chunks.search_tsv): identifier parts in lower case, plus the whole identifier when it has
+    several parts. Stop words and one-letter terms are dropped, and so is any term that is not
+    plain letters and digits (`get_user` is already there as `get` and `user`), so every term is
+    one plain lexeme in a tsquery. In first-seen order, without repeats."""
+    terms: list[str] = []
+    for token in re.findall(r"[A-Za-z_][A-Za-z0-9_]*", question):
+        parts = [p.lower() for p in _IDENT_PARTS.findall(token)]
+        for t in parts + ([token.lower()] if len(parts) > 1 else []):
+            if (len(t) > 1 and t not in KEYWORD_STOP_WORDS and re.fullmatch(r"[a-z0-9]+", t)
+                    and t not in terms):
+                terms.append(t)
+    return terms
+
+
 def search_words(chunk: Chunk) -> str:
     """Words for the keyword index: identifiers split into parts (getUserById -> get user by id,
     get_user_by_id -> get user by id), plus the path and name."""

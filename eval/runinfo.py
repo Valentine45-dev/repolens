@@ -101,6 +101,9 @@ def run_info(provider=None, *, llm_used: bool) -> dict:
             "graph_expansion": config.QA_GRAPH_EXPANSION,
             "expand_max": config.QA_EXPAND_MAX,
             "context_tokens": config.QA_CONTEXT_TOKENS,
+            "hybrid": config.QA_HYBRID,
+            "hybrid_depth": config.QA_HYBRID_DEPTH,
+            "rrf_k": config.QA_RRF_K,
         },
     }
 

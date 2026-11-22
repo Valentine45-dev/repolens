@@ -1,6 +1,11 @@
 """Retrieval for one question: exact cosine top-k over this snapshot's chunks, then optional
 1-hop graph expansion. A plain function so the evaluation can call it with expansion on and off.
 
+Hybrid search (`hybrid=True`, default QA_HYBRID): the vector top-HYBRID_DEPTH and a keyword
+top-HYBRID_DEPTH over chunks.search_tsv (OR of the question's terms, app.qa.chunks.query_terms)
+are merged by reciprocal rank fusion (score = sum of 1 / (RRF_K + rank)) and cut to top-k; graph
+expansion then runs on the fused hits as on plain search hits.
+
 Test and example code (chunks.in_test) is left out in SQL unless asked for; if that leaves
 nothing, the search runs once more with it included and the result says so.
 """
@@ -9,6 +14,7 @@ from dataclasses import dataclass, field
 
 from app import config
 from app.db import pool
+from app.qa.chunks import query_terms
 from app.qa.embed import get_embedder
 
 CHARS_PER_TOKEN = 3.5  # rough estimate for the context budget; chunks are already <= 256 tokens
@@ -45,10 +51,12 @@ class Retrieval:
     include_tests: bool = False
     used_test_code: bool = False
     scope_file_id: int | None = None
+    hybrid: bool = False
 
     def summary(self) -> dict:
         out = {
             "k": self.k,
+            "hybrid": self.hybrid,
             "expand": self.expand,
             "include_tests": self.include_tests,
             "used_test_code": self.used_test_code,
@@ -77,6 +85,39 @@ def _search(conn, snapshot_id: int, q: str, k: int, include_tests: bool) -> list
         " ORDER BY distance, c.id LIMIT %s",
         (q, snapshot_id, include_tests, k),
     ).fetchall()
+
+
+def _keyword(conn, snapshot_id: int, q: str, terms: list[str], depth: int,
+              include_tests: bool) -> list[dict]:
+    """Chunks whose search words contain any of the terms, best ts_rank first (normalised by
+    document length, option 1). Terms are plain [a-z0-9]+ lexemes (query_terms), so the joined
+    string is a valid tsquery of ORs and nothing in it is an operator."""
+    if not terms:
+        return []
+    tsquery = " | ".join(terms)
+    return conn.execute(
+        f"SELECT {_COLUMNS}, ts_rank(c.search_tsv, to_tsquery('simple', %s), 1) AS rank{_FROM}"
+        " WHERE c.snapshot_id = %s AND (%s OR NOT c.in_test)"
+        " AND c.search_tsv @@ to_tsquery('simple', %s)"
+        " ORDER BY rank DESC, c.id LIMIT %s",
+        (q, tsquery, snapshot_id, include_tests, tsquery, depth),
+    ).fetchall()
+
+
+def fuse(vector: list[dict], keyword: list[dict], k: int, rrf_k: int) -> list[dict]:
+    """Reciprocal rank fusion of two ranked lists of chunk rows, deduped by chunk id, top k. Ties:
+    the better single rank, then vector distance, then chunk id (so the order is reproducible)."""
+    score: dict[int, float] = {}
+    best: dict[int, int] = {}
+    rows: dict[int, dict] = {}
+    for ranked in (vector, keyword):
+        for rank, row in enumerate(ranked, start=1):
+            cid = row["id"]
+            score[cid] = score.get(cid, 0.0) + 1.0 / (rrf_k + rank)
+            best[cid] = min(best.get(cid, rank), rank)
+            rows.setdefault(cid, row)
+    order = sorted(rows, key=lambda c: (-score[c], best[c], float(rows[c]["distance"]), c))
+    return [rows[c] for c in order[:k]]
 
 
 def _expand(conn, snapshot_id: int, q: str, hits: list[dict], include_tests: bool,
@@ -153,19 +194,25 @@ def _scoped(conn, snapshot_id: int, q: str, file_id: int) -> list[dict]:
 
 def retrieve(snapshot_id: int, question: str, *, k: int | None = None,
              expand: bool | None = None, include_tests: bool = False,
-             expand_max: int | None = None, scope_file_id: int | None = None) -> Retrieval:
+             expand_max: int | None = None, scope_file_id: int | None = None,
+             hybrid: bool | None = None) -> Retrieval:
     """`scope_file_id` ("Ask about this") puts that file's chunks first, within SCOPE_SHARE of the
     context budget, ahead of the usual search and expansion. Without it, nothing here changes."""
     k = config.QA_TOP_K if k is None else k
     expand = config.QA_GRAPH_EXPANSION if expand is None else expand
     expand_max = config.QA_EXPAND_MAX if expand_max is None else expand_max
+    hybrid = config.QA_HYBRID if hybrid is None else hybrid
     q = _vector(get_embedder().embed([question])[0])
+    depth = max(k, config.QA_HYBRID_DEPTH) if hybrid else k
     with pool().connection() as conn:
         tests = include_tests
-        hits = _search(conn, snapshot_id, q, k, tests)
+        hits = _search(conn, snapshot_id, q, depth, tests)
         if not hits and not tests:
             tests = True  # only test or example code here: use it, and say so
-            hits = _search(conn, snapshot_id, q, k, tests)
+            hits = _search(conn, snapshot_id, q, depth, tests)
+        if hybrid:
+            words = _keyword(conn, snapshot_id, q, query_terms(question), depth, tests)
+            hits = fuse(hits, words, k, config.QA_RRF_K)
         scoped = [] if scope_file_id is None else _scoped(conn, snapshot_id, q, scope_file_id)
         if scoped:
             own = {r["id"] for r in scoped}
@@ -191,4 +238,4 @@ def retrieve(snapshot_id: int, question: str, *, k: int | None = None,
     return Retrieval(snippets, k, expand, include_tests,
                      # A file the user picked is not "test code because nothing else matched".
                      used_test_code=any(s.in_test and s.via != "scope" for s in snippets),
-                     scope_file_id=scope_file_id)
+                     scope_file_id=scope_file_id, hybrid=hybrid)

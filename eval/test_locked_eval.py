@@ -148,9 +148,22 @@ def test_meter_cap_arithmetic():
 
 # ---- blind sheet ---------------------------------------------------------------------------
 
+def _every_config(records: list[dict]) -> list[dict]:
+    """The shared test records carry retrieval for A, B and C (v2.0); a real run records every
+    configuration in le.CONFIGS, so configurations added later get C's retrieval here."""
+    out = []
+    for r in records:
+        if "retrieval" in r:
+            r = {**r, "retrieval": {c: r["retrieval"].get(c, r["retrieval"]["C"])
+                                    for c in le.CONFIGS}}
+        out.append(r)
+    return out
+
+
 def passes(void_second=False):
-    return [{"pass": 1, "void": False, "records": list(RECORDS.values())},
-            {"pass": 2, "void": void_second, "records": list(RECORDS.values())}]
+    records = _every_config(list(RECORDS.values()))
+    return [{"pass": 1, "void": False, "records": records},
+            {"pass": 2, "void": void_second, "records": records}]
 
 
 def test_sheet_rows_are_blind_and_map_back():

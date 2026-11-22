@@ -52,13 +52,17 @@ import locked_metrics as lm
 import yaml
 from runinfo import ROOT, header, run_info, save_results  # also puts backend/ on sys.path
 
+# v2.1 (Step 5 Part B): D and DG added; A, B, C say hybrid False so they keep their v2.0 meaning
+# whatever QA_HYBRID's default is.
 CONFIGS = {
-    "A": {"k": 8, "expand": False, "expand_max": 0},
-    "B": {"k": 16, "expand": False, "expand_max": 0},
-    "C": {"k": 8, "expand": True, "expand_max": 8},
+    "A": {"k": 8, "expand": False, "expand_max": 0, "hybrid": False},
+    "B": {"k": 16, "expand": False, "expand_max": 0, "hybrid": False},
+    "C": {"k": 8, "expand": True, "expand_max": 8, "hybrid": False},
+    "D": {"k": 8, "expand": False, "expand_max": 0, "hybrid": True},
+    "DG": {"k": 8, "expand": True, "expand_max": 8, "hybrid": True},
 }
 LIVE_CONFIG = "C"  # what /ask uses with the default settings (QA_TOP_K 8, expansion on, 8)
-PAIRS = [("C", "B"), ("C", "A"), ("B", "A")]
+PAIRS = [("C", "B"), ("C", "A"), ("B", "A"), ("DG", "C"), ("DG", "D"), ("D", "A")]
 PASS_CAP_USD = 1.0
 # Frozen in Part B step 2 (eval/results/LOCKED-FREEZE-CHECKS.md): >= 2.5x the slowest
 # measured full analysis of a similar-size repo on the eval PC, rounded up to 300 s.
