@@ -143,7 +143,8 @@ def evaluate(repos: list[dict]) -> dict:
 
 
 def _ranges(snippets, via: str | None = None) -> list[str]:
-    return [f"{s.path}:{s.start_line}-{s.end_line}" for s in snippets if via is None or s.via == via]
+    return [f"{s.path}:{s.start_line}-{s.end_line}" for s in snippets
+            if via is None or s.via == via]
 
 
 def doc_ladder(v1_repos: list[dict], tuning_file: Path | None) -> dict:
