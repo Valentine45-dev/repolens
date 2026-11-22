@@ -18,6 +18,10 @@ it clones the repo, parses the Python and JavaScript/TypeScript files, and gives
 - an **Ask panel**: structural questions ("which files import signer.py?") are answered from the
   graph without an LLM; other questions go to an LLM with retrieved code, and only citations
   that the server can match to a snippet it sent (`path:start-end`) are shown as source chips.
+  With the claim check (on by default, `QA_CLAIM_CHECK`), each cited statement must also quote
+  the lines it cites; the server keeps the statement only if that quote is in those lines as sent,
+  removes it otherwise, and says how many it removed beside the answer. That shows the quoted
+  evidence exists, not that it supports the statement.
   The conversation is kept per analysis in this browser tab: closing the panel while a question
   is answered loses neither the question nor its answer (a dot on the Ask button says it
   arrived), and a half-typed question waits in the box.

@@ -202,6 +202,8 @@ def doc_repo(client, monkeypatch, tmp_path):
 
     monkeypatch.setattr(clone, "fetch_commit", fetch)
     monkeypatch.setattr(config, "QA_DOC_POOL", 2)
+    # Scripted answers use bare citations (citation validation of docs); claims: test_claims.py.
+    monkeypatch.setattr(config, "QA_CLAIM_CHECK", False)
     body = client.post("/repos", json={"url": "https://github.com/example/docs"}).json()
     status = client.get(f"/snapshots/{body['snapshot_id']}/status").json()
     assert status["status"] == "done", status

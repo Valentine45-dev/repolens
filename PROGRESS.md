@@ -2700,3 +2700,60 @@ are deliberately not changed after seeing eval results; these stay as documented
     default if it loses no more questions than it wins on answered_correct_file, the count of answers that
     are the could-not-find answer rises by at most 2, and median latency (smoke_qa's `seconds_median`) rises
     by at most 50%. Otherwise off.
+- **Step 5 Part C: claim check — built and run (`feat/claim-check`, 23 Nov; not merged). Adopted: on by
+  default (`QA_CLAIM_CHECK=1`).**
+  - **First, the has_chunks fix (owner):** `answer.search_ready` and the status features (`api/snapshots.py`)
+    now count code chunks only (`AND source = 'code'`), as Step 0 said; test
+    `test_doc_chunks_alone_never_make_search_ready` (code search failed, doc chunks left: before the fix Ask
+    said ready) fails on the old queries.
+  - **Built as pre-registered:** `app/qa/claims.py` (`check_claims`), `prompts/system_claims.md`
+    (PROMPT_VERSION `2026-11-23.claims.1`; the same prompt with only the citation rules changed, tested
+    section by section; hash guard), `prompt.active_prompt()` (claims prompt only with the flag on; with it
+    off the prompt is v2.0's, `2026-10-28.2`), `citations.citation_spans` (bare citations found the way the
+    validator finds them). `/ask` gains `claims: {total, kept, removed, note}` (None with the check off; the
+    note is shown under the answer by the UI with "that shows the evidence exists, not that it supports the
+    statement", never in the answer text). Run info records the active prompt version and `claim_check`; the
+    runner records `claims` per question (purely additive, not scored); `smoke_qa.py` records claims and has a
+    per-call dollar guard (`--cap-usd`).
+  - **Tests:** `tests/test_claims.py` 18 (quote present kept and stripped; absent removed with the note
+    outside the text; quote across a snippet boundary fails; range across snippets fails; trivial quotes
+    rejected, 15 characters or 3 words enough; all fail → could not find with the attempts counted; injection
+    text in a quote only matches the escaped form the model saw; bare citations fail, a bare one before a
+    bracket joins its claim; tolerant forms incl. curly quotes, backticks, `#L`, line prefixes; two sources one
+    failing; bullets; code fences; on the AI route with FakeProvider: claims prompt sent, version returned,
+    note separate, unverified on a removal, all-fail, flag off = v2.0); claims prompt hash and section tests;
+    web: the note beside the answer (not in it), none with the check off, stored-turn validation of `claims`.
+    The existing Ask and doc tests script bare citations, so their FakeProvider fixtures pin the check off.
+  - **Paid run (first results count; cap $0.60, guards $0.28 + $0.32):** `smoke_qa.py --all` (18 v1 Q&A
+    questions), Sonnet 5.5, effort low, between_tools, $2 / $10 per MTok (pricing page as read 21 Nov). Off:
+    `smoke_qa-claims-off-20261122T191019Z-22ebde6.json`, prompt 2026-10-28.2, 73,986 in / 7,516 out,
+    **$0.2231**. On: `smoke_qa-claims-on-20261122T191707Z-22ebde6.json`, prompt 2026-11-23.claims.1, 77,244 in /
+    8,512 out, **$0.2396**. Step 5 Part C: **$0.4627**; Step 5 total **$0.5477** (of $1.50); tuning total
+    recorded about $1.27 (of $3).
+    | | off | on |
+    |---|---|---|
+    | answered_correct_file (14 answerable) | 14/14 | 14/14 |
+    | citation_validity (no dropped citation) | 16/18 | 12/18 |
+    | cited_sentence_rate (frozen score_claims) | 101/168 = 0.601 | 91/143 = 0.636 |
+    | could-not-find answers (pre-registered: the answer is it) | 1 (Q8) | 1 (Q8) |
+    | claims kept / removed | – | 94 / 7 (in 6 answers: Q3, Q5, Q10, Q11, Q14 one each, Q15 two) |
+    | median latency (smoke_qa) | 5.3 s | 5.3 s |
+    Compared by `eval/claim_check_compare.py`: `claim_check_compare-20261122T192305Z-22ebde6.json`. A first
+    compare (`...-192107Z-...`) counted answers that *contain* the could-not-find sentence (on: Q1, a partial
+    answer with 5 kept citations, also counted: 1 → 2); the script was corrected to the pre-registered
+    definition (the answer *is* that sentence, i.e. starts with it) and recomputed from the same saved files,
+    no new calls; the rule passes under either (rise 1 or 0, at most 2 allowed). Both files are kept.
+  - **Adoption rule applied:** 0 wins / 0 losses on answered_correct_file, could-not-find +0, latency +0% →
+    **on by default.** Against the prediction: as predicted for answered_correct_file and could-not-find;
+    latency +0% (predicted +20-40%); 7 claims removed, in 6 of the 16 answers that cite (predicted 0-1 per
+    answer: inside).
+  - **Measurement notes for v2.1 vs v2.0:** with the check on, a failed quote is a dropped citation, so
+    `citation_validity` falls (16/18 → 12/18 here) by construction, on top of A-02's stricter counting; it is
+    not comparable with v2.0's. More answers are `unverified` (A-01): smoke_qa's own judge marks `unverified`
+    as a FAIL ("no citation survived validation", wording from before A-01) though the expected file is cited:
+    off 15/18 (Q2, Q3 by A-01; Q16 the usual trap), on 11/18 (Q3, Q5, Q10, Q11, Q14, Q15 by a removed claim;
+    Q16). By CLAUDE.md's smoke criteria (identity, unanswerable, injection, the expected file among validated
+    citations) the on arm passes all but Q16, as every run since v1. The on arm is the smoke run of the new
+    default (same code, prompt, model and retrieval).
+  - **Note:** the first call of each arm took long (240 s off, 99 s on: model load on a cold process; the
+    median is unaffected).

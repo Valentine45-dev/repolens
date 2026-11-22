@@ -5,8 +5,9 @@ import importlib.util
 import json
 from pathlib import Path
 
+from app import config
 from app.qa.llm import FakeProvider
-from app.qa.prompt import system_prompt
+from app.qa.prompt import active_prompt, claims_prompt, system_prompt
 
 RUNINFO = Path(__file__).resolve().parents[2] / "eval" / "runinfo.py"
 
@@ -25,7 +26,9 @@ def test_run_info_records_model_effort_thinking_and_sha(tmp_path):
     assert len(info["commit_sha"]) == 40 and info["llm_used"] is True
     assert {k: info["llm"][k] for k in ("model", "effort", "thinking")} == {
         "model": "fake", "effort": "medium", "thinking": "adaptive"}
-    assert info["llm"]["prompt_version"] == system_prompt().version
+    # the prompt /ask sends: the claims prompt while the claim check is on (the v2.1 default)
+    assert info["llm"]["prompt_version"] == active_prompt().version
+    assert info["llm"]["claim_check"] is config.QA_CLAIM_CHECK
     assert info["embed_model"] and info["embed_revision"]
     header = runinfo.header(info)
     assert "model fake effort=medium thinking=adaptive" in header
@@ -36,9 +39,15 @@ def test_run_info_records_model_effort_thinking_and_sha(tmp_path):
     assert path.name.startswith("check-") and path.name.endswith(f"-{info['commit_sha'][:7]}.json")
 
 
-def test_run_info_without_llm_still_records_the_configured_settings():
-    from app import config
+def test_run_info_prompt_follows_the_claim_check(monkeypatch):
+    runinfo = load()
+    monkeypatch.setattr(config, "QA_CLAIM_CHECK", False)
+    assert runinfo.run_info(llm_used=False)["llm"]["prompt_version"] == system_prompt().version
+    monkeypatch.setattr(config, "QA_CLAIM_CHECK", True)
+    assert runinfo.run_info(llm_used=False)["llm"]["prompt_version"] == claims_prompt().version
 
+
+def test_run_info_without_llm_still_records_the_configured_settings():
     info = load().run_info(llm_used=False)
     assert info["llm_used"] is False
     assert (info["llm"]["effort"], info["llm"]["thinking"]) == (config.LLM_EFFORT,

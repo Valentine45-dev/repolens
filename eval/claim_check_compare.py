@@ -27,6 +27,12 @@ def load(path: Path) -> dict:
 
 
 def could_not_find(answer: str) -> bool:
+    """The answer IS the could-not-find answer (pre-registered): it starts with that sentence."""
+    return " ".join(answer.lower().split()).startswith(COULD_NOT_FIND)
+
+
+def mentions_could_not_find(answer: str) -> bool:
+    """Information only: the sentence appears anywhere (also in a partial answer)."""
     return COULD_NOT_FIND in " ".join(answer.lower().split())
 
 
@@ -37,6 +43,7 @@ def per_question(row: dict) -> dict:
         "answered_correct_file": row.get("expected_file_cited"),
         "citation_valid": row["dropped"] == 0, "citations": len(row["citations"]),
         "dropped": row["dropped"], "could_not_find": could_not_find(row["answer"]),
+        "mentions_could_not_find": mentions_could_not_find(row["answer"]),
         "sentences": s["sentences"], "cited_sentences": s["cited_sentences"],
         "claims": row.get("claims"), "tokens_in": row["tokens_in"],
         "tokens_out": row["tokens_out"], "seconds": row["seconds"],
@@ -70,6 +77,7 @@ def main() -> None:
             "citation_validity": f"{sum(v['citation_valid'] for v in x.values())}/{len(x)}",
             "cited_sentence_rate": f"{cited}/{sent} = {round(cited / sent, 3) if sent else None}",
             "could_not_find": sum(v["could_not_find"] for v in x.values()),
+            "mentions_could_not_find": sum(v["mentions_could_not_find"] for v in x.values()),
             "dropped": sum(v["dropped"] for v in x.values()),
             "tokens_in": sum(v["tokens_in"] for v in x.values()),
             "tokens_out": sum(v["tokens_out"] for v in x.values()),
