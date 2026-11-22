@@ -7,7 +7,9 @@ DATABASE_URL = os.environ.get("DATABASE_URL", "")
 MAX_FILES = int(os.environ.get("MAX_FILES", "2000"))
 MAX_FILE_BYTES = int(os.environ.get("MAX_FILE_BYTES", "1000000"))
 CLONE_TIMEOUT_S = int(os.environ.get("CLONE_TIMEOUT_S", "120"))
-MAX_ANALYSIS_S = int(os.environ.get("MAX_ANALYSIS_S", "600"))
+# 1200 s since 22 Nov (was 600): on the eval PC under CPU load mocha's search was lost at 600 s
+# (21 Nov). The locked evaluation runs use their own frozen 2100 s (eval/locked_eval.py).
+MAX_ANALYSIS_S = int(os.environ.get("MAX_ANALYSIS_S", "1200"))
 # Embedding test code runs after Ask is on, with its own limit. On a slow CPU this takes longest:
 # about 1,230 s for express's 1,048 test chunks on the baseline PC (BASELINE-v1.md).
 MAX_TEST_EMBED_S = int(os.environ.get("MAX_TEST_EMBED_S", "1800"))
