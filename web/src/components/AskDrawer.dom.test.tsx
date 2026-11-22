@@ -481,6 +481,31 @@ describe("a reload while the browser cancels the question's request", () => {
   });
 });
 
+describe("Part A: documentation citations", () => {
+  it("a doc chip says documentation and opens the doc panel link, a code chip the file node", async () => {
+    await open("/a/93/explore?ask=1");
+    await ask("What is this project for?");
+    await answerWith({
+      ...answer("It is a sample."),
+      citations: [
+        { path: "README.md", start_line: 3, end_line: 9, file_id: 40, symbol_id: null, in_test: false, source: "doc" },
+        { path: "app/real.py", start_line: 1, end_line: 2, file_id: 12, symbol_id: 1, in_test: false, source: "code" },
+      ],
+    });
+    const chips = [...turns()[0].querySelectorAll<HTMLAnchorElement>(".citation")];
+    expect(chips).toHaveLength(2);
+    const [doc, code] = chips;
+    expect(doc.dataset.source).toBe("doc");
+    expect(doc.textContent).toContain("README.md:3-9");
+    expect(doc.textContent).toContain("documentation");
+    expect(new URL(doc.href).searchParams.get("doc")).toBe("40");
+    expect(new URL(doc.href).searchParams.get("node")).toBeNull();
+    expect(new URL(doc.href).searchParams.get("lines")).toBe("3-9");
+    expect(code.textContent).not.toContain("documentation");
+    expect(new URL(code.href).searchParams.get("node")).toBe("12");
+  });
+});
+
 describe("A-01: an answer with some sources removed", () => {
   const NONE = "None of the sources this answer cited could be verified";
 

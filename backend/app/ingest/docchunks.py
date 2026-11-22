@@ -44,6 +44,24 @@ def backfill(snapshot_id: int) -> dict:
         return embed_docs(snapshot_id, None, time.monotonic() + config.MAX_ANALYSIS_S)
 
 
+def doc_status(snapshot_id: int) -> dict:
+    """How many doc chunks the snapshot has, and how many the chunker makes from its stored files
+    now (no embedding: the embedder's tokenizer only). Used by the evaluation runner to refuse a
+    run whose doc chunks are missing or out of date."""
+    from app.ingest.pipeline import stored_doc_files
+    from app.qa.docs import build_all_doc_chunks
+    from app.qa.embed import get_embedder
+
+    embedder = get_embedder()
+    expected, picked = build_all_doc_chunks(stored_doc_files(snapshot_id), embedder.count_tokens,
+                                            embedder.max_tokens)
+    with db.pool().connection() as conn:
+        have = conn.execute("SELECT count(*) AS n FROM chunks WHERE snapshot_id = %s"
+                            " AND source = 'doc'", (snapshot_id,)).fetchone()["n"]
+    return {"doc_files": len(picked.files), "doc_chunks": have,
+            "doc_chunks_expected": len(expected)}
+
+
 def main() -> None:
     p = argparse.ArgumentParser(description=__doc__.split("\n")[0])
     p.add_argument("snapshots", type=int, nargs="+")

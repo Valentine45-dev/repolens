@@ -19,6 +19,7 @@ import {
 } from "../components/ExploreLegend";
 import { MapHint } from "../components/MapHint";
 import { MapView } from "../components/MapView";
+import { DocPanel } from "../components/DocPanel";
 import { NodePanel } from "../components/NodePanel";
 import { applyCap, degrees, layoutGraph, RENDER_CAP } from "../graphModel";
 import { densityText, statusText } from "../legendText";
@@ -74,6 +75,9 @@ function ExploreInner() {
   // Ask open it shares Ask's column as a tab (AnalysisShell), so the canvas keeps its width.
   const panelOverlay = useMediaQuery("(max-width: 900px)");
   const selectedId = params.get("node") ? Number(params.get("node")) : null;
+  // A documentation file opened from an Ask citation (doc chips): not on the map, its own panel.
+  const docParam = params.get("doc");
+  const docId = docParam && Number(docParam) > 0 ? Number(docParam) : null;
   const linesParam = params.get("lines");
   const highlight = useMemo(() => parseLines(linesParam), [linesParam]);
   const urlView = useMemo(() => parseViewParams(params), [params]);
@@ -141,9 +145,15 @@ function ExploreInner() {
     setNotice(gone);
   }, [mustCheck, fileCheck.data, fileCheck.error, setParams]);
   const nodeParam = params.get("node");
+  const docShown = selectedId === null && docId !== null;
   const panelState: PanelState =
-    selected !== null ? "shown" : selectedId !== null && !graph.data && !graph.error ? "pending" : "none";
-  useEffect(() => reportPanel(nodeParam, panelState), [reportPanel, nodeParam, panelState]);
+    selected !== null || docShown
+      ? "shown"
+      : selectedId !== null && !graph.data && !graph.error
+        ? "pending"
+        : "none";
+  const panelParam = nodeParam ?? (docShown ? docParam : null);
+  useEffect(() => reportPanel(panelParam, panelState), [reportPanel, panelParam, panelState]);
 
   // Which view: the URL wins; with no level and no root the start rule picks files for a small
   // repo and folders for a big one; a link to a file opens that file's folder.
@@ -177,9 +187,10 @@ function ExploreInner() {
     (fileId: number | null, lines: LineRange | null = null) =>
       setParams(
         fileId === null
-          ? { node: null, lines: null }
+          ? { node: null, doc: null, lines: null }
           : {
               node: String(fileId),
+              doc: null,
               lines: lines ? `${lines.start}-${lines.end}` : null,
               ...pin,
             },
@@ -577,6 +588,15 @@ function ExploreInner() {
             onShowFunctions={
               request?.level === "symbol" && request.root === selected.path ? undefined : showFunctions
             }
+            onClose={closePanel}
+          />
+        ) : docShown ? (
+          <DocPanel
+            snapshotId={snapshotId}
+            fileId={docId!}
+            highlight={highlight}
+            reveal={reveal}
+            hidden={panelHidden}
             onClose={closePanel}
           />
         ) : null}

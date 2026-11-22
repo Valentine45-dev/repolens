@@ -585,12 +585,30 @@ def cmd_validate(args) -> None:
         raise SystemExit(1)
 
 
+def require_docs(facts: dict, repo: str) -> None:
+    """v2.1: with docs on (QA_DOC_POOL > 0), a snapshot whose doc chunks are missing or differ
+    from what its stored files give now (analysed before docs, or not backfilled) would answer
+    from code only without saying so: refuse."""
+    from app import config
+    from app.ingest.docchunks import doc_status
+
+    if config.QA_DOC_POOL <= 0:
+        return
+    d = doc_status(facts["id"])
+    facts.update(d)
+    if d["doc_chunks"] != d["doc_chunks_expected"]:
+        raise SystemExit(f"{repo}: {d['doc_files']} doc files, {d['doc_chunks']} doc chunks stored,"
+                         f" {d['doc_chunks_expected']} expected; run"
+                         f" `python -m app.ingest.docchunks {facts['id']}` first")
+
+
 def _snapshots(questions: list[dict]) -> dict:
     out = {}
     for repo in sorted({q["repo"] for q in questions}):
         commit = next(q["commit"] for q in questions if q["repo"] == repo)
         facts = snapshot_facts(repo, commit)
         require_search(facts, repo)
+        require_docs(facts, repo)
         out[repo] = {**facts, "commit": commit}
     return out
 
@@ -642,7 +660,12 @@ def cmd_run(args) -> None:
         info = run_info(meter, llm_used=True)
         info["notes"] = args.notes
         info["answer_cache"] = "none (not implemented in the product)"
-        info["doc_pool"] = "none (v2.0 chunks code only)"
+        from app import config
+
+        info["doc_pool"] = (f"QA_DOC_POOL {config.QA_DOC_POOL}, cutoff at code vector hit"
+                            f" {config.QA_DOC_CUTOFF_RANK}" if config.QA_DOC_POOL > 0
+                            else "off (QA_DOC_POOL 0)")
+        info["doc_chunks"] = {r: s.get("doc_chunks") for r, s in snaps.items()}
         info["prices_usd_per_mtok"] = {"in": price_in, "out": price_out}
         print(header(info))
         print(f"{len(questions)} questions, {args.passes} pass(es), estimate per pass"
@@ -794,8 +817,11 @@ def cmd_analyse(args) -> None:
     path = save_results("analysis_timing" + (f"-{args.label}" if args.label else ""), info,
                         {"pins": _rel(args.pins), "analyses": out})
     for r in out:
-        print(f"{r['repo']}: analysis {r['analysis_s']} s, with test code"
-              f" {r['total_with_tests_s']} s, search {r['search']}, receipt {r['receipt']}")
+        print(f"{r['repo']}: snapshot {r['snapshot_id']}, analysis {r['analysis_s']} s, with test"
+              f" code {r['total_with_tests_s']} s, search {r['search']}, receipt {r['receipt']}")
+    ids = " ".join(str(r["snapshot_id"]) for r in out)
+    print(f"doc chunks (v2.1, before validate): cd backend; uv run --env-file ../.env python -m"
+          f" app.ingest.docchunks {ids}")
     print("saved", _rel(path))
 
 

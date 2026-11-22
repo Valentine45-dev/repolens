@@ -9,13 +9,16 @@ export interface LineRange {
 }
 
 /** Explorer with a file selected and, optionally, lines highlighted. `tests` makes a test
- * file visible (the graph hides test files by default); `ask` keeps the Ask drawer open. */
+ * file visible (the graph hides test files by default); `ask` keeps the Ask drawer open.
+ * `docId` opens a documentation file (README, docs) in the doc panel instead: docs are not on
+ * the map, so they are never a `node`. */
 export function exploreHref(
   snapshotId: number,
-  opts: { fileId?: number; lines?: LineRange | null; tests?: boolean; ask?: boolean } = {},
+  opts: { fileId?: number; docId?: number; lines?: LineRange | null; tests?: boolean; ask?: boolean } = {},
 ): string {
   const params = new URLSearchParams();
-  if (opts.fileId !== undefined) params.set("node", String(opts.fileId));
+  if (opts.docId !== undefined) params.set("doc", String(opts.docId));
+  else if (opts.fileId !== undefined) params.set("node", String(opts.fileId));
   if (opts.lines) params.set("lines", `${opts.lines.start}-${opts.lines.end}`);
   if (opts.tests) params.set("tests", "1");
   if (opts.ask) params.set("ask", "1");

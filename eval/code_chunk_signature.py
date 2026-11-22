@@ -1,7 +1,7 @@
 """Signature of the code chunks of given snapshots: proves a migration or a doc backfill left them
 byte-identical. No LLM, no embedding.
 
-    uv run --project backend --env-file .env python eval/code_chunk_signature.py 1 2 3 [--out f.json]
+    uv run --project backend --env-file .env python eval/code_chunk_signature.py 1 2 3 [--out F]
 
 Per snapshot: the number of code chunks and an MD5 over every column of every code row in id
 order (id, symbol_id, file_id when present, lines, token count, in_test, text, search_tsv,
@@ -14,9 +14,7 @@ import json
 import sys
 from pathlib import Path
 
-from runinfo import ROOT  # also puts backend/ on sys.path
-
-from app import db  # noqa: E402
+from runinfo import ROOT  # also puts backend/ on sys.path (app is imported in main)
 
 ROW = ("concat_ws('|', c.id, c.symbol_id, {file_id} c.start_line, c.end_line, c.token_count,"
        " c.in_test, md5(c.text), md5(coalesce(c.search_tsv::text, '')),"
@@ -45,6 +43,8 @@ def main() -> None:
                    help="leave chunks.file_id out of the row, to compare with a capture made"
                         " before the column existed")
     args = p.parse_args()
+    from app import db
+
     if args.without_file_id:
         global ROW
         ROW = ROW.replace("{file_id}", "")

@@ -69,7 +69,7 @@ export function AnalysisShell() {
   // Below 1600px three docked columns leave the map or list too narrow, so with Ask open a file or
   // finding panel shares Ask's column as a tab (under 901px both overlay, as before). Which tab is
   // in front is view state only: both stay in the URL and both stay mounted.
-  const panelParam = params.get("node") ?? params.get("finding");
+  const panelParam = params.get("node") ?? params.get("doc") ?? params.get("finding");
   // A panel in the URL is not always one on screen (a hidden test file, an old link): only then
   // does Ask share its column, so an empty File tab never stands in front of Ask.
   const [reported, setReported] = useState<{ param: string | null; state: PanelState }>({

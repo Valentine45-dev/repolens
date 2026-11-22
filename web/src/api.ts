@@ -148,8 +148,9 @@ export interface Citation {
   start_line: number;
   end_line: number;
   file_id: number;
-  symbol_id: number;
+  symbol_id: number | null; // null for documentation
   in_test: boolean;
+  source?: "code" | "doc"; // "doc": README or docs text; older answers have none (code)
 }
 
 /** One place an import or call happens, in the file named by `site_path` next to it. */
