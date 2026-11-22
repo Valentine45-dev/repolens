@@ -507,7 +507,8 @@ def test_retry_preparing_search_after_a_failed_search(client, monkeypatch, fake)
     f = client.get(f"/snapshots/{sid}/status").json()["features"]
     assert (f["ask"], f["retry_search"]) == (False, True)
     assert f["ask_reason"] == (
-        "Search setup took longer than 600 s and was stopped. The map and findings are complete."
+        f"Search setup took longer than {config.MAX_ANALYSIS_S} s and was stopped."
+        " The map and findings are complete."
     )
     assert ask(client, sid, "How is a user created?")["status"] == "no_context"
 
