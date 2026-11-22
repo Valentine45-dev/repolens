@@ -1,0 +1,392 @@
+{
+  "run": {
+    "commit_sha": "f4f2331c2cb94200a1099b43471f67a072d78ff8",
+    "dirty": false,
+    "run_at": "2026-11-22T01:25:47+00:00",
+    "machine": "LAPTOP-4C2E555R",
+    "cpu": "Intel(R) Pentium(R) Silver N5030 CPU @ 1.10GHz",
+    "cpu_threads": 4,
+    "ram_gb": 7.8,
+    "os": "Windows 11 (10.0.26300)",
+    "python": "3.12.16",
+    "packages": {
+      "torch": "2.14.1+cpu",
+      "sentence-transformers": "6.2.0",
+      "transformers": "5.21.0",
+      "tree-sitter": "0.25.2",
+      "anthropic": "2.3.0"
+    },
+    "max_analysis_s": 2100,
+    "tool_pins": {
+      "bandit": "bandit==1.9.4",
+      "semgrep": "semgrep==1.182.1"
+    },
+    "notes": "run day; apps closed",
+    "embedder": "sentence-transformers",
+    "embed_model": "sentence-transformers/all-MiniLM-L6-v2",
+    "embed_revision": "1110a243fdf4706b3f48f1d95db1a4f5529b4d41",
+    "llm_used": false,
+    "llm": {
+      "provider": "anthropic",
+      "model": "claude-sonnet-5-5",
+      "effort": "low",
+      "thinking": "between_tools",
+      "max_tokens": 4000,
+      "prompt_version": "2026-10-28.2"
+    },
+    "retrieval": {
+      "top_k": 8,
+      "graph_expansion": true,
+      "expand_max": 8,
+      "context_tokens": 6000
+    },
+    "analysed": "in this process"
+  },
+  "pins": "eval/locked/pins.yaml",
+  "analyses": [
+    {
+      "repo": "sindresorhus/p-limit",
+      "commit": "a8a6fbec4e0e866d6d779b10889bb4f5567e70eb",
+      "snapshot_id": 42,
+      "job_id": 40,
+      "submitted_status": "queued",
+      "timing_only": false,
+      "stages": [
+        {
+          "t_s": 31.0,
+          "status": "queued",
+          "stage": "queued",
+          "search": "ready"
+        },
+        {
+          "t_s": 33.0,
+          "status": "running",
+          "stage": "discover",
+          "search": "ready"
+        },
+        {
+          "t_s": 35.0,
+          "status": "running",
+          "stage": "embed",
+          "search": "embedding"
+        },
+        {
+          "t_s": 205.9,
+          "status": "done",
+          "stage": "done",
+          "search": "tests"
+        },
+        {
+          "t_s": 220.5,
+          "status": "done",
+          "stage": "done",
+          "search": "ready"
+        }
+      ],
+      "final_status": "done",
+      "error": null,
+      "receipt": {
+        "files_kept": 11,
+        "files_skipped": 5,
+        "files_beyond_limit": 0,
+        "hit_file_limit": false
+      },
+      "search": "ready",
+      "search_error": null,
+      "analysis_s": 205.9,
+      "total_with_tests_s": 220.5
+    },
+    {
+      "repo": "jd/tenacity",
+      "commit": "aac059c906170ee7b6ce1aa086a226f3aded5c99",
+      "snapshot_id": 43,
+      "job_id": 41,
+      "submitted_status": "queued",
+      "timing_only": false,
+      "stages": [
+        {
+          "t_s": 0.1,
+          "status": "queued",
+          "stage": "queued",
+          "search": "ready"
+        },
+        {
+          "t_s": 2.1,
+          "status": "running",
+          "stage": "fetch",
+          "search": "ready"
+        },
+        {
+          "t_s": 8.2,
+          "status": "running",
+          "stage": "discover",
+          "search": "ready"
+        },
+        {
+          "t_s": 14.2,
+          "status": "running",
+          "stage": "edges",
+          "search": "ready"
+        },
+        {
+          "t_s": 22.3,
+          "status": "running",
+          "stage": "detect",
+          "search": "ready"
+        },
+        {
+          "t_s": 24.4,
+          "status": "running",
+          "stage": "embed",
+          "search": "embedding"
+        },
+        {
+          "t_s": 105.2,
+          "status": "done",
+          "stage": "done",
+          "search": "tests"
+        },
+        {
+          "t_s": 220.4,
+          "status": "done",
+          "stage": "done",
+          "search": "ready"
+        }
+      ],
+      "final_status": "done",
+      "error": null,
+      "receipt": {
+        "files_kept": 93,
+        "files_skipped": 4,
+        "files_beyond_limit": 0,
+        "hit_file_limit": false
+      },
+      "search": "ready",
+      "search_error": null,
+      "analysis_s": 105.2,
+      "total_with_tests_s": 220.4
+    },
+    {
+      "repo": "tkem/cachetools",
+      "commit": "07bb96086794ca6e2f70f32b7cc759fe91c08651",
+      "snapshot_id": 44,
+      "job_id": 42,
+      "submitted_status": "queued",
+      "timing_only": false,
+      "stages": [
+        {
+          "t_s": 0.1,
+          "status": "queued",
+          "stage": "queued",
+          "search": "ready"
+        },
+        {
+          "t_s": 2.1,
+          "status": "running",
+          "stage": "fetch",
+          "search": "ready"
+        },
+        {
+          "t_s": 6.1,
+          "status": "running",
+          "stage": "discover",
+          "search": "ready"
+        },
+        {
+          "t_s": 8.3,
+          "status": "running",
+          "stage": "parse",
+          "search": "ready"
+        },
+        {
+          "t_s": 10.3,
+          "status": "running",
+          "stage": "edges",
+          "search": "ready"
+        },
+        {
+          "t_s": 20.4,
+          "status": "running",
+          "stage": "embed",
+          "search": "embedding"
+        },
+        {
+          "t_s": 109.9,
+          "status": "done",
+          "stage": "done",
+          "search": "tests"
+        },
+        {
+          "t_s": 226.8,
+          "status": "done",
+          "stage": "done",
+          "search": "ready"
+        }
+      ],
+      "final_status": "done",
+      "error": null,
+      "receipt": {
+        "files_kept": 40,
+        "files_skipped": 4,
+        "files_beyond_limit": 0,
+        "hit_file_limit": false
+      },
+      "search": "ready",
+      "search_error": null,
+      "analysis_s": 109.9,
+      "total_with_tests_s": 226.8
+    },
+    {
+      "repo": "encode/httpx",
+      "commit": "3ba5fe0d7ac70222590e759c31442b1cab263791",
+      "snapshot_id": 45,
+      "job_id": 43,
+      "submitted_status": "queued",
+      "timing_only": false,
+      "stages": [
+        {
+          "t_s": 0.1,
+          "status": "queued",
+          "stage": "queued",
+          "search": "ready"
+        },
+        {
+          "t_s": 2.1,
+          "status": "running",
+          "stage": "fetch",
+          "search": "ready"
+        },
+        {
+          "t_s": 68.8,
+          "status": "running",
+          "stage": "discover",
+          "search": "ready"
+        },
+        {
+          "t_s": 84.1,
+          "status": "running",
+          "stage": "parse",
+          "search": "ready"
+        },
+        {
+          "t_s": 88.3,
+          "status": "running",
+          "stage": "edges",
+          "search": "ready"
+        },
+        {
+          "t_s": 106.6,
+          "status": "running",
+          "stage": "detect",
+          "search": "ready"
+        },
+        {
+          "t_s": 108.7,
+          "status": "running",
+          "stage": "embed",
+          "search": "embedding"
+        },
+        {
+          "t_s": 344.5,
+          "status": "done",
+          "stage": "done",
+          "search": "tests"
+        },
+        {
+          "t_s": 628.1,
+          "status": "done",
+          "stage": "done",
+          "search": "ready"
+        }
+      ],
+      "final_status": "done",
+      "error": null,
+      "receipt": {
+        "files_kept": 91,
+        "files_skipped": 26,
+        "files_beyond_limit": 0,
+        "hit_file_limit": false
+      },
+      "search": "ready",
+      "search_error": null,
+      "analysis_s": 344.5,
+      "total_with_tests_s": 628.1
+    },
+    {
+      "repo": "axios/axios",
+      "commit": "84a9f3b9a4f3244b8c8e818f557d64c7b964fb25",
+      "snapshot_id": 46,
+      "job_id": 44,
+      "submitted_status": "queued",
+      "timing_only": false,
+      "stages": [
+        {
+          "t_s": 0.1,
+          "status": "queued",
+          "stage": "queued",
+          "search": "ready"
+        },
+        {
+          "t_s": 2.2,
+          "status": "running",
+          "stage": "fetch",
+          "search": "ready"
+        },
+        {
+          "t_s": 14.5,
+          "status": "running",
+          "stage": "discover",
+          "search": "ready"
+        },
+        {
+          "t_s": 53.1,
+          "status": "running",
+          "stage": "parse",
+          "search": "ready"
+        },
+        {
+          "t_s": 59.5,
+          "status": "running",
+          "stage": "edges",
+          "search": "ready"
+        },
+        {
+          "t_s": 80.0,
+          "status": "running",
+          "stage": "detect",
+          "search": "ready"
+        },
+        {
+          "t_s": 82.1,
+          "status": "running",
+          "stage": "embed",
+          "search": "embedding"
+        },
+        {
+          "t_s": 371.7,
+          "status": "done",
+          "stage": "done",
+          "search": "tests"
+        },
+        {
+          "t_s": 1203.5,
+          "status": "done",
+          "stage": "done",
+          "search": "ready"
+        }
+      ],
+      "final_status": "done",
+      "error": null,
+      "receipt": {
+        "files_kept": 427,
+        "files_skipped": 39,
+        "files_beyond_limit": 0,
+        "hit_file_limit": false
+      },
+      "search": "ready",
+      "search_error": null,
+      "analysis_s": 371.7,
+      "total_with_tests_s": 1203.5
+    }
+  ]
+}
