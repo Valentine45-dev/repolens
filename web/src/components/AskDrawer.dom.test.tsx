@@ -480,3 +480,26 @@ describe("a reload while the browser cancels the question's request", () => {
     expect(turns()[1].textContent).toContain(UNREACHABLE);
   });
 });
+
+describe("A-01: an answer with some sources removed", () => {
+  const NONE = "None of the sources this answer cited could be verified";
+
+  it("says which sources were removed, keeps the verified chips, and never says none verified", async () => {
+    await open("/a/91/explore?ask=1");
+    await ask("How is a user created?");
+    await answerWith({ ...answer("A. B. C."), status: "unverified", dropped: 2 });
+    const t = turns()[0];
+    expect(t.textContent).toContain("2 sources this answer cited could not be verified and were removed.");
+    expect(t.textContent).toContain("The sentences they were attached to are not backed by a source.");
+    expect(t.textContent).not.toContain(NONE);
+    expect(t.querySelectorAll(".citation")).toHaveLength(1); // the verified one stays a chip
+    expect(t.textContent).not.toContain("sources could not be verified and were removed."); // no second caption
+  });
+
+  it("keeps the 'none verified' line when nothing survived", async () => {
+    await open("/a/92/explore?ask=1");
+    await ask("How is a user created?");
+    await answerWith({ ...answer("A."), status: "unverified", dropped: 1, citations: [] });
+    expect(turns()[0].textContent).toContain(NONE);
+  });
+});

@@ -194,7 +194,8 @@ def test_ai_answer_with_validated_citations(client, snapshot, fake):
     fake.script = [f"It builds a User and saves it (sample_app/service.py:{start}-{end})."
                    f" It also logs to `sample_app/service.py:400-410`."]
     a = ask(client, snapshot, "How is a user created?")
-    assert (a["kind"], a["status"], a["dropped"]) == ("ai", "answered", 1)
+    # A-01 (review 14 Nov): a dropped citation makes the answer unverified, even with a valid one
+    assert (a["kind"], a["status"], a["dropped"]) == ("ai", "unverified", 1)
     assert a["citations"] == [{
         "path": "sample_app/service.py", "start_line": start, "end_line": end,
         "file_id": a["citations"][0]["file_id"], "symbol_id": a["citations"][0]["symbol_id"],
@@ -210,6 +211,47 @@ def test_ai_answer_with_validated_citations(client, snapshot, fake):
     assert '<snippet source="sample_app/service.py:' in sent["prompt"]
     assert sent["prompt"].rstrip().endswith("</question>")
     assert sent["timeout"] == pytest.approx(config.QA_DEADLINE_S, abs=1)
+
+
+def _create_user_range(snapshot):
+    (chunk,) = query(
+        "SELECT c.start_line, c.end_line FROM chunks c JOIN symbols s ON s.id = c.symbol_id"
+        " WHERE c.snapshot_id = %s AND s.qualified_name = 'sample_app.service.create_user'",
+        snapshot,
+    )
+    return chunk["start_line"], chunk["end_line"]
+
+
+def test_only_valid_citations_is_answered(client, snapshot, fake):
+    start, end = _create_user_range(snapshot)
+    fake.script = [f"It builds a User and saves it (sample_app/service.py:{start}-{end})."]
+    a = ask(client, snapshot, "How is a user created?")
+    assert (a["status"], len(a["citations"]), a["dropped"]) == ("answered", 1, 0)
+
+
+def test_one_valid_and_three_invented_citations_is_unverified(client, snapshot, fake):
+    """A-01: the review's case. Before the fix this was 'answered'."""
+    start, end = _create_user_range(snapshot)
+    fake.script = [f"A (sample_app/service.py:{start}). B (sample_app/service.py:900)."
+                   " C (sample_app/service.py:901). D (sample_app/service.py:902)."]
+    a = ask(client, snapshot, "How is a user created?")
+    assert (a["status"], len(a["citations"]), a["dropped"]) == ("unverified", 1, 3)
+
+
+def test_a_validator_failure_is_a_status_not_a_500(client, snapshot, fake, monkeypatch):
+    """A-04, second half: whatever goes wrong in validation, the reply is a status. The model's
+    text could not be checked, so it is not shown; the search's own locations are."""
+    from app.qa import answer
+
+    def boom(text, snippets):
+        raise ValueError("validator bug")
+
+    monkeypatch.setattr(answer, "validate", boom)
+    fake.script = ["Users are created in sample_app/service.py:1."]
+    a = ask(client, snapshot, "How is a user created?")
+    assert (a["kind"], a["status"], a["citations"]) == ("ai", "unavailable", [])
+    assert "sample_app/service.py:1" not in a["answer"]  # nothing unchecked looks like a source
+    assert a["locations"]
 
 
 def test_all_citations_dropped_is_unverified(client, snapshot, fake):
