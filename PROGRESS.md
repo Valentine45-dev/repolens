@@ -2668,3 +2668,35 @@ are deliberately not changed after seeing eval results; these stay as documented
     (itsdangerous) and one backfill run, never together. $0.
   - **Dev DB now:** the tuning snapshots 1, 2, 3, 6 have doc chunks (unused while `QA_DOC_POOL` is 0); the
     locked snapshots were not touched.
+  - **Merged into `main` (22 Nov, `847986d`), CI green on `main`.**
+- **Step 5 Part C: claim check (`feat/claim-check`, 23 Nov) — details fixed before the code and the paid run.**
+  - **Format (model):** after each claim, its source and a short exact quote in square brackets,
+    `[path:start-end "exact words from those lines"]`; several sources as several brackets. Only when
+    `QA_CLAIM_CHECK=1`: a second versioned system prompt (`prompts/system_claims.md`, its own PROMPT_VERSION),
+    so with the flag off the prompt stays v2.0's byte for byte.
+  - **Parsing (tolerant):** `[...]` or `(...)`; straight, curly or backtick quote marks; `#L` and `L`
+    forms; a quote with `N| ` line prefixes has them stripped. A citation written without a quote (bare
+    `path:N-M`) is a citation attempt with no quote: it fails the check.
+  - **Claim = sentence:** a citation belongs to the sentence ending right before it (or the text since the
+    previous citation on that line); citations separated only by spaces, commas or semicolons share one
+    claim. A claim is kept if at least one of its citations passes both checks: the range lies inside one
+    sent snippet (as today) AND the quote appears in those lines as sent (escaped text, no line prefixes),
+    whitespace-normalised, case-sensitive, ≥ 3 words or ≥ 15 characters. Failing citations of a kept claim
+    are dropped (counted in `dropped`). A failed claim is **removed** with its citations. Sentences without
+    any citation are left as they are (as today; `cited_sentence_rate` measures them). Code fences are not
+    read for citations.
+  - **Text and API:** quotes are stripped; a kept citation is written `(path:N-M)`, so the chips and the frozen
+    `score_claims.py` read it as before. The answer gains `claims: {total, kept, removed, note}`; `note`
+    ("N statement(s) removed: the quoted evidence was not found in the cited lines.") is a separate field shown
+    by the UI, **never part of the answer text**. All claims fail → the `COULD_NOT_FIND` sentence, no
+    citations, `dropped` = the citations written (so the frozen scorer sends an unanswerable answer to the
+    judge, not to an automatic pass). Status stays `answered | unverified` (A-01: any drop → unverified).
+  - **Paid eval (cap $0.60; $0.30 per arm, guarded per call):** `eval/smoke_qa.py --all` (the 18 v1 tuning Q&A
+    questions: 16 + identity + injection), `QA_CLAIM_CHECK=0` first, then `=1`, one pass each, first result
+    counts; Sonnet 5.5, effort low, between_tools; prices $2 / $10 per MTok. Compared by
+    `eval/claim_check_compare.py`: per question answered_correct_file (expected file among validated
+    citations, 14 answerable), citation_validity (no dropped citation), cited_sentence_rate (frozen
+    `score_claims.py`), claims kept/removed, tokens, latency. **Adoption rule (pre-registered):** on by
+    default if it loses no more questions than it wins on answered_correct_file, the count of answers that
+    are the could-not-find answer rises by at most 2, and median latency (smoke_qa's `seconds_median`) rises
+    by at most 50%. Otherwise off.
