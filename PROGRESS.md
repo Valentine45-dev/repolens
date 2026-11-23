@@ -2815,3 +2815,7 @@ are deliberately not changed after seeing eval results; these stay as documented
     changed sources). Default seed **20261123** (printed; recorded in the combined key). `locked_eval.py`,
     `locked_metrics.py`, `score_claims.py` unchanged; scorer self-check passes. CI eval-unit job now also runs
     ruff and the tests on the two new files. Eval unit 93 passed. No API, no locked file opened.
+- **23 Nov: faithful_human judged** (J1, blind mixed sheet of pass-1 answers, seed 20261123): v2.0 yes 28 /
+  partly 22 / no 0; v2.1 yes 25 / partly 25 / no 0; unanswerable_ok 4/4 both; paired v2.1 vs v2.0 on
+  faithful=yes: 9 wins, 12 losses, exact p = 0.664 (not conclusive). Judgment files committed on the run
+  branches (80e2303, f85a4ae).

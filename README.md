@@ -257,6 +257,24 @@ The retrieval eval needs `expressjs/express` and `pallets/itsdangerous` analysed
 in [`eval/questions.yaml`](eval/questions.yaml). The detector eval runs Bandit and Semgrep
 through `uvx` at pinned versions (Semgrep falls back to its Docker image).
 
+### Evaluation results (v2)
+
+Held-out numbers are from the locked set (50 questions written by outsiders, 5 repos), pass 1 of
+each locked run, for the configuration `/ask` uses (v2.0: C, top 8 + graph expansion; v2.1: DG,
+hybrid search + graph expansion). `faithful_human` is one human judge (J1) on a blind sheet that
+mixed both versions' pass-1 answers.
+
+| Metric | v2.0 | v2.1 | Evidence |
+|---|---|---|---|
+| Held-out code_hit | 24/36 = 0.67 | 24/36 = 0.67 | [v2.0 run](eval/results/locked/locked_run-v2.0-20261122T024145Z-f4f2331.json), [v2.1 run](eval/results/locked/locked_run-v2.1-20261123T101546Z-8b337dd.json) (`summary`) |
+| Held-out answered correct file | 31/41 = 0.76 | 30/41 = 0.73 | same files (`answered_correct_file`) |
+| Held-out faithful_human = yes | 28/50 = 0.56 | 25/50 = 0.50 | [v2.0 judgments](eval/results/locked/locked_run-v2.0-20261122T024145Z-f4f2331-judgments.json), [v2.1 judgments](eval/results/locked/locked_run-v2.1-20261123T101546Z-8b337dd-judgments.json) (the rest are `partly`, none `no`) |
+| Tuning code_hit (config C, 14 questions) | 13/14 = 0.93 | | [retrieval eval at the v2.0 run commit](eval/results/retrieval_context-before-job-lock-race-20261122T031039Z-f4f2331.json) (`summary.all.recall.C`) |
+
+The tuning number comes from questions the retrieval was tuned on; the held-out numbers are the
+ones to compare. v2.1 differs from v2.0 by more than one change (hybrid search, claim check,
+citation fixes), so the table does not show which change moved a number.
+
 ### Results so far (28 Oct)
 
 These are small evaluations, labelled by the people who wrote the rules and the retrieval code:
