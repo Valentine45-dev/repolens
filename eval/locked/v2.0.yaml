@@ -1,0 +1,875 @@
+# RepoLens locked evaluation, v2.0 question file (schema 1). 50 questions, 5 repos.
+# Questions: W1 (L1, L2), W2 (L3), W3 (L4, L5), verbatim. Answer key: J1, read from the
+# pinned code, no RepoLens, no AI; revised 21 Nov after the J4 comparison. Built 22 Nov 2026
+# off the dev PC. Do not edit: the SHA-256 of this exact file is committed before the run.
+schema: 1
+questions:
+- id: L1-01
+  set: locked
+  repo: sindresorhus/p-limit
+  commit: a8a6fbec4e0e866d6d779b10889bb4f5567e70eb
+  question: How does the pLimit() function manage the execution of asynchronous functions to ensure that the configured concurrency limit is never exceeded?
+  type: code_how
+  expected:
+  - path: index.js
+    start: 19
+    end: 64
+    source: code
+  author: W1
+  written_from: code_reading
+  labeller: J1
+  notes: ''
+- id: L1-02
+  set: locked
+  repo: sindresorhus/p-limit
+  commit: a8a6fbec4e0e866d6d779b10889bb4f5567e70eb
+  question: How does the resumeNext() function decide when to execute the next queued task, and how does it update the active task count?
+  type: code_how
+  expected:
+  - path: index.js
+    start: 19
+    end: 25
+    source: code
+  author: W1
+  written_from: code_reading
+  labeller: J1
+  notes: ''
+- id: L1-03
+  set: locked
+  repo: sindresorhus/p-limit
+  commit: a8a6fbec4e0e866d6d779b10889bb4f5567e70eb
+  question: How does the enqueue() function add new tasks to the queue and ensure that they execute in the correct order?
+  type: code_how
+  expected:
+  - path: index.js
+    start: 50
+    end: 64
+    source: code
+  - path: index.js
+    start: 19
+    end: 25
+    source: code
+  author: W1
+  written_from: code_reading
+  labeller: J1
+  notes: all listed ranges needed for a full answer (for human judging)
+- id: L1-04
+  set: locked
+  repo: sindresorhus/p-limit
+  commit: a8a6fbec4e0e866d6d779b10889bb4f5567e70eb
+  question: How does the clearQueue() method handle pending tasks when rejectOnClear is enabled compared to when it is disabled?
+  type: code_how
+  expected:
+  - path: index.js
+    start: 77
+    end: 89
+    source: code
+  author: W1
+  written_from: code_reading
+  labeller: J1
+  notes: ''
+- id: L1-05
+  set: locked
+  repo: sindresorhus/p-limit
+  commit: a8a6fbec4e0e866d6d779b10889bb4f5567e70eb
+  question: How does the limit.map() method process an iterable using limited concurrency, and how does it preserve the order of results?
+  type: code_how
+  expected:
+  - path: index.js
+    start: 106
+    end: 127
+    source: code
+  author: W1
+  written_from: code_reading
+  labeller: J1
+  notes: ''
+- id: L1-06
+  set: locked
+  repo: sindresorhus/p-limit
+  commit: a8a6fbec4e0e866d6d779b10889bb4f5567e70eb
+  question: How does the limitFunction() function create a reusable function that restricts concurrent executions of a particular function?
+  type: code_how
+  expected:
+  - path: index.js
+    start: 133
+    end: 142
+    source: code
+  author: W1
+  written_from: code_reading
+  labeller: J1
+  notes: ''
+- id: L1-07
+  set: locked
+  repo: sindresorhus/p-limit
+  commit: a8a6fbec4e0e866d6d779b10889bb4f5567e70eb
+  question: Where is invalid concurrency handled in the code, and what conditions cause the validateConcurrency() function to throw a TypeError?
+  type: locate
+  expected:
+  - path: index.js
+    start: 144
+    end: 148
+    source: code
+  author: W1
+  written_from: code_reading
+  labeller: J1
+  notes: ''
+- id: L1-08
+  set: locked
+  repo: sindresorhus/p-limit
+  commit: a8a6fbec4e0e866d6d779b10889bb4f5567e70eb
+  question: What is the main purpose of the p-limit library, and what problem does it solve when working with asynchronous JavaScript operations?
+  type: purpose
+  expected:
+  - path: readme.md
+    start: 3
+    end: 29
+    source: doc
+  author: W1
+  written_from: code_reading
+  labeller: J1
+  notes: ''
+- id: L1-09
+  set: locked
+  repo: sindresorhus/p-limit
+  commit: a8a6fbec4e0e866d6d779b10889bb4f5567e70eb
+  question: Which files import or use the pLimit function from index.js, and how is it used in each of those files?
+  type: graph
+  expected: []
+  expected_files_with_tests:
+  - benchmark.js
+  - index.d.ts
+  - index.test-d.ts
+  - test.js
+  expected_files_without_tests:
+  - benchmark.js
+  - index.d.ts
+  author: W1
+  written_from: code_reading
+  labeller: J1
+  notes: defining file index.js excluded; docs (readme.md, recipes.md) not counted
+- id: L1-10
+  set: locked
+  repo: sindresorhus/p-limit
+  commit: a8a6fbec4e0e866d6d779b10889bb4f5567e70eb
+  question: Does the clearQueue() method cancel asynchronous functions that are already running, or does it only affect tasks waiting in the queue? Explain your answer based on the implementation.
+  type: code_how
+  expected:
+  - path: index.js
+    start: 77
+    end: 89
+    source: code
+  author: W1
+  written_from: code_reading
+  labeller: J1
+  notes: 'scored as an ordinary answerable question (owner decision 21 Nov); answer: only waiting tasks'
+- id: L2-01
+  set: locked
+  repo: jd/tenacity
+  commit: aac059c906170ee7b6ce1aa086a226f3aded5c99
+  question: How does the library decide whether a failed operation should be attempted again or whether it should stop retrying?
+  type: code_how
+  expected:
+  - path: tenacity/__init__.py
+    start: 443
+    end: 500
+    source: code
+  author: W1
+  written_from: code_reading
+  labeller: J1
+  notes: ''
+- id: L2-02
+  set: locked
+  repo: jd/tenacity
+  commit: aac059c906170ee7b6ce1aa086a226f3aded5c99
+  question: How does the library prevent an operation from being retried forever when a maximum number of attempts or time limit has been configured?
+  type: code_how
+  expected:
+  - path: tenacity/stop.py
+    start: 89
+    end: 117
+    source: code
+  - path: tenacity/__init__.py
+    start: 432
+    end: 434
+    source: code
+  author: W1
+  written_from: code_reading
+  labeller: J1
+  notes: all listed ranges needed for a full answer (for human judging)
+- id: L2-03
+  set: locked
+  repo: jd/tenacity
+  commit: aac059c906170ee7b6ce1aa086a226f3aded5c99
+  question: How does the library calculate how long to wait before trying an operation again, and how does exponential backoff work in its implementation?
+  type: code_how
+  expected:
+  - path: tenacity/wait.py
+    start: 201
+    end: 244
+    source: code
+  author: W1
+  written_from: code_reading
+  labeller: J1
+  notes: ''
+- id: L2-04
+  set: locked
+  repo: jd/tenacity
+  commit: aac059c906170ee7b6ce1aa086a226f3aded5c99
+  question: How does the library handle asynchronous functions differently from normal synchronous functions when performing retries?
+  type: code_how
+  expected:
+  - path: tenacity/asyncio/__init__.py
+    start: 112
+    end: 172
+    source: code
+  author: W1
+  written_from: code_reading
+  labeller: J1
+  notes: ''
+- id: L2-05
+  set: locked
+  repo: jd/tenacity
+  commit: aac059c906170ee7b6ce1aa086a226f3aded5c99
+  question: How does the system keep track of the number of attempts, execution time, and waiting time during a retry operation?
+  type: code_how
+  expected:
+  - path: tenacity/__init__.py
+    start: 590
+    end: 662
+    source: code
+  - path: tenacity/__init__.py
+    start: 488
+    end: 495
+    source: code
+  author: W1
+  written_from: code_reading
+  labeller: J1
+  notes: all listed ranges needed for a full answer (for human judging)
+- id: L2-06
+  set: locked
+  repo: jd/tenacity
+  commit: aac059c906170ee7b6ce1aa086a226f3aded5c99
+  question: How does the library allow developers to execute custom actions before an attempt, after a failed attempt, or just before waiting for the next retry?
+  type: code_how
+  expected:
+  - path: tenacity/__init__.py
+    start: 443
+    end: 500
+    source: code
+  author: W1
+  written_from: code_reading
+  labeller: J1
+  notes: ''
+- id: L2-07
+  set: locked
+  repo: jd/tenacity
+  commit: aac059c906170ee7b6ce1aa086a226f3aded5c99
+  question: Where is the final failure of a retry operation handled, and how does the implementation decide whether to raise a RetryError or re-raise the original exception?
+  type: locate
+  expected:
+  - path: tenacity/__init__.py
+    start: 472
+    end: 486
+    source: code
+  author: W1
+  written_from: code_reading
+  labeller: J1
+  notes: ''
+- id: L2-08
+  set: locked
+  repo: jd/tenacity
+  commit: aac059c906170ee7b6ce1aa086a226f3aded5c99
+  question: What problem does Tenacity solve, what are its main features, and how can developers use it in Python applications?
+  type: purpose
+  expected:
+  - path: doc/source/index.rst
+    start: 18
+    end: 66
+    source: doc
+  author: W1
+  written_from: code_reading
+  labeller: J1
+  notes: ''
+- id: L2-09
+  set: locked
+  repo: jd/tenacity
+  commit: aac059c906170ee7b6ce1aa086a226f3aded5c99
+  question: Which files import or use Retrying and AsyncRetrying, and how are these classes used across the implementation and test suite?
+  type: graph
+  expected: []
+  expected_files_with_tests:
+  - tenacity/__init__.py
+  - tests/test_asyncio.py
+  - tests/test_tenacity.py
+  expected_files_without_tests:
+  - tenacity/__init__.py
+  author: W1
+  written_from: code_reading
+  labeller: J1
+  notes: union of files using either class (owner decision 21 Nov); tenacity/__init__.py defines Retrying but uses AsyncRetrying (795, 810)
+- id: L2-10
+  set: locked
+  repo: jd/tenacity
+  commit: aac059c906170ee7b6ce1aa086a226f3aded5c99
+  question: Does Tenacity automatically support retrying exceptions raised during the iteration of generator and asynchronous generator functions? Explain what happens according to the project's implementation and documentation.
+  type: false_premise
+  expected: []
+  premise_truth: 'No — @retry does not support generator or async generator functions: it wraps the call, which just returns a generator object without running the body, so exceptions raised later during iteration are not retried (doc/source/index.rst : 743–746).'
+  author: W1
+  written_from: code_reading
+  labeller: J1
+  notes: truth shown at doc/source/index.rst 740-746
+- id: L3-01
+  set: locked
+  repo: tkem/cachetools
+  commit: 07bb96086794ca6e2f70f32b7cc759fe91c08651
+  question: How does the cache decide which item to remove when it runs out of space?
+  type: code_how
+  expected:
+  - path: src/cachetools/__init__.py
+    start: 77
+    end: 96
+    source: code
+  author: W2
+  written_from: code_reading
+  labeller: J1
+  notes: ''
+- id: L3-02
+  set: locked
+  repo: tkem/cachetools
+  commit: 07bb96086794ca6e2f70f32b7cc759fe91c08651
+  question: How does the library remember which item was used most recently?
+  type: code_how
+  expected:
+  - path: src/cachetools/__init__.py
+    start: 294
+    end: 302
+    source: code
+  - path: src/cachetools/__init__.py
+    start: 321
+    end: 326
+    source: code
+  author: W2
+  written_from: code_reading
+  labeller: J1
+  notes: all listed ranges needed for a full answer (for human judging)
+- id: L3-03
+  set: locked
+  repo: tkem/cachetools
+  commit: 07bb96086794ca6e2f70f32b7cc759fe91c08651
+  question: How does the library automatically remove cached data after a certain amount of time?
+  type: code_how
+  expected:
+  - path: src/cachetools/__init__.py
+    start: 496
+    end: 510
+    source: code
+  - path: src/cachetools/__init__.py
+    start: 544
+    end: 564
+    source: code
+  author: W2
+  written_from: code_reading
+  labeller: J1
+  notes: all listed ranges needed for a full answer (for human judging)
+- id: L3-04
+  set: locked
+  repo: tkem/cachetools
+  commit: 07bb96086794ca6e2f70f32b7cc759fe91c08651
+  question: How does the library prevent the same function from doing expensive work repeatedly when it receives identical arguments?
+  type: code_how
+  expected:
+  - path: src/cachetools/_cached.py
+    start: 216
+    end: 232
+    source: code
+  - path: src/cachetools/keys.py
+    start: 37
+    end: 43
+    source: code
+  author: W2
+  written_from: code_reading
+  labeller: J1
+  notes: all listed ranges needed for a full answer (for human judging)
+- id: L3-05
+  set: locked
+  repo: tkem/cachetools
+  commit: 07bb96086794ca6e2f70f32b7cc759fe91c08651
+  question: How does the library handle multiple threads trying to calculate the same cached result at the same time?
+  type: code_how
+  expected:
+  - path: src/cachetools/_cached.py
+    start: 155
+    end: 186
+    source: code
+  author: W2
+  written_from: code_reading
+  labeller: J1
+  notes: ''
+- id: L3-06
+  set: locked
+  repo: tkem/cachetools
+  commit: 07bb96086794ca6e2f70f32b7cc759fe91c08651
+  question: How does caching work for class methods when different objects should have their own cached results?
+  type: code_how
+  expected:
+  - path: src/cachetools/_cachedmethod.py
+    start: 270
+    end: 283
+    source: code
+  author: W2
+  written_from: code_reading
+  labeller: J1
+  notes: ''
+- id: L3-07
+  set: locked
+  repo: tkem/cachetools
+  commit: 07bb96086794ca6e2f70f32b7cc759fe91c08651
+  question: Where is the handling of expired cache entries implemented, and what happens when an expired entry is accessed?
+  type: locate
+  expected:
+  - path: src/cachetools/__init__.py
+    start: 544
+    end: 564
+    source: code
+  - path: src/cachetools/__init__.py
+    start: 484
+    end: 494
+    source: code
+  author: W2
+  written_from: code_reading
+  labeller: J1
+  notes: all listed ranges needed for a full answer (for human judging)
+- id: L3-08
+  set: locked
+  repo: tkem/cachetools
+  commit: 07bb96086794ca6e2f70f32b7cc759fe91c08651
+  question: What is this project actually designed to do, and why would someone use it instead of Python's built-in caching functionality?
+  type: purpose
+  expected:
+  - path: README.rst
+    start: 24
+    end: 56
+    source: doc
+  author: W2
+  written_from: code_reading
+  labeller: J1
+  notes: ''
+- id: L3-09
+  set: locked
+  repo: tkem/cachetools
+  commit: 07bb96086794ca6e2f70f32b7cc759fe91c08651
+  question: Which files use the hashkey() and methodkey() functions from keys.py, and how do they use them when generating cache keys for decorated functions and methods?
+  type: graph
+  expected: []
+  expected_files_with_tests:
+  - src/cachetools/__init__.py
+  - src/cachetools/func.py
+  - src/cachetools/keys.pyi
+  - tests/test_cached.py
+  - tests/test_cachedmethod.py
+  - tests/test_keys.py
+  expected_files_without_tests:
+  - src/cachetools/__init__.py
+  - src/cachetools/func.py
+  - src/cachetools/keys.pyi
+  author: W2
+  written_from: code_reading
+  labeller: J1
+  notes: union of files using either function (owner decision 21 Nov); defining file keys.py excluded; type stub keys.pyi counted as code (owner decision 22 Nov, consistent with index.d.ts in L1-09)
+- id: L3-10
+  set: locked
+  repo: tkem/cachetools
+  commit: 07bb96086794ca6e2f70f32b7cc759fe91c08651
+  question: Since cachetools automatically handles concurrent access, does it guarantee that all its cache implementations are thread-safe without requiring locks?
+  type: false_premise
+  expected: []
+  premise_truth: 'No — the cache classes (LRUCache, TTLCache and the rest) are not thread-safe, and the docs say shared access must be synchronised by the caller, e.g. with the lock= argument of @cached (docs/index.rst : 62–67; src/cachetools/__init__.py has no locking in the classes).'
+  author: W2
+  written_from: code_reading
+  labeller: J1
+  notes: 'truth shown at docs/index.rst 62-67; partial exception: cachetools.func decorators create a Condition() themselves'
+- id: L4-01
+  set: locked
+  repo: encode/httpx
+  commit: 3ba5fe0d7ac70222590e759c31442b1cab263791
+  question: What is this project for? What does httpx actually do for a Python developer?
+  type: purpose
+  expected:
+  - path: README.md
+    start: 16
+    end: 41
+    source: doc
+  author: W3
+  written_from: not_recorded
+  labeller: J1
+  notes: ''
+- id: L4-02
+  set: locked
+  repo: encode/httpx
+  commit: 3ba5fe0d7ac70222590e759c31442b1cab263791
+  question: How does `httpx.get("https://...")` work under the hood? How does a one-line request turn into a real network call?
+  type: code_how
+  expected:
+  - path: httpx/_api.py
+    start: 92
+    end: 111
+    source: code
+  - path: httpx/_client.py
+    start: 988
+    end: 1002
+    source: code
+  - path: httpx/_transports/default.py
+    start: 209
+    end: 237
+    source: code
+  author: W3
+  written_from: not_recorded
+  labeller: J1
+  notes: all listed ranges needed for a full answer (for human judging); socket work happens in httpcore, outside this repo
+- id: L4-03
+  set: locked
+  repo: encode/httpx
+  commit: 3ba5fe0d7ac70222590e759c31442b1cab263791
+  question: How does it keep connections alive / reuse them? How does it stop opening a brand new connection for every single request?
+  type: code_how
+  expected:
+  - path: httpx/_transports/default.py
+    start: 133
+    end: 147
+    source: code
+  author: W3
+  written_from: not_recorded
+  labeller: J1
+  notes: pooling itself is in httpcore, outside this repo
+- id: L4-04
+  set: locked
+  repo: encode/httpx
+  commit: 3ba5fe0d7ac70222590e759c31442b1cab263791
+  question: How does timeout handling work? If a server never answers, how does it decide to give up?
+  type: code_how
+  expected:
+  - path: httpx/_client.py
+    start: 351
+    end: 357
+    source: code
+  - path: httpx/_transports/default.py
+    start: 215
+    end: 228
+    source: code
+  author: W3
+  written_from: not_recorded
+  labeller: J1
+  notes: all listed ranges needed for a full answer (for human judging); timers enforced in httpcore, outside this repo
+- id: L4-05
+  set: locked
+  repo: encode/httpx
+  commit: 3ba5fe0d7ac70222590e759c31442b1cab263791
+  question: How does it follow redirects? When a site says "moved to here", how does it know to go there?
+  type: code_how
+  expected:
+  - path: httpx/_client.py
+    start: 951
+    end: 986
+    source: code
+  - path: httpx/_client.py
+    start: 501
+    end: 528
+    source: code
+  author: W3
+  written_from: not_recorded
+  labeller: J1
+  notes: all listed ranges needed for a full answer (for human judging)
+- id: L4-06
+  set: locked
+  repo: encode/httpx
+  commit: 3ba5fe0d7ac70222590e759c31442b1cab263791
+  question: How does authentication work? How do you send a username/password or token without manually building headers?
+  type: code_how
+  expected:
+  - path: httpx/_client.py
+    start: 429
+    end: 439
+    source: code
+  - path: httpx/_auth.py
+    start: 122
+    end: 142
+    source: code
+  author: W3
+  written_from: not_recorded
+  labeller: J1
+  notes: all listed ranges needed for a full answer (for human judging)
+- id: L4-07
+  set: locked
+  repo: encode/httpx
+  commit: 3ba5fe0d7ac70222590e759c31442b1cab263791
+  question: How does it handle cookies? If a site sets a cookie, how does it remember it for the next request?
+  type: code_how
+  expected:
+  - path: httpx/_client.py
+    start: 1010
+    end: 1010
+    source: code
+  - path: httpx/_models.py
+    start: 1041
+    end: 1055
+    source: code
+  - path: httpx/_client.py
+    start: 393
+    end: 404
+    source: code
+  author: W3
+  written_from: not_recorded
+  labeller: J1
+  notes: all listed ranges needed for a full answer (for human judging)
+- id: L4-08
+  set: locked
+  repo: encode/httpx
+  commit: 3ba5fe0d7ac70222590e759c31442b1cab263791
+  question: Where is proxy support handled? Where in the code does it decide to go through a proxy?
+  type: locate
+  expected:
+  - path: httpx/_client.py
+    start: 749
+    end: 758
+    source: code
+  author: W3
+  written_from: not_recorded
+  labeller: J1
+  notes: ''
+- id: L4-09
+  set: locked
+  repo: encode/httpx
+  commit: 3ba5fe0d7ac70222590e759c31442b1cab263791
+  question: Which files use `URL`? Which parts of the codebase actually depend on the URL class?
+  type: graph
+  expected: []
+  expected_files_with_tests:
+  - httpx/__init__.py
+  - httpx/_client.py
+  - httpx/_config.py
+  - httpx/_models.py
+  - httpx/_types.py
+  - httpx/_utils.py
+  - tests/client/test_auth.py
+  - tests/client/test_properties.py
+  - tests/client/test_proxies.py
+  - tests/conftest.py
+  - tests/models/test_url.py
+  - tests/test_asgi.py
+  - tests/test_urlparse.py
+  - tests/test_utils.py
+  expected_files_without_tests:
+  - httpx/__init__.py
+  - httpx/_client.py
+  - httpx/_config.py
+  - httpx/_models.py
+  - httpx/_types.py
+  - httpx/_utils.py
+  author: W3
+  written_from: not_recorded
+  labeller: J1
+  notes: defining file httpx/_urls.py excluded
+- id: L4-10
+  set: locked
+  repo: encode/httpx
+  commit: 3ba5fe0d7ac70222590e759c31442b1cab263791
+  question: How does it automatically retry a failed request 3 times? How does its built-in retry logic work when the network drops?
+  type: false_premise
+  expected: []
+  premise_truth: 'It doesn''t — httpx has no built-in "retry a failed request 3 times" feature; the only retry is the transport''s retries option (default 0) that re-tries failed connection attempts (ConnectError or ConnectTimeout), and for other cases the docs point to a separate library such as tenacity (docs/advanced.md : 1133).'
+  author: W3
+  written_from: not_recorded
+  labeller: J1
+  notes: partial false premise; truth shown at docs/advanced.md 1133-1139
+- id: L5-01
+  set: locked
+  repo: axios/axios
+  commit: 84a9f3b9a4f3244b8c8e818f557d64c7b964fb25
+  question: What is this project for? What problem is axios solving that `fetch()` doesn't?
+  type: purpose
+  expected:
+  - path: README.md
+    start: 431
+    end: 431
+    source: doc
+  - path: README.md
+    start: 505
+    end: 515
+    source: doc
+  author: W3
+  written_from: not_recorded
+  labeller: J1
+  notes: all listed ranges needed for a full answer (for human judging); the README does not compare itself with fetch() directly
+- id: L5-02
+  set: locked
+  repo: axios/axios
+  commit: 84a9f3b9a4f3244b8c8e818f557d64c7b964fb25
+  question: How does `axios.get()` work? What happens between calling `axios.get(url)` and getting data back?
+  type: code_how
+  expected:
+  - path: lib/core/Axios.js
+    start: 266
+    end: 277
+    source: code
+  - path: lib/core/dispatchRequest.js
+    start: 35
+    end: 95
+    source: code
+  author: W3
+  written_from: not_recorded
+  labeller: J1
+  notes: all listed ranges needed for a full answer (for human judging)
+- id: L5-03
+  set: locked
+  repo: axios/axios
+  commit: 84a9f3b9a4f3244b8c8e818f557d64c7b964fb25
+  question: How does it handle interceptors? How can you run code before every request, like adding an auth token?
+  type: code_how
+  expected:
+  - path: lib/core/InterceptorManager.js
+    start: 67
+    end: 92
+    source: code
+  - path: lib/core/Axios.js
+    start: 164
+    end: 256
+    source: code
+  author: W3
+  written_from: not_recorded
+  labeller: J1
+  notes: all listed ranges needed for a full answer (for human judging)
+- id: L5-04
+  set: locked
+  repo: axios/axios
+  commit: 84a9f3b9a4f3244b8c8e818f557d64c7b964fb25
+  question: How does it decide between browser and Node? How does the same code work in both places?
+  type: code_how
+  expected:
+  - path: lib/adapters/adapters.js
+    start: 65
+    end: 115
+    source: code
+  - path: lib/defaults/index.js
+    start: 42
+    end: 42
+    source: code
+  author: W3
+  written_from: not_recorded
+  labeller: J1
+  notes: all listed ranges needed for a full answer (for human judging)
+- id: L5-05
+  set: locked
+  repo: axios/axios
+  commit: 84a9f3b9a4f3244b8c8e818f557d64c7b964fb25
+  question: 'How does it turn my JS object into a request body? I pass `{name: "a"}` - how does that become something sent over the wire?'
+  type: code_how
+  expected:
+  - path: lib/defaults/index.js
+    start: 44
+    end: 108
+    source: code
+  author: W3
+  written_from: not_recorded
+  labeller: J1
+  notes: ''
+- id: L5-06
+  set: locked
+  repo: axios/axios
+  commit: 84a9f3b9a4f3244b8c8e818f557d64c7b964fb25
+  question: How does it handle errors? Why do I get an error object with `.response` sometimes and not others?
+  type: code_how
+  expected:
+  - path: lib/core/settle.js
+    start: 14
+    end: 27
+    source: code
+  - path: lib/adapters/xhr.js
+    start: 152
+    end: 195
+    source: code
+  author: W3
+  written_from: not_recorded
+  labeller: J1
+  notes: all listed ranges needed for a full answer (for human judging)
+- id: L5-07
+  set: locked
+  repo: axios/axios
+  commit: 84a9f3b9a4f3244b8c8e818f557d64c7b964fb25
+  question: How does cancelling a request work? How do you abort a request that's already in flight?
+  type: code_how
+  expected:
+  - path: lib/adapters/xhr.js
+    start: 239
+    end: 258
+    source: code
+  - path: lib/adapters/http.js
+    start: 684
+    end: 688
+    source: code
+  author: W3
+  written_from: not_recorded
+  labeller: J1
+  notes: all listed ranges needed for a full answer (for human judging)
+- id: L5-08
+  set: locked
+  repo: axios/axios
+  commit: 84a9f3b9a4f3244b8c8e818f557d64c7b964fb25
+  question: Where is proxy / NO_PROXY handling done? Where does it check if a URL should bypass the proxy?
+  type: locate
+  expected:
+  - path: lib/adapters/http.js
+    start: 258
+    end: 276
+    source: code
+  - path: lib/helpers/shouldBypassProxy.js
+    start: 438
+    end: 505
+    source: code
+  author: W3
+  written_from: not_recorded
+  labeller: J1
+  notes: all listed ranges needed for a full answer (for human judging)
+- id: L5-09
+  set: locked
+  repo: axios/axios
+  commit: 84a9f3b9a4f3244b8c8e818f557d64c7b964fb25
+  question: Which files use `mergeConfig`? Which files rely on merging default + per-request config?
+  type: graph
+  expected: []
+  expected_files_with_tests:
+  - index.d.cts
+  - index.d.ts
+  - index.js
+  - lib/axios.js
+  - lib/core/Axios.js
+  - lib/helpers/resolveConfig.js
+  - tests/browser/instance.browser.test.js
+  - tests/module/cjs/tests/helpers/cjs-added-types.ts
+  - tests/module/esm/tests/helpers/esm-added-types.ts
+  - tests/unit/api.test.js
+  - tests/unit/core/mergeConfig.test.js
+  - tests/unit/prototypePollution.test.js
+  expected_files_without_tests:
+  - index.d.cts
+  - index.d.ts
+  - index.js
+  - lib/axios.js
+  - lib/core/Axios.js
+  - lib/helpers/resolveConfig.js
+  author: W3
+  written_from: not_recorded
+  labeller: J1
+  notes: defining file lib/core/mergeConfig.js excluded; index.d.cts is not stored by RepoLens v2.0 (.cts not discovered), kept deliberately (owner decision 22 Nov)
+- id: L5-10
+  set: locked
+  repo: axios/axios
+  commit: 84a9f3b9a4f3244b8c8e818f557d64c7b964fb25
+  question: How does it automatically retry a failed request with exponential backoff? How does its built-in retry feature work?
+  type: false_premise
+  expected: []
+  premise_truth: 'It doesn''t — axios has no built-in retry or backoff option; the docs show you writing your own response interceptor that re-sends the request and counts attempts (docs/pages/advanced/retry.md : 3–39, backoff by hand at 41–71).'
+  author: W3
+  written_from: not_recorded
+  labeller: J1
+  notes: truth shown at docs/pages/advanced/retry.md 3-71
