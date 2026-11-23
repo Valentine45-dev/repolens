@@ -1,0 +1,218 @@
+{
+ "results": "eval/results/locked/locked_run-v2.1-20261123T101546Z-8b337dd.json",
+ "judge": "J1",
+ "judgments": {
+  "1": {
+   "L2-03": {
+    "faithful": "yes"
+   },
+   "L3-05": {
+    "faithful": "partly"
+   },
+   "L2-04": {
+    "faithful": "partly"
+   },
+   "L4-01": {
+    "faithful": "partly"
+   },
+   "L4-09": {
+    "faithful": "yes"
+   },
+   "L3-02": {
+    "faithful": "yes"
+   },
+   "L1-05": {
+    "faithful": "partly"
+   },
+   "L4-03": {
+    "faithful": "yes"
+   },
+   "L4-02": {
+    "faithful": "partly"
+   },
+   "L5-09": {
+    "faithful": "partly"
+   },
+   "L2-01": {
+    "faithful": "yes"
+   },
+   "L2-02": {
+    "faithful": "yes"
+   },
+   "L1-07": {
+    "faithful": "yes"
+   },
+   "L5-10": {
+    "faithful": "partly",
+    "rejects_premise": "yes",
+    "false_claim_cited": "no"
+   },
+   "L1-02": {
+    "faithful": "partly"
+   },
+   "L3-04": {
+    "faithful": "partly"
+   },
+   "L5-02": {
+    "faithful": "partly"
+   },
+   "L1-08": {
+    "faithful": "partly"
+   },
+   "L5-05": {
+    "faithful": "yes"
+   },
+   "L1-10": {
+    "faithful": "partly"
+   },
+   "L1-01": {
+    "faithful": "yes"
+   },
+   "L3-03": {
+    "faithful": "yes"
+   },
+   "L2-10": {
+    "faithful": "partly",
+    "rejects_premise": "yes",
+    "false_claim_cited": "no"
+   },
+   "L2-05": {
+    "faithful": "yes"
+   },
+   "L1-04": {
+    "faithful": "yes"
+   },
+   "L1-06": {
+    "faithful": "yes"
+   },
+   "L5-03": {
+    "faithful": "partly"
+   },
+   "L5-07": {
+    "faithful": "yes"
+   },
+   "L4-10": {
+    "faithful": "partly",
+    "rejects_premise": "yes",
+    "false_claim_cited": "no"
+   },
+   "L5-06": {
+    "faithful": "partly"
+   },
+   "L4-05": {
+    "faithful": "partly"
+   },
+   "L3-06": {
+    "faithful": "yes"
+   },
+   "L3-08": {
+    "faithful": "partly"
+   },
+   "L5-04": {
+    "faithful": "partly"
+   },
+   "L4-04": {
+    "faithful": "yes"
+   },
+   "L4-06": {
+    "faithful": "yes"
+   },
+   "L5-01": {
+    "faithful": "partly"
+   },
+   "L3-10": {
+    "faithful": "yes",
+    "rejects_premise": "yes",
+    "false_claim_cited": "no"
+   },
+   "L3-07": {
+    "faithful": "partly"
+   },
+   "L2-08": {
+    "faithful": "yes"
+   },
+   "L2-09": {
+    "faithful": "yes"
+   },
+   "L4-07": {
+    "faithful": "yes"
+   },
+   "L3-09": {
+    "faithful": "yes"
+   },
+   "L4-08": {
+    "faithful": "partly"
+   },
+   "L3-01": {
+    "faithful": "partly"
+   },
+   "L1-03": {
+    "faithful": "yes"
+   },
+   "L2-07": {
+    "faithful": "yes"
+   },
+   "L2-06": {
+    "faithful": "partly"
+   },
+   "L5-08": {
+    "faithful": "yes"
+   },
+   "L1-09": {
+    "faithful": "partly"
+   }
+  },
+  "2": {
+   "L5-04": {},
+   "L3-03": {},
+   "L5-05": {},
+   "L3-09": {},
+   "L5-02": {},
+   "L1-01": {},
+   "L4-09": {},
+   "L5-06": {},
+   "L5-09": {},
+   "L1-10": {},
+   "L5-07": {},
+   "L1-05": {},
+   "L2-09": {},
+   "L5-08": {},
+   "L2-05": {},
+   "L2-07": {},
+   "L3-01": {},
+   "L4-04": {},
+   "L1-02": {},
+   "L3-05": {},
+   "L4-08": {},
+   "L2-10": {},
+   "L3-04": {},
+   "L2-01": {},
+   "L3-06": {},
+   "L1-06": {},
+   "L3-07": {},
+   "L3-08": {},
+   "L4-06": {},
+   "L3-02": {},
+   "L4-02": {},
+   "L2-02": {},
+   "L5-03": {},
+   "L1-09": {},
+   "L5-10": {},
+   "L1-04": {},
+   "L1-07": {},
+   "L1-03": {},
+   "L2-03": {},
+   "L1-08": {},
+   "L5-01": {},
+   "L3-10": {},
+   "L4-05": {},
+   "L2-06": {},
+   "L4-03": {},
+   "L4-10": {},
+   "L4-01": {},
+   "L2-08": {},
+   "L2-04": {},
+   "L4-07": {}
+  }
+ }
+}

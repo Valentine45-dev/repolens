@@ -1,0 +1,199 @@
+{
+  "run": {
+    "commit_sha": "8b337dda3d50833adeb67d3e3f2d9375ead8d063",
+    "dirty": false,
+    "run_at": "2026-11-23T09:36:27+00:00",
+    "machine": "LAPTOP-4C2E555R",
+    "cpu": "Intel(R) Pentium(R) Silver N5030 CPU @ 1.10GHz",
+    "cpu_threads": 4,
+    "ram_gb": 7.8,
+    "os": "Windows 11 (10.0.26300)",
+    "python": "3.12.16",
+    "packages": {
+      "torch": "2.14.1+cpu",
+      "sentence-transformers": "6.2.0",
+      "transformers": "5.21.0",
+      "tree-sitter": "0.25.2",
+      "anthropic": "2.3.0"
+    },
+    "max_analysis_s": 2100,
+    "tool_pins": {
+      "bandit": "bandit==1.9.4",
+      "semgrep": "semgrep==1.182.1"
+    },
+    "notes": "run day v2.1; apps closed",
+    "embedder": "sentence-transformers",
+    "embed_model": "sentence-transformers/all-MiniLM-L6-v2",
+    "embed_revision": "1110a243fdf4706b3f48f1d95db1a4f5529b4d41",
+    "llm_used": false,
+    "llm": {
+      "provider": "anthropic",
+      "model": "claude-sonnet-5-5",
+      "effort": "low",
+      "thinking": "between_tools",
+      "max_tokens": 4000,
+      "prompt_version": "2026-11-23.claims.1",
+      "claim_check": true
+    },
+    "retrieval": {
+      "top_k": 8,
+      "graph_expansion": true,
+      "expand_max": 8,
+      "context_tokens": 6000,
+      "hybrid": true,
+      "hybrid_depth": 16,
+      "rrf_k": 60,
+      "doc_pool": 0,
+      "doc_cutoff_rank": 8
+    },
+    "analysed": "in this process"
+  },
+  "pins": "eval/locked/pins.yaml",
+  "analyses": [
+    {
+      "repo": "sindresorhus/p-limit",
+      "commit": "a8a6fbec4e0e866d6d779b10889bb4f5567e70eb",
+      "snapshot_id": 42,
+      "job_id": 40,
+      "submitted_status": "done",
+      "timing_only": false,
+      "stages": [
+        {
+          "t_s": 38.3,
+          "status": "done",
+          "stage": "done",
+          "search": "ready"
+        }
+      ],
+      "note": "already analysed: the existing job was reused, nothing was timed",
+      "final_status": "done",
+      "error": null,
+      "receipt": {
+        "files_kept": 11,
+        "files_skipped": 5,
+        "files_beyond_limit": 0,
+        "hit_file_limit": false
+      },
+      "search": "ready",
+      "search_error": null,
+      "analysis_s": 38.3,
+      "total_with_tests_s": 38.3
+    },
+    {
+      "repo": "jd/tenacity",
+      "commit": "aac059c906170ee7b6ce1aa086a226f3aded5c99",
+      "snapshot_id": 43,
+      "job_id": 41,
+      "submitted_status": "done",
+      "timing_only": false,
+      "stages": [
+        {
+          "t_s": 0.2,
+          "status": "done",
+          "stage": "done",
+          "search": "ready"
+        }
+      ],
+      "note": "already analysed: the existing job was reused, nothing was timed",
+      "final_status": "done",
+      "error": null,
+      "receipt": {
+        "files_kept": 93,
+        "files_skipped": 4,
+        "files_beyond_limit": 0,
+        "hit_file_limit": false
+      },
+      "search": "ready",
+      "search_error": null,
+      "analysis_s": 0.2,
+      "total_with_tests_s": 0.2
+    },
+    {
+      "repo": "tkem/cachetools",
+      "commit": "07bb96086794ca6e2f70f32b7cc759fe91c08651",
+      "snapshot_id": 44,
+      "job_id": 42,
+      "submitted_status": "done",
+      "timing_only": false,
+      "stages": [
+        {
+          "t_s": 0.2,
+          "status": "done",
+          "stage": "done",
+          "search": "ready"
+        }
+      ],
+      "note": "already analysed: the existing job was reused, nothing was timed",
+      "final_status": "done",
+      "error": null,
+      "receipt": {
+        "files_kept": 40,
+        "files_skipped": 4,
+        "files_beyond_limit": 0,
+        "hit_file_limit": false
+      },
+      "search": "ready",
+      "search_error": null,
+      "analysis_s": 0.2,
+      "total_with_tests_s": 0.2
+    },
+    {
+      "repo": "encode/httpx",
+      "commit": "3ba5fe0d7ac70222590e759c31442b1cab263791",
+      "snapshot_id": 45,
+      "job_id": 43,
+      "submitted_status": "done",
+      "timing_only": false,
+      "stages": [
+        {
+          "t_s": 0.2,
+          "status": "done",
+          "stage": "done",
+          "search": "ready"
+        }
+      ],
+      "note": "already analysed: the existing job was reused, nothing was timed",
+      "final_status": "done",
+      "error": null,
+      "receipt": {
+        "files_kept": 91,
+        "files_skipped": 26,
+        "files_beyond_limit": 0,
+        "hit_file_limit": false
+      },
+      "search": "ready",
+      "search_error": null,
+      "analysis_s": 0.2,
+      "total_with_tests_s": 0.2
+    },
+    {
+      "repo": "axios/axios",
+      "commit": "84a9f3b9a4f3244b8c8e818f557d64c7b964fb25",
+      "snapshot_id": 46,
+      "job_id": 44,
+      "submitted_status": "done",
+      "timing_only": false,
+      "stages": [
+        {
+          "t_s": 0.4,
+          "status": "done",
+          "stage": "done",
+          "search": "ready"
+        }
+      ],
+      "note": "already analysed: the existing job was reused, nothing was timed",
+      "final_status": "done",
+      "error": null,
+      "receipt": {
+        "files_kept": 427,
+        "files_skipped": 39,
+        "files_beyond_limit": 0,
+        "hit_file_limit": false
+      },
+      "search": "ready",
+      "search_error": null,
+      "analysis_s": 0.4,
+      "total_with_tests_s": 0.4
+    }
+  ]
+}
