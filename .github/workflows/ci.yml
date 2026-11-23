@@ -54,5 +54,5 @@ jobs:
           enable-cache: true
       - run: uv sync --locked
         working-directory: backend
-      - run: uv run --project backend ruff check --config backend/pyproject.toml eval/locked_metrics.py eval/locked_eval.py eval/test_locked_metrics.py eval/test_locked_eval.py
-      - run: uv run --project backend python -m pytest -q -p no:cacheprovider eval/test_locked_metrics.py eval/test_locked_eval.py
+      - run: uv run --project backend ruff check --config backend/pyproject.toml eval/locked_metrics.py eval/locked_eval.py eval/test_locked_metrics.py eval/test_locked_eval.py eval/judging_mix.py eval/test_judging_mix.py
+      - run: uv run --project backend python -m pytest -q -p no:cacheprovider eval/test_locked_metrics.py eval/test_locked_eval.py eval/judging_mix.py eval/test_judging_mix.py

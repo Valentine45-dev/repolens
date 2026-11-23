@@ -2809,3 +2809,9 @@ are deliberately not changed after seeing eval results; these stay as documented
     version's own sheet format, pass-1 rows filled, pass-2 rows blank, read unchanged by
     `locked_eval.py judge`, which counts a blank row as awaiting). Writes only outside the repository;
     prints counts only.
+  - **Built (23 Nov):** `eval/judging_mix.py` + `eval/test_judging_mix.py` (8 tests on synthetic sheets/keys in
+    `sheet`'s format: row counts, pass filtering, every row maps back exactly once, seed reproducible, unmix
+    round trip read by `locked_eval.read_judgments` with pass 2 awaiting, refusal inside the repo, bad values,
+    changed sources). Default seed **20261123** (printed; recorded in the combined key). `locked_eval.py`,
+    `locked_metrics.py`, `score_claims.py` unchanged; scorer self-check passes. CI eval-unit job now also runs
+    ruff and the tests on the two new files. Eval unit 93 passed. No API, no locked file opened.
