@@ -2797,3 +2797,15 @@ are deliberately not changed after seeing eval results; these stay as documented
     0d6d16b.json` identical to Part C's `...-claim-check-20261122T195441Z-f763e5e.json` (all 20 records;
     A 0.72, B 0.89, C 0.94, D 0.72, DG 0.94, E 0.94 on the 18 tuning code questions).
   - **Step 5 spend:** $0.5477 of $1.50 (Part B smoke $0.085, Part C arms $0.4627); Parts A, D, E $0.
+- **Blind judging pre-registration (23 Nov 2026 ~16:05 IST, before either blind sheet was opened; branch
+  `eval/judging-mix`).** Locked runs v2.0 and v2.1 are done (v2.1 two passes complete, $1.46). Judging scope
+  decided by the owner: **pass-1 answers only, 50 per version = 100 rows**, mixed into one sheet shuffled with
+  a fixed seed so the judge cannot tell version, pass or configuration; **judge J1, no AI**. **Deviation from
+  V2-EVAL-DESIGN §5** ("all locked-set answers"), for time; **pass-2 answers not judged**. Analysis:
+  faithful yes/partly/no per version; paired sign test on faithful=yes per question; premise rows by the
+  frozen rule; caveat: v2.1 differs from v2.0 by more than the claim check.
+  - Tool: `eval/judging_mix.py` (`mix`: both versions' sheet + key → one shuffled sheet with no version, pass
+    or configuration anywhere, and a combined key; `unmix`: the filled mixed sheet + combined key → each
+    version's own sheet format, pass-1 rows filled, pass-2 rows blank, read unchanged by
+    `locked_eval.py judge`, which counts a blank row as awaiting). Writes only outside the repository;
+    prints counts only.
